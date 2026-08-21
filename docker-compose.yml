@@ -5,9 +5,9 @@ services:
     restart: unless-stopped
 
     environment:
-      POSTGRES_DB: lamdong_ocop
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 123456
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
 
     ports:
       - "5432:5432"
@@ -15,20 +15,27 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   pgadmin:
     image: dpage/pgadmin4
     container_name: lamdong-pgadmin
     restart: unless-stopped
 
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@gmail.com
-      PGADMIN_DEFAULT_PASSWORD: 123456
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
 
     ports:
       - "5050:80"
 
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
 
 volumes:
   postgres_data:
