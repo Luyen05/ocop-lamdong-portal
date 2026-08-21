@@ -28,3 +28,9 @@ Khởi động PostgreSQL/PostGIS và pgAdmin:
 docker compose up -d postgres pgadmin
 ```
 
+## Tài liệu nền
+
+- Schema PostgreSQL/PostGIS: `database/schema.sql`.
+- ERD: `database/ERD.md`.
+- Hợp đồng REST API dự kiến: `docs/API.md`.
+- Postman collection: `docs/postman/OCOP-Lam-Dong.postman_collection.json`.

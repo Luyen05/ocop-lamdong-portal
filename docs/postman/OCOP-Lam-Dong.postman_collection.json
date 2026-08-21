@@ -1,0 +1,101 @@
+{
+  "info": {
+    "name": "OCOP Lâm Đồng API",
+    "description": "Các luồng public, user, subject và admin của REST API v1.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {"key": "baseUrl", "value": "http://localhost:8000/api/v1"},
+    {"key": "userToken", "value": ""},
+    {"key": "adminToken", "value": ""},
+    {"key": "subjectToken", "value": ""},
+    {"key": "subjectId", "value": "1"}
+  ],
+  "item": [
+    {
+      "name": "Public",
+      "item": [
+        {"name": "Danh mục", "request": {"method": "GET", "url": "{{baseUrl}}/categories"}},
+        {"name": "Sản phẩm", "request": {"method": "GET", "url": "{{baseUrl}}/products?page=1&page_size=20&sort=newest"}},
+        {"name": "Điểm gần nhất", "request": {"method": "GET", "url": "{{baseUrl}}/map/nearby?lat=11.9404&lng=108.4583&radius_km=20&limit=10"}}
+      ]
+    },
+    {
+      "name": "User",
+      "item": [
+        {
+          "name": "Đăng ký",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"change-me-123\",\n  \"full_name\": \"Người dùng thử\"\n}"},
+            "url": "{{baseUrl}}/auth/register"
+          }
+        },
+        {
+          "name": "Đăng nhập user",
+          "event": [{"listen": "test", "script": {"exec": ["pm.collectionVariables.set('userToken', pm.response.json().access_token);"]}}],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"change-me-123\"\n}"},
+            "url": "{{baseUrl}}/auth/login"
+          }
+        },
+        {
+          "name": "Gửi hồ sơ subject",
+          "request": {
+            "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{userToken}}", "type": "string"}]},
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"name\": \"HTX Nông nghiệp mẫu\",\n  \"type\": \"cooperative\",\n  \"representative\": \"Nguyễn Văn A\",\n  \"phone\": \"0900000000\",\n  \"address\": \"Đà Lạt, Lâm Đồng\",\n  \"district\": \"Đà Lạt\"\n}"},
+            "url": "{{baseUrl}}/subject-applications"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Subject",
+      "item": [
+        {
+          "name": "Đăng nhập subject",
+          "event": [{"listen": "test", "script": {"exec": ["pm.collectionVariables.set('subjectToken', pm.response.json().access_token);"]}}],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"change-me-123\"\n}"},
+            "url": "{{baseUrl}}/auth/login"
+          }
+        },
+        {"name": "Sản phẩm của tôi", "request": {"auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{subjectToken}}", "type": "string"}]}, "method": "GET", "url": "{{baseUrl}}/subject/products"}}
+      ]
+    },
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "Đăng nhập admin",
+          "event": [{"listen": "test", "script": {"exec": ["pm.collectionVariables.set('adminToken', pm.response.json().access_token);"]}}],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"your-admin-password\"\n}"},
+            "url": "{{baseUrl}}/auth/login"
+          }
+        },
+        {"name": "Dashboard", "request": {"auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{adminToken}}", "type": "string"}]}, "method": "GET", "url": "{{baseUrl}}/admin/dashboard"}},
+        {"name": "Hồ sơ chờ duyệt", "request": {"auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{adminToken}}", "type": "string"}]}, "method": "GET", "url": "{{baseUrl}}/admin/subjects?status=pending"}},
+        {
+          "name": "Duyệt subject",
+          "request": {
+            "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{adminToken}}", "type": "string"}]},
+            "method": "PATCH",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"status\": \"approved\"\n}"},
+            "url": "{{baseUrl}}/admin/subjects/{{subjectId}}/moderation"
+          }
+        }
+      ]
+    }
+  ]
+}
