@@ -38,5 +38,20 @@ services:
       postgres:
         condition: service_healthy
 
+  backend:
+    build: ./backend
+    container_name: lamdong-backend
+    restart: unless-stopped
+
+    environment:
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
+
+    ports:
+      - "8000:8000"
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
 volumes:
   postgres_data:
