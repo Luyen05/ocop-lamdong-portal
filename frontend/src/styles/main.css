@@ -1,0 +1,26 @@
+:root {
+  font-family: "Segoe UI", Arial, sans-serif;
+  color: #0f172b;
+  background: #f8fafc;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  min-width: 320px;
+  background: #f8fafc;
+}
+

@@ -47,6 +47,18 @@ Chạy kiểm thử:
 pytest -q
 ```
 
+## Frontend tối thiểu
+
+Từ thư mục `frontend`:
+
+```powershell
+npm install
+npm run dev
+```
+
+Frontend chạy tại `http://localhost:5173`. Axios đọc API base URL từ
+`VITE_API_BASE_URL`; scaffold chưa gọi endpoint nghiệp vụ.
+
 ## Tài liệu nền
 
 - Schema PostgreSQL/PostGIS: `database/schema.sql`.
