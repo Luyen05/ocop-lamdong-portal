@@ -9,13 +9,6 @@ nghiệp và bản đồ số tỉnh Lâm Đồng.
 - Frontend: Vue 3, Vue Router, Axios và Bootstrap/CSS.
 - Bản đồ: Leaflet, GeoJSON và OSRM thông qua backend.
 
-## Trạng thái triển khai
-
-Nhánh `main` được xây dựng tuần tự theo các commit nhỏ. Bản backend đầy đủ trước
-khi tái cấu trúc được lưu tại nhánh
-`codex/archive-working-backend-2026-08-21` để tham khảo, không merge nguyên nhánh
-archive vào `main`.
-
 ## Thiết lập môi trường
 
 1. Sao chép `.env.example` thành `.env`.
