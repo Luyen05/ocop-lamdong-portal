@@ -22,42 +22,99 @@ archive vào `main`.
 2. Thay tất cả giá trị `change-me` bằng thông tin chỉ dùng trên máy cá nhân.
 3. Không commit `.env` hoặc Firebase service account.
 
-Khởi động PostgreSQL/PostGIS và pgAdmin:
+Máy phát triển chỉ cần Git và Docker Desktop. Python, Node.js, npm và toàn bộ
+dependency của dự án được cài trong Docker image.
+
+Cấu hình Compose hiện tại dành cho phát triển local, có hot reload và Vite dev
+server; không dùng trực tiếp cấu hình này để triển khai production.
+
+Khởi động toàn bộ PostgreSQL/PostGIS, pgAdmin, FastAPI và Vue/Vite:
 
 ```powershell
-docker compose up -d postgres pgadmin
+docker compose build
+docker compose up -d
+docker compose ps
 ```
 
-## Backend tối thiểu
+Các địa chỉ phát triển:
 
-Từ thư mục `backend`:
+- Frontend: `http://localhost:5173`.
+- Backend: `http://localhost:8000`.
+- Health check: `http://localhost:8000/health`.
+- Swagger: `http://localhost:8000/docs`.
+- pgAdmin: `http://localhost:5050`.
+
+Xem log theo service:
 
 ```powershell
-python -m venv .venv
-.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-uvicorn app.main:app --reload
+docker compose logs -f backend
+docker compose logs -f frontend
+docker compose logs -f postgres
 ```
 
-Health check: `http://localhost:8000/health`.
+Backend và frontend đều mount source code từ máy vào container để hỗ trợ hot
+reload. Dependency frontend nằm trong volume `frontend_node_modules`, không tạo
+`node_modules` trên máy host. Docker Compose tự tạo `DATABASE_URL` từ các biến
+`POSTGRES_*` và sử dụng hostname nội bộ `postgres`.
 
-Chạy kiểm thử:
+Khi volume PostgreSQL còn trống, Docker tự chạy `database/schema.sql` rồi
+`database/seed_dev.sql`. Các file trong `docker-entrypoint-initdb.d` không chạy
+lại với volume đã có dữ liệu. Không xóa volume chỉ để nạp lại schema nếu chưa
+sao lưu dữ liệu cần giữ.
+
+## Kiểm thử trong Docker
+
+Backend:
 
 ```powershell
-pytest -q
+docker compose exec backend python -m pytest -q
 ```
 
-## Frontend tối thiểu
-
-Từ thư mục `frontend`:
+Frontend:
 
 ```powershell
-npm install
-npm run dev
+docker compose exec frontend npm run type-check
+docker compose exec frontend npm run build
 ```
 
-Frontend chạy tại `http://localhost:5173`. Axios đọc API base URL từ
-`VITE_API_BASE_URL`; scaffold chưa gọi endpoint nghiệp vụ.
+## Cài thêm dependency
+
+Backend: thêm package có phiên bản cố định vào `backend/requirements.txt`, sau
+đó build lại service:
+
+```powershell
+docker compose build backend
+docker compose up -d backend
+```
+
+Frontend: cài package bên trong container để đồng thời cập nhật `package.json`
+và `package-lock.json` trên source được mount:
+
+```powershell
+docker compose exec frontend npm install <ten-package>
+docker compose build frontend
+docker compose up -d frontend
+```
+
+Sau khi `git pull`, nếu `frontend/package-lock.json` thay đổi, đồng bộ lại
+volume thư viện rồi khởi động frontend:
+
+```powershell
+docker compose run --rm --no-deps frontend npm ci
+docker compose up -d frontend
+```
+
+Không cài dependency thủ công trên máy host hoặc chỉ cài tạm trong container mà
+không cập nhật file lock.
+
+## Dừng môi trường
+
+```powershell
+docker compose down
+```
+
+Lệnh trên giữ volume PostgreSQL. Không dùng `docker compose down -v` nếu chưa
+chủ động sao lưu và xác nhận có thể xóa toàn bộ dữ liệu local.
 
 ## Tài liệu nền
 
