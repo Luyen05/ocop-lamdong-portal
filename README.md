@@ -122,3 +122,4 @@ chủ động sao lưu và xác nhận có thể xóa toàn bộ dữ liệu loc
 - ERD: `database/ERD.md`.
 - Hợp đồng REST API dự kiến: `docs/API.md`.
 - Postman collection: `docs/postman/OCOP-Lam-Dong.postman_collection.json`.
+- Hướng dẫn chạy và kế hoạch nhóm: `docs/HUONG_DAN_CHAY_VA_KE_HOACH_NHOM_OCOP_LAM_DONG.docx`.
