@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import get_settings
-
+from app.core.database import get_connection
 
 settings = get_settings()
 
@@ -25,3 +25,16 @@ app.add_middleware(
 def health() -> dict[str, str]:
     return {"status": "ok"}
 
+@app.get("/db-health", tags=["System"])
+def database_health():
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT current_database(), PostGIS_Version();")
+            database, postgis_version = cur.fetchone()
+
+    return {
+        "status": "ok",
+        "database": database,
+        "postgis_version": postgis_version,
+    }
+    

@@ -45,6 +45,7 @@ services:
 
     environment:
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
 
     ports:
       - "8000:8000"
