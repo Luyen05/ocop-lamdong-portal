@@ -43,6 +43,8 @@ Các API đầu tiên:
 - `GET /api/v1/health/database`: kiểm tra kết nối PostgreSQL.
 - `GET /api/v1/categories`: danh sách danh mục, hỗ trợ `page`, `page_size`, `search`, `sort`.
 - `GET /api/v1/categories/{slug}`: chi tiết một danh mục.
+- `GET /api/v1/products`: danh sách sản phẩm đã duyệt, hỗ trợ tìm kiếm, lọc và phân trang.
+- `GET /api/v1/products/{slug}`: chi tiết sản phẩm đã duyệt.
 - `POST /api/v1/auth/register`: đăng ký tài khoản với role `user`.
 - `POST /api/v1/auth/login`: đăng nhập bằng JSON và nhận JWT access token.
 - `GET /api/v1/auth/me`: xem tài khoản hiện tại bằng Bearer token.
@@ -77,6 +79,24 @@ docker compose exec postgres sh -lc 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" 
 
 Seed có tính lặp lại an toàn: chạy nhiều lần không tạo trùng danh mục, chủ thể
 hoặc sản phẩm. Tài khoản gắn với dữ liệu mẫu bị khóa và không dùng để đăng nhập.
+
+## Kiểm tra nhanh module sản phẩm
+
+Sau khi backend và frontend đã chạy, mở các địa chỉ:
+
+- Danh sách sản phẩm: `http://localhost:5173/san-pham`.
+- Chi tiết dữ liệu mẫu: `http://localhost:5173/san-pham/ca-phe-arabica-cau-dat-demo`.
+- API danh sách: `http://localhost:8000/api/v1/products`.
+- API chi tiết: `http://localhost:8000/api/v1/products/ca-phe-arabica-cau-dat-demo`.
+
+Ví dụ lọc sản phẩm 5 sao thuộc danh mục đồ uống tại Đà Lạt:
+
+```text
+http://localhost:8000/api/v1/products?category=do-uong&star=5&district=Đà%20Lạt
+```
+
+API công khai không trả sản phẩm `pending`, `rejected` hoặc sản phẩm thuộc chủ
+thể chưa được duyệt.
 
 ## Kiểm thử trong Docker
 
