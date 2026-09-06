@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
+import { authStore } from '@/stores/auth'
 import HomeView from '@/views/HomeView.vue'
 
 const router = createRouter({
@@ -22,8 +23,26 @@ const router = createRouter({
       component: () => import('@/views/RegisterView.vue'),
       meta: { layout: 'auth', guestOnly: true },
     },
+    {
+      path: '/tai-khoan',
+      name: 'profile',
+      component: () => import('@/views/ProfileView.vue'),
+      meta: { requiresAuth: true },
+    },
   ],
   scrollBehavior: () => ({ top: 0 }),
+})
+
+router.beforeEach(async (to) => {
+  await authStore.initialize()
+
+  if (to.meta.requiresAuth && !authStore.isAuthenticated.value) {
+    return { name: 'login', query: { redirect: to.fullPath } }
+  }
+  if (to.meta.guestOnly && authStore.isAuthenticated.value) {
+    return { name: 'home' }
+  }
+  return true
 })
 
 export default router
