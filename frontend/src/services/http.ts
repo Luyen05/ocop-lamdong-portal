@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-import { getAccessToken } from '@/services/token'
+import { expireAccessToken, getAccessToken } from '@/services/token'
 
 const http = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000/api/v1',
@@ -17,5 +17,15 @@ http.interceptors.request.use((config) => {
   }
   return config
 })
+
+http.interceptors.response.use(
+  (response) => response,
+  (error: unknown) => {
+    if (axios.isAxiosError(error) && error.response?.status === 401 && getAccessToken()) {
+      expireAccessToken()
+    }
+    return Promise.reject(error)
+  },
+)
 
 export default http

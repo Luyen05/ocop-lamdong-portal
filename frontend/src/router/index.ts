@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
+import { AUTH_SESSION_EXPIRED_EVENT } from '@/services/token'
 import { authStore } from '@/stores/auth'
 import HomeView from '@/views/HomeView.vue'
 
@@ -43,6 +44,16 @@ router.beforeEach(async (to) => {
     return { name: 'home' }
   }
   return true
+})
+
+window.addEventListener(AUTH_SESSION_EXPIRED_EVENT, () => {
+  const currentRoute = router.currentRoute.value
+  if (currentRoute.meta.requiresAuth) {
+    void router.push({
+      name: 'login',
+      query: { redirect: currentRoute.fullPath, expired: '1' },
+    })
+  }
 })
 
 export default router
