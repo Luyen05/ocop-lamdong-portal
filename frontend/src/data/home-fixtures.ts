@@ -55,3 +55,50 @@ export const tourismFixtures: TourismFixture[] = [
     theme: 'milk',
   },
 ]
+
+export interface MapMarkerFixture {
+  id: string
+  label: string
+  type: 'ocop-5' | 'ocop-4' | 'tourism'
+  x: number
+  y: number
+}
+
+export const mapMarkerFixtures: MapMarkerFixture[] = [
+  { id: 'da-lat', label: 'OCOP Đà Lạt', type: 'ocop-5', x: 47, y: 34 },
+  { id: 'cau-dat', label: 'Cầu Đất Farm', type: 'tourism', x: 68, y: 28 },
+  { id: 'duc-trong', label: 'Đức Trọng', type: 'ocop-4', x: 52, y: 62 },
+  { id: 'don-duong', label: 'Đơn Dương', type: 'ocop-4', x: 72, y: 54 },
+  { id: 'bao-loc', label: 'Bảo Lộc', type: 'ocop-5', x: 25, y: 76 },
+  { id: 'lac-duong', label: 'Lạc Dương', type: 'tourism', x: 43, y: 17 },
+]
+
+export interface NewsFixture {
+  id: string
+  category: string
+  date: string
+  title: string
+  summary: string
+  theme: 'policy' | 'tourism'
+}
+
+export const newsFixtures: NewsFixture[] = [
+  {
+    id: 'cong-nhan-san-pham-ocop-2024',
+    category: 'Tin OCOP',
+    date: '15/03/2024',
+    title: 'Lâm Đồng công nhận thêm 45 sản phẩm OCOP đạt 4 sao và 5 sao năm 2024',
+    summary:
+      'UBND tỉnh Lâm Đồng tổ chức lễ trao giấy chứng nhận cho các sản phẩm thuộc lĩnh vực nông sản, thực phẩm chế biến và dịch vụ du lịch nông thôn.',
+    theme: 'policy',
+  },
+  {
+    id: 'du-lich-nong-nghiep-ben-vung',
+    category: 'Du lịch nông nghiệp',
+    date: '10/03/2024',
+    title: 'Phát triển mô hình Du lịch Nông nghiệp bền vững gắn với trải nghiệm làng nghề OCOP',
+    summary:
+      'Mô hình kết hợp hái nông sản tại vườn và thưởng thức sản phẩm OCOP tại chỗ đang trở thành xu hướng thu hút du khách đến Lâm Đồng.',
+    theme: 'tourism',
+  },
+]
