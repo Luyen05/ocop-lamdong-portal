@@ -1,10 +1,33 @@
 :root {
-  --ocop-green: #2f6f3e;
-  --ocop-green-dark: #173a22;
-  --ocop-cream: #f7f8f2;
+  --ocop-primary-950: #004f3b;
+  --ocop-primary-900: #006045;
+  --ocop-primary-700: #007a55;
+  --ocop-primary-500: #00a878;
+  --ocop-mint: #00d492;
+  --ocop-mint-soft: #ecfdf5;
+  --ocop-mint-border: #a4f4cf;
+  --ocop-blue: #0084d1;
+  --ocop-gold: #ffb900;
+  --ocop-danger: #fb2c36;
+  --ocop-navy: #0f172b;
+  --ocop-slate: #62748e;
+  --ocop-surface: #f8fafc;
+  --ocop-surface-muted: #f1f5f9;
+  --ocop-border: #e2e8f0;
+  --ocop-white: #ffffff;
+  --ocop-radius-xs: 4px;
+  --ocop-radius-sm: 8px;
+  --ocop-radius-md: 12px;
+  --ocop-radius-lg: 16px;
+  --ocop-radius-xl: 24px;
+  --ocop-container: 1280px;
+  --ocop-content: 1216px;
+  --ocop-green: var(--ocop-primary-700);
+  --ocop-green-dark: var(--ocop-primary-950);
+  --ocop-cream: var(--ocop-surface);
   font-family: "Segoe UI", Arial, sans-serif;
-  color: #0f172b;
-  background: #f8fafc;
+  color: var(--ocop-navy);
+  background: var(--ocop-surface);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
 }
@@ -24,18 +47,53 @@ body,
 
 body {
   min-width: 320px;
-  background: #f8fafc;
+  overflow-x: hidden;
+  background: var(--ocop-surface);
+  color: var(--ocop-navy);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+.site-container {
+  width: min(calc(100% - 2rem), var(--ocop-container));
+  margin-inline: auto;
+}
+
+.site-content {
+  width: min(calc(100% - 2rem), var(--ocop-content));
+  margin-inline: auto;
 }
 
 .btn-success {
-  --bs-btn-bg: var(--ocop-green);
-  --bs-btn-border-color: var(--ocop-green);
-  --bs-btn-hover-bg: #245d32;
-  --bs-btn-hover-border-color: #245d32;
+  --bs-btn-bg: var(--ocop-primary-700);
+  --bs-btn-border-color: var(--ocop-primary-700);
+  --bs-btn-hover-bg: var(--ocop-primary-900);
+  --bs-btn-hover-border-color: var(--ocop-primary-900);
 }
 
 .form-control:focus,
 .form-check-input:focus {
-  border-color: #72a37c;
-  box-shadow: 0 0 0 0.2rem rgb(47 111 62 / 14%);
+  border-color: var(--ocop-primary-500);
+  box-shadow: 0 0 0 0.2rem rgb(0 122 85 / 14%);
+}
+
+@media (min-width: 768px) {
+  .site-container,
+  .site-content {
+    width: min(calc(100% - 3rem), var(--ocop-container));
+  }
+
+  .site-content {
+    width: min(calc(100% - 3rem), var(--ocop-content));
+  }
 }
