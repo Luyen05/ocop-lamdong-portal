@@ -52,6 +52,14 @@ body {
   color: var(--ocop-navy);
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
+[id] {
+  scroll-margin-top: 116px;
+}
+
 button,
 input,
 select,
