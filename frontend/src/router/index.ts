@@ -14,11 +14,13 @@ const router = createRouter({
       path: '/dang-nhap',
       name: 'login',
       component: () => import('@/views/LoginView.vue'),
+      meta: { layout: 'auth', guestOnly: true },
     },
     {
       path: '/dang-ky',
       name: 'register',
       component: () => import('@/views/RegisterView.vue'),
+      meta: { layout: 'auth', guestOnly: true },
     },
   ],
   scrollBehavior: () => ({ top: 0 }),

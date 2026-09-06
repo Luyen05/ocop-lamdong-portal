@@ -1,4 +1,7 @@
 :root {
+  --ocop-green: #2f6f3e;
+  --ocop-green-dark: #173a22;
+  --ocop-cream: #f7f8f2;
   font-family: "Segoe UI", Arial, sans-serif;
   color: #0f172b;
   background: #f8fafc;
@@ -24,3 +27,15 @@ body {
   background: #f8fafc;
 }
 
+.btn-success {
+  --bs-btn-bg: var(--ocop-green);
+  --bs-btn-border-color: var(--ocop-green);
+  --bs-btn-hover-bg: #245d32;
+  --bs-btn-hover-border-color: #245d32;
+}
+
+.form-control:focus,
+.form-check-input:focus {
+  border-color: #72a37c;
+  box-shadow: 0 0 0 0.2rem rgb(47 111 62 / 14%);
+}
