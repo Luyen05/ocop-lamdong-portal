@@ -176,6 +176,61 @@ def test_me_rejects_expired_token(auth_context) -> None:
     assert response.json()["code"] == "INVALID_TOKEN"
 
 
+def test_update_me_changes_only_profile_fields(auth_context) -> None:
+    client, testing_session = auth_context
+    registered = register_user(client)
+    token = login_user(client)
+
+    response = client.patch(
+        "/api/v1/auth/me",
+        headers={"Authorization": f"Bearer {token}"},
+        json={
+            "full_name": "Nguyễn Văn B",
+            "phone": None,
+            "avatar_url": "https://example.com/avatar.webp",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["full_name"] == "Nguyễn Văn B"
+    assert response.json()["phone"] is None
+    assert response.json()["avatar_url"] == "https://example.com/avatar.webp"
+    assert response.json()["role"] == "user"
+
+    with testing_session() as session:
+        stored_user = session.get(User, registered["id"])
+        assert stored_user is not None
+        assert stored_user.full_name == "Nguyễn Văn B"
+        assert stored_user.phone is None
+
+
+def test_update_me_rejects_protected_fields(auth_context) -> None:
+    client, _ = auth_context
+    register_user(client)
+    token = login_user(client)
+
+    response = client.patch(
+        "/api/v1/auth/me",
+        headers={"Authorization": f"Bearer {token}"},
+        json={"role_id": 1, "is_active": False},
+    )
+
+    assert response.status_code == 422
+    assert response.json()["code"] == "VALIDATION_ERROR"
+
+
+def test_update_me_requires_authentication(auth_context) -> None:
+    client, _ = auth_context
+
+    response = client.patch(
+        "/api/v1/auth/me",
+        json={"full_name": "Nguyễn Văn B"},
+    )
+
+    assert response.status_code == 401
+    assert response.json()["code"] == "INVALID_TOKEN"
+
+
 def test_inactive_account_is_rejected(auth_context) -> None:
     client, testing_session = auth_context
     user = register_user(client)

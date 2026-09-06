@@ -1,6 +1,15 @@
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, SecretStr, field_validator
+from pydantic import (
+    AnyHttpUrl,
+    BaseModel,
+    ConfigDict,
+    EmailStr,
+    Field,
+    SecretStr,
+    field_validator,
+    model_validator,
+)
 
 
 class RegisterRequest(BaseModel):
@@ -32,6 +41,38 @@ class LoginRequest(BaseModel):
     @classmethod
     def normalize_email(cls, value: EmailStr) -> str:
         return str(value).strip().lower()
+
+
+class UpdateMeRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    full_name: str | None = Field(default=None, min_length=2, max_length=150)
+    phone: str | None = Field(default=None, min_length=8, max_length=20)
+    avatar_url: AnyHttpUrl | None = Field(default=None, max_length=500)
+
+    @field_validator("full_name", "phone", mode="before")
+    @classmethod
+    def normalize_text(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        normalized = value.strip()
+        return normalized or None
+
+    @field_validator("avatar_url", mode="before")
+    @classmethod
+    def normalize_avatar_url(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        normalized = value.strip()
+        return normalized or None
+
+    @model_validator(mode="after")
+    def validate_patch_fields(self) -> "UpdateMeRequest":
+        if not self.model_fields_set:
+            raise ValueError("Cần cung cấp ít nhất một trường để cập nhật.")
+        if "full_name" in self.model_fields_set and self.full_name is None:
+            raise ValueError("Họ tên không được để trống.")
+        return self
 
 
 class UserRead(BaseModel):

@@ -46,6 +46,7 @@ Các API đầu tiên:
 - `POST /api/v1/auth/register`: đăng ký tài khoản với role `user`.
 - `POST /api/v1/auth/login`: đăng nhập bằng JSON và nhận JWT access token.
 - `GET /api/v1/auth/me`: xem tài khoản hiện tại bằng Bearer token.
+- `PATCH /api/v1/auth/me`: cập nhật họ tên, số điện thoại hoặc ảnh đại diện.
 
 JWT access token mặc định có hiệu lực 60 phút. Tạo `JWT_SECRET_KEY` riêng cho
 mỗi môi trường, dài tối thiểu 32 ký tự; không commit khóa thật lên Git.
