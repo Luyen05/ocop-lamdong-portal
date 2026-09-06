@@ -70,7 +70,8 @@
   max-width: 47rem;
   margin: 1rem 0 1.25rem;
   color: #18351f;
-  font-family: Georgia, serif;
+  font-family: "Segoe UI", Arial, sans-serif;
+  font-weight: 800;
   font-size: clamp(2.6rem, 7vw, 5.2rem);
   line-height: 1.02;
 }
@@ -96,7 +97,7 @@
 .hero-panel strong {
   max-width: 25rem;
   margin: 1rem 0;
-  font-family: Georgia, serif;
+  font-family: "Segoe UI", Arial, sans-serif;
   font-size: clamp(1.8rem, 4vw, 2.6rem);
   line-height: 1.15;
 }
