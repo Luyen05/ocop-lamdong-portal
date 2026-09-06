@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 
+import HomeCategories from '@/components/home/HomeCategories.vue'
 import HomeHero from '@/components/home/HomeHero.vue'
 import ProductCard from '@/components/products/ProductCard.vue'
 import { getProducts } from '@/services/products'
@@ -26,6 +27,7 @@ onMounted(async () => {
   <main>
     <div class="site-content home-hero-wrap">
       <HomeHero />
+      <HomeCategories />
     </div>
 
     <section id="san-pham" class="container py-5 py-lg-6">
