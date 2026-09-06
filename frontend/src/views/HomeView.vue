@@ -23,7 +23,6 @@ import TourismSection from '@/components/home/TourismSection.vue'
 <style scoped>
 .home-page {
   min-height: 100vh;
-  padding-bottom: 48px;
   background: var(--ocop-surface);
 }
 
