@@ -85,7 +85,7 @@ defineProps<{
   border-radius: 50%;
   background: #2f6f3e;
   color: #fff;
-  font-family: Georgia, serif;
+  font-family: "Segoe UI", Arial, sans-serif;
   font-size: 1.55rem;
 }
 
@@ -114,7 +114,8 @@ defineProps<{
 .auth-intro h1 {
   max-width: 29rem;
   margin: 1.25rem 0;
-  font-family: Georgia, serif;
+  font-family: "Segoe UI", Arial, sans-serif;
+  font-weight: 750;
   font-size: clamp(2.2rem, 4vw, 3.5rem);
   line-height: 1.05;
 }
