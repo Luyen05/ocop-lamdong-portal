@@ -10,9 +10,13 @@ const router = createRouter({
       name: 'home',
       component: HomeView,
     },
+    {
+      path: '/dang-nhap',
+      name: 'login',
+      component: () => import('@/views/LoginView.vue'),
+    },
   ],
   scrollBehavior: () => ({ top: 0 }),
 })
 
 export default router
-
