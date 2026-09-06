@@ -14,6 +14,7 @@ const password = ref('')
 const isSubmitting = ref(false)
 const errorMessage = ref('')
 const wasRegistered = route.query.registered === '1'
+const sessionExpired = route.query.expired === '1'
 
 async function submit(): Promise<void> {
   if (isSubmitting.value) return
@@ -41,6 +42,9 @@ async function submit(): Promise<void> {
     <form class="d-grid gap-3" @submit.prevent="submit">
       <div v-if="wasRegistered" class="alert alert-success py-2" role="status">
         Tạo tài khoản thành công. Bạn có thể đăng nhập ngay.
+      </div>
+      <div v-if="sessionExpired" class="alert alert-warning py-2" role="status">
+        Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.
       </div>
 
       <div v-if="errorMessage" class="alert alert-danger py-2" role="alert">

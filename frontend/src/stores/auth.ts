@@ -2,6 +2,7 @@ import { computed, readonly, ref } from 'vue'
 
 import * as authService from '@/services/auth'
 import {
+  AUTH_SESSION_EXPIRED_EVENT,
   getAccessToken,
   removeAccessToken,
   saveAccessToken,
@@ -66,6 +67,11 @@ function clearSession(): void {
   accessToken.value = null
   currentUser.value = null
 }
+
+window.addEventListener(AUTH_SESSION_EXPIRED_EVENT, () => {
+  accessToken.value = null
+  currentUser.value = null
+})
 
 export const authStore = {
   currentUser: readonly(currentUser),
