@@ -43,6 +43,12 @@ Các API đầu tiên:
 - `GET /api/v1/health/database`: kiểm tra kết nối PostgreSQL.
 - `GET /api/v1/categories`: danh sách danh mục, hỗ trợ `page`, `page_size`, `search`, `sort`.
 - `GET /api/v1/categories/{slug}`: chi tiết một danh mục.
+- `POST /api/v1/auth/register`: đăng ký tài khoản với role `user`.
+- `POST /api/v1/auth/login`: đăng nhập bằng JSON và nhận JWT access token.
+- `GET /api/v1/auth/me`: xem tài khoản hiện tại bằng Bearer token.
+
+JWT access token mặc định có hiệu lực 60 phút. Tạo `JWT_SECRET_KEY` riêng cho
+mỗi môi trường, dài tối thiểu 32 ký tự; không commit khóa thật lên Git.
 
 Xem log theo service:
 
