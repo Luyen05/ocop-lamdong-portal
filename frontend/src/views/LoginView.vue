@@ -9,10 +9,11 @@ import { authStore } from '@/stores/auth'
 const route = useRoute()
 const router = useRouter()
 
-const email = ref('')
+const email = ref(typeof route.query.email === 'string' ? route.query.email : '')
 const password = ref('')
 const isSubmitting = ref(false)
 const errorMessage = ref('')
+const wasRegistered = route.query.registered === '1'
 
 async function submit(): Promise<void> {
   if (isSubmitting.value) return
@@ -22,7 +23,8 @@ async function submit(): Promise<void> {
   try {
     await authStore.login({ email: email.value, password: password.value })
     const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/'
-    await router.push(redirect.startsWith('/') ? redirect : '/')
+    const safeRedirect = redirect.startsWith('/') && !redirect.startsWith('//') ? redirect : '/'
+    await router.push(safeRedirect)
   } catch (error) {
     errorMessage.value = getApiErrorMessage(
       error,
@@ -37,6 +39,10 @@ async function submit(): Promise<void> {
 <template>
   <AuthLayout title="Đăng nhập" subtitle="Chào mừng bạn quay lại với OCOP Lâm Đồng.">
     <form class="d-grid gap-3" @submit.prevent="submit">
+      <div v-if="wasRegistered" class="alert alert-success py-2" role="status">
+        Tạo tài khoản thành công. Bạn có thể đăng nhập ngay.
+      </div>
+
       <div v-if="errorMessage" class="alert alert-danger py-2" role="alert">
         {{ errorMessage }}
       </div>
@@ -78,7 +84,7 @@ async function submit(): Promise<void> {
 
       <p class="mb-0 mt-2 text-center text-secondary">
         Chưa có tài khoản?
-        <span class="fw-semibold text-success">Đăng ký sẽ được bổ sung ở bước kế tiếp</span>
+        <RouterLink class="fw-semibold text-success" to="/dang-ky">Đăng ký ngay</RouterLink>
       </p>
     </form>
   </AuthLayout>
