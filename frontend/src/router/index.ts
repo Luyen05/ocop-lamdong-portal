@@ -30,8 +30,14 @@ const router = createRouter({
       component: () => import('@/views/ProfileView.vue'),
       meta: { requiresAuth: true },
     },
+    {
+      path: '/san-pham',
+      name: 'products',
+      component: () => import('@/views/ProductsView.vue'),
+    },
   ],
-  scrollBehavior: () => ({ top: 0 }),
+  scrollBehavior: (to) =>
+    to.hash ? { el: to.hash, behavior: 'smooth' } : { top: 0 },
 })
 
 router.beforeEach(async (to) => {

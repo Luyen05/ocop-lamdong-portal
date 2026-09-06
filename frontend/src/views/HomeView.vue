@@ -10,7 +10,9 @@
             phẩm đặc trưng, điểm đến nông nghiệp và bản đồ số trực quan.
           </p>
           <div class="d-flex flex-wrap gap-2 mt-4">
-            <a class="btn btn-success btn-lg px-4" href="#san-pham">Khám phá ngay</a>
+            <RouterLink class="btn btn-success btn-lg px-4" to="/san-pham">
+              Khám phá ngay
+            </RouterLink>
             <RouterLink class="btn btn-outline-success btn-lg px-4" to="/dang-ky">
               Tạo tài khoản
             </RouterLink>

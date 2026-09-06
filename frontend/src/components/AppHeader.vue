@@ -26,8 +26,8 @@ async function logout(): Promise<void> {
 
       <nav class="main-nav" aria-label="Điều hướng chính">
         <RouterLink to="/">Trang chủ</RouterLink>
-        <a href="#san-pham">Sản phẩm</a>
-        <a href="#dia-diem">Điểm đến</a>
+        <RouterLink to="/san-pham">Sản phẩm</RouterLink>
+        <RouterLink to="/#dia-diem">Điểm đến</RouterLink>
       </nav>
 
       <div v-if="isAuthenticated" class="account-actions">
