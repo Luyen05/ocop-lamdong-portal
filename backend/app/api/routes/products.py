@@ -93,7 +93,7 @@ def list_products(
     if star is not None:
         filters.append(Product.star == star)
     if district:
-        filters.append(Subject.district == district.strip())
+        filters.append(func.lower(Subject.district) == func.lower(district.strip()))
     if min_price is not None:
         filters.append(Product.price >= min_price)
     if max_price is not None:
