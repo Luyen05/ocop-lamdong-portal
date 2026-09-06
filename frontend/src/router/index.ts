@@ -35,6 +35,11 @@ const router = createRouter({
       name: 'products',
       component: () => import('@/views/ProductsView.vue'),
     },
+    {
+      path: '/san-pham/:slug',
+      name: 'product-detail',
+      component: () => import('@/views/ProductDetailView.vue'),
+    },
   ],
   scrollBehavior: (to) =>
     to.hash ? { el: to.hash, behavior: 'smooth' } : { top: 0 },
