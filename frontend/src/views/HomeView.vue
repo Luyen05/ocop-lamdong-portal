@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 
+import HomeHero from '@/components/home/HomeHero.vue'
 import ProductCard from '@/components/products/ProductCard.vue'
 import { getProducts } from '@/services/products'
 import type { ProductListItem } from '@/types/product'
@@ -23,32 +24,9 @@ onMounted(async () => {
 
 <template>
   <main>
-    <section class="hero-section">
-      <div class="container hero-grid">
-        <div>
-          <span class="hero-eyebrow">Tinh hoa bản địa · Giá trị bền vững</span>
-          <h1>Khám phá sản phẩm OCOP Lâm Đồng</h1>
-          <p>
-            Cổng thông tin kết nối người dân, du khách và các chủ thể OCOP qua sản
-            phẩm đặc trưng, điểm đến nông nghiệp và bản đồ số trực quan.
-          </p>
-          <div class="d-flex flex-wrap gap-2 mt-4">
-            <RouterLink class="btn btn-success btn-lg px-4" to="/san-pham">
-              Khám phá ngay
-            </RouterLink>
-            <RouterLink class="btn btn-outline-success btn-lg px-4" to="/dang-ky">
-              Tạo tài khoản
-            </RouterLink>
-          </div>
-        </div>
-
-        <div class="hero-panel" aria-label="Thông tin nổi bật">
-          <span class="panel-badge">OCOP Lâm Đồng</span>
-          <strong>Nông sản chất lượng từ miền đất cao nguyên</strong>
-          <p>Dữ liệu sẽ được kết nối từ API sản phẩm trong module tiếp theo.</p>
-        </div>
-      </div>
-    </section>
+    <div class="site-content home-hero-wrap">
+      <HomeHero />
+    </div>
 
     <section id="san-pham" class="container py-5 py-lg-6">
       <div class="section-heading">
@@ -100,6 +78,10 @@ onMounted(async () => {
 </template>
 
 <style scoped>
+.home-hero-wrap {
+  padding-top: 24px;
+}
+
 .hero-section {
   padding: clamp(4.5rem, 10vw, 8rem) 0;
   background:
