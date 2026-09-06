@@ -69,6 +69,15 @@ Khi volume PostgreSQL còn trống, Docker tự chạy `database/schema.sql` r�
 lại với volume đã có dữ liệu. Không xóa volume chỉ để nạp lại schema nếu chưa
 sao lưu dữ liệu cần giữ.
 
+Để nạp bổ sung dữ liệu mẫu vào volume đang có mà không xóa dữ liệu, chạy:
+
+```powershell
+docker compose exec postgres sh -lc 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -f /docker-entrypoint-initdb.d/002-seed-dev.sql'
+```
+
+Seed có tính lặp lại an toàn: chạy nhiều lần không tạo trùng danh mục, chủ thể
+hoặc sản phẩm. Tài khoản gắn với dữ liệu mẫu bị khóa và không dùng để đăng nhập.
+
 ## Kiểm thử trong Docker
 
 Backend:
