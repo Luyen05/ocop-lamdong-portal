@@ -16,7 +16,13 @@ from app.core.security import (
 )
 from app.models.role import Role
 from app.models.user import User
-from app.schemas.auth import LoginRequest, RegisterRequest, TokenResponse, UserRead
+from app.schemas.auth import (
+    LoginRequest,
+    RegisterRequest,
+    TokenResponse,
+    UpdateMeRequest,
+    UserRead,
+)
 from app.schemas.error import ErrorResponse
 
 
@@ -157,4 +163,34 @@ def login(
     },
 )
 def get_me(current_user: CurrentUser) -> UserRead:
+    return to_user_read(current_user)
+
+
+@router.patch(
+    "/me",
+    response_model=UserRead,
+    responses={
+        status.HTTP_401_UNAUTHORIZED: {"model": ErrorResponse},
+        status.HTTP_403_FORBIDDEN: {"model": ErrorResponse},
+        status.HTTP_422_UNPROCESSABLE_ENTITY: {"model": ErrorResponse},
+    },
+)
+def update_me(
+    payload: UpdateMeRequest,
+    current_user: CurrentUser,
+    db: Annotated[Session, Depends(get_db)],
+) -> UserRead:
+    fields = payload.model_fields_set
+    if "full_name" in fields:
+        current_user.full_name = payload.full_name
+    if "phone" in fields:
+        current_user.phone = payload.phone
+    if "avatar_url" in fields:
+        current_user.avatar_url = (
+            str(payload.avatar_url) if payload.avatar_url is not None else None
+        )
+
+    db.add(current_user)
+    db.commit()
+    db.refresh(current_user)
     return to_user_read(current_user)
