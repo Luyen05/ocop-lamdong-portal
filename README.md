@@ -37,6 +37,13 @@ Các địa chỉ phát triển:
 - Swagger: `http://localhost:8000/docs`.
 - pgAdmin: `http://localhost:5050`.
 
+Các API đầu tiên:
+
+- `GET /health`: kiểm tra tiến trình backend.
+- `GET /api/v1/health/database`: kiểm tra kết nối PostgreSQL.
+- `GET /api/v1/categories`: danh sách danh mục, hỗ trợ `page`, `page_size`, `search`, `sort`.
+- `GET /api/v1/categories/{slug}`: chi tiết một danh mục.
+
 Xem log theo service:
 
 ```powershell
