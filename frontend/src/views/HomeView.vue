@@ -2,6 +2,7 @@
 import FeaturedProducts from '@/components/home/FeaturedProducts.vue'
 import HomeCategories from '@/components/home/HomeCategories.vue'
 import HomeHero from '@/components/home/HomeHero.vue'
+import TourismSection from '@/components/home/TourismSection.vue'
 </script>
 
 <template>
@@ -10,11 +11,7 @@ import HomeHero from '@/components/home/HomeHero.vue'
       <HomeHero />
       <HomeCategories />
       <FeaturedProducts />
-
-      <section id="diem-du-lich" class="coming-section">
-        <span>Điểm đến canh nông</span>
-        <h2>Trải nghiệm du lịch nông nghiệp Lâm Đồng</h2>
-      </section>
+      <TourismSection />
 
       <section id="ban-do" class="coming-section map-coming">
         <span>Bản đồ số GIS</span>
