@@ -12,6 +12,8 @@ from app.models.subject import Subject
 from app.schemas.error import ErrorResponse
 from app.schemas.product import (
     ProductCategoryRead,
+    ProductDetail,
+    ProductImageRead,
     ProductListItem,
     ProductListResponse,
     ProductSubjectRead,
@@ -130,4 +132,57 @@ def list_products(
         page=page,
         page_size=page_size,
         total=total,
+    )
+
+
+@router.get(
+    "/{slug}",
+    response_model=ProductDetail,
+    responses={status.HTTP_404_NOT_FOUND: {"model": ErrorResponse}},
+)
+def get_product(slug: str, db: Session = Depends(get_db)) -> ProductDetail:
+    product = db.scalar(
+        select(Product)
+        .join(Product.subject)
+        .where(
+            Product.slug == slug,
+            Product.status == "approved",
+            Subject.status == "approved",
+        )
+        .options(
+            joinedload(Product.category),
+            joinedload(Product.subject),
+            selectinload(Product.images),
+        )
+    )
+    if product is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={
+                "code": "PRODUCT_NOT_FOUND",
+                "message": "Không tìm thấy sản phẩm.",
+                "details": {"slug": slug},
+            },
+        )
+
+    summary = to_product_list_item(product)
+    return ProductDetail(
+        **summary.model_dump(),
+        cert_code=product.cert_code,
+        cert_year=product.cert_year,
+        vietgap_code=product.vietgap_code,
+        story=product.story,
+        ingredients=product.ingredients,
+        usage_instructions=product.usage_instructions,
+        views=product.views,
+        images=[
+            ProductImageRead(
+                id=image.id,
+                image_url=image.image_url,
+                is_primary=image.is_primary,
+                sort_order=image.sort_order,
+            )
+            for image in product.images
+        ],
+        updated_at=product.updated_at,
     )

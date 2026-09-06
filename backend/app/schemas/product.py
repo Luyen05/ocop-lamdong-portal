@@ -35,3 +35,22 @@ class ProductListResponse(BaseModel):
     page: int
     page_size: int
     total: int
+
+
+class ProductImageRead(BaseModel):
+    id: int
+    image_url: str
+    is_primary: bool
+    sort_order: int
+
+
+class ProductDetail(ProductListItem):
+    cert_code: str | None
+    cert_year: int | None
+    vietgap_code: str | None
+    story: str | None
+    ingredients: str | None
+    usage_instructions: str | None
+    views: int
+    images: list[ProductImageRead]
+    updated_at: datetime
