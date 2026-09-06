@@ -84,7 +84,12 @@ def product_client() -> Generator[TestClient, None, None]:
                 star=5,
                 price=Decimal("180000"),
                 unit="hộp 500g",
+                cert_code="OCOP-LD-001",
+                cert_year=2025,
                 description="Cà phê rang xay nguyên chất từ Cầu Đất.",
+                story="Hạt cà phê được trồng ở độ cao trên 1.500 mét.",
+                ingredients="100% cà phê Arabica.",
+                usage_instructions="Pha phin hoặc pha máy.",
                 rating_avg=Decimal("4.80"),
                 status="approved",
             ),
@@ -128,14 +133,23 @@ def product_client() -> Generator[TestClient, None, None]:
         ]
         session.add_all([*users, *categories, *subjects, *products])
         session.flush()
-        session.add(
-            ProductImage(
-                id=1,
-                product_id=1,
-                image_url="https://example.com/coffee.webp",
-                is_primary=True,
-                sort_order=0,
-            )
+        session.add_all(
+            [
+                ProductImage(
+                    id=1,
+                    product_id=1,
+                    image_url="https://example.com/coffee.webp",
+                    is_primary=True,
+                    sort_order=0,
+                ),
+                ProductImage(
+                    id=2,
+                    product_id=1,
+                    image_url="https://example.com/coffee-detail.webp",
+                    is_primary=False,
+                    sort_order=1,
+                ),
+            ]
         )
         session.commit()
 
@@ -190,3 +204,37 @@ def test_list_products_rejects_invalid_price_range(product_client: TestClient) -
 
     assert response.status_code == 422
     assert response.json()["code"] == "INVALID_PRICE_RANGE"
+
+
+def test_get_product_returns_public_detail(product_client: TestClient) -> None:
+    response = product_client.get("/api/v1/products/ca-phe-arabica-cau-dat")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["name"] == "Cà phê Arabica Cầu Đất"
+    assert body["cert_code"] == "OCOP-LD-001"
+    assert body["cert_year"] == 2025
+    assert body["category"]["slug"] == "do-uong"
+    assert body["subject"]["name"] == "Hợp tác xã Cầu Đất"
+    assert [image["image_url"] for image in body["images"]] == [
+        "https://example.com/coffee.webp",
+        "https://example.com/coffee-detail.webp",
+    ]
+
+
+@pytest.mark.parametrize(
+    "slug",
+    [
+        "san-pham-chua-duyet",
+        "san-pham-chu-the-cho-duyet",
+        "khong-ton-tai",
+    ],
+)
+def test_get_product_hides_unapproved_content(
+    product_client: TestClient,
+    slug: str,
+) -> None:
+    response = product_client.get(f"/api/v1/products/{slug}")
+
+    assert response.status_code == 404
+    assert response.json()["code"] == "PRODUCT_NOT_FOUND"
