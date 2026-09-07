@@ -10,6 +10,7 @@ from app.core.database import Base
 
 if TYPE_CHECKING:
     from app.models.product import Product
+    from app.models.user import User
 
 
 class Subject(Base):
@@ -34,6 +35,7 @@ class Subject(Base):
     address: Mapped[str] = mapped_column(Text, nullable=False)
     district: Mapped[str] = mapped_column(String(100), nullable=False)
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="pending")
+    moderation_note: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
@@ -46,4 +48,5 @@ class Subject(Base):
         onupdate=func.now(),
     )
 
+    user: Mapped[User] = relationship(back_populates="subject")
     products: Mapped[list[Product]] = relationship(back_populates="subject")

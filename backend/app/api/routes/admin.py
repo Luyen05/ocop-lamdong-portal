@@ -4,6 +4,7 @@ from app.api.dependencies import CurrentUser, require_roles
 from app.core.roles import RoleName
 from app.schemas.access import AdminAccessResponse
 from app.schemas.error import ErrorResponse
+from app.api.routes import admin_subject_applications
 
 
 router = APIRouter(
@@ -25,3 +26,8 @@ def check_admin_access(current_user: CurrentUser) -> AdminAccessResponse:
     """Xác nhận JWT hiện tại thuộc một tài khoản admin đang hoạt động."""
     return AdminAccessResponse(role=RoleName(current_user.role.name))
 
+
+router.include_router(
+    admin_subject_applications.router,
+    prefix="/subject-applications",
+)
