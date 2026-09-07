@@ -1,9 +1,9 @@
 <script setup lang="ts">
 const stats = [
-  { icon: '♕', value: '185+', label: 'Sản phẩm OCOP 3 - 5 sao', tone: 'green' },
-  { icon: '⌖', value: '68+', label: 'Điểm du lịch nông nghiệp', tone: 'gold' },
-  { icon: '♢', value: '120+', label: 'Chủ thể & HTX đăng ký', tone: 'blue' },
-  { icon: '◎', value: '12', label: 'Huyện & Thành phố tích hợp', tone: 'purple' },
+  { icon: '♕', value: '3–5★', label: 'Sản phẩm OCOP được kiểm duyệt', tone: 'green' },
+  { icon: '⌖', value: 'GIS', label: 'Bản đồ điểm đến nông nghiệp', tone: 'gold' },
+  { icon: '♢', value: 'HTX', label: 'Không gian dành cho chủ thể', tone: 'blue' },
+  { icon: '◎', value: '12', label: 'Huyện & thành phố Lâm Đồng', tone: 'purple' },
 ]
 </script>
 
@@ -52,16 +52,16 @@ const stats = [
           <p>• Làng nghề &amp; Thủ công mỹ nghệ</p>
         </section>
 
-        <aside class="capstone-card">
-          <strong>♙ ĐỒ ÁN TỐT NGHIỆP ĐẠI HỌC</strong>
-          <p>Thiết kế giao diện UI/UX &amp; Frontend Architecture chuẩn Material Design 3 tích hợp bản đồ số GIS.</p>
-          <span>Mô Tả Liệu Đồ Án (12 Mục)</span>
+        <aside class="info-card">
+          <strong>✓ THÔNG TIN MINH BẠCH</strong>
+          <p>Nội dung sản phẩm, chủ thể và điểm đến chỉ được công khai sau khi hoàn thành quy trình kiểm duyệt.</p>
+          <span>Dữ liệu cập nhật theo phê duyệt</span>
         </aside>
       </div>
 
       <div class="footer-bottom">
         <span>© 2026 Cổng Thông Tin Quảng Bá OCOP &amp; Bản Đồ Số Du Lịch Nông Nghiệp Lâm Đồng.</span>
-        <span>Đồ án tốt nghiệp CNTT ♥ Vue 3 / FastAPI - PostGIS</span>
+        <span>Phát triển với Vue 3 / FastAPI / PostGIS</span>
       </div>
     </div>
   </footer>
@@ -191,7 +191,7 @@ const stats = [
   gap: 2px;
 }
 
-.capstone-card {
+.info-card {
   align-self: start;
   padding: 16px;
   border: 1px solid rgb(148 163 184 / 14%);
@@ -199,16 +199,16 @@ const stats = [
   background: #1b2940;
 }
 
-.capstone-card strong {
-  color: #fbbf24;
+.info-card strong {
+  color: #6ee7b7;
   font-size: 10px;
 }
 
-.capstone-card p {
+.info-card p {
   margin: 10px 0;
 }
 
-.capstone-card span {
+.info-card span {
   display: block;
   padding: 7px 10px;
   border-radius: 6px;

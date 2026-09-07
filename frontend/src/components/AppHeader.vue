@@ -70,7 +70,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
         <div class="announcement-actions">
           <span class="capstone-label">
             <img :src="asset('icon-capstone.svg')" alt="" />
-            Hồ Sơ Đồ Án Tốt Nghiệp (12 Mục)
+            Dữ liệu OCOP được kiểm duyệt
           </span>
           <span>Hotline: 0263.3822000</span>
         </div>
@@ -180,7 +180,6 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   margin: 0;
   color: #d0fae5;
   font-weight: 500;
-  text-transform: uppercase;
 }
 
 .online-dot {
@@ -216,7 +215,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 .header-inner {
   position: relative;
   display: flex;
-  min-height: 68px;
+  min-height: 72px;
   align-items: center;
   gap: 16px;
 }
@@ -336,7 +335,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 
 .main-nav a {
   display: flex;
-  min-width: 58px;
+  min-width: 64px;
   min-height: 40px;
   align-items: center;
   justify-content: center;
@@ -345,9 +344,9 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   border: 1px solid transparent;
   border-radius: var(--ocop-radius-sm);
   color: #45556c;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 650;
-  line-height: 13px;
+  line-height: 14px;
   text-align: center;
   text-decoration: none;
 }
@@ -458,7 +457,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   background: var(--ocop-primary-950);
 }
 
-@media (min-width: 1200px) {
+@media (min-width: 1320px) {
   .header-search {
     display: block;
   }
@@ -529,7 +528,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 
   .announcement-inner p {
     max-width: 100%;
-    font-size: 9px;
+    font-size: 10px;
   }
 
   .announcement-actions {
