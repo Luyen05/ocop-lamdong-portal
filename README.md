@@ -49,6 +49,10 @@ Các API đầu tiên:
 - `POST /api/v1/auth/login`: đăng nhập bằng JSON và nhận JWT access token.
 - `GET /api/v1/auth/me`: xem tài khoản hiện tại bằng Bearer token.
 - `PATCH /api/v1/auth/me`: cập nhật họ tên, số điện thoại hoặc ảnh đại diện.
+- `POST /api/v1/subject-applications`: người dùng gửi hồ sơ đăng ký chủ thể.
+- `GET/PUT /api/v1/subject-applications/me`: xem hoặc gửi lại hồ sơ của mình.
+- `GET /api/v1/admin/subject-applications`: admin tìm kiếm và lọc hồ sơ.
+- `PATCH /api/v1/admin/subject-applications/{id}/moderation`: admin duyệt hoặc từ chối.
 
 JWT access token mặc định có hiệu lực 60 phút. Tạo `JWT_SECRET_KEY` riêng cho
 mỗi môi trường, dài tối thiểu 32 ký tự; không commit khóa thật lên Git.
@@ -79,6 +83,28 @@ docker compose exec postgres sh -lc 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" 
 
 Seed có tính lặp lại an toàn: chạy nhiều lần không tạo trùng danh mục, chủ thể
 hoặc sản phẩm. Tài khoản gắn với dữ liệu mẫu bị khóa và không dùng để đăng nhập.
+
+Sau khi cập nhật mã nguồn có migration mới, áp dụng lần lượt các file chưa chạy
+trong `database/migrations`. Ví dụ với migration hồ sơ chủ thể:
+
+```powershell
+Get-Content .\database\migrations\002_subject_moderation.sql -Raw | docker compose exec -T postgres sh -lc 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+```
+
+Có thể mở cùng file trong Query Tool của pgAdmin và chạy một lần. Không xóa
+volume PostgreSQL chỉ để áp dụng migration.
+
+## Kiểm tra luồng đăng ký chủ thể
+
+1. Đăng nhập bằng tài khoản `user`, mở `http://localhost:5173/dang-ky-chu-the`
+   và gửi hồ sơ.
+2. Đăng nhập bằng tài khoản `admin`, mở
+   `http://localhost:5173/quan-tri/ho-so-chu-the`.
+3. Duyệt hồ sơ để cấp role `subject`, hoặc từ chối kèm lý do để người dùng sửa
+   và gửi lại.
+
+Backend kiểm tra role trong database tại thời điểm gọi API. Việc sửa role trong
+JWT hoặc tự hiện nút quản trị trên frontend không làm tăng quyền tài khoản.
 
 ## Kiểm tra nhanh module sản phẩm
 
