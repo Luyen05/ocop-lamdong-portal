@@ -5,6 +5,10 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 const search = ref('')
 
+function asset(name: string): string {
+  return `/assets/figma/home/${name}`
+}
+
 async function submitSearch(): Promise<void> {
   const keyword = search.value.trim()
   await router.push({ name: 'products', query: keyword ? { search: keyword } : {} })
@@ -15,14 +19,14 @@ async function submitSearch(): Promise<void> {
   <section class="home-hero" aria-labelledby="home-hero-title">
     <img
       class="hero-image"
-      src="/assets/figma/home/hero-agriculture.png"
+      :src="asset('hero-agriculture.png')"
       alt="Nông nghiệp cao nguyên Lâm Đồng"
     />
     <div class="hero-overlay" />
 
     <div class="hero-content">
       <div class="hero-badge">
-        <img src="/assets/figma/home/icon-hero-badge.svg" alt="" />
+        <img :src="asset('icon-hero-badge.svg')" alt="" />
         Cổng thông tin quốc gia chương trình OCOP Lâm Đồng
       </div>
 
@@ -37,7 +41,7 @@ async function submitSearch(): Promise<void> {
       <form class="hero-search" role="search" @submit.prevent="submitSearch">
         <label class="search-field">
           <span class="visually-hidden">Tên sản phẩm cần tìm</span>
-          <img src="/assets/figma/home/icon-search.svg" alt="" />
+          <img :src="asset('icon-search.svg')" alt="" />
           <input
             v-model="search"
             type="search"
@@ -45,18 +49,18 @@ async function submitSearch(): Promise<void> {
           />
         </label>
         <button type="submit">
-          <img src="/assets/figma/home/icon-search-white.svg" alt="" />
+          <img :src="asset('icon-search-white.svg')" alt="" />
           Tra Cứu Ngay
         </button>
       </form>
 
       <div class="hero-actions">
         <a class="map-action" href="#ban-do">
-          <img src="/assets/figma/home/icon-compass.svg" alt="" />
+          <img :src="asset('icon-compass.svg')" alt="" />
           Khám Phá Bản Đồ Số GIS
         </a>
         <a class="tourism-action" href="#diem-du-lich">
-          <img src="/assets/figma/home/icon-pin.svg" alt="" />
+          <img :src="asset('icon-pin.svg')" alt="" />
           Điểm Du Lịch Canh Nông
         </a>
       </div>
