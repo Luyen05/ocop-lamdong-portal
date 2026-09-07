@@ -46,5 +46,6 @@ class User(Base):
     role: Mapped[Role] = relationship(back_populates="users")
     subject: Mapped[Subject | None] = relationship(
         back_populates="user",
+        foreign_keys="Subject.user_id",
         uselist=False,
     )

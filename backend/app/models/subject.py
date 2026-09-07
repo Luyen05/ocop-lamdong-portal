@@ -35,7 +35,12 @@ class Subject(Base):
     address: Mapped[str] = mapped_column(Text, nullable=False)
     district: Mapped[str] = mapped_column(String(100), nullable=False)
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="pending")
-    moderation_note: Mapped[str | None] = mapped_column(Text)
+    reviewed_by: Mapped[int | None] = mapped_column(
+        BigInteger().with_variant(Integer, "sqlite"),
+        ForeignKey("users.id", ondelete="RESTRICT"),
+    )
+    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    rejection_reason: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
@@ -48,5 +53,8 @@ class Subject(Base):
         onupdate=func.now(),
     )
 
-    user: Mapped[User] = relationship(back_populates="subject")
+    user: Mapped[User] = relationship(
+        back_populates="subject",
+        foreign_keys=[user_id],
+    )
     products: Mapped[list[Product]] = relationship(back_populates="subject")

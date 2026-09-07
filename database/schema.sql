@@ -43,9 +43,22 @@ CREATE TABLE subjects (
   geom GEOMETRY(Point, 4326),
   status VARCHAR(20) NOT NULL DEFAULT 'pending'
     CHECK (status IN ('pending', 'approved', 'rejected')),
-  moderation_note TEXT,
+  reviewed_by BIGINT REFERENCES users(id) ON DELETE RESTRICT,
+  reviewed_at TIMESTAMPTZ,
+  rejection_reason TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT ck_subjects_review_state CHECK (
+    (status = 'pending' AND reviewed_by IS NULL AND reviewed_at IS NULL AND rejection_reason IS NULL)
+    OR (status = 'approved' AND reviewed_by IS NOT NULL AND reviewed_at IS NOT NULL AND rejection_reason IS NULL)
+    OR (
+      status = 'rejected'
+      AND reviewed_by IS NOT NULL
+      AND reviewed_at IS NOT NULL
+      AND rejection_reason IS NOT NULL
+      AND BTRIM(rejection_reason) <> ''
+    )
+  )
 );
 
 CREATE TABLE categories (

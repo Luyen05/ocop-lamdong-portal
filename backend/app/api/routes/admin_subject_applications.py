@@ -1,9 +1,11 @@
+from datetime import datetime, timezone
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import case, func, or_, select
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session, joinedload, selectinload
 
+from app.api.dependencies import CurrentUser
 from app.core.database import get_db
 from app.core.roles import RoleName
 from app.models.role import Role
@@ -35,7 +37,7 @@ def to_admin_subject_application_read(subject: Subject) -> AdminSubjectApplicati
         address=subject.address,
         district=subject.district,
         status=subject.status,
-        moderation_note=subject.moderation_note,
+        moderation_note=subject.rejection_reason,
         created_at=subject.created_at,
         updated_at=subject.updated_at,
         applicant=ApplicantRead(
@@ -113,12 +115,12 @@ def list_subject_applications(
 def moderate_subject_application(
     application_id: int,
     payload: SubjectModerationRequest,
+    current_admin: CurrentUser,
     db: Session = Depends(get_db),
 ) -> AdminSubjectApplicationRead:
     subject = db.scalar(
         select(Subject)
         .where(Subject.id == application_id)
-        .options(joinedload(Subject.user).joinedload(User.role))
         .with_for_update()
     )
     if subject is None:
@@ -130,6 +132,22 @@ def moderate_subject_application(
                 "details": {"application_id": application_id},
             },
         )
+    applicant = db.scalar(
+        select(User)
+        .where(User.id == subject.user_id)
+        .options(selectinload(User.role))
+        .with_for_update()
+    )
+    if applicant is None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={
+                "code": "SUBJECT_APPLICANT_NOT_FOUND",
+                "message": "Tài khoản gửi hồ sơ không còn tồn tại.",
+                "details": None,
+            },
+        )
+    subject.user = applicant
     if subject.status != "pending":
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -167,7 +185,9 @@ def moderate_subject_application(
         )
 
     subject.status = payload.status
-    subject.moderation_note = payload.note
+    subject.reviewed_by = current_admin.id
+    subject.reviewed_at = datetime.now(timezone.utc)
+    subject.rejection_reason = payload.note if payload.status == "rejected" else None
     subject.user.role = target_role
     db.add_all([subject, subject.user])
     db.commit()
