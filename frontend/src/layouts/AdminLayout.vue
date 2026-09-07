@@ -12,11 +12,15 @@ const userInitial = computed(() =>
   authStore.currentUser.value?.full_name.trim().charAt(0).toUpperCase() || 'A',
 )
 
+const pageTitle = computed(() =>
+  typeof route.meta.title === 'string' ? route.meta.title : 'Tổng quan quản trị',
+)
+
 const navigation = [
   { label: 'Tổng quan', symbol: '▦', to: '/quan-tri', available: true },
   { label: 'Sản phẩm', symbol: '◈', to: '', available: false },
   { label: 'Điểm du lịch', symbol: '⌖', to: '', available: false },
-  { label: 'Chủ thể / HTX', symbol: '♢', to: '', available: false },
+  { label: 'Chủ thể / HTX', symbol: '♢', to: '/quan-tri/ho-so-chu-the', available: true },
   { label: 'Người dùng', symbol: '♙', to: '', available: false },
   { label: 'Đánh giá', symbol: '★', to: '', available: false },
   { label: 'Bài viết', symbol: '▤', to: '', available: false },
@@ -95,7 +99,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
         </button>
         <div>
           <span class="topbar-label">Hệ thống quản lý OCOP</span>
-          <strong>Tổng quan quản trị</strong>
+          <strong>{{ pageTitle }}</strong>
         </div>
         <RouterLink class="admin-account" to="/tai-khoan">
           <span>{{ userInitial }}</span>

@@ -61,6 +61,13 @@ const router = createRouter({
           path: '',
           name: 'admin-dashboard',
           component: () => import('@/views/admin/AdminDashboardView.vue'),
+          meta: { title: 'Tổng quan quản trị' },
+        },
+        {
+          path: 'ho-so-chu-the',
+          name: 'admin-subject-applications',
+          component: () => import('@/views/admin/AdminSubjectApplicationsView.vue'),
+          meta: { title: 'Hồ sơ chủ thể' },
         },
       ],
     },
