@@ -185,6 +185,9 @@ def test_admin_can_approve_and_grant_subject_role(subject_context) -> None:
         assert stored_subject is not None
         assert stored_user.role.name == "subject"
         assert stored_subject.status == "approved"
+        assert stored_subject.reviewed_by is not None
+        assert stored_subject.reviewed_at is not None
+        assert stored_subject.rejection_reason is None
 
 
 def test_rejection_requires_note_and_user_can_resubmit(subject_context) -> None:

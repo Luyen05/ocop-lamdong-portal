@@ -23,5 +23,5 @@ Các cột `geom` sử dụng `GEOMETRY(Point,4326)`. Bảng `reviews` bắt bu�
 unique index.
 
 Hồ sơ `subjects` đồng thời là hồ sơ đăng ký chủ thể. Trường `status` biểu diễn
-quy trình `pending → approved/rejected`; `moderation_note` lưu phản hồi của quản trị
-viên khi xét duyệt.
+quy trình `pending → approved/rejected`; `reviewed_by`, `reviewed_at` và
+`rejection_reason` lưu vết kiểm duyệt của quản trị viên.

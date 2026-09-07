@@ -27,7 +27,7 @@ def to_subject_application_read(subject: Subject) -> SubjectApplicationRead:
         address=subject.address,
         district=subject.district,
         status=subject.status,
-        moderation_note=subject.moderation_note,
+        moderation_note=subject.rejection_reason,
         created_at=subject.created_at,
         updated_at=subject.updated_at,
     )
@@ -150,6 +150,8 @@ def resubmit_subject_application(
     for field, value in payload.model_dump(mode="json").items():
         setattr(subject, field, value)
     subject.status = "pending"
-    subject.moderation_note = None
+    subject.reviewed_by = None
+    subject.reviewed_at = None
+    subject.rejection_reason = None
     save_application(db, subject)
     return to_subject_application_read(subject)
