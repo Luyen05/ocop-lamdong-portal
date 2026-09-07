@@ -10,6 +10,7 @@ from app.core.database import Base
 
 if TYPE_CHECKING:
     from app.models.role import Role
+    from app.models.subject import Subject
 
 
 class User(Base):
@@ -43,3 +44,7 @@ class User(Base):
     )
 
     role: Mapped[Role] = relationship(back_populates="users")
+    subject: Mapped[Subject | None] = relationship(
+        back_populates="user",
+        uselist=False,
+    )
