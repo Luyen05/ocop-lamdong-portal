@@ -40,6 +40,15 @@ describe('resolveRouteAccess', () => {
     ).toBe('allow')
   })
 
+  it('chan subject khoi khu vuc quan tri', () => {
+    expect(
+      resolveRouteAccess(
+        { requiresAuth: true, roles: ['admin'] },
+        createUser('subject'),
+      ),
+    ).toBe('forbidden')
+  })
+
   it('dua tai khoan da dang nhap ra khoi trang chi danh cho khach', () => {
     expect(resolveRouteAccess({ guestOnly: true }, createUser('subject'))).toBe('home')
   })
