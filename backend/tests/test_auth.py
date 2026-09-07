@@ -324,3 +324,58 @@ def test_admin_access_uses_current_database_role(auth_context) -> None:
 
     assert response.status_code == 200
     assert response.json() == {"authenticated": True, "role": "admin"}
+
+
+def test_admin_access_ignores_forged_role_claim(auth_context) -> None:
+    client, _ = auth_context
+    registered = register_user(client)
+    forged_token = create_access_token(
+        user_id=registered["id"],
+        role="admin",
+    )
+
+    response = client.get(
+        "/api/v1/admin/access",
+        headers={"Authorization": f"Bearer {forged_token}"},
+    )
+
+    assert response.status_code == 403
+    assert response.json()["code"] == "INSUFFICIENT_PERMISSIONS"
+
+
+def test_admin_or_subject_guard_uses_role_matrix() -> None:
+    admin = User(
+        id=1,
+        role_id=1,
+        role=Role(id=1, name="admin"),
+        email="admin@example.com",
+        hashed_password=hash_password("admin-password"),
+        full_name="Admin",
+        is_active=True,
+    )
+    subject = User(
+        id=2,
+        role_id=2,
+        role=Role(id=2, name="subject"),
+        email="subject@example.com",
+        hashed_password=hash_password("subject-password"),
+        full_name="Subject",
+        is_active=True,
+    )
+    user = User(
+        id=3,
+        role_id=3,
+        role=Role(id=3, name="user"),
+        email="user@example.com",
+        hashed_password=hash_password("user-password"),
+        full_name="User",
+        is_active=True,
+    )
+    content_manager = require_roles("admin", "subject")
+
+    assert content_manager(current_user=admin) is admin
+    assert content_manager(current_user=subject) is subject
+    with pytest.raises(HTTPException) as exc_info:
+        content_manager(current_user=user)
+
+    assert exc_info.value.status_code == 403
