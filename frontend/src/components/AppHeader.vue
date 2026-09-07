@@ -32,6 +32,13 @@ const publicNavigation = [
 
 const navigation = computed(() => [
   ...publicNavigation,
+  ...(currentUser.value?.role === 'user' || currentUser.value?.role === 'subject'
+    ? [{
+        label: currentUser.value.role === 'subject' ? 'Hồ sơ chủ thể' : 'Đăng ký chủ thể',
+        to: '/dang-ky-chu-the',
+        icon: 'icon-admin.svg',
+      }]
+    : []),
   ...(currentUser.value?.role === 'admin'
     ? [{ label: 'Quản trị', to: '/quan-tri', icon: 'icon-admin.svg' }]
     : []),
