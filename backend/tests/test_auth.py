@@ -279,3 +279,48 @@ def test_role_guard_allows_admin_and_denies_user() -> None:
 
     assert exc_info.value.status_code == 403
     assert exc_info.value.detail["code"] == "INSUFFICIENT_PERMISSIONS"
+
+
+def test_admin_access_requires_authentication(auth_context) -> None:
+    client, _ = auth_context
+
+    response = client.get("/api/v1/admin/access")
+
+    assert response.status_code == 401
+    assert response.json()["code"] == "INVALID_TOKEN"
+
+
+def test_admin_access_denies_regular_user(auth_context) -> None:
+    client, _ = auth_context
+    register_user(client)
+    token = login_user(client)
+
+    response = client.get(
+        "/api/v1/admin/access",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 403
+    assert response.json()["code"] == "INSUFFICIENT_PERMISSIONS"
+
+
+def test_admin_access_uses_current_database_role(auth_context) -> None:
+    client, testing_session = auth_context
+    registered = register_user(client)
+    token_issued_for_user_role = login_user(client)
+
+    with testing_session() as session:
+        stored_user = session.get(User, registered["id"])
+        admin_role = session.get(Role, 1)
+        assert stored_user is not None
+        assert admin_role is not None
+        stored_user.role = admin_role
+        session.commit()
+
+    response = client.get(
+        "/api/v1/admin/access",
+        headers={"Authorization": f"Bearer {token_issued_for_user_role}"},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {"authenticated": True, "role": "admin"}

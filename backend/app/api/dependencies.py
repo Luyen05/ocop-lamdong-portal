@@ -8,6 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload
 
 from app.core.database import get_db
+from app.core.roles import RoleName
 from app.core.security import decode_access_token
 from app.models.user import User
 
@@ -64,8 +65,8 @@ def get_current_user(
 CurrentUser = Annotated[User, Depends(get_current_user)]
 
 
-def require_roles(*allowed_roles: str) -> Callable:
-    allowed = set(allowed_roles)
+def require_roles(*allowed_roles: RoleName | str) -> Callable:
+    allowed = {str(role) for role in allowed_roles}
 
     def role_checker(current_user: CurrentUser) -> User:
         if current_user.role.name not in allowed:
@@ -80,3 +81,11 @@ def require_roles(*allowed_roles: str) -> Callable:
         return current_user
 
     return role_checker
+
+
+AdminUser = Annotated[User, Depends(require_roles(RoleName.ADMIN))]
+SubjectUser = Annotated[User, Depends(require_roles(RoleName.SUBJECT))]
+AdminOrSubjectUser = Annotated[
+    User,
+    Depends(require_roles(RoleName.ADMIN, RoleName.SUBJECT)),
+]
