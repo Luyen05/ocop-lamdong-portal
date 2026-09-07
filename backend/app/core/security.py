@@ -4,6 +4,7 @@ import jwt
 from pwdlib import PasswordHash
 
 from app.core.config import get_settings
+from app.core.roles import RoleName
 
 
 password_hash = PasswordHash.recommended()
@@ -24,7 +25,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 def create_access_token(
     *,
     user_id: int,
-    role: str,
+    role: RoleName | str,
     expires_delta: timedelta | None = None,
 ) -> str:
     settings = get_settings()
@@ -36,7 +37,7 @@ def create_access_token(
     )
     payload = {
         "sub": str(user_id),
-        "role": role,
+        "role": str(role),
         "type": "access",
         "iat": now,
         "exp": expires_at,

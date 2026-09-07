@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session, joinedload
 from app.api.dependencies import CurrentUser
 from app.core.config import get_settings
 from app.core.database import get_db
+from app.core.roles import RoleName
 from app.core.security import (
     DUMMY_PASSWORD_HASH,
     create_access_token,
@@ -70,7 +71,7 @@ def register(
             },
         )
 
-    user_role = db.scalar(select(Role).where(Role.name == "user"))
+    user_role = db.scalar(select(Role).where(Role.name == RoleName.USER))
     if user_role is None:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,

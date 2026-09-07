@@ -11,6 +11,8 @@ from pydantic import (
     model_validator,
 )
 
+from app.core.roles import RoleName
+
 
 class RegisterRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -84,7 +86,7 @@ class UserRead(BaseModel):
     phone: str | None
     avatar_url: str | None
     is_active: bool
-    role: str
+    role: RoleName
     created_at: datetime
     updated_at: datetime
 
