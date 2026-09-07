@@ -22,13 +22,20 @@ const roleLabel = computed(() => {
 
 const userInitial = computed(() => currentUser.value?.full_name.trim().charAt(0).toUpperCase() || 'U')
 
-const navigation = [
+const publicNavigation = [
   { label: 'Trang chủ', to: '/', icon: 'icon-home.svg' },
   { label: 'Sản phẩm OCOP', to: '/san-pham', icon: 'icon-products.svg' },
   { label: 'Điểm du lịch', to: '/#diem-du-lich', icon: 'icon-tourism.svg' },
   { label: 'Bản đồ số GIS', to: '/#ban-do', icon: 'icon-map.svg' },
   { label: 'Tin tức', to: '/#tin-tuc', icon: 'icon-news.svg' },
 ]
+
+const navigation = computed(() => [
+  ...publicNavigation,
+  ...(currentUser.value?.role === 'admin'
+    ? [{ label: 'Quản trị', to: '/quan-tri', icon: 'icon-admin.svg' }]
+    : []),
+])
 
 function asset(name: string): string {
   return `/assets/figma/home/${name}`

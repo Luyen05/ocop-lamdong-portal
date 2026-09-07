@@ -47,6 +47,18 @@ const router = createRouter({
       name: 'forbidden',
       component: () => import('@/views/ForbiddenView.vue'),
     },
+    {
+      path: '/quan-tri',
+      component: () => import('@/layouts/AdminLayout.vue'),
+      meta: { layout: 'admin', requiresAuth: true, roles: ['admin'] },
+      children: [
+        {
+          path: '',
+          name: 'admin-dashboard',
+          component: () => import('@/views/admin/AdminDashboardView.vue'),
+        },
+      ],
+    },
   ],
   scrollBehavior: (to) =>
     to.hash ? { el: to.hash, behavior: 'smooth' } : { top: 0 },
