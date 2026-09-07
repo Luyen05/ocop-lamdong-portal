@@ -3,6 +3,8 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { AUTH_SESSION_EXPIRED_EVENT } from '@/services/token'
 import { authStore } from '@/stores/auth'
 import HomeView from '@/views/HomeView.vue'
+import { resolveRouteAccess } from '@/router/access'
+import type { UserRole } from '@/types/auth'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -40,6 +42,11 @@ const router = createRouter({
       name: 'product-detail',
       component: () => import('@/views/ProductDetailView.vue'),
     },
+    {
+      path: '/khong-co-quyen',
+      name: 'forbidden',
+      component: () => import('@/views/ForbiddenView.vue'),
+    },
   ],
   scrollBehavior: (to) =>
     to.hash ? { el: to.hash, behavior: 'smooth' } : { top: 0 },
@@ -48,10 +55,22 @@ const router = createRouter({
 router.beforeEach(async (to) => {
   await authStore.initialize()
 
-  if (to.meta.requiresAuth && !authStore.isAuthenticated.value) {
+  const decision = resolveRouteAccess(
+    {
+      requiresAuth: Boolean(to.meta.requiresAuth),
+      guestOnly: Boolean(to.meta.guestOnly),
+      roles: to.meta.roles as readonly UserRole[] | undefined,
+    },
+    authStore.currentUser.value,
+  )
+
+  if (decision === 'login') {
     return { name: 'login', query: { redirect: to.fullPath } }
   }
-  if (to.meta.guestOnly && authStore.isAuthenticated.value) {
+  if (decision === 'forbidden') {
+    return { name: 'forbidden', query: { from: to.fullPath } }
+  }
+  if (decision === 'home') {
     return { name: 'home' }
   }
   return true
