@@ -7,7 +7,8 @@ import { newsFixtures } from '@/data/home-fixtures'
     <div class="section-heading">
       <div>
         <span class="eyebrow">Tin Tức &amp; Sự Kiện OCOP</span>
-        <h2 id="news-title">Cập nhật chính sách khuyến nông và hoạt động quảng bá du lịch</h2>
+        <h2 id="news-title">Cập nhật hoạt động OCOP Lâm Đồng</h2>
+        <p class="section-copy">Chính sách khuyến nông, chương trình xúc tiến và câu chuyện du lịch nông nghiệp.</p>
       </div>
       <span class="demo-label">Dữ liệu minh họa</span>
     </div>
@@ -57,10 +58,16 @@ h2 {
   max-width: 680px;
   margin: 4px 0 0;
   color: var(--ocop-navy);
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 800;
   letter-spacing: -0.5px;
   line-height: 28px;
+}
+
+.section-copy {
+  margin: 2px 0 0;
+  color: var(--ocop-slate);
+  font-size: 13px;
 }
 
 .demo-label {

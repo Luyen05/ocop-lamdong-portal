@@ -108,7 +108,7 @@ onMounted(loadCategories)
 .section-heading h2 {
   margin: 0;
   color: var(--ocop-navy);
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 800;
   letter-spacing: -0.5px;
   line-height: 28px;
@@ -117,7 +117,7 @@ onMounted(loadCategories)
 .section-heading p {
   margin: 0;
   color: var(--ocop-slate);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 500;
   line-height: 16px;
 }

@@ -196,7 +196,7 @@ const truncatedSubject = computed(() => {
   overflow: hidden;
   min-height: 39px;
   margin: 6px 0;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 750;
   line-height: 1.4;
   -webkit-box-orient: vertical;
@@ -218,8 +218,8 @@ const truncatedSubject = computed(() => {
   min-height: 48px;
   margin: 0;
   color: var(--ocop-slate);
-  font-size: 11px;
-  line-height: 16px;
+  font-size: 12px;
+  line-height: 17px;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
 }

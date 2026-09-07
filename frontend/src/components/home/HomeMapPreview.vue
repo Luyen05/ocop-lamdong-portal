@@ -79,7 +79,7 @@ const markerIcons = {
 h2 {
   margin: 4px 0 0;
   color: var(--ocop-navy);
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 800;
   letter-spacing: -0.5px;
   line-height: 28px;
@@ -88,7 +88,7 @@ h2 {
 .section-heading p {
   margin: 2px 0 0;
   color: var(--ocop-slate);
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .demo-label {

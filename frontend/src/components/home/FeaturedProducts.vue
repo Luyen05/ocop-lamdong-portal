@@ -90,7 +90,7 @@ onMounted(loadProducts)
 .section-heading h2 {
   margin: 0;
   color: var(--ocop-navy);
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 800;
   letter-spacing: -0.5px;
   line-height: 28px;

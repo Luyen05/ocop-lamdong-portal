@@ -27,15 +27,15 @@ async function submitSearch(): Promise<void> {
     <div class="hero-content">
       <div class="hero-badge">
         <img :src="asset('icon-hero-badge.svg')" alt="" />
-        Cổng thông tin quốc gia chương trình OCOP Lâm Đồng
+        Cổng thông tin quảng bá OCOP Lâm Đồng
       </div>
 
       <h1 id="home-hero-title">
-        Nông Sản OCOP Đạt Sao &amp; Bản Đồ Số Du Lịch Nông Nghiệp Tỉnh Lâm Đồng
+        Nông sản OCOP đạt sao &amp; Bản đồ số du lịch nông nghiệp tỉnh Lâm Đồng
       </h1>
       <p>
-        Tra cứu thông tin chính thức 185+ sản phẩm OCOP, nhà vườn công nghệ cao,
-        trải nghiệm hái dâu tây, đồi chè Cầu Đất và chỉ đường thông minh trên bản đồ số GIS.
+        Tra cứu sản phẩm OCOP đã được phê duyệt, khám phá nhà vườn công nghệ cao,
+        điểm du lịch canh nông và vị trí trên bản đồ số GIS của tỉnh Lâm Đồng.
       </p>
 
       <form class="hero-search" role="search" @submit.prevent="submitSearch">
@@ -71,7 +71,7 @@ async function submitSearch(): Promise<void> {
 <style scoped>
 .home-hero {
   position: relative;
-  min-height: 598px;
+  min-height: 550px;
   overflow: hidden;
   border-radius: var(--ocop-radius-xl);
   background: var(--ocop-navy);
@@ -101,9 +101,9 @@ async function submitSearch(): Promise<void> {
   z-index: 1;
   display: flex;
   width: min(100%, 1024px);
-  min-height: 598px;
+  min-height: 550px;
   margin-inline: auto;
-  padding: 96px 24px;
+  padding: 72px 24px;
   flex-direction: column;
   align-items: center;
   justify-content: center;
@@ -134,7 +134,7 @@ async function submitSearch(): Promise<void> {
 h1 {
   max-width: 896px;
   margin: 24px 0 0;
-  font-size: clamp(34px, 4vw, 48px);
+  font-size: clamp(34px, 3.7vw, 46px);
   font-weight: 800;
   letter-spacing: -1.2px;
   line-height: 1.25;
@@ -252,7 +252,7 @@ h1 {
 @media (max-width: 767.98px) {
   .home-hero,
   .hero-content {
-    min-height: 570px;
+    min-height: 530px;
   }
 
   .home-hero {
@@ -269,7 +269,7 @@ h1 {
 
   h1 {
     margin-top: 20px;
-    font-size: clamp(30px, 9vw, 40px);
+    font-size: clamp(28px, 8vw, 36px);
     letter-spacing: -0.8px;
   }
 
