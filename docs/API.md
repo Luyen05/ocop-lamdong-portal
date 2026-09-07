@@ -6,7 +6,7 @@ Base URL: `/api/v1`. Tất cả endpoint có biểu tượng khóa trong Swagger
 ## Quy ước
 
 - Danh sách trả `{items, page, page_size, total}`.
-- Lỗi trả `{error: {code, message, details}}`.
+- Lỗi trả `{code, message, details}`.
 - Tọa độ đầu vào là `longitude`, `latitude`; đầu ra dùng GeoJSON `[longitude, latitude]`.
 - Public chỉ đọc product/location/review `approved` và news `published`.
 
@@ -15,7 +15,9 @@ Base URL: `/api/v1`. Tất cả endpoint có biểu tượng khóa trong Swagger
 | Nhóm | Method và path | Quyền |
 |---|---|---|
 | Auth | `POST /auth/register`, `POST /auth/login` | Public |
-| Auth | `GET/PATCH /auth/me`, `POST /subject-applications` | Đã đăng nhập |
+| Auth | `GET/PATCH /auth/me` | Đã đăng nhập |
+| Subject application | `POST /subject-applications` | User |
+| Subject application | `GET/PUT /subject-applications/me` | User hoặc subject |
 | Public | `GET /categories`, `GET /products`, `GET /products/{slug}` | Public |
 | Public | `GET /locations`, `GET /locations/{slug}` | Public |
 | Public | `GET /news`, `GET /news/{slug}` | Public |
@@ -27,6 +29,8 @@ Base URL: `/api/v1`. Tất cả endpoint có biểu tượng khóa trong Swagger
 | Subject | POST/DELETE `/subject/locations/{id}/products...` | Subject, giới hạn sở hữu |
 | Images | Upload/sắp xếp/xóa ảnh product và location | Subject, giới hạn sở hữu |
 | Admin | `/admin/users`, `/admin/subjects`, `/admin/categories` | Admin |
+| Admin | `GET /admin/subject-applications` | Admin |
+| Admin | `PATCH /admin/subject-applications/{id}/moderation` | Admin |
 | Admin | `/admin/products`, `/admin/locations`, `/admin/reviews` | Admin |
 | Admin | `/admin/news`, `/admin/news/{id}/images` | Admin |
 | Admin | `GET /admin/dashboard` | Admin |
