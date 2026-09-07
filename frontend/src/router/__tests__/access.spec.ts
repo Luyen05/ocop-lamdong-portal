@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { resolveRouteAccess } from '@/router/access'
+import { resolvePostLoginTarget, resolveRouteAccess } from '@/router/access'
 import type { User, UserRole } from '@/types/auth'
 
 function createUser(role: UserRole): User {
@@ -42,5 +42,25 @@ describe('resolveRouteAccess', () => {
 
   it('dua tai khoan da dang nhap ra khoi trang chi danh cho khach', () => {
     expect(resolveRouteAccess({ guestOnly: true }, createUser('subject'))).toBe('home')
+  })
+})
+
+describe('resolvePostLoginTarget', () => {
+  it('dua admin vao dashboard khi khong co trang quay lai', () => {
+    expect(resolvePostLoginTarget('admin', undefined)).toBe('/quan-tri')
+  })
+
+  it('dua subject vao trang tai khoan khi chua co khu vuc chu the', () => {
+    expect(resolvePostLoginTarget('subject', undefined)).toBe('/tai-khoan')
+  })
+
+  it('giu trang noi bo ma nguoi dung dang truy cap', () => {
+    expect(resolvePostLoginTarget('admin', '/quan-tri?tab=san-pham')).toBe(
+      '/quan-tri?tab=san-pham',
+    )
+  })
+
+  it('khong chap nhan dia chi chuyen huong ra ben ngoai', () => {
+    expect(resolvePostLoginTarget('admin', '//example.com')).toBe('/quan-tri')
   })
 })

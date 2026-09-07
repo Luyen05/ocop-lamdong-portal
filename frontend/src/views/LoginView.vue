@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import AuthLayout from '@/components/auth/AuthLayout.vue'
+import { resolvePostLoginTarget } from '@/router/access'
 import { getApiErrorMessage } from '@/services/api-error'
 import { authStore } from '@/stores/auth'
 
@@ -22,10 +23,8 @@ async function submit(): Promise<void> {
   errorMessage.value = ''
   isSubmitting.value = true
   try {
-    await authStore.login({ email: email.value, password: password.value })
-    const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/'
-    const safeRedirect = redirect.startsWith('/') && !redirect.startsWith('//') ? redirect : '/'
-    await router.push(safeRedirect)
+    const user = await authStore.login({ email: email.value, password: password.value })
+    await router.push(resolvePostLoginTarget(user.role, route.query.redirect))
   } catch (error) {
     errorMessage.value = getApiErrorMessage(
       error,

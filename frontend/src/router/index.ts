@@ -4,7 +4,6 @@ import { AUTH_SESSION_EXPIRED_EVENT } from '@/services/token'
 import { authStore } from '@/stores/auth'
 import HomeView from '@/views/HomeView.vue'
 import { resolveRouteAccess } from '@/router/access'
-import type { UserRole } from '@/types/auth'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -71,7 +70,7 @@ router.beforeEach(async (to) => {
     {
       requiresAuth: Boolean(to.meta.requiresAuth),
       guestOnly: Boolean(to.meta.guestOnly),
-      roles: to.meta.roles as readonly UserRole[] | undefined,
+      roles: to.meta.roles,
     },
     authStore.currentUser.value,
   )
