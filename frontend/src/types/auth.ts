@@ -1,3 +1,5 @@
+export type UserRole = 'admin' | 'subject' | 'user'
+
 export interface User {
   id: number
   email: string
@@ -5,7 +7,7 @@ export interface User {
   phone: string | null
   avatar_url: string | null
   is_active: boolean
-  role: 'admin' | 'subject' | 'user'
+  role: UserRole
   created_at: string
   updated_at: string
 }
