@@ -59,8 +59,8 @@ describe('resolvePostLoginTarget', () => {
     expect(resolvePostLoginTarget('admin', undefined)).toBe('/quan-tri')
   })
 
-  it('dua subject vao trang tai khoan khi chua co khu vuc chu the', () => {
-    expect(resolvePostLoginTarget('subject', undefined)).toBe('/tai-khoan')
+  it('dua subject vao trang quan ly san pham', () => {
+    expect(resolvePostLoginTarget('subject', undefined)).toBe('/chu-the/san-pham')
   })
 
   it('giu trang noi bo ma nguoi dung dang truy cap', () => {

@@ -10,7 +10,7 @@ export type RouteAccessDecision = 'allow' | 'login' | 'forbidden' | 'home'
 
 const roleLandingPaths: Record<UserRole, string> = {
   admin: '/quan-tri',
-  subject: '/tai-khoan',
+  subject: '/chu-the/san-pham',
   user: '/',
 }
 
