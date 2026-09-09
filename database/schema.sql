@@ -108,7 +108,9 @@ CREATE TABLE ocop_products (
 CREATE TABLE product_images (
   id BIGSERIAL PRIMARY KEY,
   product_id BIGINT NOT NULL REFERENCES ocop_products(id) ON DELETE CASCADE,
-  image_url VARCHAR(500) NOT NULL,
+  storage_path VARCHAR(500) NOT NULL UNIQUE,
+  image_url VARCHAR(1000) NOT NULL,
+  alt_text VARCHAR(255),
   is_primary BOOLEAN NOT NULL DEFAULT FALSE,
   sort_order INTEGER NOT NULL DEFAULT 0 CHECK (sort_order >= 0),
   created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP

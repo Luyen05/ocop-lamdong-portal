@@ -124,6 +124,7 @@ def replace_product_images(product: Product, payload: ProductWritePayload) -> No
         product.images.append(
             ProductImage(
                 image_url=image.image_url,
+                alt_text=product.name,
                 is_primary=image.is_primary,
                 sort_order=image.sort_order,
             )

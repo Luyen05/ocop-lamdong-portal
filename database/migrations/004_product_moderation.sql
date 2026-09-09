@@ -15,6 +15,9 @@ ALTER TABLE ocop_products
 ALTER TABLE ocop_products
   ALTER COLUMN status SET DEFAULT 'draft',
   DROP CONSTRAINT IF EXISTS ocop_products_status_check,
+  DROP CONSTRAINT IF EXISTS ck_product_status,
+  DROP CONSTRAINT IF EXISTS ck_ocop_products_status,
+  DROP CONSTRAINT IF EXISTS ck_ocop_products_review_state,
   DROP CONSTRAINT IF EXISTS product_certificate_dates;
 
 ALTER TABLE ocop_products
@@ -32,6 +35,21 @@ ALTER TABLE ocop_products
   ADD CONSTRAINT product_certificate_dates CHECK (
     cert_issued_at IS NULL OR cert_expires_at IS NULL OR cert_expires_at > cert_issued_at
   );
+
+ALTER TABLE product_images
+  ADD COLUMN IF NOT EXISTS storage_path VARCHAR(500),
+  ADD COLUMN IF NOT EXISTS alt_text VARCHAR(255);
+
+UPDATE product_images
+SET storage_path = 'legacy/product-images/' || id
+WHERE storage_path IS NULL OR BTRIM(storage_path) = '';
+
+ALTER TABLE product_images
+  ALTER COLUMN storage_path SET NOT NULL,
+  ALTER COLUMN image_url TYPE VARCHAR(1000);
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_product_images_storage_path
+  ON product_images (storage_path);
 
 CREATE TABLE IF NOT EXISTS product_change_requests (
   id BIGSERIAL PRIMARY KEY,
