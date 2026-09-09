@@ -18,7 +18,7 @@ const pageTitle = computed(() =>
 
 const navigation = [
   { label: 'Tổng quan', symbol: '▦', to: '/quan-tri', available: true },
-  { label: 'Sản phẩm', symbol: '◈', to: '', available: false },
+  { label: 'Sản phẩm', symbol: '◈', to: '/quan-tri/san-pham', available: true },
   { label: 'Điểm du lịch', symbol: '⌖', to: '', available: false },
   { label: 'Chủ thể / HTX', symbol: '♢', to: '/quan-tri/ho-so-chu-the', available: true },
   { label: 'Người dùng', symbol: '♙', to: '', available: false },

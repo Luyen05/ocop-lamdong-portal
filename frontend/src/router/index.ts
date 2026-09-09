@@ -69,6 +69,12 @@ const router = createRouter({
           component: () => import('@/views/admin/AdminSubjectApplicationsView.vue'),
           meta: { title: 'Hồ sơ chủ thể' },
         },
+        {
+          path: 'san-pham',
+          name: 'admin-products',
+          component: () => import('@/views/admin/AdminProductsView.vue'),
+          meta: { title: 'Duyệt sản phẩm' },
+        },
       ],
     },
     {
