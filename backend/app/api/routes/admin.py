@@ -4,7 +4,7 @@ from app.api.dependencies import CurrentUser, require_roles
 from app.core.roles import RoleName
 from app.schemas.access import AdminAccessResponse
 from app.schemas.error import ErrorResponse
-from app.api.routes import admin_subject_applications
+from app.api.routes import admin_products, admin_subject_applications
 
 
 router = APIRouter(
@@ -31,3 +31,4 @@ router.include_router(
     admin_subject_applications.router,
     prefix="/subject-applications",
 )
+router.include_router(admin_products.router)

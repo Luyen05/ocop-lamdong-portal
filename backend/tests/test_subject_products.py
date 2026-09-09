@@ -61,6 +61,14 @@ def subject_product_context() -> Generator[tuple[TestClient, sessionmaker], None
                     full_name="Người dùng",
                     is_active=True,
                 ),
+                User(
+                    id=4,
+                    role_id=1,
+                    email="admin@example.com",
+                    hashed_password="not-used",
+                    full_name="Quản trị viên",
+                    is_active=True,
+                ),
             ]
         )
         session.flush()
@@ -160,6 +168,78 @@ def test_subject_creates_draft_and_submits_for_moderation(subject_product_contex
     assert submitted.status_code == 200
     assert submitted.json()["status"] == "pending"
     assert submitted.json()["submitted_at"] is not None
+
+
+def test_admin_approves_product_before_it_becomes_public(subject_product_context) -> None:
+    client, _ = subject_product_context
+    subject_headers = auth_header(1, "subject")
+    admin_headers = auth_header(4, "admin")
+    created = client.post(
+        "/api/v1/subject/products",
+        headers=subject_headers,
+        json=product_payload("OCOP-LD-APPROVE"),
+    )
+    product_id = created.json()["id"]
+    client.post(
+        f"/api/v1/subject/products/{product_id}/submit",
+        headers=subject_headers,
+    )
+
+    hidden = client.get("/api/v1/products/ca-phe-arabica-cau-dat")
+    approved = client.patch(
+        f"/api/v1/admin/products/{product_id}/moderation",
+        headers=admin_headers,
+        json={"status": "approved", "note": "Đã đối chiếu giấy chứng nhận."},
+    )
+    public = client.get("/api/v1/products/ca-phe-arabica-cau-dat")
+
+    assert hidden.status_code == 404
+    assert approved.status_code == 200
+    assert approved.json()["status"] == "approved"
+    assert approved.json()["moderation_note"] == "Đã đối chiếu giấy chứng nhận."
+    assert public.status_code == 200
+
+
+def test_admin_must_explain_revision_or_rejection(subject_product_context) -> None:
+    client, _ = subject_product_context
+    subject_headers = auth_header(1, "subject")
+    admin_headers = auth_header(4, "admin")
+    created = client.post(
+        "/api/v1/subject/products",
+        headers=subject_headers,
+        json=product_payload("OCOP-LD-REVISION"),
+    )
+    product_id = created.json()["id"]
+    client.post(
+        f"/api/v1/subject/products/{product_id}/submit",
+        headers=subject_headers,
+    )
+
+    missing_note = client.patch(
+        f"/api/v1/admin/products/{product_id}/moderation",
+        headers=admin_headers,
+        json={"status": "needs_revision"},
+    )
+    revision = client.patch(
+        f"/api/v1/admin/products/{product_id}/moderation",
+        headers=admin_headers,
+        json={"status": "needs_revision", "note": "Ảnh chứng nhận chưa rõ."},
+    )
+
+    assert missing_note.status_code == 422
+    assert revision.status_code == 200
+    assert revision.json()["status"] == "needs_revision"
+
+
+def test_subject_cannot_access_admin_product_queue(subject_product_context) -> None:
+    client, _ = subject_product_context
+    response = client.get(
+        "/api/v1/admin/products",
+        headers=auth_header(1, "subject"),
+    )
+
+    assert response.status_code == 403
+    assert response.json()["code"] == "INSUFFICIENT_PERMISSIONS"
 
 
 def test_subject_cannot_read_product_owned_by_another_subject(subject_product_context) -> None:
