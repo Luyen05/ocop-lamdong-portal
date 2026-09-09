@@ -71,6 +71,29 @@ const router = createRouter({
         },
       ],
     },
+    {
+      path: '/chu-the',
+      component: () => import('@/layouts/SubjectLayout.vue'),
+      meta: { layout: 'subject', requiresAuth: true, roles: ['subject'] },
+      children: [
+        { path: '', redirect: '/chu-the/san-pham' },
+        {
+          path: 'san-pham',
+          name: 'subject-products',
+          component: () => import('@/views/subject/SubjectProductsView.vue'),
+        },
+        {
+          path: 'san-pham/them',
+          name: 'subject-product-create',
+          component: () => import('@/views/subject/SubjectProductEditorView.vue'),
+        },
+        {
+          path: 'san-pham/:id/chinh-sua',
+          name: 'subject-product-edit',
+          component: () => import('@/views/subject/SubjectProductEditorView.vue'),
+        },
+      ],
+    },
   ],
   scrollBehavior: (to) =>
     to.hash ? { el: to.hash, behavior: 'smooth' } : { top: 0 },
