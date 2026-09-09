@@ -242,6 +242,112 @@ def test_subject_cannot_access_admin_product_queue(subject_product_context) -> N
     assert response.json()["code"] == "INSUFFICIENT_PERMISSIONS"
 
 
+def create_approved_product(client: TestClient, cert_code: str) -> tuple[dict, dict, dict]:
+    subject_headers = auth_header(1, "subject")
+    admin_headers = auth_header(4, "admin")
+    created = client.post(
+        "/api/v1/subject/products",
+        headers=subject_headers,
+        json=product_payload(cert_code),
+    )
+    assert created.status_code == 201
+    product_id = created.json()["id"]
+    submitted = client.post(
+        f"/api/v1/subject/products/{product_id}/submit",
+        headers=subject_headers,
+    )
+    assert submitted.status_code == 200
+    approved = client.patch(
+        f"/api/v1/admin/products/{product_id}/moderation",
+        headers=admin_headers,
+        json={"status": "approved"},
+    )
+    assert approved.status_code == 200
+    return approved.json(), subject_headers, admin_headers
+
+
+def test_approved_product_update_waits_for_admin(subject_product_context) -> None:
+    client, _ = subject_product_context
+    product, subject_headers, admin_headers = create_approved_product(
+        client,
+        "OCOP-LD-UPDATE",
+    )
+    proposed = product_payload("OCOP-LD-UPDATE")
+    proposed["name"] = "Cà phê Arabica Cầu Đất phiên bản mới"
+    proposed["price"] = "195000"
+
+    requested = client.post(
+        f"/api/v1/subject/products/{product['id']}/change-requests",
+        headers=subject_headers,
+        json={"proposed_data": proposed, "reason": "Cập nhật bao bì và giá bán."},
+    )
+    public_before = client.get(f"/api/v1/products/{product['slug']}")
+    moderated = client.patch(
+        f"/api/v1/admin/product-change-requests/{requested.json()['id']}/moderation",
+        headers=admin_headers,
+        json={"status": "approved", "note": "Thông tin khớp chứng nhận."},
+    )
+    public_after = client.get(f"/api/v1/products/{product['slug']}")
+
+    assert requested.status_code == 201
+    assert public_before.json()["name"] == "Cà phê Arabica Cầu Đất"
+    assert moderated.status_code == 200
+    assert moderated.json()["status"] == "approved"
+    assert public_after.json()["name"] == proposed["name"]
+    assert public_after.json()["price"] == 195000
+
+
+def test_approved_product_deletion_is_archived_after_admin_approval(
+    subject_product_context,
+) -> None:
+    client, _ = subject_product_context
+    product, subject_headers, admin_headers = create_approved_product(
+        client,
+        "OCOP-LD-DELETE",
+    )
+
+    requested = client.post(
+        f"/api/v1/subject/products/{product['id']}/deletion-requests",
+        headers=subject_headers,
+        json={"reason": "Sản phẩm đã ngừng kinh doanh."},
+    )
+    still_public = client.get(f"/api/v1/products/{product['slug']}")
+    approved = client.patch(
+        f"/api/v1/admin/product-change-requests/{requested.json()['id']}/moderation",
+        headers=admin_headers,
+        json={"status": "approved", "note": "Đã xác nhận ngừng kinh doanh."},
+    )
+    hidden = client.get(f"/api/v1/products/{product['slug']}")
+
+    assert requested.status_code == 201
+    assert still_public.status_code == 200
+    assert approved.status_code == 200
+    assert hidden.status_code == 404
+
+
+def test_product_allows_only_one_active_change_request(subject_product_context) -> None:
+    client, _ = subject_product_context
+    product, subject_headers, _ = create_approved_product(
+        client,
+        "OCOP-LD-ONE-REQUEST",
+    )
+
+    first = client.post(
+        f"/api/v1/subject/products/{product['id']}/deletion-requests",
+        headers=subject_headers,
+        json={"reason": "Đề nghị ngừng kinh doanh sản phẩm."},
+    )
+    duplicate = client.post(
+        f"/api/v1/subject/products/{product['id']}/deletion-requests",
+        headers=subject_headers,
+        json={"reason": "Gửi thêm một yêu cầu trùng lặp."},
+    )
+
+    assert first.status_code == 201
+    assert duplicate.status_code == 409
+    assert duplicate.json()["code"] == "ACTIVE_PRODUCT_CHANGE_REQUEST_EXISTS"
+
+
 def test_subject_cannot_read_product_owned_by_another_subject(subject_product_context) -> None:
     client, _ = subject_product_context
     created = client.post(
