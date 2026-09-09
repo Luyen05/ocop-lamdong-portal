@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import date, datetime
 from decimal import Decimal
 from typing import TYPE_CHECKING
+from uuid import uuid4
 
 from sqlalchemy import (
     BigInteger,
@@ -120,7 +121,14 @@ class ProductImage(Base):
         ForeignKey("ocop_products.id", ondelete="CASCADE"),
         nullable=False,
     )
-    image_url: Mapped[str] = mapped_column(String(500), nullable=False)
+    storage_path: Mapped[str] = mapped_column(
+        String(500),
+        unique=True,
+        nullable=False,
+        default=lambda: f"external/product-images/{uuid4()}",
+    )
+    image_url: Mapped[str] = mapped_column(String(1000), nullable=False)
+    alt_text: Mapped[str | None] = mapped_column(String(255))
     is_primary: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     created_at: Mapped[datetime] = mapped_column(
