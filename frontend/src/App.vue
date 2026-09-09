@@ -8,7 +8,11 @@ const route = useRoute()
 </script>
 
 <template>
-  <AppHeader v-if="route.meta.layout !== 'auth' && route.meta.layout !== 'admin'" />
+  <AppHeader
+    v-if="route.meta.layout !== 'auth' && route.meta.layout !== 'admin' && route.meta.layout !== 'subject'"
+  />
   <RouterView />
-  <SiteFooter v-if="route.meta.layout !== 'auth' && route.meta.layout !== 'admin'" />
+  <SiteFooter
+    v-if="route.meta.layout !== 'auth' && route.meta.layout !== 'admin' && route.meta.layout !== 'subject'"
+  />
 </template>

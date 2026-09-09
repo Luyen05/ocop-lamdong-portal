@@ -34,8 +34,8 @@ const navigation = computed(() => [
   ...publicNavigation,
   ...(currentUser.value?.role === 'user' || currentUser.value?.role === 'subject'
     ? [{
-        label: currentUser.value.role === 'subject' ? 'Hồ sơ chủ thể' : 'Đăng ký chủ thể',
-        to: '/dang-ky-chu-the',
+        label: currentUser.value.role === 'subject' ? 'Quản lý sản phẩm' : 'Đăng ký chủ thể',
+        to: currentUser.value.role === 'subject' ? '/chu-the/san-pham' : '/dang-ky-chu-the',
         icon: 'icon-admin.svg',
       }]
     : []),
