@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="520" viewBox="0 0 800 520">
+  <defs><linearGradient id="a" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#18392f"/><stop offset="1" stop-color="#8b5e3c"/></linearGradient></defs>
+  <rect width="800" height="520" rx="28" fill="url(#a)"/>
+  <circle cx="400" cy="220" r="125" fill="#f7ead5"/>
+  <path d="M322 196c45-76 142-54 155 13 13 68-67 124-139 78-34-22-39-55-16-91Z" fill="#704326"/>
+  <path d="M390 153c-12 55-2 112 31 157" fill="none" stroke="#d6ae7b" stroke-width="12" stroke-linecap="round"/>
+  <text x="400" y="405" text-anchor="middle" fill="#fff" font-family="Segoe UI,Arial" font-size="38" font-weight="700">CÀ PHÊ ARABICA</text>
+  <text x="400" y="448" text-anchor="middle" fill="#d8eee5" font-family="Segoe UI,Arial" font-size="22">Dữ liệu kiểm thử OCOP Lâm Đồng</text>
+</svg>

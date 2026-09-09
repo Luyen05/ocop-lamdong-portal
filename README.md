@@ -193,5 +193,6 @@ Không cần chạy lệnh này với database được tạo mới từ schema 
 - ERD: `database/ERD.md`.
 - Hợp đồng REST API dự kiến: `docs/API.md`.
 - Quy trình kiểm duyệt sản phẩm: `docs/QUY_TRINH_KIEM_DUYET_SAN_PHAM.md`.
+- Tài khoản và dữ liệu kiểm thử: `docs/DU_LIEU_KIEM_THU_SAN_PHAM.md`.
 - Postman collection: `docs/postman/OCOP-Lam-Dong.postman_collection.json`.
 - Hướng dẫn chạy và kế hoạch nhóm: `docs/HUONG_DAN_CHAY_VA_KE_HOACH_NHOM_OCOP_LAM_DONG.docx`.
