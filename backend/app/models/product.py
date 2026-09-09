@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
@@ -10,6 +10,7 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Integer,
+    JSON,
     Numeric,
     SmallInteger,
     String,
@@ -54,6 +55,10 @@ class Product(Base):
     unit: Mapped[str] = mapped_column(String(50), nullable=False)
     cert_code: Mapped[str | None] = mapped_column(String(100), unique=True)
     cert_year: Mapped[int | None] = mapped_column(SmallInteger)
+    cert_issued_at: Mapped[date | None] = mapped_column()
+    cert_expires_at: Mapped[date | None] = mapped_column()
+    issuing_authority: Mapped[str | None] = mapped_column(String(255))
+    certificate_url: Mapped[str | None] = mapped_column(String(500))
     vietgap_code: Mapped[str | None] = mapped_column(String(100))
     description: Mapped[str] = mapped_column(Text, nullable=False)
     story: Mapped[str | None] = mapped_column(Text)
@@ -65,7 +70,15 @@ class Product(Base):
         default=Decimal("0"),
     )
     views: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    status: Mapped[str] = mapped_column(String(20), nullable=False, default="pending")
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="draft")
+    submitted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    reviewed_by: Mapped[int | None] = mapped_column(
+        BigInteger().with_variant(Integer, "sqlite"),
+        ForeignKey("users.id", ondelete="RESTRICT"),
+    )
+    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    review_note: Mapped[str | None] = mapped_column(Text)
+    version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
@@ -88,6 +101,10 @@ class Product(Base):
             ProductImage.sort_order,
             ProductImage.id,
         ),
+    )
+    change_requests: Mapped[list[ProductChangeRequest]] = relationship(
+        back_populates="product",
+        cascade="all, delete-orphan",
     )
 
 
@@ -113,3 +130,51 @@ class ProductImage(Base):
     )
 
     product: Mapped[Product] = relationship(back_populates="images")
+
+
+class ProductChangeRequest(Base):
+    __tablename__ = "product_change_requests"
+
+    id: Mapped[int] = mapped_column(
+        BigInteger().with_variant(Integer, "sqlite"),
+        primary_key=True,
+    )
+    product_id: Mapped[int] = mapped_column(
+        BigInteger().with_variant(Integer, "sqlite"),
+        ForeignKey("ocop_products.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    subject_id: Mapped[int] = mapped_column(
+        BigInteger().with_variant(Integer, "sqlite"),
+        ForeignKey("subjects.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    request_type: Mapped[str] = mapped_column(String(20), nullable=False)
+    proposed_data: Mapped[dict | None] = mapped_column(JSON)
+    reason: Mapped[str | None] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="pending")
+    base_version: Mapped[int] = mapped_column(Integer, nullable=False)
+    submitted_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    )
+    reviewed_by: Mapped[int | None] = mapped_column(
+        BigInteger().with_variant(Integer, "sqlite"),
+        ForeignKey("users.id", ondelete="RESTRICT"),
+    )
+    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    review_note: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+    product: Mapped[Product] = relationship(back_populates="change_requests")

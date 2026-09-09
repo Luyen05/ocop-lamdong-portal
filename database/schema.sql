@@ -80,6 +80,10 @@ CREATE TABLE ocop_products (
   unit VARCHAR(50) NOT NULL,
   cert_code VARCHAR(100) UNIQUE,
   cert_year SMALLINT CHECK (cert_year BETWEEN 2000 AND 2100),
+  cert_issued_at DATE,
+  cert_expires_at DATE,
+  issuing_authority VARCHAR(255),
+  certificate_url VARCHAR(500),
   vietgap_code VARCHAR(100),
   description TEXT NOT NULL,
   story TEXT,
@@ -87,10 +91,18 @@ CREATE TABLE ocop_products (
   usage_instructions TEXT,
   rating_avg NUMERIC(3,2) NOT NULL DEFAULT 0 CHECK (rating_avg BETWEEN 0 AND 5),
   views INTEGER NOT NULL DEFAULT 0 CHECK (views >= 0),
-  status VARCHAR(20) NOT NULL DEFAULT 'pending'
-    CHECK (status IN ('pending', 'approved', 'rejected')),
+  status VARCHAR(20) NOT NULL DEFAULT 'draft'
+    CHECK (status IN ('draft', 'pending', 'needs_revision', 'approved', 'rejected', 'suspended', 'archived')),
+  submitted_at TIMESTAMPTZ,
+  reviewed_by BIGINT REFERENCES users(id) ON DELETE RESTRICT,
+  reviewed_at TIMESTAMPTZ,
+  review_note TEXT,
+  version INTEGER NOT NULL DEFAULT 1 CHECK (version >= 1),
   created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT product_certificate_dates CHECK (
+    cert_issued_at IS NULL OR cert_expires_at IS NULL OR cert_expires_at > cert_issued_at
+  )
 );
 
 CREATE TABLE product_images (
@@ -100,6 +112,28 @@ CREATE TABLE product_images (
   is_primary BOOLEAN NOT NULL DEFAULT FALSE,
   sort_order INTEGER NOT NULL DEFAULT 0 CHECK (sort_order >= 0),
   created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE product_change_requests (
+  id BIGSERIAL PRIMARY KEY,
+  product_id BIGINT NOT NULL REFERENCES ocop_products(id) ON DELETE CASCADE,
+  subject_id BIGINT NOT NULL REFERENCES subjects(id) ON DELETE RESTRICT,
+  request_type VARCHAR(20) NOT NULL CHECK (request_type IN ('update', 'delete')),
+  proposed_data JSONB,
+  reason TEXT,
+  status VARCHAR(20) NOT NULL DEFAULT 'pending'
+    CHECK (status IN ('pending', 'needs_revision', 'approved', 'rejected', 'cancelled')),
+  base_version INTEGER NOT NULL CHECK (base_version >= 1),
+  submitted_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  reviewed_by BIGINT REFERENCES users(id) ON DELETE RESTRICT,
+  reviewed_at TIMESTAMPTZ,
+  review_note TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT product_change_payload CHECK (
+    (request_type = 'update' AND proposed_data IS NOT NULL)
+    OR (request_type = 'delete' AND proposed_data IS NULL)
+  )
 );
 
 CREATE TABLE tourism_locations (
@@ -187,6 +221,9 @@ CREATE INDEX idx_locations_public_filters ON tourism_locations (status, district
 CREATE INDEX idx_reviews_product_status ON reviews (product_id, status);
 CREATE INDEX idx_reviews_location_status ON reviews (location_id, status);
 CREATE UNIQUE INDEX uq_product_primary_image ON product_images (product_id) WHERE is_primary;
+CREATE UNIQUE INDEX uq_product_active_change_request
+  ON product_change_requests (product_id)
+  WHERE status IN ('pending', 'needs_revision');
 CREATE UNIQUE INDEX uq_location_primary_image ON location_images (location_id) WHERE is_primary;
 CREATE UNIQUE INDEX uq_news_primary_image ON news_images (news_id) WHERE is_primary;
 CREATE UNIQUE INDEX uq_review_user_product ON reviews (user_id, product_id) WHERE product_id IS NOT NULL;
@@ -197,6 +234,8 @@ FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 CREATE TRIGGER trg_subjects_updated_at BEFORE UPDATE ON subjects
 FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 CREATE TRIGGER trg_products_updated_at BEFORE UPDATE ON ocop_products
+FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE TRIGGER trg_product_change_requests_updated_at BEFORE UPDATE ON product_change_requests
 FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 CREATE TRIGGER trg_locations_updated_at BEFORE UPDATE ON tourism_locations
 FOR EACH ROW EXECUTE FUNCTION set_updated_at();

@@ -14,6 +14,23 @@ INSERT INTO users (
   email,
   hashed_password,
   full_name,
+  is_active
+)
+SELECT
+  id,
+  'demo-admin@local.invalid',
+  '$argon2id$v=19$m=65536,t=3,p=4$1AXbivzI3q9g7C7t+AK3xw$tLhgXDoJ5dqNYxG+nCTIwFIoMMBaSu2+gcynwqteNVE',
+  'Quản trị dữ liệu mẫu',
+  FALSE
+FROM roles
+WHERE name = 'admin'
+ON CONFLICT (email) DO NOTHING;
+
+INSERT INTO users (
+  role_id,
+  email,
+  hashed_password,
+  full_name,
   phone,
   is_active
 )
@@ -38,10 +55,12 @@ INSERT INTO subjects (
   email,
   address,
   district,
-  status
+  status,
+  reviewed_by,
+  reviewed_at
 )
 SELECT
-  id,
+  subject_user.id,
   'Hợp tác xã OCOP Lâm Đồng Demo',
   'cooperative',
   'DEMO-OCOP-LD',
@@ -50,9 +69,13 @@ SELECT
   'demo-subject@local.invalid',
   'Thành phố Đà Lạt, tỉnh Lâm Đồng',
   'Đà Lạt',
-  'approved'
-FROM users
-WHERE email = 'demo-subject@local.invalid'
+  'approved',
+  admin_user.id,
+  CURRENT_TIMESTAMP
+FROM users AS subject_user
+CROSS JOIN users AS admin_user
+WHERE subject_user.email = 'demo-subject@local.invalid'
+  AND admin_user.email = 'demo-admin@local.invalid'
 ON CONFLICT (user_id) DO NOTHING;
 
 INSERT INTO ocop_products (
@@ -65,6 +88,10 @@ INSERT INTO ocop_products (
   unit,
   cert_code,
   cert_year,
+  cert_issued_at,
+  cert_expires_at,
+  issuing_authority,
+  certificate_url,
   description,
   story,
   ingredients,
@@ -82,6 +109,10 @@ SELECT
   demo.unit,
   demo.cert_code,
   demo.cert_year,
+  MAKE_DATE(demo.cert_year, 1, 1),
+  (MAKE_DATE(demo.cert_year, 1, 1) + INTERVAL '36 months')::DATE,
+  'Cơ quan có thẩm quyền (dữ liệu minh họa)',
+  'https://example.invalid/chung-nhan/' || demo.cert_code,
   demo.description,
   demo.story,
   demo.ingredients,
