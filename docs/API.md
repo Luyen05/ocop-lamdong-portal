@@ -38,11 +38,27 @@ Base URL: `/api/v1`. Tất cả endpoint có biểu tượng khóa trong Swagger
 Swagger tại `/docs` là nguồn chi tiết cho query parameter, request body và response
 của từng endpoint.
 
+### Quy trình sản phẩm đã triển khai
+
+- Chủ thể đã được duyệt tạo và sửa bản nháp tại /subject/products, sau đó gọi
+  POST /subject/products/{id}/submit để gửi kiểm duyệt.
+- Hạng sao do chủ thể khai báo theo giấy chứng nhận. Quản trị viên chỉ đối chiếu
+  minh chứng và duyệt hiển thị, không cấp hoặc tự nâng hạng sao.
+- Quản trị viên xem hàng đợi tại /admin/products và xử lý tại
+  PATCH /admin/products/{id}/moderation.
+- Sửa sản phẩm đã duyệt tạo yêu cầu tại
+  POST /subject/products/{id}/change-requests. Phiên bản cũ vẫn công khai đến
+  khi quản trị viên chấp thuận.
+- Ngừng hiển thị tạo yêu cầu tại
+  POST /subject/products/{id}/deletion-requests. Khi được duyệt, sản phẩm chuyển
+  sang trạng thái archived và vẫn được giữ lại để bảo toàn lịch sử.
+
 ## Quy trình trạng thái
 
 - Hồ sơ subject: user tạo `pending`; admin chuyển `approved/rejected`. Khi approved,
   backend tự cấp role `subject`; khi rejected tự trả về role `user`.
-- Product/location do subject tạo hoặc sửa luôn về `pending`.
+- Sản phẩm mới đi qua draft -> pending -> approved. Sản phẩm đã duyệt sử dụng
+  yêu cầu thay đổi riêng; địa điểm sẽ được hoàn thiện ở module sau.
 - Review mới luôn `pending`; chỉ review `approved` được tính vào `rating_avg`.
 - News dùng `draft/published/archived`; `published_at` được backend quản lý.
 

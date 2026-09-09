@@ -178,10 +178,20 @@ docker compose down
 Lệnh trên giữ volume PostgreSQL. Không dùng `docker compose down -v` nếu chưa
 chủ động sao lưu và xác nhận có thể xóa toàn bộ dữ liệu local.
 
+## Migration kiểm duyệt sản phẩm
+
+Với database đã có volume, chạy migration mới trước khi sử dụng màn hình quản lý
+sản phẩm:
+
+    Get-Content .\database\migrations\004_product_moderation.sql -Raw | docker compose exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+
+Không cần chạy lệnh này với database được tạo mới từ schema hiện tại.
+
 ## Tài liệu nền
 
 - Schema PostgreSQL/PostGIS: `database/schema.sql`.
 - ERD: `database/ERD.md`.
 - Hợp đồng REST API dự kiến: `docs/API.md`.
+- Quy trình kiểm duyệt sản phẩm: `docs/QUY_TRINH_KIEM_DUYET_SAN_PHAM.md`.
 - Postman collection: `docs/postman/OCOP-Lam-Dong.postman_collection.json`.
 - Hướng dẫn chạy và kế hoạch nhóm: `docs/HUONG_DAN_CHAY_VA_KE_HOACH_NHOM_OCOP_LAM_DONG.docx`.
