@@ -28,6 +28,18 @@ FROM roles
 WHERE name = 'subject'
 ON CONFLICT (email) DO NOTHING;
 
+-- Local demo approval attribution only; this admin cannot log in.
+INSERT INTO users (role_id, email, hashed_password, full_name, is_active)
+SELECT
+  id,
+  'demo-reviewer@local.invalid',
+  '!disabled-demo-reviewer',
+  'Demo reviewer (disabled)',
+  FALSE
+FROM roles
+WHERE name = 'admin'
+ON CONFLICT (email) DO NOTHING;
+
 INSERT INTO subjects (
   user_id,
   name,
@@ -38,7 +50,10 @@ INSERT INTO subjects (
   email,
   address,
   district,
-  status
+  status,
+  reviewed_by,
+  reviewed_at,
+  rejection_reason
 )
 SELECT
   id,
@@ -50,7 +65,10 @@ SELECT
   'demo-subject@local.invalid',
   'Thành phố Đà Lạt, tỉnh Lâm Đồng',
   'Đà Lạt',
-  'approved'
+  'approved',
+  (SELECT id FROM users WHERE email = 'demo-reviewer@local.invalid'),
+  CURRENT_TIMESTAMP,
+  NULL
 FROM users
 WHERE email = 'demo-subject@local.invalid'
 ON CONFLICT (user_id) DO NOTHING;
