@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="700" viewBox="0 0 1000 700">
+  <rect width="1000" height="700" fill="#fffdf3"/>
+  <rect x="35" y="35" width="930" height="630" rx="12" fill="none" stroke="#b28b2e" stroke-width="8"/>
+  <rect x="55" y="55" width="890" height="590" rx="8" fill="none" stroke="#d8bc68" stroke-width="2"/>
+  <circle cx="500" cy="175" r="70" fill="#007a55"/>
+  <text x="500" y="190" text-anchor="middle" fill="#fff" font-family="Segoe UI,Arial" font-size="38" font-weight="800">OCOP</text>
+  <text x="500" y="290" text-anchor="middle" fill="#17382f" font-family="Segoe UI,Arial" font-size="42" font-weight="700">GIẤY CHỨNG NHẬN MINH HỌA</text>
+  <text x="500" y="350" text-anchor="middle" fill="#526277" font-family="Segoe UI,Arial" font-size="25">Chỉ dùng để kiểm thử quy trình phần mềm</text>
+  <text x="500" y="445" text-anchor="middle" fill="#bf2f2f" font-family="Segoe UI,Arial" font-size="48" font-weight="800" transform="rotate(-8 500 445)">KHÔNG CÓ GIÁ TRỊ PHÁP LÝ</text>
+  <text x="500" y="555" text-anchor="middle" fill="#7b6a42" font-family="Segoe UI,Arial" font-size="22">Đồ án Cổng thông tin OCOP Lâm Đồng</text>
+</svg>

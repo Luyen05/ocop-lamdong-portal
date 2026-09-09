@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="520" viewBox="0 0 800 520">
+  <defs><linearGradient id="a" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ffb7b7"/><stop offset="1" stop-color="#b5253e"/></linearGradient></defs>
+  <rect width="800" height="520" rx="28" fill="url(#a)"/>
+  <path d="M400 122c94 0 132 70 103 146-25 66-103 111-103 111s-78-45-103-111c-29-76 9-146 103-146Z" fill="#e9334c"/>
+  <path d="M337 134c28-44 49-48 63-15 14-33 35-29 63 15-41-10-85-10-126 0Z" fill="#287b4c"/>
+  <g fill="#ffe9a6"><circle cx="360" cy="210" r="6"/><circle cx="420" cy="191" r="6"/><circle cx="455" cy="245" r="6"/><circle cx="382" cy="275" r="6"/><circle cx="424" cy="313" r="6"/></g>
+  <text x="400" y="423" text-anchor="middle" fill="#fff" font-family="Segoe UI,Arial" font-size="38" font-weight="700">MỨT DÂU ĐÀ LẠT</text>
+  <text x="400" y="462" text-anchor="middle" fill="#ffe8ec" font-family="Segoe UI,Arial" font-size="22">Dữ liệu kiểm thử OCOP Lâm Đồng</text>
+</svg>
