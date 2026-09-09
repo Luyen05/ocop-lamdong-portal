@@ -9,7 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.models.category import Category
-from app.models.product import Product, ProductImage
+from app.models.product import Product, ProductChangeRequest, ProductImage
 from app.models.subject import Subject
 from app.models.user import User
 from app.schemas.product_management import (
@@ -18,6 +18,7 @@ from app.schemas.product_management import (
     ManagedProductRead,
     ManagedProductSubjectRead,
     ProductWritePayload,
+    ProductChangeRequestRead,
 )
 
 
@@ -206,4 +207,54 @@ def to_managed_product_read(product: Product) -> ManagedProductRead:
         ],
         created_at=product.created_at,
         updated_at=product.updated_at,
+    )
+
+
+def change_request_load_options() -> tuple:
+    return (
+        joinedload(ProductChangeRequest.product).joinedload(Product.subject),
+    )
+
+
+def get_change_request(
+    db: Session,
+    request_id: int,
+    *,
+    subject_id: int | None = None,
+    lock: bool = False,
+) -> ProductChangeRequest:
+    filters = [ProductChangeRequest.id == request_id]
+    if subject_id is not None:
+        filters.append(ProductChangeRequest.subject_id == subject_id)
+    statement = select(ProductChangeRequest).where(*filters)
+    if lock:
+        statement = statement.with_for_update()
+    change_request = db.scalar(statement.options(*change_request_load_options()))
+    if change_request is None:
+        raise workflow_error(
+            status.HTTP_404_NOT_FOUND,
+            "PRODUCT_CHANGE_REQUEST_NOT_FOUND",
+            "Không tìm thấy yêu cầu thay đổi sản phẩm.",
+            {"request_id": request_id},
+        )
+    return change_request
+
+
+def to_change_request_read(change_request: ProductChangeRequest) -> ProductChangeRequestRead:
+    return ProductChangeRequestRead(
+        id=change_request.id,
+        product_id=change_request.product_id,
+        subject_id=change_request.subject_id,
+        request_type=change_request.request_type,
+        proposed_data=change_request.proposed_data,
+        reason=change_request.reason,
+        status=change_request.status,
+        base_version=change_request.base_version,
+        submitted_at=change_request.submitted_at,
+        reviewed_at=change_request.reviewed_at,
+        review_note=change_request.review_note,
+        product_name=change_request.product.name,
+        subject_name=change_request.product.subject.name,
+        created_at=change_request.created_at,
+        updated_at=change_request.updated_at,
     )
