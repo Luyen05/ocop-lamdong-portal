@@ -16,3 +16,4 @@ coverage/
 ~$*.docx
 .DS_Store
 firebase-service-account.json
+.tmp/
