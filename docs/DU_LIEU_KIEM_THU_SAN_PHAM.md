@@ -12,12 +12,11 @@ Database hiện có cần chạy migration 004 trước:
 
     Get-Content .\database\migrations\004_product_moderation.sql -Raw | docker compose exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
 
-Sau đó nạp dữ liệu:
+Sau đó nạp seed:
 
     Get-Content .\database\seed_product_workflow.sql -Raw | docker compose exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
 
-File seed có thể chạy lại mà không tạo trùng tài khoản, chủ thể, sản phẩm, ảnh
-hoặc yêu cầu mẫu.
+File có thể chạy lại và không tạo thêm bản ghi trùng.
 
 ## Tài khoản kiểm thử
 
