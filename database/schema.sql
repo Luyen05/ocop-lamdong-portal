@@ -69,6 +69,22 @@ CREATE TABLE categories (
   icon VARCHAR(100)
 );
 
+CREATE TABLE data_sources (
+  id BIGSERIAL PRIMARY KEY,
+  title VARCHAR(500) NOT NULL,
+  document_number VARCHAR(100),
+  issuing_body VARCHAR(255),
+  source_type VARCHAR(50) NOT NULL,
+  published_at DATE,
+  source_url TEXT NOT NULL UNIQUE,
+  local_path VARCHAR(500),
+  sha256 VARCHAR(64),
+  retrieved_at DATE NOT NULL,
+  CONSTRAINT data_source_sha256_format CHECK (
+    sha256 IS NULL OR sha256 ~ '^[0-9a-f]{64}$'
+  )
+);
+
 CREATE TABLE ocop_products (
   id BIGSERIAL PRIMARY KEY,
   subject_id BIGINT NOT NULL REFERENCES subjects(id) ON DELETE RESTRICT,
@@ -103,6 +119,19 @@ CREATE TABLE ocop_products (
   CONSTRAINT product_certificate_dates CHECK (
     cert_issued_at IS NULL OR cert_expires_at IS NULL OR cert_expires_at > cert_issued_at
   )
+);
+
+CREATE TABLE product_sources (
+  product_id BIGINT NOT NULL REFERENCES ocop_products(id) ON DELETE CASCADE,
+  source_id BIGINT NOT NULL REFERENCES data_sources(id) ON DELETE RESTRICT,
+  verification_level VARCHAR(2) NOT NULL
+    CHECK (verification_level IN ('A', 'B1', 'B2', 'C')),
+  original_address TEXT,
+  evidence_role VARCHAR(30) NOT NULL
+    CHECK (evidence_role IN ('recognition', 'identity', 'address', 'enrichment')),
+  verified_at DATE NOT NULL,
+  notes TEXT,
+  PRIMARY KEY (product_id, source_id, evidence_role)
 );
 
 CREATE TABLE product_images (
@@ -222,6 +251,7 @@ CREATE INDEX idx_products_public_filters ON ocop_products (status, category_id, 
 CREATE INDEX idx_locations_public_filters ON tourism_locations (status, district, type);
 CREATE INDEX idx_reviews_product_status ON reviews (product_id, status);
 CREATE INDEX idx_reviews_location_status ON reviews (location_id, status);
+CREATE INDEX idx_product_sources_source ON product_sources (source_id);
 CREATE UNIQUE INDEX uq_product_primary_image ON product_images (product_id) WHERE is_primary;
 CREATE UNIQUE INDEX uq_product_active_change_request
   ON product_change_requests (product_id)
