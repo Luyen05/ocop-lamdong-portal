@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="560" viewBox="0 0 800 560" role="img" aria-labelledby="title description">
+  <title id="title">Ảnh minh họa dữ liệu sản phẩm công khai</title>
+  <desc id="description">Ảnh giữ chỗ trung tính, không phải ảnh bao bì thực tế.</desc>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#e7f5ef"/>
+      <stop offset="1" stop-color="#f8fafc"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="560" rx="32" fill="url(#background)"/>
+  <circle cx="400" cy="224" r="104" fill="#006045" opacity="0.12"/>
+  <path d="M356 238c35-9 60-33 76-72 24 51 17 103-31 137-12-29-27-48-45-65Z" fill="#007a55"/>
+  <path d="M344 288c36-4 67 8 94 35" fill="none" stroke="#004f3b" stroke-width="14" stroke-linecap="round"/>
+  <text x="400" y="392" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="34" font-weight="700" fill="#0f172b">DỮ LIỆU THAM KHẢO</text>
+  <text x="400" y="438" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="22" fill="#62748e">Ảnh minh họa - không phải bao bì thực tế</text>
+</svg>
