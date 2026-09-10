@@ -84,6 +84,10 @@ docker compose exec postgres sh -lc 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" 
 Seed có tính lặp lại an toàn: chạy nhiều lần không tạo trùng danh mục, chủ thể
 hoặc sản phẩm. Tài khoản gắn với dữ liệu mẫu bị khóa và không dùng để đăng nhập.
 
+Ngoài dữ liệu minh họa mặc định, dự án có bộ sản phẩm tham khảo thu thập từ
+nguồn công khai. Xem nguồn, giới hạn sử dụng và cách nạp tại
+[`docs/DU_LIEU_THAM_KHAO_CONG_KHAI.md`](docs/DU_LIEU_THAM_KHAO_CONG_KHAI.md).
+
 Sau khi cập nhật mã nguồn có migration mới, áp dụng lần lượt các file chưa chạy
 trong `database/migrations`. Ví dụ với migration hồ sơ chủ thể:
 
