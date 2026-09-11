@@ -25,6 +25,7 @@ from app.core.database import Base
 
 if TYPE_CHECKING:
     from app.models.category import Category
+    from app.models.data_source import ProductSource
     from app.models.subject import Subject
 
 
@@ -104,6 +105,10 @@ class Product(Base):
         ),
     )
     change_requests: Mapped[list[ProductChangeRequest]] = relationship(
+        back_populates="product",
+        cascade="all, delete-orphan",
+    )
+    source_links: Mapped[list[ProductSource]] = relationship(
         back_populates="product",
         cascade="all, delete-orphan",
     )
