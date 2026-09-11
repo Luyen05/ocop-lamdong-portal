@@ -16,12 +16,29 @@ import type {
   ProductChangeRequest,
   ProductEvidenceResponse,
   ProductModerationDecision,
+  ProductSnapshot,
   ProductVerificationStatus,
   ProductWorkflowStatus,
+  ProductWritePayload,
   VerificationLevel,
 } from '@/types/product-management'
 
 type EvidenceIssueFilter = '' | 'missing_decision' | 'missing_issued_at'
+type ComparableProductField = Exclude<keyof ProductWritePayload, 'images'>
+
+const comparisonFields: Array<{ key: ComparableProductField; label: string }> = [
+  { key: 'name', label: 'Tên sản phẩm' },
+  { key: 'category_id', label: 'Mã danh mục' },
+  { key: 'star', label: 'Hạng sao' },
+  { key: 'price', label: 'Giá tham khảo' },
+  { key: 'unit', label: 'Đơn vị tính' },
+  { key: 'cert_code', label: 'Mã chứng nhận' },
+  { key: 'cert_issued_at', label: 'Ngày cấp' },
+  { key: 'cert_expires_at', label: 'Ngày hết hạn' },
+  { key: 'issuing_authority', label: 'Cơ quan công nhận' },
+  { key: 'certificate_url', label: 'Tài liệu chứng nhận' },
+  { key: 'description', label: 'Mô tả' },
+]
 
 const products = ref<ManagedProduct[]>([])
 const productTotal = ref(0)
@@ -167,9 +184,16 @@ function formatDate(value: string | null): string {
   return value ? new Intl.DateTimeFormat('vi-VN').format(new Date(value)) : 'Chưa có'
 }
 
-function fieldValue(request: ProductChangeRequest, field: keyof NonNullable<ProductChangeRequest['proposed_data']>): string {
-  const value = request.proposed_data?.[field]
+function comparisonValue(
+  data: ProductWritePayload | ProductSnapshot | null,
+  field: ComparableProductField,
+): string {
+  const value = data?.[field]
   return value === null || value === undefined ? '—' : String(value)
+}
+
+function fieldChanged(request: ProductChangeRequest, field: ComparableProductField): boolean {
+  return comparisonValue(request.current_data, field) !== comparisonValue(request.proposed_data, field)
 }
 
 function workflowLabel(status: ProductWorkflowStatus): string {
@@ -349,12 +373,27 @@ onMounted(loadData)
             <div><small>Loại yêu cầu</small><strong>{{ selectedRequest.request_type === 'update' ? 'Cập nhật' : 'Ngừng hiển thị' }}</strong></div>
           </section>
           <p v-if="selectedRequest.reason" class="reason-box"><strong>Lý do:</strong> {{ selectedRequest.reason }}</p>
-          <section v-if="selectedRequest.request_type === 'update'" class="review-grid">
-            <div><small>Tên đề xuất</small><strong>{{ fieldValue(selectedRequest, 'name') }}</strong></div>
-            <div><small>Hạng sao theo chứng nhận</small><strong>{{ fieldValue(selectedRequest, 'star') }} sao</strong></div>
-            <div><small>Mã chứng nhận</small><strong>{{ fieldValue(selectedRequest, 'cert_code') }}</strong></div>
-            <div><small>Ngày hết hạn</small><strong>{{ formatDate(fieldValue(selectedRequest, 'cert_expires_at')) }}</strong></div>
-            <div class="wide"><small>Cơ quan công nhận</small><strong>{{ fieldValue(selectedRequest, 'issuing_authority') }}</strong></div>
+          <section v-if="selectedRequest.request_type === 'update'" class="comparison-section">
+            <div class="comparison-heading">
+              <strong>So sánh nội dung thay đổi</strong>
+              <span>Ô màu vàng là dữ liệu đã thay đổi</span>
+            </div>
+            <div class="comparison-table" role="table" aria-label="So sánh dữ liệu sản phẩm">
+              <div class="comparison-row comparison-header" role="row">
+                <span>Trường dữ liệu</span><span>Đang công khai</span><span>Chủ thể đề xuất</span>
+              </div>
+              <div
+                v-for="field in comparisonFields"
+                :key="field.key"
+                class="comparison-row"
+                :class="{ changed: fieldChanged(selectedRequest, field.key) }"
+                role="row"
+              >
+                <strong>{{ field.label }}</strong>
+                <span>{{ comparisonValue(selectedRequest.current_data, field.key) }}</span>
+                <span>{{ comparisonValue(selectedRequest.proposed_data, field.key) }}</span>
+              </div>
+            </div>
           </section>
           <p v-else class="warning-box">Nếu chấp thuận, sản phẩm sẽ bị ẩn khỏi API công khai và chuyển vào trạng thái lưu trữ. Dữ liệu không bị xóa cứng.</p>
         </template>
@@ -440,6 +479,17 @@ onMounted(loadData)
 .evidence-message.error { background: #fef2f2; color: #b42323; }
 .reason-box, .warning-box { padding: 11px; border-radius: 8px; background: #fff7ed; color: #914515; font-size: 12px; }
 .warning-box { background: #fef2f2; color: #a72727; }
+.comparison-section { display: grid; margin-top: 18px; gap: 10px; }
+.comparison-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.comparison-heading strong { font-size: 13px; }
+.comparison-heading span { color: var(--ocop-slate); font-size: 9px; }
+.comparison-table { overflow: hidden; border: 1px solid var(--ocop-border); border-radius: 10px; }
+.comparison-row { display: grid; padding: 9px 11px; grid-template-columns: 140px repeat(2, minmax(0, 1fr)); gap: 12px; border-bottom: 1px solid var(--ocop-border); font-size: 10px; }
+.comparison-row:last-child { border-bottom: 0; }
+.comparison-row > span { overflow-wrap: anywhere; }
+.comparison-header { background: #f1f5f9; color: #526277; font-weight: 800; }
+.comparison-row.changed { background: #fffaf0; }
+.comparison-row.changed > strong { color: #9a4d12; }
 .decision-box { display: grid; margin-top: 18px; gap: 12px; }
 .decision-box label { display: grid; gap: 5px; color: #526277; font-size: 11px; font-weight: 700; }
 .decision-box select, .decision-box textarea { padding: 9px; border: 1px solid var(--ocop-border); border-radius: 8px; }
@@ -462,5 +512,8 @@ onMounted(loadData)
   .subject-box, .review-grid, .evidence-overview { grid-template-columns: 1fr; }
   .review-grid .wide { grid-column: auto; }
   .document-links { flex-direction: column; }
+  .comparison-heading { align-items: start; flex-direction: column; }
+  .comparison-header { display: none; }
+  .comparison-row { grid-template-columns: 1fr; gap: 4px; }
 }
 </style>
