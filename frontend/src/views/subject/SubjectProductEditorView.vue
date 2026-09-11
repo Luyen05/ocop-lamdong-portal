@@ -62,11 +62,11 @@ function fillForm(product: ManagedProduct): void {
   form.star = product.star
   form.price = String(product.price)
   form.unit = product.unit
-  form.cert_code = product.cert_code
-  form.cert_issued_at = product.cert_issued_at
-  form.cert_expires_at = product.cert_expires_at
-  form.issuing_authority = product.issuing_authority
-  form.certificate_url = product.certificate_url
+  form.cert_code = product.cert_code || ''
+  form.cert_issued_at = product.cert_issued_at || ''
+  form.cert_expires_at = product.cert_expires_at || ''
+  form.issuing_authority = product.issuing_authority || ''
+  form.certificate_url = product.certificate_url || ''
   form.vietgap_code = product.vietgap_code
   form.description = product.description
   form.story = product.story
