@@ -3,10 +3,12 @@ import { computed, onMounted, ref } from 'vue'
 
 import { getApiErrorMessage } from '@/services/api-error'
 import {
+  cancelProductChangeRequest,
   deleteProductDraft,
   listMyProducts,
   listProductChangeRequests,
   requestProductDeletion,
+  resubmitProductChangeRequest,
   submitProduct,
 } from '@/services/product-management'
 import type {
@@ -23,6 +25,7 @@ const actionId = ref<number | null>(null)
 const errorMessage = ref('')
 const successMessage = ref('')
 const deletingProduct = ref<ManagedProduct | null>(null)
+const revisingDeletionRequest = ref<ProductChangeRequest | null>(null)
 const deletionReason = ref('')
 
 const statusLabels: Record<ProductWorkflowStatus, string> = {
@@ -95,13 +98,51 @@ async function sendDeletionRequest(): Promise<void> {
   actionId.value = deletingProduct.value.id
   errorMessage.value = ''
   try {
-    await requestProductDeletion(deletingProduct.value.id, deletionReason.value)
-    successMessage.value = 'Đã gửi yêu cầu ngừng hiển thị. Sản phẩm vẫn công khai cho đến khi được duyệt.'
+    if (revisingDeletionRequest.value) {
+      await resubmitProductChangeRequest(revisingDeletionRequest.value.id, {
+        proposed_data: null,
+        reason: deletionReason.value,
+      })
+      successMessage.value = 'Đã bổ sung lý do và gửi lại yêu cầu ngừng hiển thị.'
+    } else {
+      await requestProductDeletion(deletingProduct.value.id, deletionReason.value)
+      successMessage.value = 'Đã gửi yêu cầu ngừng hiển thị. Sản phẩm vẫn công khai cho đến khi được duyệt.'
+    }
     deletingProduct.value = null
+    revisingDeletionRequest.value = null
     deletionReason.value = ''
     await loadData()
   } catch (error) {
     errorMessage.value = getApiErrorMessage(error, 'Không thể gửi yêu cầu ngừng hiển thị.')
+  } finally {
+    actionId.value = null
+  }
+}
+
+function openDeletionRevision(product: ManagedProduct, request?: ProductChangeRequest): void {
+  if (!request) return
+  deletingProduct.value = product
+  revisingDeletionRequest.value = request
+  deletionReason.value = request.reason || ''
+}
+
+function closeDeletionDialog(): void {
+  deletingProduct.value = null
+  revisingDeletionRequest.value = null
+  deletionReason.value = ''
+}
+
+async function cancelRequest(request?: ProductChangeRequest): Promise<void> {
+  if (!request) return
+  if (!window.confirm('Hủy yêu cầu đang chờ xử lý?')) return
+  actionId.value = request.product_id
+  errorMessage.value = ''
+  try {
+    await cancelProductChangeRequest(request.id)
+    successMessage.value = 'Đã hủy yêu cầu thay đổi sản phẩm.'
+    await loadData()
+  } catch (error) {
+    errorMessage.value = getApiErrorMessage(error, 'Không thể hủy yêu cầu.')
   } finally {
     actionId.value = null
   }
@@ -163,11 +204,25 @@ onMounted(loadData)
           </div>
           <div class="product-actions">
             <RouterLink
-              v-if="['draft', 'needs_revision', 'rejected', 'approved'].includes(product.status)"
+              v-if="['draft', 'needs_revision', 'rejected'].includes(product.status) || (product.status === 'approved' && !activeRequest(product.id))"
               :to="'/chu-the/san-pham/' + product.id + '/chinh-sua'"
             >
               {{ product.status === 'approved' ? 'Đề nghị cập nhật' : 'Chỉnh sửa' }}
             </RouterLink>
+            <RouterLink
+              v-if="activeRequest(product.id)?.status === 'needs_revision' && activeRequest(product.id)?.request_type === 'update'"
+              :to="'/chu-the/yeu-cau/' + activeRequest(product.id)?.id + '/chinh-sua'"
+            >
+              Bổ sung yêu cầu
+            </RouterLink>
+            <button
+              v-if="activeRequest(product.id)?.status === 'needs_revision' && activeRequest(product.id)?.request_type === 'delete'"
+              class="approve-button"
+              type="button"
+              @click="openDeletionRevision(product, activeRequest(product.id))"
+            >
+              Bổ sung lý do
+            </button>
             <button
               v-if="['draft', 'needs_revision', 'rejected'].includes(product.status)"
               class="approve-button"
@@ -189,26 +244,35 @@ onMounted(loadData)
               v-if="product.status === 'approved' && !activeRequest(product.id)"
               class="danger-button"
               type="button"
-              @click="deletingProduct = product"
+              @click="deletingProduct = product; revisingDeletionRequest = null; deletionReason = ''"
             >
               Đề nghị ngừng
+            </button>
+            <button
+              v-if="activeRequest(product.id)"
+              class="danger-button"
+              type="button"
+              :disabled="actionId === product.id"
+              @click="cancelRequest(activeRequest(product.id))"
+            >
+              Hủy yêu cầu
             </button>
           </div>
         </article>
       </div>
     </section>
 
-    <div v-if="deletingProduct" class="dialog-backdrop" @click.self="deletingProduct = null">
+    <div v-if="deletingProduct" class="dialog-backdrop" @click.self="closeDeletionDialog">
       <form class="dialog-card" @submit.prevent="sendDeletionRequest">
-        <h2>Đề nghị ngừng hiển thị</h2>
+        <h2>{{ revisingDeletionRequest ? 'Bổ sung yêu cầu ngừng hiển thị' : 'Đề nghị ngừng hiển thị' }}</h2>
         <p>“{{ deletingProduct.name }}” vẫn công khai cho đến khi quản trị viên chấp thuận.</p>
         <label>
           Lý do
           <textarea v-model="deletionReason" required minlength="5" rows="4" />
         </label>
         <div>
-          <button type="button" @click="deletingProduct = null">Hủy</button>
-          <button class="danger-fill" type="submit">Gửi yêu cầu</button>
+          <button type="button" @click="closeDeletionDialog">Đóng</button>
+          <button class="danger-fill" type="submit">{{ revisingDeletionRequest ? 'Gửi lại yêu cầu' : 'Gửi yêu cầu' }}</button>
         </div>
       </form>
     </div>

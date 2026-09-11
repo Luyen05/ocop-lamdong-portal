@@ -6,18 +6,25 @@ import { getCategories } from '@/services/categories'
 import { getApiErrorMessage } from '@/services/api-error'
 import {
   createProductDraft,
+  getProductChangeRequest,
   getMyProduct,
   requestProductUpdate,
+  resubmitProductChangeRequest,
   submitProduct,
   updateProductDraft,
 } from '@/services/product-management'
 import type { Category } from '@/types/category'
-import type { ManagedProduct, ProductWritePayload } from '@/types/product-management'
+import type {
+  ManagedProduct,
+  ProductChangeRequest,
+  ProductWritePayload,
+} from '@/types/product-management'
 
 const route = useRoute()
 const router = useRouter()
 const categories = ref<Category[]>([])
 const currentProduct = ref<ManagedProduct | null>(null)
+const currentRequest = ref<ProductChangeRequest | null>(null)
 const loading = ref(true)
 const saving = ref(false)
 const errorMessage = ref('')
@@ -27,9 +34,22 @@ const productId = computed(() => {
   const raw = route.params.id
   return typeof raw === 'string' ? Number(raw) : null
 })
-const isApprovedUpdate = computed(() => currentProduct.value?.status === 'approved')
+const requestId = computed(() => {
+  const raw = route.params.requestId
+  return typeof raw === 'string' ? Number(raw) : null
+})
+const isRequestRevision = computed(() => Boolean(currentRequest.value))
+const isApprovedUpdate = computed(
+  () => !isRequestRevision.value && currentProduct.value?.status === 'approved',
+)
 const pageTitle = computed(() =>
-  isApprovedUpdate.value ? 'Đề nghị cập nhật sản phẩm' : productId.value ? 'Chỉnh sửa sản phẩm' : 'Thêm sản phẩm',
+  isRequestRevision.value
+    ? 'Bổ sung yêu cầu cập nhật'
+    : isApprovedUpdate.value
+      ? 'Đề nghị cập nhật sản phẩm'
+      : productId.value
+        ? 'Chỉnh sửa sản phẩm'
+        : 'Thêm sản phẩm',
 )
 
 const today = new Date()
@@ -56,7 +76,7 @@ const form = reactive<ProductWritePayload>({
   images: [{ image_url: '', is_primary: true, sort_order: 0 }],
 })
 
-function fillForm(product: ManagedProduct): void {
+function fillForm(product: ManagedProduct | ProductWritePayload): void {
   form.category_id = product.category_id
   form.name = product.name
   form.star = product.star
@@ -93,7 +113,16 @@ async function load(): Promise<void> {
     const categoryData = await getCategories()
     categories.value = categoryData.items
     if (!form.category_id && categories.value[0]) form.category_id = categories.value[0].id
-    if (productId.value) {
+    if (requestId.value) {
+      const request = await getProductChangeRequest('subject', requestId.value)
+      if (request.status !== 'needs_revision' || request.request_type !== 'update' || !request.proposed_data) {
+        errorMessage.value = 'Chỉ yêu cầu cập nhật cần bổ sung mới có thể chỉnh sửa.'
+        return
+      }
+      currentRequest.value = request
+      updateReason.value = request.reason || ''
+      fillForm(request.proposed_data)
+    } else if (productId.value) {
       const product = await getMyProduct(productId.value)
       if (!['draft', 'needs_revision', 'rejected', 'approved'].includes(product.status)) {
         errorMessage.value = 'Sản phẩm đang chờ xử lý và không thể chỉnh sửa.'
@@ -114,7 +143,12 @@ async function save(submitAfterSave = false): Promise<void> {
   errorMessage.value = ''
   try {
     const payload = normalizedPayload()
-    if (isApprovedUpdate.value && currentProduct.value) {
+    if (currentRequest.value) {
+      await resubmitProductChangeRequest(currentRequest.value.id, {
+        proposed_data: payload,
+        reason: updateReason.value || null,
+      })
+    } else if (isApprovedUpdate.value && currentProduct.value) {
       await requestProductUpdate(currentProduct.value.id, payload, updateReason.value)
     } else {
       const saved = currentProduct.value
@@ -124,7 +158,15 @@ async function save(submitAfterSave = false): Promise<void> {
     }
     await router.push({
       name: 'subject-products',
-      query: { saved: isApprovedUpdate.value ? 'requested' : submitAfterSave ? 'submitted' : 'draft' },
+      query: {
+        saved: isRequestRevision.value
+          ? 'resubmitted'
+          : isApprovedUpdate.value
+            ? 'requested'
+            : submitAfterSave
+              ? 'submitted'
+              : 'draft',
+      },
     })
   } catch (error) {
     errorMessage.value = getApiErrorMessage(error, 'Không thể lưu thông tin sản phẩm.')
@@ -140,9 +182,12 @@ onMounted(load)
   <main class="editor-page">
     <header>
       <RouterLink to="/chu-the/san-pham">← Danh sách sản phẩm</RouterLink>
-      <span>{{ isApprovedUpdate ? 'Yêu cầu thay đổi' : 'Hồ sơ sản phẩm OCOP' }}</span>
+      <span>{{ isApprovedUpdate || isRequestRevision ? 'Yêu cầu thay đổi' : 'Hồ sơ sản phẩm OCOP' }}</span>
       <h1>{{ pageTitle }}</h1>
-      <p v-if="isApprovedUpdate">
+      <p v-if="isRequestRevision">
+        Cập nhật nội dung theo phản hồi của quản trị viên rồi gửi lại yêu cầu.
+      </p>
+      <p v-else-if="isApprovedUpdate">
         Phiên bản hiện tại vẫn công khai. Dữ liệu bên dưới chỉ được áp dụng sau khi quản trị viên duyệt.
       </p>
       <p v-else>
@@ -153,7 +198,7 @@ onMounted(load)
     <div v-if="errorMessage" class="alert alert-danger" role="alert">{{ errorMessage }}</div>
     <p v-if="loading" class="loading-card">Đang tải biểu mẫu...</p>
 
-    <form v-else class="product-form" @submit.prevent="save(isApprovedUpdate)">
+    <form v-else class="product-form" @submit.prevent="save(isApprovedUpdate || isRequestRevision)">
       <section>
         <div class="section-heading">
           <strong>1. Thông tin sản phẩm</strong>
@@ -208,7 +253,7 @@ onMounted(load)
         <img v-if="form.images[0].image_url" class="image-preview" :src="form.images[0].image_url" alt="Xem trước ảnh sản phẩm" />
       </section>
 
-      <section v-if="isApprovedUpdate">
+      <section v-if="isApprovedUpdate || isRequestRevision">
         <div class="section-heading"><strong>4. Lý do cập nhật</strong></div>
         <label>Lý do đề nghị thay đổi
           <textarea v-model.trim="updateReason" rows="3" placeholder="Ví dụ: cập nhật bao bì và giá bán mới" />
@@ -227,7 +272,7 @@ onMounted(load)
           Lưu bản nháp
         </button>
         <button class="primary-button" type="submit" :disabled="saving">
-          {{ saving ? 'Đang lưu...' : isApprovedUpdate ? 'Gửi yêu cầu cập nhật' : 'Lưu và gửi duyệt' }}
+          {{ saving ? 'Đang lưu...' : isRequestRevision ? 'Gửi lại yêu cầu' : isApprovedUpdate ? 'Gửi yêu cầu cập nhật' : 'Lưu và gửi duyệt' }}
         </button>
       </footer>
     </form>

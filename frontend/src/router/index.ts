@@ -98,6 +98,11 @@ const router = createRouter({
           name: 'subject-product-edit',
           component: () => import('@/views/subject/SubjectProductEditorView.vue'),
         },
+        {
+          path: 'yeu-cau/:requestId/chinh-sua',
+          name: 'subject-product-request-edit',
+          component: () => import('@/views/subject/SubjectProductEditorView.vue'),
+        },
       ],
     },
   ],

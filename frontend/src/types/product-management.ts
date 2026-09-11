@@ -122,6 +122,11 @@ export interface ProductChangeRequestListResponse {
   total: number
 }
 
+export interface ProductChangeRevisionPayload {
+  proposed_data?: ProductWritePayload | null
+  reason?: string | null
+}
+
 export interface ProductModerationPayload {
   status: ProductModerationDecision
   note?: string | null

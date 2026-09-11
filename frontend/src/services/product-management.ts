@@ -8,6 +8,7 @@ import type {
   ManagedProductListResponse,
   ProductChangeRequest,
   ProductChangeRequestListResponse,
+  ProductChangeRevisionPayload,
   ProductChangeStatus,
   ProductChangeType,
   ProductModerationPayload,
@@ -86,6 +87,37 @@ export async function listProductChangeRequests(
   const response = await http.get<ProductChangeRequestListResponse>(
     `${prefix}/product-change-requests`,
     { params: { ...filters, page_size: 100 } },
+  )
+  return response.data
+}
+
+export async function getProductChangeRequest(
+  scope: 'subject' | 'admin',
+  requestId: number,
+): Promise<ProductChangeRequest> {
+  const prefix = scope === 'subject' ? '/subject' : '/admin'
+  const response = await http.get<ProductChangeRequest>(
+    `${prefix}/product-change-requests/${requestId}`,
+  )
+  return response.data
+}
+
+export async function resubmitProductChangeRequest(
+  requestId: number,
+  payload: ProductChangeRevisionPayload,
+): Promise<ProductChangeRequest> {
+  const response = await http.put<ProductChangeRequest>(
+    `/subject/product-change-requests/${requestId}`,
+    payload,
+  )
+  return response.data
+}
+
+export async function cancelProductChangeRequest(
+  requestId: number,
+): Promise<ProductChangeRequest> {
+  const response = await http.post<ProductChangeRequest>(
+    `/subject/product-change-requests/${requestId}/cancel`,
   )
   return response.data
 }
