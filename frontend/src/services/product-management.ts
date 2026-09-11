@@ -1,5 +1,6 @@
 import http from '@/services/http'
 import type {
+  AdminProductFilters,
   ManagedProduct,
   ManagedProductListResponse,
   ProductChangeRequest,
@@ -7,6 +8,7 @@ import type {
   ProductChangeStatus,
   ProductChangeType,
   ProductModerationPayload,
+  ProductEvidenceResponse,
   ProductWorkflowStatus,
   ProductWritePayload,
 } from '@/types/product-management'
@@ -83,11 +85,18 @@ export async function listProductChangeRequests(
 }
 
 export async function listAdminProducts(
-  filters: { status?: ProductWorkflowStatus; search?: string } = {},
+  filters: AdminProductFilters = {},
 ): Promise<ManagedProductListResponse> {
   const response = await http.get<ManagedProductListResponse>('/admin/products', {
     params: { ...filters, page_size: 100 },
   })
+  return response.data
+}
+
+export async function getProductEvidence(productId: number): Promise<ProductEvidenceResponse> {
+  const response = await http.get<ProductEvidenceResponse>(
+    `/admin/products/${productId}/evidence`,
+  )
   return response.data
 }
 
