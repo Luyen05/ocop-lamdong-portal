@@ -330,11 +330,31 @@ class ProductDeleteRequestCreate(BaseModel):
         return value.strip() if isinstance(value, str) else value
 
 
+class ProductSnapshotRead(BaseModel):
+    category_id: int
+    name: str
+    star: int
+    price: Decimal
+    unit: str
+    cert_code: str | None
+    cert_issued_at: date | None
+    cert_expires_at: date | None
+    issuing_authority: str | None
+    certificate_url: str | None
+    vietgap_code: str | None
+    description: str
+    story: str | None
+    ingredients: str | None
+    usage_instructions: str | None
+    images: list[ProductImagePayload]
+
+
 class ProductChangeRequestRead(BaseModel):
     id: int
     product_id: int
     subject_id: int
     request_type: Literal["update", "delete"]
+    current_data: ProductSnapshotRead
     proposed_data: dict | None
     reason: str | None
     status: ProductChangeStatus

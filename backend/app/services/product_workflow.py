@@ -20,6 +20,7 @@ from app.schemas.product_management import (
     ManagedProductSubjectRead,
     ProductEvidenceResponse,
     ProductEvidenceSourceRead,
+    ProductSnapshotRead,
     ProductWritePayload,
     ProductChangeRequestRead,
     DataSourceRead,
@@ -308,6 +309,7 @@ def to_product_evidence_response(product: Product) -> ProductEvidenceResponse:
 def change_request_load_options() -> tuple:
     return (
         joinedload(ProductChangeRequest.product).joinedload(Product.subject),
+        joinedload(ProductChangeRequest.product).selectinload(Product.images),
     )
 
 
@@ -336,11 +338,38 @@ def get_change_request(
 
 
 def to_change_request_read(change_request: ProductChangeRequest) -> ProductChangeRequestRead:
+    product = change_request.product
+    current_data = ProductSnapshotRead(
+        category_id=product.category_id,
+        name=product.name,
+        star=product.star,
+        price=product.price,
+        unit=product.unit,
+        cert_code=product.cert_code,
+        cert_issued_at=product.cert_issued_at,
+        cert_expires_at=product.cert_expires_at,
+        issuing_authority=product.issuing_authority,
+        certificate_url=product.certificate_url,
+        vietgap_code=product.vietgap_code,
+        description=product.description,
+        story=product.story,
+        ingredients=product.ingredients,
+        usage_instructions=product.usage_instructions,
+        images=[
+            {
+                "image_url": image.image_url,
+                "is_primary": image.is_primary,
+                "sort_order": image.sort_order,
+            }
+            for image in product.images
+        ],
+    )
     return ProductChangeRequestRead(
         id=change_request.id,
         product_id=change_request.product_id,
         subject_id=change_request.subject_id,
         request_type=change_request.request_type,
+        current_data=current_data,
         proposed_data=change_request.proposed_data,
         reason=change_request.reason,
         status=change_request.status,
