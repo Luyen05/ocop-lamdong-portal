@@ -442,6 +442,35 @@ def test_subject_cannot_manage_data_sources(subject_product_context) -> None:
     assert response.status_code == 403
 
 
+def test_admin_dashboard_uses_database_counts(subject_product_context) -> None:
+    client, _ = subject_product_context
+    created = client.post(
+        "/api/v1/subject/products",
+        headers=auth_header(1, "subject"),
+        json=product_payload("OCOP-LD-DASHBOARD"),
+    )
+    client.post(
+        f"/api/v1/subject/products/{created.json()['id']}/submit",
+        headers=auth_header(1, "subject"),
+    )
+
+    dashboard = client.get(
+        "/api/v1/admin/dashboard",
+        headers=auth_header(4, "admin"),
+    )
+    forbidden = client.get(
+        "/api/v1/admin/dashboard",
+        headers=auth_header(1, "subject"),
+    )
+
+    assert dashboard.status_code == 200
+    assert dashboard.json()["total_products"] == 1
+    assert dashboard.json()["pending_products"] == 1
+    assert dashboard.json()["approved_products"] == 0
+    assert dashboard.json()["products_missing_decision"] == 1
+    assert forbidden.status_code == 403
+
+
 def create_approved_product(client: TestClient, cert_code: str) -> tuple[dict, dict, dict]:
     subject_headers = auth_header(1, "subject")
     admin_headers = auth_header(4, "admin")
