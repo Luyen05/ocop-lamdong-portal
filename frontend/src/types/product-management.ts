@@ -25,6 +25,15 @@ export type ProductEvidenceIssue =
   | 'missing_decision'
   | 'missing_issued_at'
   | 'missing_expires_at'
+export type EvidenceRole = 'recognition' | 'identity' | 'address' | 'enrichment'
+export type DataSourceType =
+  | 'legal_document'
+  | 'recognition_decision'
+  | 'government_portal'
+  | 'government_news'
+  | 'subject_website'
+  | 'academic_reference'
+  | 'other'
 
 export interface ProductImagePayload {
   image_url: string
@@ -131,14 +140,45 @@ export interface ProductDataSource {
   retrieved_at: string
 }
 
+export interface DataSourceWritePayload {
+  title: string
+  document_number: string | null
+  issuing_body: string | null
+  source_type: DataSourceType
+  published_at: string | null
+  source_url: string
+  retrieved_at: string
+}
+
+export interface DataSourceListResponse {
+  items: ProductDataSource[]
+  page: number
+  page_size: number
+  total: number
+}
+
 export interface ProductEvidenceSource {
-  evidence_role: string
+  evidence_role: EvidenceRole
   verification_level: VerificationLevel
   original_address: string | null
   verified_at: string
   notes: string | null
   source: ProductDataSource
 }
+
+export interface ProductEvidenceLinkPayload {
+  source_id: number
+  evidence_role: EvidenceRole
+  verification_level: VerificationLevel
+  original_address: string | null
+  verified_at: string
+  notes: string | null
+}
+
+export type ProductEvidenceLinkUpdatePayload = Omit<
+  ProductEvidenceLinkPayload,
+  'source_id' | 'evidence_role'
+>
 
 export interface ProductEvidenceResponse {
   product_id: number

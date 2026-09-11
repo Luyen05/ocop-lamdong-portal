@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 
+import ProductEvidenceManager from '@/components/admin/ProductEvidenceManager.vue'
 import { getApiErrorMessage } from '@/services/api-error'
 import {
   getProductEvidence,
@@ -13,7 +14,6 @@ import type {
   AdminProductFilters,
   ManagedProduct,
   ProductChangeRequest,
-  ProductEvidenceIssue,
   ProductEvidenceResponse,
   ProductModerationDecision,
   ProductVerificationStatus,
@@ -192,15 +192,6 @@ function verificationLabel(status: ProductVerificationStatus): string {
   }[status]
 }
 
-function issueLabel(issue: ProductEvidenceIssue): string {
-  return {
-    no_recognition_source: 'Chưa có nguồn công nhận',
-    missing_decision: 'Thiếu số quyết định',
-    missing_issued_at: 'Thiếu ngày cấp',
-    missing_expires_at: 'Thiếu ngày hết hạn',
-  }[issue]
-}
-
 onMounted(loadData)
 </script>
 
@@ -341,37 +332,14 @@ onMounted(loadData)
             <a v-if="selectedProduct.images[0]?.image_url" :href="selectedProduct.images[0].image_url" target="_blank" rel="noopener">Mở ảnh sản phẩm ↗</a>
           </div>
 
-          <section class="evidence-section">
-            <div class="section-heading">
-              <div>
-                <small>Đối chiếu nguồn</small>
-                <h3>Chứng cứ dữ liệu</h3>
-              </div>
-              <span v-if="evidence" class="level-chip">{{ evidence.evidence_count }} nguồn</span>
-            </div>
-            <p v-if="evidenceLoading" class="evidence-message">Đang tải chứng cứ...</p>
-            <p v-else-if="evidenceError" class="evidence-message error">{{ evidenceError }}</p>
-            <template v-else-if="evidence">
-              <div class="evidence-overview">
-                <div><small>Cấp nguồn cao nhất</small><strong>{{ evidence.verification_level || 'Chưa xếp cấp' }}</strong></div>
-                <div><small>Trạng thái xác minh</small><strong>{{ verificationLabel(evidence.verification_status) }}</strong></div>
-              </div>
-              <div v-if="evidence.issues.length" class="issue-list">
-                <span v-for="issue in evidence.issues" :key="issue">{{ issueLabel(issue) }}</span>
-              </div>
-              <p v-if="!evidence.sources.length" class="evidence-message">Sản phẩm chưa được liên kết với nguồn chứng cứ.</p>
-              <article v-for="sourceLink in evidence.sources" v-else :key="`${sourceLink.source.id}-${sourceLink.evidence_role}`" class="evidence-card">
-                <div>
-                  <span class="level-chip">Nguồn {{ sourceLink.verification_level }}</span>
-                  <small>{{ sourceLink.evidence_role === 'recognition' ? 'Nguồn công nhận' : 'Nguồn bổ sung' }}</small>
-                </div>
-                <h4>{{ sourceLink.source.title }}</h4>
-                <p>{{ sourceLink.source.document_number || 'Chưa có số văn bản' }} · {{ sourceLink.source.issuing_body || 'Chưa rõ cơ quan ban hành' }}</p>
-                <p v-if="sourceLink.notes" class="source-note">{{ sourceLink.notes }}</p>
-                <a :href="sourceLink.source.source_url" target="_blank" rel="noopener">Xem nguồn gốc ↗</a>
-              </article>
-            </template>
-          </section>
+          <p v-if="evidenceLoading" class="evidence-message">Đang tải chứng cứ...</p>
+          <p v-else-if="evidenceError" class="evidence-message error">{{ evidenceError }}</p>
+          <ProductEvidenceManager
+            v-else-if="evidence"
+            :product-id="selectedProduct.id"
+            :evidence="evidence"
+            @updated="evidence = $event"
+          />
         </template>
 
         <template v-else-if="selectedRequest">

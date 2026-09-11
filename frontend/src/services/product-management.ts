@@ -1,6 +1,9 @@
 import http from '@/services/http'
 import type {
   AdminProductFilters,
+  DataSourceListResponse,
+  DataSourceWritePayload,
+  EvidenceRole,
   ManagedProduct,
   ManagedProductListResponse,
   ProductChangeRequest,
@@ -9,6 +12,9 @@ import type {
   ProductChangeType,
   ProductModerationPayload,
   ProductEvidenceResponse,
+  ProductEvidenceLinkPayload,
+  ProductEvidenceLinkUpdatePayload,
+  ProductDataSource,
   ProductWorkflowStatus,
   ProductWritePayload,
 } from '@/types/product-management'
@@ -98,6 +104,60 @@ export async function getProductEvidence(productId: number): Promise<ProductEvid
     `/admin/products/${productId}/evidence`,
   )
   return response.data
+}
+
+export async function listDataSources(search?: string): Promise<DataSourceListResponse> {
+  const response = await http.get<DataSourceListResponse>('/admin/data-sources', {
+    params: { search: search || undefined, page_size: 100 },
+  })
+  return response.data
+}
+
+export async function createDataSource(
+  payload: DataSourceWritePayload,
+): Promise<ProductDataSource> {
+  const response = await http.post<ProductDataSource>('/admin/data-sources', payload)
+  return response.data
+}
+
+export async function updateDataSource(
+  sourceId: number,
+  payload: DataSourceWritePayload,
+): Promise<ProductDataSource> {
+  const response = await http.patch<ProductDataSource>(`/admin/data-sources/${sourceId}`, payload)
+  return response.data
+}
+
+export async function linkProductEvidence(
+  productId: number,
+  payload: ProductEvidenceLinkPayload,
+): Promise<ProductEvidenceResponse> {
+  const response = await http.post<ProductEvidenceResponse>(
+    `/admin/products/${productId}/evidence`,
+    payload,
+  )
+  return response.data
+}
+
+export async function updateProductEvidenceLink(
+  productId: number,
+  sourceId: number,
+  evidenceRole: EvidenceRole,
+  payload: ProductEvidenceLinkUpdatePayload,
+): Promise<ProductEvidenceResponse> {
+  const response = await http.patch<ProductEvidenceResponse>(
+    `/admin/products/${productId}/evidence/${sourceId}/${evidenceRole}`,
+    payload,
+  )
+  return response.data
+}
+
+export async function unlinkProductEvidence(
+  productId: number,
+  sourceId: number,
+  evidenceRole: EvidenceRole,
+): Promise<void> {
+  await http.delete(`/admin/products/${productId}/evidence/${sourceId}/${evidenceRole}`)
 }
 
 export async function moderateProduct(
