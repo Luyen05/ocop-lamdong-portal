@@ -35,6 +35,16 @@ ProductEvidenceIssue = Literal[
     "missing_issued_at",
     "missing_expires_at",
 ]
+EvidenceRole = Literal["recognition", "identity", "address", "enrichment"]
+DataSourceType = Literal[
+    "legal_document",
+    "recognition_decision",
+    "government_portal",
+    "government_news",
+    "subject_website",
+    "academic_reference",
+    "other",
+]
 
 
 def _validate_http_url(value: str) -> str:
@@ -194,8 +204,76 @@ class DataSourceRead(BaseModel):
     retrieved_at: date
 
 
+class DataSourceWrite(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    title: str = Field(min_length=3, max_length=500)
+    document_number: str | None = Field(default=None, max_length=100)
+    issuing_body: str | None = Field(default=None, max_length=255)
+    source_type: DataSourceType
+    published_at: date | None = None
+    source_url: str = Field(min_length=8, max_length=2000)
+    retrieved_at: date = Field(default_factory=date.today)
+
+    @field_validator("title", "document_number", "issuing_body", mode="before")
+    @classmethod
+    def normalize_source_text(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        normalized = value.strip()
+        return normalized or None
+
+    @field_validator("source_url")
+    @classmethod
+    def validate_source_url(cls, value: str) -> str:
+        return _validate_http_url(value)
+
+
+class DataSourceListResponse(BaseModel):
+    items: list[DataSourceRead]
+    page: int
+    page_size: int
+    total: int
+
+
+class ProductEvidenceLinkCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    source_id: int = Field(gt=0)
+    evidence_role: EvidenceRole = "recognition"
+    verification_level: VerificationLevel
+    original_address: str | None = Field(default=None, max_length=2000)
+    verified_at: date = Field(default_factory=date.today)
+    notes: str | None = Field(default=None, max_length=2000)
+
+    @field_validator("original_address", "notes", mode="before")
+    @classmethod
+    def normalize_link_text(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        normalized = value.strip()
+        return normalized or None
+
+
+class ProductEvidenceLinkUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    verification_level: VerificationLevel
+    original_address: str | None = Field(default=None, max_length=2000)
+    verified_at: date
+    notes: str | None = Field(default=None, max_length=2000)
+
+    @field_validator("original_address", "notes", mode="before")
+    @classmethod
+    def normalize_updated_link_text(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        normalized = value.strip()
+        return normalized or None
+
+
 class ProductEvidenceSourceRead(BaseModel):
-    evidence_role: str
+    evidence_role: EvidenceRole
     verification_level: VerificationLevel
     original_address: str | None
     verified_at: date

@@ -49,7 +49,7 @@ class ProductSource(Base):
     )
     source_id: Mapped[int] = mapped_column(
         BigInteger().with_variant(Integer, "sqlite"),
-        ForeignKey("data_sources.id", ondelete="CASCADE"),
+        ForeignKey("data_sources.id", ondelete="RESTRICT"),
         primary_key=True,
     )
     evidence_role: Mapped[str] = mapped_column(
