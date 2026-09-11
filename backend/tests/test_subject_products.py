@@ -11,6 +11,8 @@ from app.core.database import Base, get_db
 from app.core.security import create_access_token
 from app.main import app
 from app.models.category import Category
+from app.models.data_source import DataSource, ProductSource
+from app.models.product import Product
 from app.models.role import Role
 from app.models.subject import Subject
 from app.models.user import User
@@ -240,6 +242,117 @@ def test_subject_cannot_access_admin_product_queue(subject_product_context) -> N
 
     assert response.status_code == 403
     assert response.json()["code"] == "INSUFFICIENT_PERMISSIONS"
+
+
+def test_admin_can_view_official_product_evidence(subject_product_context) -> None:
+    client, testing_session = subject_product_context
+    created = client.post(
+        "/api/v1/subject/products",
+        headers=auth_header(1, "subject"),
+        json=product_payload("OCOP-LD-EVIDENCE-A"),
+    )
+    product_id = created.json()["id"]
+
+    with testing_session() as session:
+        source = DataSource(
+            title="Quyết định công nhận sản phẩm OCOP",
+            document_number="3981/QĐ-UBND",
+            issuing_body="UBND tỉnh Lâm Đồng",
+            source_type="official_decision",
+            published_at=date.today(),
+            source_url="https://example.com/sources/decision-3981.pdf",
+            retrieved_at=date.today(),
+        )
+        session.add(source)
+        session.flush()
+        session.add(
+            ProductSource(
+                product_id=product_id,
+                source_id=source.id,
+                evidence_role="recognition",
+                verification_level="A",
+                original_address="Lâm Đồng",
+                verified_at=date.today(),
+            )
+        )
+        session.commit()
+
+    evidence = client.get(
+        f"/api/v1/admin/products/{product_id}/evidence",
+        headers=auth_header(4, "admin"),
+    )
+    filtered = client.get(
+        "/api/v1/admin/products",
+        headers=auth_header(4, "admin"),
+        params={
+            "verification_level": "A",
+            "verification_status": "verified_official_decision",
+            "missing_decision": False,
+        },
+    )
+
+    assert evidence.status_code == 200
+    assert evidence.json()["verification_level"] == "A"
+    assert evidence.json()["verification_status"] == "verified_official_decision"
+    assert evidence.json()["issues"] == []
+    assert evidence.json()["sources"][0]["source"]["document_number"] == "3981/QĐ-UBND"
+    assert filtered.status_code == 200
+    assert [item["id"] for item in filtered.json()["items"]] == [product_id]
+
+
+def test_admin_filters_products_with_incomplete_evidence(subject_product_context) -> None:
+    client, testing_session = subject_product_context
+    payload = product_payload("OCOP-LD-EVIDENCE-B1")
+    payload["name"] = "Trà atiso cần bổ sung hồ sơ"
+    created = client.post(
+        "/api/v1/subject/products",
+        headers=auth_header(1, "subject"),
+        json=payload,
+    )
+    product_id = created.json()["id"]
+
+    with testing_session() as session:
+        product = session.get(Product, product_id)
+        product.cert_issued_at = None
+        source = DataSource(
+            title="Bài viết cơ quan nhà nước xác nhận trao chứng nhận",
+            issuing_body="Báo Lâm Đồng",
+            source_type="government_news",
+            published_at=date.today(),
+            source_url="https://example.com/sources/government-news.html",
+            retrieved_at=date.today(),
+        )
+        session.add(source)
+        session.flush()
+        session.add(
+            ProductSource(
+                product_id=product_id,
+                source_id=source.id,
+                evidence_role="recognition",
+                verification_level="B1",
+                verified_at=date.today(),
+                notes="Chưa tìm thấy phụ lục quyết định.",
+            )
+        )
+        session.commit()
+
+    filtered = client.get(
+        "/api/v1/admin/products",
+        headers=auth_header(4, "admin"),
+        params={
+            "verification_status": "verified_government_source",
+            "missing_decision": True,
+            "missing_issued_at": True,
+        },
+    )
+
+    assert filtered.status_code == 200
+    assert filtered.json()["total"] == 1
+    item = filtered.json()["items"][0]
+    assert item["id"] == product_id
+    assert item["verification_level"] == "B1"
+    assert item["missing_decision"] is True
+    assert item["missing_issued_at"] is True
 
 
 def create_approved_product(client: TestClient, cert_code: str) -> tuple[dict, dict, dict]:

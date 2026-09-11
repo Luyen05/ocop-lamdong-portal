@@ -1,11 +1,12 @@
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, Query, status
-from sqlalchemy import case, func, or_, select
+from sqlalchemy import and_, case, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import CurrentUser
 from app.core.database import get_db
+from app.models.data_source import DataSource, ProductSource
 from app.models.product import Product
 from app.models.subject import Subject
 from app.models.user import User
@@ -13,13 +14,17 @@ from app.schemas.error import ErrorResponse
 from app.schemas.product_management import (
     ManagedProductListResponse,
     ManagedProductRead,
+    ProductEvidenceResponse,
     ProductModerationRequest,
+    ProductVerificationStatus,
     ProductWorkflowStatus,
+    VerificationLevel,
 )
 from app.services.product_workflow import (
     get_product_for_admin,
     product_load_options,
     to_managed_product_read,
+    to_product_evidence_response,
     validate_certificate_is_current,
     workflow_error,
 )
@@ -28,12 +33,39 @@ from app.services.product_workflow import (
 router = APIRouter(prefix="/products")
 
 
+def source_exists(*conditions):
+    return (
+        select(ProductSource.product_id)
+        .join(DataSource, DataSource.id == ProductSource.source_id)
+        .where(ProductSource.product_id == Product.id, *conditions)
+        .exists()
+    )
+
+
+def effective_level_filter(level: VerificationLevel):
+    has_a = source_exists(ProductSource.verification_level == "A")
+    has_b1 = source_exists(ProductSource.verification_level == "B1")
+    has_b2 = source_exists(ProductSource.verification_level == "B2")
+    has_c = source_exists(ProductSource.verification_level == "C")
+    if level == "A":
+        return has_a
+    if level == "B1":
+        return and_(~has_a, has_b1)
+    if level == "B2":
+        return and_(~has_a, ~has_b1, has_b2)
+    return and_(~has_a, ~has_b1, ~has_b2, has_c)
+
+
 @router.get("", response_model=ManagedProductListResponse)
 def list_products_for_moderation(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100),
     product_status: ProductWorkflowStatus | None = Query(default=None, alias="status"),
     search: str | None = Query(default=None, min_length=1, max_length=150),
+    verification_level: VerificationLevel | None = Query(default=None),
+    verification_status: ProductVerificationStatus | None = Query(default=None),
+    missing_decision: bool | None = Query(default=None),
+    missing_issued_at: bool | None = Query(default=None),
     db: Session = Depends(get_db),
 ) -> ManagedProductListResponse:
     filters = []
@@ -47,6 +79,37 @@ def list_products_for_moderation(
                 Product.cert_code.ilike(keyword),
                 Subject.name.ilike(keyword),
             )
+        )
+    if verification_level:
+        filters.append(effective_level_filter(verification_level))
+
+    has_official_recognition = source_exists(
+        ProductSource.evidence_role == "recognition",
+        ProductSource.verification_level == "A",
+    )
+    has_government_recognition = source_exists(
+        ProductSource.evidence_role == "recognition",
+        ProductSource.verification_level == "B1",
+    )
+    if verification_status == "verified_official_decision":
+        filters.append(has_official_recognition)
+    elif verification_status == "verified_government_source":
+        filters.extend([~has_official_recognition, has_government_recognition])
+    elif verification_status == "pending_verification":
+        filters.extend([~has_official_recognition, ~has_government_recognition])
+
+    has_decision = source_exists(
+        ProductSource.evidence_role == "recognition",
+        DataSource.document_number.is_not(None),
+        func.length(func.trim(DataSource.document_number)) > 0,
+    )
+    if missing_decision is not None:
+        filters.append(~has_decision if missing_decision else has_decision)
+    if missing_issued_at is not None:
+        filters.append(
+            Product.cert_issued_at.is_(None)
+            if missing_issued_at
+            else Product.cert_issued_at.is_not(None)
         )
 
     total = db.scalar(
@@ -75,6 +138,14 @@ def list_products_for_moderation(
         page_size=page_size,
         total=total,
     )
+
+
+@router.get("/{product_id}/evidence", response_model=ProductEvidenceResponse)
+def get_product_evidence(
+    product_id: int,
+    db: Session = Depends(get_db),
+) -> ProductEvidenceResponse:
+    return to_product_evidence_response(get_product_for_admin(db, product_id))
 
 
 @router.get("/{product_id}", response_model=ManagedProductRead)
