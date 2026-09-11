@@ -9,6 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.models.category import Category
+from app.models.data_source import ProductSource
 from app.models.product import Product, ProductChangeRequest, ProductImage
 from app.models.subject import Subject
 from app.models.user import User
@@ -17,8 +18,11 @@ from app.schemas.product_management import (
     ManagedProductImageRead,
     ManagedProductRead,
     ManagedProductSubjectRead,
+    ProductEvidenceResponse,
+    ProductEvidenceSourceRead,
     ProductWritePayload,
     ProductChangeRequestRead,
+    DataSourceRead,
 )
 
 
@@ -55,7 +59,53 @@ def product_load_options() -> tuple:
         joinedload(Product.category),
         joinedload(Product.subject),
         selectinload(Product.images),
+        selectinload(Product.source_links).joinedload(ProductSource.source),
     )
+
+
+def build_evidence_summary(product: Product) -> dict:
+    """Tinh trang thai xac minh tu chung cu, khong luu lap vao bang san pham."""
+
+    level_rank = {"A": 0, "B1": 1, "B2": 2, "C": 3}
+    valid_links = [
+        link for link in product.source_links if link.verification_level in level_rank
+    ]
+    recognition_links = [
+        link for link in valid_links if link.evidence_role == "recognition"
+    ]
+    levels = {link.verification_level for link in valid_links}
+    verification_level = min(levels, key=level_rank.get) if levels else None
+
+    recognition_levels = {link.verification_level for link in recognition_links}
+    if "A" in recognition_levels:
+        verification_status = "verified_official_decision"
+    elif "B1" in recognition_levels:
+        verification_status = "verified_government_source"
+    else:
+        verification_status = "pending_verification"
+
+    has_decision = any(
+        link.source.document_number and link.source.document_number.strip()
+        for link in recognition_links
+    )
+    issues = []
+    if not recognition_links:
+        issues.append("no_recognition_source")
+    if not has_decision:
+        issues.append("missing_decision")
+    if product.cert_issued_at is None:
+        issues.append("missing_issued_at")
+    if product.cert_expires_at is None:
+        issues.append("missing_expires_at")
+
+    return {
+        "verification_level": verification_level,
+        "verification_status": verification_status,
+        "evidence_count": len(valid_links),
+        "missing_decision": "missing_decision" in issues,
+        "missing_issued_at": "missing_issued_at" in issues,
+        "issues": issues,
+    }
 
 
 def get_owned_product(db: Session, product_id: int, subject_id: int) -> Product:
@@ -162,6 +212,7 @@ def validate_certificate_is_current(product: Product) -> None:
 
 
 def to_managed_product_read(product: Product) -> ManagedProductRead:
+    evidence = build_evidence_summary(product)
     return ManagedProductRead(
         id=product.id,
         subject_id=product.subject_id,
@@ -206,8 +257,51 @@ def to_managed_product_read(product: Product) -> ManagedProductRead:
             )
             for image in product.images
         ],
+        verification_level=evidence["verification_level"],
+        verification_status=evidence["verification_status"],
+        evidence_count=evidence["evidence_count"],
+        missing_decision=evidence["missing_decision"],
+        missing_issued_at=evidence["missing_issued_at"],
         created_at=product.created_at,
         updated_at=product.updated_at,
+    )
+
+
+def to_product_evidence_response(product: Product) -> ProductEvidenceResponse:
+    evidence = build_evidence_summary(product)
+    return ProductEvidenceResponse(
+        product_id=product.id,
+        product_name=product.name,
+        verification_level=evidence["verification_level"],
+        verification_status=evidence["verification_status"],
+        evidence_count=evidence["evidence_count"],
+        issues=evidence["issues"],
+        sources=[
+            ProductEvidenceSourceRead(
+                evidence_role=link.evidence_role,
+                verification_level=link.verification_level,
+                original_address=link.original_address,
+                verified_at=link.verified_at,
+                notes=link.notes,
+                source=DataSourceRead(
+                    id=link.source.id,
+                    title=link.source.title,
+                    document_number=link.source.document_number,
+                    issuing_body=link.source.issuing_body,
+                    source_type=link.source.source_type,
+                    published_at=link.source.published_at,
+                    source_url=link.source.source_url,
+                    local_path=link.source.local_path,
+                    sha256=link.source.sha256,
+                    retrieved_at=link.source.retrieved_at,
+                ),
+            )
+            for link in sorted(
+                product.source_links,
+                key=lambda item: (item.verified_at, item.source_id),
+                reverse=True,
+            )
+        ],
     )
 
 

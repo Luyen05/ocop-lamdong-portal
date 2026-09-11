@@ -23,6 +23,18 @@ ProductChangeStatus = Literal[
     "rejected",
     "cancelled",
 ]
+VerificationLevel = Literal["A", "B1", "B2", "C"]
+ProductVerificationStatus = Literal[
+    "verified_official_decision",
+    "verified_government_source",
+    "pending_verification",
+]
+ProductEvidenceIssue = Literal[
+    "no_recognition_source",
+    "missing_decision",
+    "missing_issued_at",
+    "missing_expires_at",
+]
 
 
 def _validate_http_url(value: str) -> str:
@@ -153,6 +165,11 @@ class ManagedProductRead(BaseModel):
     category: ManagedProductCategoryRead
     subject: ManagedProductSubjectRead
     images: list[ManagedProductImageRead]
+    verification_level: VerificationLevel | None = None
+    verification_status: ProductVerificationStatus = "pending_verification"
+    evidence_count: int = 0
+    missing_decision: bool = True
+    missing_issued_at: bool = True
     created_at: datetime
     updated_at: datetime
 
@@ -162,6 +179,38 @@ class ManagedProductListResponse(BaseModel):
     page: int
     page_size: int
     total: int
+
+
+class DataSourceRead(BaseModel):
+    id: int
+    title: str
+    document_number: str | None
+    issuing_body: str | None
+    source_type: str
+    published_at: date | None
+    source_url: str
+    local_path: str | None
+    sha256: str | None
+    retrieved_at: date
+
+
+class ProductEvidenceSourceRead(BaseModel):
+    evidence_role: str
+    verification_level: VerificationLevel
+    original_address: str | None
+    verified_at: date
+    notes: str | None
+    source: DataSourceRead
+
+
+class ProductEvidenceResponse(BaseModel):
+    product_id: int
+    product_name: str
+    verification_level: VerificationLevel | None
+    verification_status: ProductVerificationStatus
+    evidence_count: int
+    issues: list[ProductEvidenceIssue]
+    sources: list[ProductEvidenceSourceRead]
 
 
 class ProductModerationRequest(BaseModel):
