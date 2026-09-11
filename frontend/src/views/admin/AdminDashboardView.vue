@@ -1,23 +1,63 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 
+import { getAdminDashboard, type AdminDashboardStats } from '@/services/admin'
+import { getApiErrorMessage } from '@/services/api-error'
 import { authStore } from '@/stores/auth'
 
 const greetingName = computed(() => authStore.currentUser.value?.full_name || 'Quản trị viên')
 
-const systemCards = [
-  { label: 'Phân quyền', value: '3 vai trò', note: 'Admin, chủ thể và người dùng', tone: 'green' },
-  { label: 'Xác thực', value: 'JWT', note: 'Access token và kiểm tra tài khoản', tone: 'blue' },
-  { label: 'Dữ liệu không gian', value: 'PostGIS', note: 'Sẵn sàng cho module bản đồ', tone: 'purple' },
-  { label: 'Kiểm duyệt', value: '4 nhóm', note: 'Chủ thể, sản phẩm, địa điểm, đánh giá', tone: 'gold' },
-]
+const stats = ref<AdminDashboardStats | null>(null)
+const loading = ref(true)
+const errorMessage = ref('')
 
-const priorities = [
-  { title: 'Quản lý sản phẩm', description: 'CRUD, ảnh, trạng thái và quy trình kiểm duyệt.', status: 'Ưu tiên 1' },
-  { title: 'Quản lý chủ thể OCOP', description: 'Tiếp nhận và xét duyệt hồ sơ đăng ký chủ thể.', status: 'Ưu tiên 2' },
-  { title: 'Quản lý điểm du lịch', description: 'Thông tin địa điểm, tọa độ và dịch vụ.', status: 'Ưu tiên 3' },
-  { title: 'Kiểm duyệt đánh giá', description: 'Duyệt nội dung trước khi ảnh hưởng điểm trung bình.', status: 'Sau API review' },
-]
+const systemCards = computed(() => [
+  { label: 'Tổng sản phẩm', value: stats.value?.total_products ?? 0, note: 'Tất cả trạng thái', tone: 'green' },
+  { label: 'Đang công khai', value: stats.value?.approved_products ?? 0, note: 'Đã được quản trị viên duyệt', tone: 'blue' },
+  { label: 'Sản phẩm chờ duyệt', value: stats.value?.pending_products ?? 0, note: 'Cần kiểm tra hồ sơ', tone: 'gold' },
+  { label: 'Hồ sơ chủ thể chờ duyệt', value: stats.value?.pending_subject_applications ?? 0, note: 'Cần xác minh đơn vị', tone: 'purple' },
+])
+
+const priorities = computed(() => [
+  {
+    title: 'Sản phẩm mới chờ duyệt',
+    description: 'Kiểm tra chứng nhận và quyết định trước khi công khai.',
+    status: stats.value?.pending_products ?? 0,
+    to: '/quan-tri/san-pham',
+  },
+  {
+    title: 'Yêu cầu sửa hoặc ngừng hiển thị',
+    description: 'So sánh dữ liệu cũ–mới và xử lý đề nghị của chủ thể.',
+    status: stats.value?.pending_change_requests ?? 0,
+    to: '/quan-tri/san-pham',
+  },
+  {
+    title: 'Hồ sơ chủ thể chờ duyệt',
+    description: 'Xác minh đơn vị trước khi cấp quyền chủ thể.',
+    status: stats.value?.pending_subject_applications ?? 0,
+    to: '/quan-tri/ho-so-chu-the',
+  },
+  {
+    title: 'Sản phẩm thiếu số quyết định',
+    description: 'Bổ sung hoặc liên kết nguồn chứng cứ còn thiếu.',
+    status: stats.value?.products_missing_decision ?? 0,
+    to: '/quan-tri/san-pham',
+  },
+])
+
+async function loadDashboard(): Promise<void> {
+  loading.value = true
+  errorMessage.value = ''
+  try {
+    stats.value = await getAdminDashboard()
+  } catch (error) {
+    errorMessage.value = getApiErrorMessage(error, 'Không thể tải thống kê quản trị.')
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(loadDashboard)
 </script>
 
 <template>
@@ -31,13 +71,18 @@ const priorities = [
       <RouterLink to="/">Xem trang công khai →</RouterLink>
     </section>
 
+    <div v-if="errorMessage" class="alert alert-danger" role="alert">
+      {{ errorMessage }}
+      <button class="retry-button" type="button" @click="loadDashboard">Thử lại</button>
+    </div>
+
     <section class="system-section" aria-labelledby="system-title">
       <div class="section-title">
         <div>
           <span>Nền tảng hiện có</span>
           <h2 id="system-title">Tổng quan hệ thống</h2>
         </div>
-        <small>Không sử dụng số liệu giả</small>
+        <small>{{ loading ? 'Đang tải số liệu...' : 'Số liệu trực tiếp từ database' }}</small>
       </div>
       <div class="system-grid">
         <article v-for="card in systemCards" :key="card.label" :class="`tone-${card.tone}`">
@@ -57,14 +102,14 @@ const priorities = [
           </div>
         </div>
         <div class="priority-list">
-          <article v-for="(item, index) in priorities" :key="item.title">
+          <RouterLink v-for="(item, index) in priorities" :key="item.title" :to="item.to">
             <span class="priority-index">{{ index + 1 }}</span>
             <div>
               <strong>{{ item.title }}</strong>
               <p>{{ item.description }}</p>
             </div>
-            <small>{{ item.status }}</small>
-          </article>
+            <small>{{ item.status }} hồ sơ</small>
+          </RouterLink>
         </div>
       </section>
 
@@ -227,14 +272,18 @@ const priorities = [
   margin-top: 14px;
 }
 
-.priority-list article {
+.priority-list a {
   display: grid;
   padding: 14px 0;
   align-items: center;
   grid-template-columns: 32px minmax(0, 1fr) auto;
   gap: 12px;
   border-top: 1px solid #edf1f4;
+  color: inherit;
+  text-decoration: none;
 }
+
+.priority-list a:hover { background: #f8fafc; }
 
 .priority-index {
   display: grid;
@@ -294,6 +343,8 @@ const priorities = [
   gap: 5px;
 }
 
+.retry-button { margin-left: 10px; border: 0; background: transparent; color: inherit; font-weight: 800; text-decoration: underline; }
+
 @media (max-width: 991.98px) {
   .system-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -314,7 +365,7 @@ const priorities = [
     grid-template-columns: 1fr;
   }
 
-  .priority-list article {
+  .priority-list a {
     align-items: start;
     grid-template-columns: 28px minmax(0, 1fr);
   }
