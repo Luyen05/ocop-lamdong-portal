@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy import and_, case, func, or_, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import CurrentUser
@@ -14,6 +15,9 @@ from app.schemas.error import ErrorResponse
 from app.schemas.product_management import (
     ManagedProductListResponse,
     ManagedProductRead,
+    EvidenceRole,
+    ProductEvidenceLinkCreate,
+    ProductEvidenceLinkUpdate,
     ProductEvidenceResponse,
     ProductModerationRequest,
     ProductVerificationStatus,
@@ -146,6 +150,92 @@ def get_product_evidence(
     db: Session = Depends(get_db),
 ) -> ProductEvidenceResponse:
     return to_product_evidence_response(get_product_for_admin(db, product_id))
+
+
+@router.post(
+    "/{product_id}/evidence",
+    response_model=ProductEvidenceResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def link_product_evidence(
+    product_id: int,
+    payload: ProductEvidenceLinkCreate,
+    db: Session = Depends(get_db),
+) -> ProductEvidenceResponse:
+    product = get_product_for_admin(db, product_id)
+    if db.get(DataSource, payload.source_id) is None:
+        raise workflow_error(
+            status.HTTP_404_NOT_FOUND,
+            "DATA_SOURCE_NOT_FOUND",
+            "Không tìm thấy nguồn dữ liệu cần liên kết.",
+            {"source_id": payload.source_id},
+        )
+    link = ProductSource(product_id=product.id, **payload.model_dump())
+    db.add(link)
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        raise workflow_error(
+            status.HTTP_409_CONFLICT,
+            "PRODUCT_EVIDENCE_LINK_EXISTS",
+            "Nguồn này đã được liên kết với cùng vai trò chứng cứ.",
+        ) from exc
+    db.expire_all()
+    return to_product_evidence_response(get_product_for_admin(db, product.id))
+
+
+def get_product_evidence_link(
+    db: Session,
+    product_id: int,
+    source_id: int,
+    evidence_role: EvidenceRole,
+) -> ProductSource:
+    link = db.get(ProductSource, (product_id, source_id, evidence_role))
+    if link is None:
+        raise workflow_error(
+            status.HTTP_404_NOT_FOUND,
+            "PRODUCT_EVIDENCE_LINK_NOT_FOUND",
+            "Không tìm thấy liên kết chứng cứ của sản phẩm.",
+        )
+    return link
+
+
+@router.patch(
+    "/{product_id}/evidence/{source_id}/{evidence_role}",
+    response_model=ProductEvidenceResponse,
+)
+def update_product_evidence_link(
+    product_id: int,
+    source_id: int,
+    evidence_role: EvidenceRole,
+    payload: ProductEvidenceLinkUpdate,
+    db: Session = Depends(get_db),
+) -> ProductEvidenceResponse:
+    get_product_for_admin(db, product_id)
+    link = get_product_evidence_link(db, product_id, source_id, evidence_role)
+    for field, value in payload.model_dump().items():
+        setattr(link, field, value)
+    db.add(link)
+    db.commit()
+    db.expire_all()
+    return to_product_evidence_response(get_product_for_admin(db, product_id))
+
+
+@router.delete(
+    "/{product_id}/evidence/{source_id}/{evidence_role}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def unlink_product_evidence(
+    product_id: int,
+    source_id: int,
+    evidence_role: EvidenceRole,
+    db: Session = Depends(get_db),
+) -> None:
+    get_product_for_admin(db, product_id)
+    link = get_product_evidence_link(db, product_id, source_id, evidence_role)
+    db.delete(link)
+    db.commit()
 
 
 @router.get("/{product_id}", response_model=ManagedProductRead)

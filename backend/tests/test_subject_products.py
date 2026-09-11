@@ -355,6 +355,93 @@ def test_admin_filters_products_with_incomplete_evidence(subject_product_context
     assert item["missing_issued_at"] is True
 
 
+def test_admin_manages_data_source_and_product_link(subject_product_context) -> None:
+    client, _ = subject_product_context
+    admin_headers = auth_header(4, "admin")
+    created_product = client.post(
+        "/api/v1/subject/products",
+        headers=auth_header(1, "subject"),
+        json=product_payload("OCOP-LD-MANAGED-SOURCE"),
+    )
+    product_id = created_product.json()["id"]
+    source_payload = {
+        "title": "Quyết định công nhận đợt kiểm thử",
+        "document_number": "100/QĐ-UBND",
+        "issuing_body": "UBND tỉnh Lâm Đồng",
+        "source_type": "recognition_decision",
+        "published_at": date.today().isoformat(),
+        "source_url": "https://example.com/sources/managed-source.pdf",
+        "retrieved_at": date.today().isoformat(),
+    }
+
+    created_source = client.post(
+        "/api/v1/admin/data-sources",
+        headers=admin_headers,
+        json=source_payload,
+    )
+    assert created_source.status_code == 201
+    source_id = created_source.json()["id"]
+
+    source_payload["title"] = "Quyết định công nhận đã cập nhật"
+    updated_source = client.patch(
+        f"/api/v1/admin/data-sources/{source_id}",
+        headers=admin_headers,
+        json=source_payload,
+    )
+    assert updated_source.status_code == 200
+    assert updated_source.json()["title"] == source_payload["title"]
+
+    linked = client.post(
+        f"/api/v1/admin/products/{product_id}/evidence",
+        headers=admin_headers,
+        json={
+            "source_id": source_id,
+            "evidence_role": "recognition",
+            "verification_level": "A",
+            "verified_at": date.today().isoformat(),
+            "original_address": "Đà Lạt, Lâm Đồng",
+            "notes": "Đã đối chiếu phụ lục.",
+        },
+    )
+    assert linked.status_code == 201
+    assert linked.json()["verification_status"] == "verified_official_decision"
+    assert linked.json()["sources"][0]["source"]["id"] == source_id
+
+    updated_link = client.patch(
+        f"/api/v1/admin/products/{product_id}/evidence/{source_id}/recognition",
+        headers=admin_headers,
+        json={
+            "verification_level": "B1",
+            "verified_at": date.today().isoformat(),
+            "original_address": None,
+            "notes": "Cần đối chiếu lại bản ký.",
+        },
+    )
+    assert updated_link.status_code == 200
+    assert updated_link.json()["verification_level"] == "B1"
+    assert updated_link.json()["sources"][0]["notes"] == "Cần đối chiếu lại bản ký."
+
+    unlinked = client.delete(
+        f"/api/v1/admin/products/{product_id}/evidence/{source_id}/recognition",
+        headers=admin_headers,
+    )
+    assert unlinked.status_code == 204
+    evidence = client.get(
+        f"/api/v1/admin/products/{product_id}/evidence",
+        headers=admin_headers,
+    )
+    assert evidence.json()["evidence_count"] == 0
+
+
+def test_subject_cannot_manage_data_sources(subject_product_context) -> None:
+    client, _ = subject_product_context
+    response = client.get(
+        "/api/v1/admin/data-sources",
+        headers=auth_header(1, "subject"),
+    )
+    assert response.status_code == 403
+
+
 def create_approved_product(client: TestClient, cert_code: str) -> tuple[dict, dict, dict]:
     subject_headers = auth_header(1, "subject")
     admin_headers = auth_header(4, "admin")
