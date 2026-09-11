@@ -11,11 +11,17 @@ import {
 import AdminProductsView from '@/views/admin/AdminProductsView.vue'
 
 vi.mock('@/services/product-management', () => ({
+  createDataSource: vi.fn(),
   getProductEvidence: vi.fn(),
+  linkProductEvidence: vi.fn(),
+  listDataSources: vi.fn(),
   listAdminProducts: vi.fn(),
   listProductChangeRequests: vi.fn(),
   moderateProduct: vi.fn(),
   moderateProductChangeRequest: vi.fn(),
+  unlinkProductEvidence: vi.fn(),
+  updateDataSource: vi.fn(),
+  updateProductEvidenceLink: vi.fn(),
 }))
 
 const pendingProduct = {
