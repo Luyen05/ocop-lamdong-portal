@@ -127,4 +127,62 @@ describe('AdminProductsView', () => {
       note: null,
     })
   })
+
+  it('so sanh du lieu dang cong khai voi du lieu chu the de xuat', async () => {
+    const currentData = {
+      category_id: 1,
+      name: 'Cà phê Arabica',
+      star: 4,
+      price: '180000',
+      unit: 'hộp',
+      cert_code: 'OCOP-LD-010',
+      cert_issued_at: '2026-01-01',
+      cert_expires_at: '2029-01-01',
+      issuing_authority: 'UBND tỉnh Lâm Đồng',
+      certificate_url: 'https://example.com/certificate.pdf',
+      vietgap_code: null,
+      description: 'Mô tả hiện tại của sản phẩm.',
+      story: null,
+      ingredients: null,
+      usage_instructions: null,
+      images: [{ image_url: 'https://example.com/product.webp', is_primary: true, sort_order: 0 }],
+    }
+    vi.mocked(listAdminProducts).mockResolvedValue({ items: [], page: 1, page_size: 100, total: 0 })
+    vi.mocked(listProductChangeRequests).mockResolvedValue({
+      items: [
+        {
+          id: 5,
+          product_id: 10,
+          subject_id: 2,
+          request_type: 'update',
+          current_data: currentData,
+          proposed_data: { ...currentData, price: '200000', description: 'Mô tả mới.' },
+          reason: 'Cập nhật giá bán',
+          status: 'pending',
+          base_version: 2,
+          submitted_at: '2026-09-10T00:00:00Z',
+          reviewed_at: null,
+          review_note: null,
+          product_name: 'Cà phê Arabica',
+          subject_name: 'HTX Đà Lạt',
+          created_at: '2026-09-10T00:00:00Z',
+          updated_at: '2026-09-10T00:00:00Z',
+        },
+      ],
+      page: 1,
+      page_size: 100,
+      total: 1,
+    })
+
+    const wrapper = mount(AdminProductsView)
+    await flushPromises()
+    const changesTab = wrapper.findAll('button').find((button) => button.text().includes('Sửa / ngừng'))
+    await changesTab!.trigger('click')
+    const inspectButton = wrapper.findAll('button').find((button) => button.text() === 'Kiểm tra yêu cầu')
+    await inspectButton!.trigger('click')
+
+    expect(wrapper.text()).toContain('Đang công khai')
+    expect(wrapper.text()).toContain('180000')
+    expect(wrapper.text()).toContain('200000')
+  })
 })

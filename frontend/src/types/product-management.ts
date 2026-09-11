@@ -97,11 +97,24 @@ export interface ManagedProductListResponse {
   total: number
 }
 
+export interface ProductSnapshot
+  extends Omit<
+    ProductWritePayload,
+    'cert_code' | 'cert_issued_at' | 'cert_expires_at' | 'issuing_authority' | 'certificate_url'
+  > {
+  cert_code: string | null
+  cert_issued_at: string | null
+  cert_expires_at: string | null
+  issuing_authority: string | null
+  certificate_url: string | null
+}
+
 export interface ProductChangeRequest {
   id: number
   product_id: number
   subject_id: number
   request_type: ProductChangeType
+  current_data: ProductSnapshot
   proposed_data: ProductWritePayload | null
   reason: string | null
   status: ProductChangeStatus
