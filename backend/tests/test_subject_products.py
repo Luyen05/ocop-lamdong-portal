@@ -490,6 +490,9 @@ def test_approved_product_update_waits_for_admin(subject_product_context) -> Non
     public_after = client.get(f"/api/v1/products/{product['slug']}")
 
     assert requested.status_code == 201
+    assert requested.json()["current_data"]["name"] == "Cà phê Arabica Cầu Đất"
+    assert requested.json()["current_data"]["price"] == "180000.00"
+    assert requested.json()["proposed_data"]["price"] == "195000"
     assert public_before.json()["name"] == "Cà phê Arabica Cầu Đất"
     assert moderated.status_code == 200
     assert moderated.json()["status"] == "approved"
