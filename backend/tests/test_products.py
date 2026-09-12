@@ -90,6 +90,7 @@ def product_client() -> Generator[TestClient, None, None]:
                 story="Hạt cà phê được trồng ở độ cao trên 1.500 mét.",
                 ingredients="100% cà phê Arabica.",
                 usage_instructions="Pha phin hoặc pha máy.",
+                vietgap_code="VIETGAP-LD-001",
                 rating_avg=Decimal("4.80"),
                 status="approved",
             ),
@@ -176,6 +177,8 @@ def test_list_products_only_returns_approved_content(product_client: TestClient)
     ]
     assert body["items"][0]["primary_image_url"] == "https://example.com/coffee.webp"
     assert body["items"][0]["subject"]["district"] == "Đà Lạt"
+    assert body["items"][0]["vietgap_code"] == "VIETGAP-LD-001"
+    assert body["items"][1]["vietgap_code"] is None
 
 
 def test_list_products_supports_public_filters(product_client: TestClient) -> None:

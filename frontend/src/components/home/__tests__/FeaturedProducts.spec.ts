@@ -20,6 +20,7 @@ function product(id: number, star: number): ProductListItem {
     unit: 'hộp',
     description: 'Mô tả',
     rating_avg: 4.5,
+    vietgap_code: null,
     primary_image_url: null,
     category: { id: 1, name: 'Thực phẩm', slug: 'thuc-pham' },
     subject: { id: 1, name: 'Chủ thể', district: 'Đà Lạt' },

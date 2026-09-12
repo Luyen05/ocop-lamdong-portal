@@ -3,7 +3,7 @@ const stats = [
   { icon: '♕', value: '3–5★', label: 'Sản phẩm OCOP được kiểm duyệt', tone: 'green' },
   { icon: '⌖', value: 'GIS', label: 'Bản đồ điểm đến nông nghiệp', tone: 'gold' },
   { icon: '♢', value: 'HTX', label: 'Không gian dành cho chủ thể', tone: 'blue' },
-  { icon: '◎', value: '12', label: 'Huyện & thành phố Lâm Đồng', tone: 'purple' },
+  { icon: '◎', value: '124', label: 'Xã, phường & đặc khu Lâm Đồng', tone: 'purple' },
 ]
 </script>
 

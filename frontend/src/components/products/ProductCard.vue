@@ -8,7 +8,7 @@ const props = defineProps<{
 }>()
 
 const formattedPrice = computed(() => {
-  if (props.product.price === null) return 'Liên hệ'
+  if (props.product.price === null || props.product.price <= 0) return 'Liên hệ'
   return new Intl.NumberFormat('vi-VN', {
     style: 'currency',
     currency: 'VND',
@@ -37,7 +37,7 @@ const truncatedSubject = computed(() => {
       </div>
       <span class="star-badge">★ OCOP {{ product.star }} SAO</span>
       <span class="category-badge">{{ product.category.name }}</span>
-      <span v-if="product.star >= 4" class="vietgap-badge">✓ VietGAP</span>
+      <span v-if="product.vietgap_code" class="vietgap-badge">✓ VietGAP</span>
     </RouterLink>
 
     <div class="product-body">
@@ -55,9 +55,9 @@ const truncatedSubject = computed(() => {
       <div class="product-price-row">
         <div class="product-price">
           <strong>{{ formattedPrice }}</strong>
-          <small v-if="product.price !== null && product.unit">/ {{ product.unit }}</small>
+          <small v-if="product.price !== null && product.price > 0 && product.unit">/ {{ product.unit }}</small>
         </div>
-        <span class="product-rating">★ {{ product.rating_avg.toFixed(1) }}</span>
+        <span v-if="product.rating_avg > 0" class="product-rating">★ {{ product.rating_avg.toFixed(1) }}</span>
       </div>
 
       <div class="product-actions">

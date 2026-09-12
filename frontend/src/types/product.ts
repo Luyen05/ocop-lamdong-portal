@@ -26,6 +26,7 @@ export interface ProductListItem {
   unit: string | null
   description: string
   rating_avg: number
+  vietgap_code: string | null
   primary_image_url: string | null
   category: ProductCategory
   subject: ProductSubject
@@ -35,7 +36,6 @@ export interface ProductListItem {
 export interface ProductDetail extends ProductListItem {
   cert_code: string | null
   cert_year: number | null
-  vietgap_code: string | null
   story: string | null
   ingredients: string | null
   usage_instructions: string | null

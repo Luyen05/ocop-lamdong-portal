@@ -36,6 +36,7 @@ def to_product_list_item(product: Product) -> ProductListItem:
         unit=product.unit,
         description=product.description,
         rating_avg=float(product.rating_avg),
+        vietgap_code=product.vietgap_code,
         primary_image_url=primary_image,
         category=ProductCategoryRead(
             id=product.category.id,
@@ -175,7 +176,6 @@ def get_product(slug: str, db: Session = Depends(get_db)) -> ProductDetail:
         **summary.model_dump(),
         cert_code=product.cert_code,
         cert_year=product.cert_year,
-        vietgap_code=product.vietgap_code,
         story=product.story,
         ingredients=product.ingredients,
         usage_instructions=product.usage_instructions,
