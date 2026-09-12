@@ -60,6 +60,7 @@ def product_load_options() -> tuple:
     return (
         joinedload(Product.category),
         joinedload(Product.subject),
+        joinedload(Product.reviewer),
         selectinload(Product.images),
         selectinload(Product.source_links).joinedload(ProductSource.source),
     )
@@ -254,6 +255,7 @@ def to_managed_product_read(product: Product) -> ManagedProductRead:
         status=product.status,
         submitted_at=product.submitted_at,
         reviewed_at=product.reviewed_at,
+        reviewed_by_name=product.reviewer.full_name if product.reviewer else None,
         moderation_note=product.review_note,
         version=product.version,
         category=ManagedProductCategoryRead(
@@ -329,6 +331,7 @@ def change_request_load_options() -> tuple:
     return (
         joinedload(ProductChangeRequest.product).joinedload(Product.subject),
         joinedload(ProductChangeRequest.product).selectinload(Product.images),
+        joinedload(ProductChangeRequest.reviewer),
     )
 
 
@@ -396,6 +399,9 @@ def to_change_request_read(change_request: ProductChangeRequest) -> ProductChang
         base_version=change_request.base_version,
         submitted_at=change_request.submitted_at,
         reviewed_at=change_request.reviewed_at,
+        reviewed_by_name=(
+            change_request.reviewer.full_name if change_request.reviewer else None
+        ),
         review_note=change_request.review_note,
         product_name=change_request.product.name,
         subject_name=change_request.product.subject.name,

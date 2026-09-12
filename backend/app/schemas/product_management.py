@@ -178,6 +178,7 @@ class ManagedProductRead(BaseModel):
     status: ProductWorkflowStatus
     submitted_at: datetime | None
     reviewed_at: datetime | None
+    reviewed_by_name: str | None
     moderation_note: str | None
     version: int
     category: ManagedProductCategoryRead
@@ -369,6 +370,7 @@ class ProductChangeRequestRead(BaseModel):
     base_version: int
     submitted_at: datetime
     reviewed_at: datetime | None
+    reviewed_by_name: str | None
     review_note: str | None
     product_name: str
     subject_name: str

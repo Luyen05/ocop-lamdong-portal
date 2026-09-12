@@ -154,6 +154,7 @@ def moderate_product_change_request(
 
     change_request.status = payload.status
     change_request.reviewed_by = current_admin.id
+    change_request.reviewer = current_admin
     change_request.reviewed_at = datetime.now(timezone.utc)
     change_request.review_note = payload.note
     db.add(change_request)
