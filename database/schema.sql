@@ -108,6 +108,7 @@ CREATE TABLE ocop_products (
   usage_instructions TEXT,
   rating_avg NUMERIC(3,2) NOT NULL DEFAULT 0 CHECK (rating_avg BETWEEN 0 AND 5),
   views INTEGER NOT NULL DEFAULT 0 CHECK (views >= 0),
+  is_demo BOOLEAN NOT NULL DEFAULT FALSE,
   status VARCHAR(20) NOT NULL DEFAULT 'draft'
     CHECK (status IN ('draft', 'pending', 'needs_revision', 'approved', 'rejected', 'suspended', 'archived')),
   submitted_at TIMESTAMPTZ,
@@ -249,6 +250,7 @@ CREATE TABLE news_images (
 CREATE INDEX idx_subjects_geom ON subjects USING GIST (geom);
 CREATE INDEX idx_tourism_locations_geom ON tourism_locations USING GIST (geom);
 CREATE INDEX idx_products_public_filters ON ocop_products (status, category_id, star);
+CREATE INDEX idx_products_public_visibility ON ocop_products (status, is_demo, category_id, star);
 CREATE UNIQUE INDEX uq_products_certificate_storage_path
   ON ocop_products (certificate_storage_path)
   WHERE certificate_storage_path IS NOT NULL;

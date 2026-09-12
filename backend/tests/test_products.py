@@ -131,6 +131,19 @@ def product_client() -> Generator[TestClient, None, None]:
                 description="Không được xuất hiện công khai.",
                 status="approved",
             ),
+            Product(
+                id=5,
+                subject_id=1,
+                category_id=1,
+                name="Sản phẩm minh họa đã duyệt",
+                slug="san-pham-minh-hoa-da-duyet",
+                star=5,
+                price=Decimal("100000"),
+                unit="hộp",
+                description="Chỉ dùng để kiểm thử quy trình nội bộ.",
+                status="approved",
+                is_demo=True,
+            ),
         ]
         session.add_all([*users, *categories, *subjects, *products])
         session.flush()
@@ -230,6 +243,7 @@ def test_get_product_returns_public_detail(product_client: TestClient) -> None:
     [
         "san-pham-chua-duyet",
         "san-pham-chu-the-cho-duyet",
+        "san-pham-minh-hoa-da-duyet",
         "khong-ton-tai",
     ],
 )

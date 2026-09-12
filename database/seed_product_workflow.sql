@@ -228,6 +228,7 @@ INSERT INTO ocop_products (
   reviewed_by,
   reviewed_at,
   review_note,
+  is_demo,
   version
 )
 SELECT
@@ -259,6 +260,7 @@ SELECT
     ELSE NULL
   END,
   demo_products.review_note,
+  TRUE,
   1
 FROM demo_products
 JOIN categories ON categories.slug = demo_products.category_slug
@@ -289,6 +291,7 @@ ON CONFLICT (slug) DO UPDATE SET
   reviewed_by = EXCLUDED.reviewed_by,
   reviewed_at = EXCLUDED.reviewed_at,
   review_note = EXCLUDED.review_note,
+  is_demo = TRUE,
   version = EXCLUDED.version;
 
 INSERT INTO product_images (

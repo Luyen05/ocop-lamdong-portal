@@ -81,6 +81,7 @@ def list_products(
 
     filters = [
         Product.status == "approved",
+        Product.is_demo.is_(False),
         Subject.status == "approved",
         Product.star.is_not(None),
         Product.description.is_not(None),
@@ -153,6 +154,7 @@ def get_product(slug: str, db: Session = Depends(get_db)) -> ProductDetail:
         .where(
             Product.slug == slug,
             Product.status == "approved",
+            Product.is_demo.is_(False),
             Subject.status == "approved",
         )
         .options(
