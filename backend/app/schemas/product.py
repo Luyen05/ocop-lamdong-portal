@@ -20,8 +20,8 @@ class ProductListItem(BaseModel):
     name: str
     slug: str
     star: int
-    price: float
-    unit: str
+    price: float | None
+    unit: str | None
     description: str
     rating_avg: float
     primary_image_url: str | None

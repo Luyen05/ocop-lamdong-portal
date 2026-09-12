@@ -82,8 +82,8 @@ class ProductWritePayload(BaseModel):
     category_id: int = Field(gt=0)
     name: str = Field(min_length=2, max_length=255)
     star: int = Field(ge=3, le=5)
-    price: Decimal = Field(ge=0, max_digits=12, decimal_places=2)
-    unit: str = Field(min_length=1, max_length=50)
+    price: Decimal | None = Field(default=None, ge=0, max_digits=12, decimal_places=2)
+    unit: str | None = Field(default=None, max_length=50)
     cert_code: str = Field(min_length=2, max_length=100)
     cert_issued_at: date
     cert_expires_at: date
@@ -98,7 +98,6 @@ class ProductWritePayload(BaseModel):
 
     @field_validator(
         "name",
-        "unit",
         "cert_code",
         "issuing_authority",
         "description",
@@ -109,6 +108,7 @@ class ProductWritePayload(BaseModel):
         return value.strip() if isinstance(value, str) else value
 
     @field_validator(
+        "unit",
         "vietgap_code",
         "story",
         "ingredients",
@@ -136,6 +136,116 @@ class ProductWritePayload(BaseModel):
         image_urls = [image.image_url for image in self.images]
         if len(image_urls) != len(set(image_urls)):
             raise ValueError("Không được gửi trùng đường dẫn ảnh sản phẩm.")
+        return self
+
+
+class ProductDraftCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    category_id: int = Field(gt=0)
+    name: str = Field(min_length=2, max_length=255)
+    star: int | None = Field(default=None, ge=3, le=5)
+    price: Decimal | None = Field(default=None, ge=0, max_digits=12, decimal_places=2)
+    unit: str | None = Field(default=None, max_length=50)
+    cert_code: str | None = Field(default=None, max_length=100)
+    cert_issued_at: date | None = None
+    cert_expires_at: date | None = None
+    issuing_authority: str | None = Field(default=None, max_length=255)
+    certificate_url: str | None = Field(default=None, max_length=500)
+    vietgap_code: str | None = Field(default=None, max_length=100)
+    description: str | None = Field(default=None, max_length=5000)
+    story: str | None = Field(default=None, max_length=10000)
+    ingredients: str | None = Field(default=None, max_length=5000)
+    usage_instructions: str | None = Field(default=None, max_length=5000)
+    images: list[ProductImagePayload] = Field(default_factory=list, max_length=10)
+
+    @field_validator(
+        "name",
+        "unit",
+        "cert_code",
+        "issuing_authority",
+        "certificate_url",
+        "vietgap_code",
+        "description",
+        "story",
+        "ingredients",
+        "usage_instructions",
+        mode="before",
+    )
+    @classmethod
+    def normalize_draft_text(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        normalized = value.strip()
+        return normalized or None
+
+    @field_validator("certificate_url")
+    @classmethod
+    def validate_optional_certificate_url(cls, value: str | None) -> str | None:
+        return _validate_http_url(value) if value else None
+
+    @model_validator(mode="after")
+    def validate_draft_dates_and_images(self) -> "ProductDraftCreate":
+        if (
+            self.cert_issued_at is not None
+            and self.cert_expires_at is not None
+            and self.cert_expires_at <= self.cert_issued_at
+        ):
+            raise ValueError("Ngày hết hạn phải sau ngày cấp chứng nhận.")
+        if self.images and sum(image.is_primary for image in self.images) != 1:
+            raise ValueError("Sản phẩm phải có đúng một ảnh chính khi đã thêm ảnh.")
+        return self
+
+
+class ProductDraftUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    category_id: int | None = Field(default=None, gt=0)
+    name: str | None = Field(default=None, min_length=2, max_length=255)
+    star: int | None = Field(default=None, ge=3, le=5)
+    price: Decimal | None = Field(default=None, ge=0, max_digits=12, decimal_places=2)
+    unit: str | None = Field(default=None, max_length=50)
+    cert_code: str | None = Field(default=None, max_length=100)
+    cert_issued_at: date | None = None
+    cert_expires_at: date | None = None
+    issuing_authority: str | None = Field(default=None, max_length=255)
+    certificate_url: str | None = Field(default=None, max_length=500)
+    vietgap_code: str | None = Field(default=None, max_length=100)
+    description: str | None = Field(default=None, max_length=5000)
+    story: str | None = Field(default=None, max_length=10000)
+    ingredients: str | None = Field(default=None, max_length=5000)
+    usage_instructions: str | None = Field(default=None, max_length=5000)
+    images: list[ProductImagePayload] | None = Field(default=None, max_length=10)
+
+    @field_validator(
+        "name",
+        "unit",
+        "cert_code",
+        "issuing_authority",
+        "certificate_url",
+        "vietgap_code",
+        "description",
+        "story",
+        "ingredients",
+        "usage_instructions",
+        mode="before",
+    )
+    @classmethod
+    def normalize_patch_text(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        normalized = value.strip()
+        return normalized or None
+
+    @field_validator("certificate_url")
+    @classmethod
+    def validate_patch_certificate_url(cls, value: str | None) -> str | None:
+        return _validate_http_url(value) if value else None
+
+    @model_validator(mode="after")
+    def validate_patch_images(self) -> "ProductDraftUpdate":
+        if self.images and sum(image.is_primary for image in self.images) != 1:
+            raise ValueError("Sản phẩm phải có đúng một ảnh chính khi đã thêm ảnh.")
         return self
 
 
@@ -169,16 +279,16 @@ class ManagedProductRead(BaseModel):
     category_id: int
     name: str
     slug: str
-    star: int
-    price: Decimal
-    unit: str
+    star: int | None
+    price: Decimal | None
+    unit: str | None
     cert_code: str | None
     cert_issued_at: date | None
     cert_expires_at: date | None
     issuing_authority: str | None
     certificate_url: str | None
     vietgap_code: str | None
-    description: str
+    description: str | None
     story: str | None
     ingredients: str | None
     usage_instructions: str | None
@@ -349,16 +459,16 @@ class ProductDeleteRequestCreate(BaseModel):
 class ProductSnapshotRead(BaseModel):
     category_id: int
     name: str
-    star: int
-    price: Decimal
-    unit: str
+    star: int | None
+    price: Decimal | None
+    unit: str | None
     cert_code: str | None
     cert_issued_at: date | None
     cert_expires_at: date | None
     issuing_authority: str | None
     certificate_url: str | None
     vietgap_code: str | None
-    description: str
+    description: str | None
     story: str | None
     ingredients: str | None
     usage_instructions: str | None

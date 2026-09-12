@@ -19,6 +19,8 @@ from app.schemas.product_management import (
     ManagedProductRead,
     ManagedProductSubjectRead,
     ProductEvidenceResponse,
+    ProductDraftCreate,
+    ProductDraftUpdate,
     ProductEvidenceSourceRead,
     ProductSnapshotRead,
     ProductWritePayload,
@@ -171,7 +173,12 @@ def build_unique_slug(db: Session, name: str, product_id: int | None = None) -> 
     return candidate
 
 
-def replace_product_images(product: Product, payload: ProductWritePayload) -> None:
+def replace_product_images(
+    product: Product,
+    payload: ProductWritePayload | ProductDraftCreate | ProductDraftUpdate,
+) -> None:
+    if payload.images is None:
+        return
     product.images.clear()
     for image in payload.images:
         image_kwargs = {}
@@ -219,6 +226,80 @@ def apply_product_payload(
     product.cert_expires_at = payload.cert_expires_at
     product.cert_year = payload.cert_issued_at.year
     replace_product_images(product, payload)
+
+
+def apply_product_draft_payload(
+    db: Session,
+    product: Product,
+    payload: ProductDraftCreate | ProductDraftUpdate,
+    *,
+    partial: bool,
+) -> None:
+    values = payload.model_dump(exclude_unset=partial, exclude={"category_id", "images"})
+    fields = payload.model_fields_set if partial else set(type(payload).model_fields)
+    if "category_id" in fields:
+        if payload.category_id is None:
+            raise workflow_error(
+                status.HTTP_422_UNPROCESSABLE_ENTITY,
+                "CATEGORY_REQUIRED",
+                "Danh mục sản phẩm không được để trống.",
+            )
+        product.category = get_category(db, payload.category_id)
+    if "name" in values and values["name"] is None:
+        raise workflow_error(
+            status.HTTP_422_UNPROCESSABLE_ENTITY,
+            "PRODUCT_NAME_REQUIRED",
+            "Tên sản phẩm không được để trống.",
+        )
+    for field, value in values.items():
+        setattr(product, field, value)
+    if "name" in values:
+        product.slug = build_unique_slug(db, product.name, product.id)
+    if "cert_issued_at" in values:
+        product.cert_year = product.cert_issued_at.year if product.cert_issued_at else None
+    if (
+        product.cert_issued_at is not None
+        and product.cert_expires_at is not None
+        and product.cert_expires_at <= product.cert_issued_at
+    ):
+        raise workflow_error(
+            status.HTTP_422_UNPROCESSABLE_ENTITY,
+            "INVALID_CERTIFICATE_DATES",
+            "Ngày hết hạn phải sau ngày cấp chứng nhận.",
+        )
+    if "images" in fields:
+        replace_product_images(product, payload)
+
+
+def validate_product_submission(product: Product) -> None:
+    required_values = {
+        "description": product.description,
+        "star": product.star,
+        "cert_code": product.cert_code,
+        "cert_issued_at": product.cert_issued_at,
+        "cert_expires_at": product.cert_expires_at,
+        "issuing_authority": product.issuing_authority,
+        "certificate_url": product.certificate_url,
+    }
+    missing_fields = [field for field, value in required_values.items() if value in (None, "")]
+    if product.price is not None and product.price > 0 and not product.unit:
+        missing_fields.append("unit")
+    if not product.images or sum(image.is_primary for image in product.images) != 1:
+        missing_fields.append("primary_image")
+    if missing_fields:
+        raise workflow_error(
+            status.HTTP_422_UNPROCESSABLE_ENTITY,
+            "PRODUCT_SUBMISSION_INCOMPLETE",
+            "Hồ sơ sản phẩm chưa đủ điều kiện gửi duyệt.",
+            {"missing_fields": missing_fields},
+        )
+    if product.cert_issued_at and product.cert_issued_at > date.today():
+        raise workflow_error(
+            status.HTTP_422_UNPROCESSABLE_ENTITY,
+            "CERTIFICATE_NOT_ACTIVE",
+            "Ngày cấp chứng nhận không được ở tương lai.",
+        )
+    validate_certificate_is_current(product)
 
 
 def validate_certificate_is_current(product: Product) -> None:

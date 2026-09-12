@@ -12,17 +12,20 @@ from app.schemas.error import ErrorResponse
 from app.schemas.product_management import (
     ManagedProductListResponse,
     ManagedProductRead,
+    ProductDraftCreate,
+    ProductDraftUpdate,
     ProductWorkflowStatus,
     ProductWritePayload,
 )
 from app.services.product_workflow import (
+    apply_product_draft_payload,
     apply_product_payload,
     build_unique_slug,
     get_approved_subject,
     get_owned_product,
     product_load_options,
     to_managed_product_read,
-    validate_certificate_is_current,
+    validate_product_submission,
     workflow_error,
 )
 
@@ -83,7 +86,7 @@ def list_my_products(
     responses={status.HTTP_409_CONFLICT: {"model": ErrorResponse}},
 )
 def create_product_draft(
-    payload: ProductWritePayload,
+    payload: ProductDraftCreate,
     current_user: CurrentUser,
     db: Session = Depends(get_db),
 ) -> ManagedProductRead:
@@ -93,13 +96,13 @@ def create_product_draft(
         category_id=payload.category_id,
         name=payload.name,
         slug=build_unique_slug(db, payload.name),
-        star=payload.star,
-        price=payload.price,
-        unit=payload.unit,
-        description=payload.description,
+        star=None,
+        price=None,
+        unit=None,
+        description=None,
         status="draft",
     )
-    apply_product_payload(db, product, payload, update_slug=False)
+    apply_product_draft_payload(db, product, payload, partial=False)
     commit_product(db, product)
     return to_managed_product_read(get_owned_product(db, product.id, subject.id))
 
@@ -131,6 +134,27 @@ def update_product_draft(
             {"current_status": product.status},
         )
     apply_product_payload(db, product, payload, update_slug=True)
+    commit_product(db, product)
+    return to_managed_product_read(get_owned_product(db, product.id, subject.id))
+
+
+@router.patch("/{product_id}", response_model=ManagedProductRead)
+def update_product_draft_partially(
+    product_id: int,
+    payload: ProductDraftUpdate,
+    current_user: CurrentUser,
+    db: Session = Depends(get_db),
+) -> ManagedProductRead:
+    subject = get_approved_subject(db, current_user)
+    product = get_owned_product(db, product_id, subject.id)
+    if product.status not in EDITABLE_STATUSES:
+        raise workflow_error(
+            status.HTTP_409_CONFLICT,
+            "PRODUCT_NOT_EDITABLE",
+            "Chỉ bản nháp hoặc hồ sơ cần chỉnh sửa mới được cập nhật trực tiếp.",
+            {"current_status": product.status},
+        )
+    apply_product_draft_payload(db, product, payload, partial=True)
     commit_product(db, product)
     return to_managed_product_read(get_owned_product(db, product.id, subject.id))
 
@@ -170,13 +194,7 @@ def submit_product_for_moderation(
             "Sản phẩm không ở trạng thái có thể gửi duyệt.",
             {"current_status": product.status},
         )
-    validate_certificate_is_current(product)
-    if not product.images or sum(image.is_primary for image in product.images) != 1:
-        raise workflow_error(
-            status.HTTP_422_UNPROCESSABLE_ENTITY,
-            "PRIMARY_IMAGE_REQUIRED",
-            "Sản phẩm phải có đúng một ảnh chính trước khi gửi duyệt.",
-        )
+    validate_product_submission(product)
     product.status = "pending"
     product.submitted_at = datetime.now(timezone.utc)
     product.reviewed_by = None
