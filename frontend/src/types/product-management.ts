@@ -37,8 +37,16 @@ export type DataSourceType =
 
 export interface ProductImagePayload {
   image_url: string
+  storage_path?: string | null
   is_primary: boolean
   sort_order: number
+}
+
+export interface ProductImageUpload {
+  image_url: string
+  storage_path: string
+  content_type: 'image/jpeg' | 'image/png' | 'image/webp'
+  size_bytes: number
 }
 
 export interface ProductWritePayload {

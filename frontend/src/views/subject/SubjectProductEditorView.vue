@@ -6,11 +6,13 @@ import { getCategories } from '@/services/categories'
 import { getApiErrorMessage } from '@/services/api-error'
 import {
   createProductDraft,
+  deleteTemporaryProductImage,
   getProductChangeRequest,
   getMyProduct,
   requestProductUpdate,
   resubmitProductChangeRequest,
   submitProduct,
+  uploadProductImage,
   updateProductDraft,
 } from '@/services/product-management'
 import type { Category } from '@/types/category'
@@ -27,7 +29,10 @@ const currentProduct = ref<ManagedProduct | null>(null)
 const currentRequest = ref<ProductChangeRequest | null>(null)
 const loading = ref(true)
 const saving = ref(false)
+const uploadingImage = ref(false)
 const errorMessage = ref('')
+const imageErrorMessage = ref('')
+const imageLoadFailed = ref(false)
 const updateReason = ref('')
 
 const productId = computed(() => {
@@ -73,7 +78,7 @@ const form = reactive<ProductWritePayload>({
   story: null,
   ingredients: null,
   usage_instructions: null,
-  images: [{ image_url: '', is_primary: true, sort_order: 0 }],
+  images: [{ image_url: '', storage_path: null, is_primary: true, sort_order: 0 }],
 })
 
 function fillForm(product: ManagedProduct | ProductWritePayload): void {
@@ -93,7 +98,56 @@ function fillForm(product: ManagedProduct | ProductWritePayload): void {
   form.ingredients = product.ingredients
   form.usage_instructions = product.usage_instructions
   const primaryImage = product.images.find((image) => image.is_primary) || product.images[0]
-  form.images = [{ image_url: primaryImage?.image_url || '', is_primary: true, sort_order: 0 }]
+  form.images = [{
+    image_url: primaryImage?.image_url || '',
+    storage_path: primaryImage?.storage_path?.startsWith('products/')
+      ? primaryImage.storage_path
+      : null,
+    is_primary: true,
+    sort_order: 0,
+  }]
+  imageLoadFailed.value = false
+}
+
+async function handleImageSelection(event: Event): Promise<void> {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  input.value = ''
+  if (!file) return
+
+  imageErrorMessage.value = ''
+  if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+    imageErrorMessage.value = 'Chỉ chấp nhận ảnh JPEG, PNG hoặc WebP.'
+    return
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    imageErrorMessage.value = 'Ảnh không được vượt quá 5 MB.'
+    return
+  }
+
+  const previousStoragePath = form.images[0].storage_path
+  uploadingImage.value = true
+  try {
+    const uploaded = await uploadProductImage(file)
+    form.images[0] = {
+      image_url: uploaded.image_url,
+      storage_path: uploaded.storage_path,
+      is_primary: true,
+      sort_order: 0,
+    }
+    imageLoadFailed.value = false
+    if (previousStoragePath && previousStoragePath !== uploaded.storage_path) {
+      await deleteTemporaryProductImage(previousStoragePath).catch(() => undefined)
+    }
+  } catch (error) {
+    imageErrorMessage.value = getApiErrorMessage(error, 'Không thể tải ảnh lên máy chủ.')
+  } finally {
+    uploadingImage.value = false
+  }
+}
+
+function handleImageError(): void {
+  imageLoadFailed.value = true
 }
 
 function normalizedPayload(): ProductWritePayload {
@@ -139,6 +193,10 @@ async function load(): Promise<void> {
 }
 
 async function save(submitAfterSave = false): Promise<void> {
+  if (!form.images[0]?.image_url) {
+    imageErrorMessage.value = 'Vui lòng tải lên ảnh đại diện sản phẩm.'
+    return
+  }
   saving.value = true
   errorMessage.value = ''
   try {
@@ -245,12 +303,33 @@ onMounted(load)
       </section>
 
       <section>
-        <div class="section-heading"><strong>3. Ảnh đại diện</strong><small>JPEG, PNG hoặc WebP</small></div>
-        <label>Đường dẫn ảnh chính *
-          <input v-model.trim="form.images[0].image_url" type="url" placeholder="https://..." required />
-          <small>Tạm dùng URL; backend upload Firebase sẽ thay thế bước này sau.</small>
+        <div class="section-heading"><strong>3. Ảnh đại diện</strong><small>JPEG, PNG hoặc WebP · tối đa 5 MB</small></div>
+        <label class="upload-field">Chọn ảnh sản phẩm *
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            :disabled="uploadingImage || saving"
+            @change="handleImageSelection"
+          />
+          <small>Ảnh được lưu trên máy chủ của hệ thống. Mỗi sản phẩm dùng một ảnh đại diện.</small>
         </label>
-        <img v-if="form.images[0].image_url" class="image-preview" :src="form.images[0].image_url" alt="Xem trước ảnh sản phẩm" />
+        <p v-if="uploadingImage" class="upload-status" role="status">Đang tải ảnh lên...</p>
+        <div v-if="imageErrorMessage" class="alert alert-danger image-alert" role="alert">{{ imageErrorMessage }}</div>
+        <div v-if="form.images[0].image_url" class="preview-card">
+          <img
+            v-if="!imageLoadFailed"
+            class="image-preview"
+            :src="form.images[0].image_url"
+            alt="Xem trước ảnh sản phẩm"
+            @error="handleImageError"
+          />
+          <div v-else class="image-placeholder" role="img" aria-label="Ảnh sản phẩm không tải được">OCOP</div>
+          <div>
+            <strong>Ảnh đại diện đã chọn</strong>
+            <small v-if="form.images[0].storage_path">Ảnh tải lên hệ thống</small>
+            <small v-else>Ảnh từ dữ liệu cũ</small>
+          </div>
+        </div>
       </section>
 
       <section v-if="isApprovedUpdate || isRequestRevision">
@@ -266,12 +345,12 @@ onMounted(load)
           v-if="!isApprovedUpdate"
           class="secondary-button"
           type="button"
-          :disabled="saving"
+          :disabled="saving || uploadingImage"
           @click="save(false)"
         >
           Lưu bản nháp
         </button>
-        <button class="primary-button" type="submit" :disabled="saving">
+        <button class="primary-button" type="submit" :disabled="saving || uploadingImage">
           {{ saving ? 'Đang lưu...' : isRequestRevision ? 'Gửi lại yêu cầu' : isApprovedUpdate ? 'Gửi yêu cầu cập nhật' : 'Lưu và gửi duyệt' }}
         </button>
       </footer>
@@ -296,7 +375,15 @@ label.wide { grid-column: 1 / -1; }
 input, select, textarea { width: 100%; padding: 10px 11px; border: 1px solid var(--ocop-border); border-radius: 8px; background: #fff; color: var(--ocop-navy); }
 textarea { resize: vertical; }
 .notice { margin-bottom: 15px; padding: 10px 12px; border-radius: 8px; background: #eff6ff; color: #1d4f91; font-size: 11px; }
-.image-preview { width: 180px; height: 130px; margin-top: 12px; border-radius: 10px; object-fit: cover; }
+.upload-field input[type='file'] { padding: 8px; cursor: pointer; }
+.upload-status { margin: 12px 0 0; color: var(--ocop-primary-700); font-size: 12px; font-weight: 700; }
+.image-alert { margin: 12px 0 0; font-size: 12px; }
+.preview-card { display: flex; width: fit-content; max-width: 100%; margin-top: 14px; padding: 8px; align-items: center; gap: 12px; border: 1px solid var(--ocop-border); border-radius: 12px; background: var(--ocop-surface); }
+.preview-card > div:last-child { display: grid; gap: 3px; }
+.preview-card strong { font-size: 12px; }
+.preview-card small { color: var(--ocop-slate); font-size: 10px; }
+.image-preview, .image-placeholder { width: 180px; height: 130px; border-radius: 10px; object-fit: cover; }
+.image-placeholder { display: grid; place-items: center; background: linear-gradient(135deg, #e8f5ef, #d7eee5); color: var(--ocop-primary-700); font-size: 22px; font-weight: 800; }
 footer { display: flex; padding: 16px 0 30px; align-items: center; justify-content: flex-end; gap: 9px; }
 footer a, footer button { padding: 10px 15px; border: 1px solid var(--ocop-border); border-radius: 9px; background: #fff; color: var(--ocop-navy); font-size: 12px; font-weight: 700; text-decoration: none; }
 .primary-button { border-color: var(--ocop-primary-700) !important; background: var(--ocop-primary-700) !important; color: #fff !important; }
@@ -307,5 +394,7 @@ footer a, footer button { padding: 10px 15px; border: 1px solid var(--ocop-borde
   .section-heading { flex-direction: column; }
   footer { align-items: stretch; flex-direction: column-reverse; }
   footer a, footer button { text-align: center; }
+  .preview-card { width: 100%; align-items: stretch; flex-direction: column; }
+  .image-preview, .image-placeholder { width: 100%; height: 190px; }
 }
 </style>
