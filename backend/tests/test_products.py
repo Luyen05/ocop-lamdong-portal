@@ -1,4 +1,5 @@
 from collections.abc import Generator
+from datetime import date
 from decimal import Decimal
 
 import pytest
@@ -10,6 +11,7 @@ from sqlalchemy.pool import StaticPool
 from app.core.database import Base, get_db
 from app.main import app
 from app.models.category import Category
+from app.models.data_source import DataSource, ProductSource
 from app.models.product import Product, ProductImage
 from app.models.role import Role
 from app.models.subject import Subject
@@ -86,6 +88,9 @@ def product_client() -> Generator[TestClient, None, None]:
                 unit="hộp 500g",
                 cert_code="OCOP-LD-001",
                 cert_year=2025,
+                cert_issued_at=date(2025, 1, 1),
+                cert_expires_at=date(2028, 1, 1),
+                issuing_authority="Ủy ban nhân dân tỉnh Lâm Đồng",
                 description="Cà phê rang xay nguyên chất từ Cầu Đất.",
                 story="Hạt cà phê được trồng ở độ cao trên 1.500 mét.",
                 ingredients="100% cà phê Arabica.",
@@ -144,9 +149,55 @@ def product_client() -> Generator[TestClient, None, None]:
                 status="approved",
                 is_demo=True,
             ),
+            Product(
+                id=6,
+                subject_id=1,
+                category_id=1,
+                name="Sản phẩm thiếu chứng cứ",
+                slug="san-pham-thieu-chung-cu",
+                star=3,
+                price=Decimal("100000"),
+                unit="hộp",
+                description="Đã duyệt nhưng chưa đủ điều kiện công khai.",
+                status="approved",
+            ),
+            Product(
+                id=7,
+                subject_id=1,
+                category_id=1,
+                name="Sản phẩm hết hạn",
+                slug="san-pham-het-han",
+                star=3,
+                price=Decimal("100000"),
+                unit="hộp",
+                cert_code="OCOP-LD-EXPIRED",
+                cert_issued_at=date(2020, 1, 1),
+                cert_expires_at=date(2023, 1, 1),
+                issuing_authority="Ủy ban nhân dân tỉnh Lâm Đồng",
+                description="Chứng nhận đã hết hạn.",
+                status="approved",
+            ),
         ]
         session.add_all([*users, *categories, *subjects, *products])
         session.flush()
+        source = DataSource(
+            id=1,
+            title="Bài công bố sản phẩm OCOP",
+            source_type="government_news",
+            source_url="https://example.com/cong-bo-ocop",
+            retrieved_at=date(2026, 9, 13),
+        )
+        session.add(source)
+        session.flush()
+        session.add(
+            ProductSource(
+                product_id=2,
+                source_id=source.id,
+                evidence_role="recognition",
+                verification_level="B1",
+                verified_at=date(2026, 9, 13),
+            )
+        )
         session.add_all(
             [
                 ProductImage(
@@ -244,6 +295,8 @@ def test_get_product_returns_public_detail(product_client: TestClient) -> None:
         "san-pham-chua-duyet",
         "san-pham-chu-the-cho-duyet",
         "san-pham-minh-hoa-da-duyet",
+        "san-pham-thieu-chung-cu",
+        "san-pham-het-han",
         "khong-ton-tai",
     ],
 )

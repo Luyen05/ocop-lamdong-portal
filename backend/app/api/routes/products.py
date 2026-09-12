@@ -1,12 +1,14 @@
+from datetime import date
 from decimal import Decimal
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import func, or_, select
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.core.database import get_db
 from app.models.category import Category
+from app.models.data_source import ProductSource
 from app.models.product import Product
 from app.models.subject import Subject
 from app.schemas.error import ErrorResponse
@@ -23,6 +25,28 @@ from app.schemas.product import (
 router = APIRouter(prefix="/products", tags=["Products"])
 
 SortOption = Literal["newest", "name", "-name", "price", "-price", "rating"]
+
+
+def public_eligibility_filter():
+    has_recognition_source = (
+        select(ProductSource.product_id)
+        .where(
+            ProductSource.product_id == Product.id,
+            ProductSource.evidence_role == "recognition",
+            ProductSource.verification_level.in_(("A", "B1")),
+        )
+        .exists()
+    )
+    has_current_certificate = and_(
+        Product.cert_code.is_not(None),
+        Product.cert_code != "",
+        Product.cert_issued_at.is_not(None),
+        Product.cert_expires_at.is_not(None),
+        Product.cert_expires_at >= date.today(),
+        Product.issuing_authority.is_not(None),
+        Product.issuing_authority != "",
+    )
+    return or_(has_recognition_source, has_current_certificate)
 
 
 def to_product_list_item(product: Product) -> ProductListItem:
@@ -85,6 +109,7 @@ def list_products(
         Subject.status == "approved",
         Product.star.is_not(None),
         Product.description.is_not(None),
+        public_eligibility_filter(),
     ]
     if search:
         keyword = f"%{search.strip()}%"
@@ -156,6 +181,9 @@ def get_product(slug: str, db: Session = Depends(get_db)) -> ProductDetail:
             Product.status == "approved",
             Product.is_demo.is_(False),
             Subject.status == "approved",
+            Product.star.is_not(None),
+            Product.description.is_not(None),
+            public_eligibility_filter(),
         )
         .options(
             joinedload(Product.category),
