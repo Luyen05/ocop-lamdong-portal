@@ -25,6 +25,7 @@ from app.schemas.product_management import (
     ProductChangeRequestRead,
     DataSourceRead,
 )
+from app.core.config import get_settings
 
 
 def workflow_error(
@@ -172,12 +173,29 @@ def build_unique_slug(db: Session, name: str, product_id: int | None = None) -> 
 def replace_product_images(product: Product, payload: ProductWritePayload) -> None:
     product.images.clear()
     for image in payload.images:
+        image_kwargs = {}
+        if image.storage_path is not None:
+            storage_pattern = rf"products/{product.subject_id}/[0-9a-f]{{32}}\.(jpg|png|webp)"
+            if re.fullmatch(storage_pattern, image.storage_path) is None:
+                raise workflow_error(
+                    status.HTTP_403_FORBIDDEN,
+                    "PRODUCT_IMAGE_NOT_OWNED",
+                    "Ảnh tải lên không thuộc chủ thể hiện tại.",
+                )
+            if not (get_settings().upload_directory / image.storage_path).is_file():
+                raise workflow_error(
+                    status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    "PRODUCT_IMAGE_NOT_FOUND",
+                    "Không tìm thấy file ảnh đã tải lên.",
+                )
+            image_kwargs["storage_path"] = image.storage_path
         product.images.append(
             ProductImage(
                 image_url=image.image_url,
                 alt_text=product.name,
                 is_primary=image.is_primary,
                 sort_order=image.sort_order,
+                **image_kwargs,
             )
         )
 
@@ -253,6 +271,7 @@ def to_managed_product_read(product: Product) -> ManagedProductRead:
             ManagedProductImageRead(
                 id=image.id,
                 image_url=image.image_url,
+                storage_path=image.storage_path,
                 is_primary=image.is_primary,
                 sort_order=image.sort_order,
             )
@@ -358,6 +377,7 @@ def to_change_request_read(change_request: ProductChangeRequest) -> ProductChang
         images=[
             {
                 "image_url": image.image_url,
+                "storage_path": image.storage_path,
                 "is_primary": image.is_primary,
                 "sort_order": image.sort_order,
             }

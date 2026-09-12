@@ -59,6 +59,7 @@ class ProductImagePayload(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     image_url: str = Field(min_length=8, max_length=500)
+    storage_path: str | None = Field(default=None, min_length=10, max_length=500)
     is_primary: bool = False
     sort_order: int = Field(default=0, ge=0, le=100)
 
@@ -133,6 +134,13 @@ class ProductWritePayload(BaseModel):
 
 class ManagedProductImageRead(ProductImagePayload):
     id: int
+
+
+class ProductImageUploadResponse(BaseModel):
+    image_url: str
+    storage_path: str
+    content_type: Literal["image/jpeg", "image/png", "image/webp"]
+    size_bytes: int
 
 
 class ManagedProductCategoryRead(BaseModel):
