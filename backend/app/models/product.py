@@ -73,6 +73,12 @@ class Product(Base):
         default=Decimal("0"),
     )
     views: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    is_demo: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+        server_default="false",
+    )
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="draft")
     submitted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     reviewed_by: Mapped[int | None] = mapped_column(

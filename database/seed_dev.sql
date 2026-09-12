@@ -97,6 +97,7 @@ INSERT INTO ocop_products (
   ingredients,
   usage_instructions,
   rating_avg,
+  is_demo,
   status
 )
 SELECT
@@ -118,6 +119,7 @@ SELECT
   demo.ingredients,
   demo.usage_instructions,
   demo.rating_avg,
+  TRUE,
   'approved'
 FROM subjects
 JOIN users ON users.id = subjects.user_id
@@ -200,5 +202,6 @@ CROSS JOIN (
 )
 JOIN categories ON categories.slug = demo.category_slug
 WHERE users.email = 'demo-subject@local.invalid'
-ON CONFLICT (slug) DO NOTHING;
+ON CONFLICT (slug) DO UPDATE SET
+  is_demo = TRUE;
 
