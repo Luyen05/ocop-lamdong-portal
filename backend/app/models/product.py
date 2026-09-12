@@ -49,21 +49,21 @@ class Product(Base):
     )
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     slug: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
-    star: Mapped[int] = mapped_column(SmallInteger, nullable=False)
-    price: Mapped[Decimal] = mapped_column(
+    star: Mapped[int | None] = mapped_column(SmallInteger)
+    price: Mapped[Decimal | None] = mapped_column(
         Numeric(12, 2),
-        nullable=False,
         default=Decimal("0"),
     )
-    unit: Mapped[str] = mapped_column(String(50), nullable=False)
+    unit: Mapped[str | None] = mapped_column(String(50))
     cert_code: Mapped[str | None] = mapped_column(String(100), unique=True)
     cert_year: Mapped[int | None] = mapped_column(SmallInteger)
     cert_issued_at: Mapped[date | None] = mapped_column()
     cert_expires_at: Mapped[date | None] = mapped_column()
     issuing_authority: Mapped[str | None] = mapped_column(String(255))
     certificate_url: Mapped[str | None] = mapped_column(String(500))
+    certificate_storage_path: Mapped[str | None] = mapped_column(String(500))
     vietgap_code: Mapped[str | None] = mapped_column(String(100))
-    description: Mapped[str] = mapped_column(Text, nullable=False)
+    description: Mapped[str | None] = mapped_column(Text)
     story: Mapped[str | None] = mapped_column(Text)
     ingredients: Mapped[str | None] = mapped_column(Text)
     usage_instructions: Mapped[str | None] = mapped_column(Text)
