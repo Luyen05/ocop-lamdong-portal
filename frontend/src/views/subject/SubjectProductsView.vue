@@ -19,7 +19,8 @@ import type {
 
 const products = ref<ManagedProduct[]>([])
 const changeRequests = ref<ProductChangeRequest[]>([])
-const filter = ref<ProductWorkflowStatus | ''>('')
+type ProductGroup = 'all' | 'draft' | 'pending' | 'revision' | 'approved'
+const filter = ref<ProductGroup>('all')
 const loading = ref(true)
 const actionId = ref<number | null>(null)
 const errorMessage = ref('')
@@ -40,8 +41,26 @@ const statusLabels: Record<ProductWorkflowStatus, string> = {
 }
 
 const filteredProducts = computed(() =>
-  filter.value ? products.value.filter((item) => item.status === filter.value) : products.value,
+  filter.value === 'all'
+    ? products.value
+    : filter.value === 'revision'
+      ? products.value.filter((item) => ['needs_revision', 'rejected'].includes(item.status))
+      : products.value.filter((item) => item.status === filter.value),
 )
+
+const productGroups: Array<{ value: ProductGroup; label: string }> = [
+  { value: 'all', label: 'Tất cả' },
+  { value: 'draft', label: 'Bản nháp' },
+  { value: 'pending', label: 'Chờ duyệt' },
+  { value: 'revision', label: 'Cần bổ sung' },
+  { value: 'approved', label: 'Đang công khai' },
+]
+
+function groupCount(group: ProductGroup): number {
+  if (group === 'all') return products.value.length
+  if (group === 'revision') return products.value.filter((item) => ['needs_revision', 'rejected'].includes(item.status)).length
+  return products.value.filter((item) => item.status === group).length
+}
 
 async function loadData(): Promise<void> {
   loading.value = true
@@ -176,15 +195,16 @@ onMounted(loadData)
     <div v-if="errorMessage" class="alert alert-danger" role="alert">{{ errorMessage }}</div>
     <div v-if="successMessage" class="alert alert-success" role="status">{{ successMessage }}</div>
 
-    <section class="filter-bar">
-      <label>
-        Trạng thái
-        <select v-model="filter">
-          <option value="">Tất cả</option>
-          <option v-for="(label, value) in statusLabels" :key="value" :value="value">{{ label }}</option>
-        </select>
-      </label>
-      <strong>{{ filteredProducts.length }} sản phẩm</strong>
+    <section class="filter-bar" aria-label="Lọc sản phẩm theo trạng thái">
+      <button
+        v-for="group in productGroups"
+        :key="group.value"
+        type="button"
+        :class="{ active: filter === group.value }"
+        @click="filter = group.value"
+      >
+        {{ group.label }} <span>{{ groupCount(group.value) }}</span>
+      </button>
     </section>
 
     <section class="product-panel">
@@ -202,10 +222,10 @@ onMounted(loadData)
           <div class="product-copy">
             <div>
               <span :class="['status', 'status-' + product.status]">{{ statusLabels[product.status] }}</span>
-              <span class="stars">{{ product.star }} sao theo chứng nhận</span>
+              <span v-if="product.star" class="stars">{{ product.star }} sao theo chứng nhận</span>
             </div>
             <h2>{{ product.name }}</h2>
-            <p>{{ product.category.name }} · {{ product.cert_code }}</p>
+            <p>{{ product.category.name }} · {{ product.cert_code || 'Chưa có mã chứng nhận' }}</p>
             <small>Cập nhật {{ formatDate(product.updated_at) }}</small>
             <p v-if="product.moderation_note" class="moderation-note">
               Phản hồi của {{ product.reviewed_by_name || 'quản trị viên' }}
@@ -226,7 +246,7 @@ onMounted(loadData)
               v-if="['draft', 'needs_revision', 'rejected'].includes(product.status) || (product.status === 'approved' && !activeRequest(product.id))"
               :to="'/chu-the/san-pham/' + product.id + '/chinh-sua'"
             >
-              {{ product.status === 'approved' ? 'Đề nghị cập nhật' : 'Chỉnh sửa' }}
+              {{ product.status === 'approved' ? 'Đề nghị cập nhật' : ['needs_revision', 'rejected'].includes(product.status) ? 'Bổ sung hồ sơ' : 'Chỉnh sửa' }}
             </RouterLink>
             <RouterLink
               v-if="activeRequest(product.id)?.status === 'needs_revision' && activeRequest(product.id)?.request_type === 'update'"
@@ -305,10 +325,11 @@ onMounted(loadData)
 .page-heading h1 { margin: 4px 0; color: var(--ocop-navy); font-size: 30px; }
 .page-heading p { margin: 0; color: var(--ocop-slate); font-size: 13px; }
 .primary-button, .product-actions a { padding: 10px 14px; border-radius: 9px; background: var(--ocop-primary-700); color: #fff; font-size: 12px; font-weight: 700; text-align: center; text-decoration: none; }
-.filter-bar { display: flex; padding: 14px 16px; align-items: end; justify-content: space-between; border: 1px solid var(--ocop-border); border-radius: 12px; background: #fff; }
-.filter-bar label, .dialog-card label { display: grid; gap: 5px; color: #56677c; font-size: 11px; font-weight: 700; }
-.filter-bar select { min-width: 190px; padding: 8px; border: 1px solid var(--ocop-border); border-radius: 8px; background: #fff; }
-.filter-bar strong { color: var(--ocop-primary-700); font-size: 12px; }
+.filter-bar { display: flex; padding: 8px; flex-wrap: wrap; gap: 7px; border: 1px solid var(--ocop-border); border-radius: 12px; background: #fff; }
+.filter-bar button { padding: 8px 11px; border: 1px solid transparent; border-radius: 8px; background: transparent; color: #56677c; font-size: 11px; font-weight: 700; }
+.filter-bar button span { margin-left: 4px; padding: 2px 6px; border-radius: 999px; background: #eef2f6; font-size: 9px; }
+.filter-bar button.active { border-color: #b8ddcf; background: #edf9f4; color: var(--ocop-primary-700); }
+.dialog-card label { display: grid; gap: 5px; color: #56677c; font-size: 11px; font-weight: 700; }
 .product-panel { overflow: hidden; border: 1px solid var(--ocop-border); border-radius: 14px; background: #fff; }
 .product-list article { display: grid; padding: 16px; align-items: center; grid-template-columns: 88px minmax(0, 1fr) auto; gap: 16px; border-bottom: 1px solid #edf1f4; }
 .product-list article:last-child { border-bottom: 0; }

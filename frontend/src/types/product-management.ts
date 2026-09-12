@@ -49,17 +49,25 @@ export interface ProductImageUpload {
   size_bytes: number
 }
 
+export interface ProductCertificateUpload {
+  storage_path: string
+  content_type: 'application/pdf' | 'image/jpeg' | 'image/png'
+  size_bytes: number
+  original_filename: string
+}
+
 export interface ProductWritePayload {
   category_id: number
   name: string
   star: number
-  price: string
-  unit: string
+  price: string | null
+  unit: string | null
   cert_code: string
   cert_issued_at: string
   cert_expires_at: string
   issuing_authority: string
-  certificate_url: string
+  certificate_url: string | null
+  certificate_storage_path?: string | null
   vietgap_code: string | null
   description: string
   story: string | null
@@ -68,19 +76,30 @@ export interface ProductWritePayload {
   images: ProductImagePayload[]
 }
 
-export interface ManagedProduct
-  extends Omit<
-    ProductWritePayload,
-    'images' | 'cert_code' | 'cert_issued_at' | 'cert_expires_at' | 'issuing_authority' | 'certificate_url'
-  > {
-  id: number
-  subject_id: number
-  slug: string
+export interface ProductDraftPayload {
+  category_id: number
+  name: string
+  star: number | null
+  price: string | null
+  unit: string | null
   cert_code: string | null
   cert_issued_at: string | null
   cert_expires_at: string | null
   issuing_authority: string | null
   certificate_url: string | null
+  certificate_storage_path?: string | null
+  vietgap_code: string | null
+  description: string | null
+  story: string | null
+  ingredients: string | null
+  usage_instructions: string | null
+  images: ProductImagePayload[]
+}
+
+export interface ManagedProduct extends ProductDraftPayload {
+  id: number
+  subject_id: number
+  slug: string
   status: ProductWorkflowStatus
   submitted_at: string | null
   reviewed_at: string | null
@@ -106,17 +125,7 @@ export interface ManagedProductListResponse {
   total: number
 }
 
-export interface ProductSnapshot
-  extends Omit<
-    ProductWritePayload,
-    'cert_code' | 'cert_issued_at' | 'cert_expires_at' | 'issuing_authority' | 'certificate_url'
-  > {
-  cert_code: string | null
-  cert_issued_at: string | null
-  cert_expires_at: string | null
-  issuing_authority: string | null
-  certificate_url: string | null
-}
+export type ProductSnapshot = ProductWritePayload
 
 export interface ProductChangeRequest {
   id: number

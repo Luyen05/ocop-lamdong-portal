@@ -53,7 +53,7 @@ describe('SubjectProductEditorView', () => {
     const file = new File([new Uint8Array([137, 80, 78, 71])], 'san-pham.png', {
       type: 'image/png',
     })
-    const input = wrapper.get('input[type="file"]')
+    const input = wrapper.get('.upload-field input[type="file"]')
     Object.defineProperty(input.element, 'files', { value: [file] })
     await input.trigger('change')
     await flushPromises()
@@ -72,7 +72,7 @@ describe('SubjectProductEditorView', () => {
     const file = new File([new Uint8Array(5 * 1024 * 1024 + 1)], 'qua-lon.webp', {
       type: 'image/webp',
     })
-    const input = wrapper.get('input[type="file"]')
+    const input = wrapper.get('.upload-field input[type="file"]')
     Object.defineProperty(input.element, 'files', { value: [file] })
     await input.trigger('change')
 

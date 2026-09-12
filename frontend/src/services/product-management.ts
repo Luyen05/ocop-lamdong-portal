@@ -11,6 +11,8 @@ import type {
   ProductChangeRevisionPayload,
   ProductChangeStatus,
   ProductChangeType,
+  ProductCertificateUpload,
+  ProductDraftPayload,
   ProductModerationPayload,
   ProductEvidenceResponse,
   ProductEvidenceLinkPayload,
@@ -34,6 +36,30 @@ export async function deleteTemporaryProductImage(storagePath: string): Promise<
   await http.delete(`/subject/product-images/${encodeURIComponent(fileName)}`)
 }
 
+export async function uploadProductCertificate(file: File): Promise<ProductCertificateUpload> {
+  const formData = new FormData()
+  formData.append('file', file)
+  const response = await http.post<ProductCertificateUpload>('/subject/product-certificates', formData)
+  return response.data
+}
+
+export async function deleteTemporaryProductCertificate(storagePath: string): Promise<void> {
+  const fileName = storagePath.split('/').pop()
+  if (!fileName) return
+  await http.delete(`/subject/product-certificates/${encodeURIComponent(fileName)}`)
+}
+
+export async function downloadProductCertificate(
+  scope: 'subject' | 'admin',
+  productId: number,
+): Promise<Blob> {
+  const path = scope === 'subject'
+    ? `/subject/product-certificates/products/${productId}`
+    : `/admin/products/${productId}/certificate`
+  const response = await http.get<Blob>(path, { responseType: 'blob' })
+  return response.data
+}
+
 export async function listMyProducts(
   status?: ProductWorkflowStatus,
 ): Promise<ManagedProductListResponse> {
@@ -48,16 +74,16 @@ export async function getMyProduct(productId: number): Promise<ManagedProduct> {
   return response.data
 }
 
-export async function createProductDraft(payload: ProductWritePayload): Promise<ManagedProduct> {
+export async function createProductDraft(payload: ProductDraftPayload): Promise<ManagedProduct> {
   const response = await http.post<ManagedProduct>('/subject/products', payload)
   return response.data
 }
 
 export async function updateProductDraft(
   productId: number,
-  payload: ProductWritePayload,
+  payload: ProductDraftPayload,
 ): Promise<ManagedProduct> {
-  const response = await http.put<ManagedProduct>(`/subject/products/${productId}`, payload)
+  const response = await http.patch<ManagedProduct>(`/subject/products/${productId}`, payload)
   return response.data
 }
 

@@ -6,18 +6,21 @@ import { getCategories } from '@/services/categories'
 import { getApiErrorMessage } from '@/services/api-error'
 import {
   createProductDraft,
+  deleteTemporaryProductCertificate,
   deleteTemporaryProductImage,
   getProductChangeRequest,
   getMyProduct,
   requestProductUpdate,
   resubmitProductChangeRequest,
   submitProduct,
+  uploadProductCertificate,
   uploadProductImage,
   updateProductDraft,
 } from '@/services/product-management'
 import type { Category } from '@/types/category'
 import type {
   ManagedProduct,
+  ProductDraftPayload,
   ProductChangeRequest,
   ProductWritePayload,
 } from '@/types/product-management'
@@ -30,8 +33,11 @@ const currentRequest = ref<ProductChangeRequest | null>(null)
 const loading = ref(true)
 const saving = ref(false)
 const uploadingImage = ref(false)
+const uploadingCertificate = ref(false)
 const errorMessage = ref('')
 const imageErrorMessage = ref('')
+const certificateErrorMessage = ref('')
+const certificateFileName = ref('')
 const imageLoadFailed = ref(false)
 const updateReason = ref('')
 
@@ -57,55 +63,73 @@ const pageTitle = computed(() =>
         : 'Thêm sản phẩm',
 )
 
-const today = new Date()
-const threeYearsLater = new Date(today)
-threeYearsLater.setFullYear(today.getFullYear() + 3)
-const isoDate = (value: Date): string => value.toISOString().slice(0, 10)
-
-const form = reactive<ProductWritePayload>({
+const form = reactive<ProductDraftPayload>({
   category_id: 0,
   name: '',
-  star: 3,
-  price: '0',
-  unit: '',
-  cert_code: '',
-  cert_issued_at: isoDate(today),
-  cert_expires_at: isoDate(threeYearsLater),
-  issuing_authority: '',
-  certificate_url: '',
+  star: null,
+  price: null,
+  unit: null,
+  cert_code: null,
+  cert_issued_at: null,
+  cert_expires_at: null,
+  issuing_authority: null,
+  certificate_url: null,
+  certificate_storage_path: null,
   vietgap_code: null,
-  description: '',
+  description: null,
   story: null,
   ingredients: null,
   usage_instructions: null,
-  images: [{ image_url: '', storage_path: null, is_primary: true, sort_order: 0 }],
+  images: [],
 })
+
+const completionItems = computed(() => [
+  {
+    label: 'Thông tin cơ bản',
+    complete: Boolean(form.name.trim().length >= 2 && form.category_id && (form.description?.trim().length || 0) >= 10),
+  },
+  {
+    label: 'Thông tin chứng nhận',
+    complete: Boolean(
+      form.star
+      && form.cert_code?.trim()
+      && form.cert_issued_at
+      && form.cert_expires_at
+      && form.issuing_authority?.trim()
+      && (form.certificate_storage_path || form.certificate_url)
+    ),
+  },
+  { label: 'Ảnh đại diện', complete: Boolean(form.images[0]?.image_url) },
+])
+const isSubmissionReady = computed(() => completionItems.value.every((item) => item.complete))
 
 function fillForm(product: ManagedProduct | ProductWritePayload): void {
   form.category_id = product.category_id
   form.name = product.name
   form.star = product.star
-  form.price = String(product.price)
+  form.price = product.price === null ? null : String(product.price)
   form.unit = product.unit
   form.cert_code = product.cert_code || ''
   form.cert_issued_at = product.cert_issued_at || ''
   form.cert_expires_at = product.cert_expires_at || ''
   form.issuing_authority = product.issuing_authority || ''
   form.certificate_url = product.certificate_url || ''
+  form.certificate_storage_path = product.certificate_storage_path || null
+  certificateFileName.value = product.certificate_storage_path?.split('/').pop() || ''
   form.vietgap_code = product.vietgap_code
   form.description = product.description
   form.story = product.story
   form.ingredients = product.ingredients
   form.usage_instructions = product.usage_instructions
   const primaryImage = product.images.find((image) => image.is_primary) || product.images[0]
-  form.images = [{
-    image_url: primaryImage?.image_url || '',
+  form.images = primaryImage ? [{
+    image_url: primaryImage.image_url,
     storage_path: primaryImage?.storage_path?.startsWith('products/')
       ? primaryImage.storage_path
       : null,
     is_primary: true,
     sort_order: 0,
-  }]
+  }] : []
   imageLoadFailed.value = false
 }
 
@@ -125,16 +149,16 @@ async function handleImageSelection(event: Event): Promise<void> {
     return
   }
 
-  const previousStoragePath = form.images[0].storage_path
+  const previousStoragePath = form.images[0]?.storage_path
   uploadingImage.value = true
   try {
     const uploaded = await uploadProductImage(file)
-    form.images[0] = {
+    form.images = [{
       image_url: uploaded.image_url,
       storage_path: uploaded.storage_path,
       is_primary: true,
       sort_order: 0,
-    }
+    }]
     imageLoadFailed.value = false
     if (previousStoragePath && previousStoragePath !== uploaded.storage_path) {
       await deleteTemporaryProductImage(previousStoragePath).catch(() => undefined)
@@ -146,19 +170,65 @@ async function handleImageSelection(event: Event): Promise<void> {
   }
 }
 
+async function handleCertificateSelection(event: Event): Promise<void> {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  input.value = ''
+  if (!file) return
+  certificateErrorMessage.value = ''
+  if (!['application/pdf', 'image/jpeg', 'image/png'].includes(file.type)) {
+    certificateErrorMessage.value = 'Chỉ chấp nhận chứng nhận PDF, JPEG hoặc PNG.'
+    return
+  }
+  if (file.size > 10 * 1024 * 1024) {
+    certificateErrorMessage.value = 'File chứng nhận không được vượt quá 10 MB.'
+    return
+  }
+  const previousStoragePath = form.certificate_storage_path
+  uploadingCertificate.value = true
+  try {
+    const uploaded = await uploadProductCertificate(file)
+    form.certificate_storage_path = uploaded.storage_path
+    form.certificate_url = null
+    certificateFileName.value = uploaded.original_filename
+    if (previousStoragePath && previousStoragePath !== uploaded.storage_path) {
+      await deleteTemporaryProductCertificate(previousStoragePath).catch(() => undefined)
+    }
+  } catch (error) {
+    certificateErrorMessage.value = getApiErrorMessage(error, 'Không thể tải giấy chứng nhận lên máy chủ.')
+  } finally {
+    uploadingCertificate.value = false
+  }
+}
+
 function handleImageError(): void {
   imageLoadFailed.value = true
 }
 
-function normalizedPayload(): ProductWritePayload {
+function normalizedDraftPayload(): ProductDraftPayload {
   return {
-    ...form,
+    category_id: form.category_id,
+    name: form.name.trim(),
+    star: form.star || null,
+    price: form.price === '' ? null : form.price,
+    unit: form.unit?.trim() || null,
+    cert_code: form.cert_code?.trim() || null,
+    cert_issued_at: form.cert_issued_at || null,
+    cert_expires_at: form.cert_expires_at || null,
+    issuing_authority: form.issuing_authority?.trim() || null,
+    certificate_url: form.certificate_url?.trim() || null,
+    certificate_storage_path: form.certificate_storage_path,
     vietgap_code: form.vietgap_code || null,
+    description: form.description?.trim() || null,
     story: form.story || null,
     ingredients: form.ingredients || null,
     usage_instructions: form.usage_instructions || null,
     images: form.images.map((image, index) => ({ ...image, sort_order: index })),
   }
+}
+
+function submissionPayload(): ProductWritePayload {
+  return normalizedDraftPayload() as ProductWritePayload
 }
 
 async function load(): Promise<void> {
@@ -193,25 +263,29 @@ async function load(): Promise<void> {
 }
 
 async function save(submitAfterSave = false): Promise<void> {
-  if (!form.images[0]?.image_url) {
-    imageErrorMessage.value = 'Vui lòng tải lên ảnh đại diện sản phẩm.'
+  if (form.name.trim().length < 2 || !form.category_id) {
+    errorMessage.value = 'Cần nhập tên và chọn danh mục trước khi lưu bản nháp.'
+    return
+  }
+  if (submitAfterSave && !isSubmissionReady.value) {
+    errorMessage.value = 'Hồ sơ chưa đủ điều kiện gửi duyệt. Vui lòng hoàn thành các mục còn thiếu.'
     return
   }
   saving.value = true
   errorMessage.value = ''
   try {
-    const payload = normalizedPayload()
+    const draftPayload = normalizedDraftPayload()
     if (currentRequest.value) {
       await resubmitProductChangeRequest(currentRequest.value.id, {
-        proposed_data: payload,
+        proposed_data: submissionPayload(),
         reason: updateReason.value || null,
       })
     } else if (isApprovedUpdate.value && currentProduct.value) {
-      await requestProductUpdate(currentProduct.value.id, payload, updateReason.value)
+      await requestProductUpdate(currentProduct.value.id, submissionPayload(), updateReason.value)
     } else {
       const saved = currentProduct.value
-        ? await updateProductDraft(currentProduct.value.id, payload)
-        : await createProductDraft(payload)
+        ? await updateProductDraft(currentProduct.value.id, draftPayload)
+        : await createProductDraft(draftPayload)
       if (submitAfterSave) await submitProduct(saved.id)
     }
     await router.push({
@@ -257,6 +331,14 @@ onMounted(load)
     <p v-if="loading" class="loading-card">Đang tải biểu mẫu...</p>
 
     <form v-else class="product-form" @submit.prevent="save(true)">
+      <aside class="completion-card" aria-label="Mức độ hoàn thiện hồ sơ">
+        <div><strong>Tiến độ hồ sơ</strong><span>{{ completionItems.filter((item) => item.complete).length }}/{{ completionItems.length }} mục</span></div>
+        <ul>
+          <li v-for="item in completionItems" :key="item.label" :class="{ complete: item.complete }">
+            <span>{{ item.complete ? '✓' : '○' }}</span>{{ item.label }}
+          </li>
+        </ul>
+      </aside>
       <section>
         <div class="section-heading">
           <strong>1. Thông tin sản phẩm</strong>
@@ -269,8 +351,8 @@ onMounted(load)
               <option v-for="category in categories" :key="category.id" :value="category.id">{{ category.name }}</option>
             </select>
           </label>
-          <label>Giá tham khảo *<input v-model="form.price" type="number" min="0" step="1000" required /></label>
-          <label>Đơn vị tính *<input v-model.trim="form.unit" placeholder="Hộp 500g" required /></label>
+          <label>Giá tham khảo<input v-model="form.price" type="number" min="0" step="1000" placeholder="Để trống nếu cần liên hệ" /></label>
+          <label>Đơn vị tính<input v-model.trim="form.unit" placeholder="Hộp 500g" /></label>
           <label class="wide">Mô tả sản phẩm *<textarea v-model.trim="form.description" rows="4" required minlength="10" /></label>
           <label class="wide">Câu chuyện sản phẩm<textarea v-model="form.story" rows="3" /></label>
           <label>Thành phần<textarea v-model="form.ingredients" rows="3" /></label>
@@ -287,6 +369,7 @@ onMounted(load)
         <div class="form-grid">
           <label>Hạng sao theo chứng nhận *
             <select v-model.number="form.star" required>
+              <option :value="null" disabled>Chọn hạng sao</option>
               <option :value="3">3 sao</option><option :value="4">4 sao</option><option :value="5">5 sao</option>
             </select>
           </label>
@@ -294,10 +377,21 @@ onMounted(load)
           <label>Ngày cấp *<input v-model="form.cert_issued_at" type="date" required /></label>
           <label>Ngày hết hạn *<input v-model="form.cert_expires_at" type="date" required /></label>
           <label class="wide">Cơ quan công nhận *<input v-model.trim="form.issuing_authority" required /></label>
-          <label class="wide">Đường dẫn tài liệu chứng nhận *
-            <input v-model.trim="form.certificate_url" type="url" placeholder="https://..." required />
-            <small>Tạm dùng URL; upload Firebase sẽ được nối ở module ảnh.</small>
+          <label class="wide certificate-upload">Bản chụp giấy chứng nhận *
+            <input
+              type="file"
+              accept="application/pdf,image/jpeg,image/png"
+              :disabled="uploadingCertificate || saving"
+              @change="handleCertificateSelection"
+            />
+            <small>PDF, JPEG hoặc PNG · tối đa 10 MB · chỉ chủ thể và quản trị viên được xem.</small>
           </label>
+          <p v-if="uploadingCertificate" class="upload-status wide" role="status">Đang tải giấy chứng nhận...</p>
+          <div v-if="certificateErrorMessage" class="alert alert-danger image-alert wide" role="alert">{{ certificateErrorMessage }}</div>
+          <div v-if="form.certificate_storage_path || form.certificate_url" class="certificate-file wide">
+            <span>✓</span>
+            <div><strong>{{ certificateFileName || 'Tài liệu chứng nhận đã liên kết' }}</strong><small>{{ form.certificate_storage_path ? 'File riêng tư trên hệ thống' : 'Tài liệu từ dữ liệu cũ' }}</small></div>
+          </div>
           <label class="wide">Mã VietGAP (nếu có)<input v-model="form.vietgap_code" /></label>
         </div>
       </section>
@@ -315,18 +409,18 @@ onMounted(load)
         </label>
         <p v-if="uploadingImage" class="upload-status" role="status">Đang tải ảnh lên...</p>
         <div v-if="imageErrorMessage" class="alert alert-danger image-alert" role="alert">{{ imageErrorMessage }}</div>
-        <div v-if="form.images[0].image_url" class="preview-card">
+        <div v-if="form.images[0]?.image_url" class="preview-card">
           <img
             v-if="!imageLoadFailed"
             class="image-preview"
-            :src="form.images[0].image_url"
+            :src="form.images[0]?.image_url"
             alt="Xem trước ảnh sản phẩm"
             @error="handleImageError"
           />
           <div v-else class="image-placeholder" role="img" aria-label="Ảnh sản phẩm không tải được">OCOP</div>
           <div>
             <strong>Ảnh đại diện đã chọn</strong>
-            <small v-if="form.images[0].storage_path">Ảnh tải lên hệ thống</small>
+            <small v-if="form.images[0]?.storage_path">Ảnh tải lên hệ thống</small>
             <small v-else>Ảnh từ dữ liệu cũ</small>
           </div>
         </div>
@@ -345,12 +439,12 @@ onMounted(load)
           v-if="!isApprovedUpdate"
           class="secondary-button"
           type="button"
-          :disabled="saving || uploadingImage"
+          :disabled="saving || uploadingImage || uploadingCertificate"
           @click="save(false)"
         >
           Lưu bản nháp
         </button>
-        <button class="primary-button" type="submit" :disabled="saving || uploadingImage">
+        <button class="primary-button" type="submit" :disabled="saving || uploadingImage || uploadingCertificate || !isSubmissionReady">
           {{ saving ? 'Đang lưu...' : isRequestRevision ? 'Gửi lại yêu cầu' : isApprovedUpdate ? 'Gửi yêu cầu cập nhật' : 'Lưu và gửi duyệt' }}
         </button>
       </footer>
@@ -366,6 +460,12 @@ header h1 { margin: 4px 0; font-size: 30px; }
 header p { margin: 0; color: var(--ocop-slate); font-size: 13px; }
 .loading-card, .product-form section { padding: 22px; border: 1px solid var(--ocop-border); border-radius: 14px; background: #fff; }
 .product-form { display: grid; gap: 16px; }
+.completion-card { padding: 16px 20px; border: 1px solid #b8ddcf; border-radius: 14px; background: #f3fbf7; }
+.completion-card > div { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.completion-card > div span { color: var(--ocop-primary-700); font-size: 12px; font-weight: 800; }
+.completion-card ul { display: flex; margin: 12px 0 0; padding: 0; flex-wrap: wrap; gap: 8px; list-style: none; }
+.completion-card li { display: flex; padding: 6px 9px; align-items: center; gap: 5px; border-radius: 999px; background: #fff; color: #7b8797; font-size: 10px; font-weight: 700; }
+.completion-card li.complete { background: #daf5e8; color: #08745a; }
 .section-heading { display: flex; margin-bottom: 16px; justify-content: space-between; gap: 12px; }
 .section-heading strong { color: var(--ocop-navy); }
 .section-heading small, label small { color: var(--ocop-slate); font-size: 10px; }
@@ -376,6 +476,13 @@ input, select, textarea { width: 100%; padding: 10px 11px; border: 1px solid var
 textarea { resize: vertical; }
 .notice { margin-bottom: 15px; padding: 10px 12px; border-radius: 8px; background: #eff6ff; color: #1d4f91; font-size: 11px; }
 .upload-field input[type='file'] { padding: 8px; cursor: pointer; }
+.certificate-upload input[type='file'] { padding: 8px; cursor: pointer; }
+.wide { grid-column: 1 / -1; }
+.certificate-file { display: flex; padding: 11px 12px; align-items: center; gap: 10px; border: 1px solid #b8ddcf; border-radius: 9px; background: #f3fbf7; color: var(--ocop-primary-700); }
+.certificate-file > span { font-size: 18px; font-weight: 800; }
+.certificate-file > div { display: grid; gap: 2px; }
+.certificate-file strong { color: var(--ocop-navy); font-size: 11px; overflow-wrap: anywhere; }
+.certificate-file small { color: var(--ocop-slate); font-size: 9px; }
 .upload-status { margin: 12px 0 0; color: var(--ocop-primary-700); font-size: 12px; font-weight: 700; }
 .image-alert { margin: 12px 0 0; font-size: 12px; }
 .preview-card { display: flex; width: fit-content; max-width: 100%; margin-top: 14px; padding: 8px; align-items: center; gap: 12px; border: 1px solid var(--ocop-border); border-radius: 12px; background: var(--ocop-surface); }
@@ -392,6 +499,7 @@ footer a, footer button { padding: 10px 15px; border: 1px solid var(--ocop-borde
   .form-grid { grid-template-columns: 1fr; }
   label.wide { grid-column: auto; }
   .section-heading { flex-direction: column; }
+  .completion-card ul { display: grid; }
   footer { align-items: stretch; flex-direction: column-reverse; }
   footer a, footer button { text-align: center; }
   .preview-card { width: 100%; align-items: stretch; flex-direction: column; }
