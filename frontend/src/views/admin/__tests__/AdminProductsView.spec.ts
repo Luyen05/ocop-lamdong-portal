@@ -207,7 +207,17 @@ describe('AdminProductsView', () => {
 
     const wrapper = mount(AdminProductsView)
     await flushPromises()
-    await wrapper.get('select').setValue('pending')
+    expect(listAdminProducts).toHaveBeenLastCalledWith(expect.objectContaining({
+      page: 1,
+      page_size: 20,
+      status: 'pending',
+    }))
+    expect(wrapper.findAll('.filter-panel select')).toHaveLength(1)
+
+    const advancedFilterButton = wrapper.findAll('button').find((button) => button.text() === 'Bộ lọc nâng cao')
+    await advancedFilterButton!.trigger('click')
+    expect(wrapper.findAll('.filter-panel select')).toHaveLength(4)
+
     await wrapper.get('.filter-panel').trigger('submit')
     await flushPromises()
     expect(listAdminProducts).toHaveBeenLastCalledWith(expect.objectContaining({

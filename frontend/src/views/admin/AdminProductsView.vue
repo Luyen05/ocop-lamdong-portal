@@ -58,9 +58,10 @@ const decision = ref<ProductModerationDecision>('approved')
 const reviewNote = ref('')
 const submitting = ref(false)
 const brokenProductImages = ref(new Set<number>())
+const showAdvancedFilters = ref(false)
 
 const search = ref('')
-const workflowStatus = ref<ProductWorkflowStatus | ''>('')
+const workflowStatus = ref<ProductWorkflowStatus | ''>('pending')
 const verificationLevel = ref<VerificationLevel | ''>('')
 const verificationStatus = ref<ProductVerificationStatus | ''>('')
 const evidenceIssue = ref<EvidenceIssueFilter>('')
@@ -116,10 +117,11 @@ async function applyFilters(): Promise<void> {
 
 async function resetFilters(): Promise<void> {
   search.value = ''
-  workflowStatus.value = ''
+  workflowStatus.value = 'pending'
   verificationLevel.value = ''
   verificationStatus.value = ''
   evidenceIssue.value = ''
+  showAdvancedFilters.value = false
   page.value = 1
   await loadData()
 }
@@ -289,48 +291,55 @@ onMounted(loadData)
     </nav>
 
     <form v-if="activeTab === 'products'" class="filter-panel" @submit.prevent="applyFilters">
-      <label class="search-field">Tìm sản phẩm hoặc chủ thể
-        <input v-model="search" type="search" placeholder="Tên, mã chứng nhận, chủ thể..." />
-      </label>
-      <label>Trạng thái nghiệp vụ
-        <select v-model="workflowStatus">
-          <option value="">Tất cả</option>
-          <option value="pending">Chờ duyệt</option>
-          <option value="needs_revision">Cần bổ sung</option>
-          <option value="approved">Đã công khai</option>
-          <option value="draft">Bản nháp</option>
-          <option value="rejected">Bị từ chối</option>
-          <option value="suspended">Tạm ẩn</option>
-          <option value="archived">Đã lưu trữ</option>
-        </select>
-      </label>
-      <label>Cấp nguồn cao nhất
-        <select v-model="verificationLevel">
-          <option value="">Tất cả</option>
-          <option value="A">A — Quyết định chính thức</option>
-          <option value="B1">B1 — Cơ quan nhà nước</option>
-          <option value="B2">B2 — Đề xuất/chấm điểm</option>
-          <option value="C">C — Nguồn chủ thể</option>
-        </select>
-      </label>
-      <label>Trạng thái xác minh
-        <select v-model="verificationStatus">
-          <option value="">Tất cả</option>
-          <option value="verified_official_decision">Có quyết định chính thức</option>
-          <option value="verified_government_source">Có nguồn cơ quan nhà nước</option>
-          <option value="pending_verification">Chờ xác minh</option>
-        </select>
-      </label>
-      <label>Vấn đề hồ sơ
-        <select v-model="evidenceIssue">
-          <option value="">Tất cả</option>
-          <option value="missing_decision">Thiếu số quyết định</option>
-          <option value="missing_issued_at">Thiếu ngày cấp</option>
-        </select>
-      </label>
-      <div class="filter-actions">
-        <button type="button" @click="resetFilters">Đặt lại</button>
-        <button class="primary-button" type="submit">Áp dụng</button>
+      <div class="basic-filters">
+        <label class="search-field">Tìm sản phẩm hoặc chủ thể
+          <input v-model="search" type="search" placeholder="Tên, mã chứng nhận, chủ thể..." />
+        </label>
+        <label>Trạng thái
+          <select v-model="workflowStatus">
+            <option value="">Tất cả</option>
+            <option value="pending">Chờ duyệt</option>
+            <option value="needs_revision">Cần bổ sung</option>
+            <option value="approved">Đã công khai</option>
+            <option value="draft">Bản nháp</option>
+            <option value="rejected">Bị từ chối</option>
+            <option value="suspended">Tạm ẩn</option>
+            <option value="archived">Đã lưu trữ</option>
+          </select>
+        </label>
+        <div class="filter-actions">
+          <button type="button" :aria-expanded="showAdvancedFilters" @click="showAdvancedFilters = !showAdvancedFilters">
+            {{ showAdvancedFilters ? 'Ẩn nâng cao' : 'Bộ lọc nâng cao' }}
+          </button>
+          <button type="button" @click="resetFilters">Đặt lại</button>
+          <button class="primary-button" type="submit">Áp dụng</button>
+        </div>
+      </div>
+      <div v-if="showAdvancedFilters" class="advanced-filters">
+        <label>Cấp nguồn cao nhất
+          <select v-model="verificationLevel">
+            <option value="">Tất cả</option>
+            <option value="A">A — Quyết định chính thức</option>
+            <option value="B1">B1 — Cơ quan nhà nước</option>
+            <option value="B2">B2 — Đề xuất/chấm điểm</option>
+            <option value="C">C — Nguồn chủ thể</option>
+          </select>
+        </label>
+        <label>Trạng thái xác minh
+          <select v-model="verificationStatus">
+            <option value="">Tất cả</option>
+            <option value="verified_official_decision">Có quyết định chính thức</option>
+            <option value="verified_government_source">Có nguồn cơ quan nhà nước</option>
+            <option value="pending_verification">Chờ xác minh</option>
+          </select>
+        </label>
+        <label>Vấn đề hồ sơ
+          <select v-model="evidenceIssue">
+            <option value="">Tất cả</option>
+            <option value="missing_decision">Thiếu số quyết định</option>
+            <option value="missing_issued_at">Thiếu ngày cấp</option>
+          </select>
+        </label>
       </div>
     </form>
 
@@ -423,14 +432,27 @@ onMounted(loadData)
             <a v-if="selectedProduct.images[0]?.image_url" :href="selectedProduct.images[0].image_url" target="_blank" rel="noopener">Mở ảnh sản phẩm ↗</a>
           </div>
 
-          <p v-if="evidenceLoading" class="evidence-message">Đang tải chứng cứ...</p>
-          <p v-else-if="evidenceError" class="evidence-message error">{{ evidenceError }}</p>
-          <ProductEvidenceManager
-            v-else-if="evidence"
-            :product-id="selectedProduct.id"
-            :evidence="evidence"
-            @updated="updateEvidenceSummary"
-          />
+          <p v-if="canModerateSelectedProduct" class="workflow-guide">
+            Kiểm tra thông tin chính, chọn <strong>Duyệt hiển thị</strong> rồi xác nhận để công khai sản phẩm.
+            Việc thêm chứng cứ chỉ hỗ trợ đối chiếu và không tự động đổi trạng thái.
+          </p>
+
+          <details class="evidence-disclosure">
+            <summary>
+              <span>Chứng cứ nguồn</span>
+              <small>Tùy chọn đối chiếu · không tự đổi trạng thái</small>
+            </summary>
+            <div class="evidence-content">
+              <p v-if="evidenceLoading" class="evidence-message">Đang tải chứng cứ...</p>
+              <p v-else-if="evidenceError" class="evidence-message error">{{ evidenceError }}</p>
+              <ProductEvidenceManager
+                v-else-if="evidence"
+                :product-id="selectedProduct.id"
+                :evidence="evidence"
+                @updated="updateEvidenceSummary"
+              />
+            </div>
+          </details>
         </template>
 
         <template v-else-if="selectedRequest">
@@ -505,10 +527,12 @@ onMounted(loadData)
 .tab-list button, .filter-actions button { padding: 10px 14px; border: 1px solid var(--ocop-border); border-radius: 9px; background: #fff; color: #56677c; font-size: 12px; font-weight: 700; }
 .tab-list button.active, .filter-actions .primary-button { border-color: var(--ocop-primary-700); background: var(--ocop-primary-700); color: #fff; }
 .tab-list span { margin-left: 5px; padding: 2px 6px; border-radius: 999px; background: rgb(255 255 255 / 20%); }
-.filter-panel { display: grid; padding: 16px; grid-template-columns: minmax(220px, 1.5fr) repeat(4, minmax(145px, 1fr)) auto; align-items: end; gap: 10px; border: 1px solid var(--ocop-border); border-radius: 14px; background: #fff; }
+.filter-panel { display: grid; padding: 16px; gap: 12px; border: 1px solid var(--ocop-border); border-radius: 14px; background: #fff; }
+.basic-filters { display: grid; grid-template-columns: minmax(240px, 2fr) minmax(180px, 1fr) auto; align-items: end; gap: 10px; }
+.advanced-filters { display: grid; padding-top: 12px; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; border-top: 1px solid var(--ocop-border); }
 .filter-panel label { display: grid; gap: 5px; color: #526277; font-size: 10px; font-weight: 700; }
 .filter-panel input, .filter-panel select { width: 100%; min-height: 38px; padding: 8px 10px; border: 1px solid var(--ocop-border); border-radius: 8px; background: #fff; font-size: 11px; }
-.filter-actions { display: flex; gap: 7px; }
+.filter-actions { display: flex; flex-wrap: wrap; gap: 7px; }
 .queue-panel { overflow: hidden; border: 1px solid var(--ocop-border); border-radius: 14px; background: #fff; }
 .queue-panel article { display: grid; padding: 15px 16px; align-items: center; grid-template-columns: 72px minmax(0, 1fr) auto; gap: 14px; border-bottom: 1px solid #edf1f4; }
 .queue-panel article:last-child { border-bottom: 0; }
@@ -549,6 +573,12 @@ onMounted(loadData)
 .document-links { display: flex; margin-top: 12px; gap: 8px; }
 .document-links a, .evidence-card a { color: #1d4f91; font-size: 11px; font-weight: 700; text-decoration: none; }
 .document-links a { padding: 8px 10px; border-radius: 7px; background: #eff6ff; }
+.workflow-guide { margin: 14px 0 0; padding: 12px 14px; border: 1px solid #a7d9c8; border-radius: 9px; background: #f0fdf8; color: #28574a; font-size: 11px; line-height: 1.55; }
+.evidence-disclosure { margin-top: 14px; border: 1px solid var(--ocop-border); border-radius: 10px; background: #fff; }
+.evidence-disclosure summary { display: flex; padding: 12px 14px; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer; color: #334155; font-size: 12px; font-weight: 800; }
+.evidence-disclosure summary small { color: var(--ocop-slate); font-size: 9px; font-weight: 600; }
+.evidence-content { padding: 0 14px 14px; }
+.evidence-content :deep(.evidence-section) { margin-top: 0; border-top: 0; padding-top: 6px; }
 .evidence-section { display: grid; margin-top: 22px; gap: 11px; border-top: 1px solid var(--ocop-border); padding-top: 18px; }
 .evidence-section h3 { margin: 3px 0 0; font-size: 17px; }
 .evidence-overview { margin-top: 0; grid-template-columns: 1fr 2fr; }
@@ -581,14 +611,14 @@ onMounted(loadData)
 .review-modal footer { display: flex; margin-top: 16px; justify-content: flex-end; gap: 8px; }
 .review-modal .submit-button { border-color: var(--ocop-primary-700); background: var(--ocop-primary-700); color: #fff; }
 @media (max-width: 1180px) {
-  .filter-panel { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .search-field { grid-column: span 2; }
+  .basic-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .filter-actions { grid-column: 1 / -1; }
 }
 @media (max-width: 640px) {
   .page-heading { align-items: start; flex-direction: column; }
-  .tab-list, .filter-panel { grid-template-columns: 1fr; }
+  .tab-list, .basic-filters, .advanced-filters { grid-template-columns: 1fr; }
   .tab-list { display: grid; }
-  .search-field { grid-column: auto; }
+  .filter-actions { grid-column: auto; }
   .filter-actions button { flex: 1; }
   .pagination-bar { align-items: stretch; flex-direction: column; }
   .pagination-bar div, .pagination-bar button { flex: 1; }
@@ -599,6 +629,7 @@ onMounted(loadData)
   .last-review-box p { grid-column: auto; }
   .review-grid .wide { grid-column: auto; }
   .document-links { flex-direction: column; }
+  .evidence-disclosure summary { align-items: start; flex-direction: column; }
   .comparison-heading { align-items: start; flex-direction: column; }
   .comparison-header { display: none; }
   .comparison-row { grid-template-columns: 1fr; gap: 4px; }
