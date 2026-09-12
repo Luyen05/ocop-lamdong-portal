@@ -8,9 +8,12 @@ trên môi trường production.
 
 ## Cách nạp dữ liệu
 
-Database hiện có cần chạy migration 004 trước:
+Database hiện có cần chạy lần lượt migration 004 đến 007 trước:
 
     Get-Content .\database\migrations\004_product_moderation.sql -Raw | docker compose exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+    Get-Content .\database\migrations\005_add_product_sources.sql -Raw | docker compose exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+    Get-Content .\database\migrations\006_simplify_subject_product_flow.sql -Raw | docker compose exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+    Get-Content .\database\migrations\007_hide_demo_products.sql -Raw | docker compose exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
 
 Sau đó nạp seed:
 
@@ -34,7 +37,7 @@ Mật khẩu chung: **DemoOCOP@2026**
 | Trà atiso túi lọc | draft | Chỉnh sửa, xóa bản nháp và gửi duyệt |
 | Mứt dâu Đà Lạt | pending | Admin duyệt hiển thị/yêu cầu bổ sung/từ chối |
 | Cà phê Arabica | needs_revision | Chủ thể xem phản hồi, sửa và gửi lại |
-| Hồng treo gió Đà Lạt | approved | Kiểm tra API công khai và yêu cầu cập nhật |
+| Hồng treo gió Đà Lạt | approved | Kiểm tra yêu cầu cập nhật trong khu vực nội bộ |
 | Mật ong hoa cà phê | approved | Kiểm tra yêu cầu ngừng hiển thị |
 | Bột rau má sấy lạnh | rejected | Chỉnh sửa hồ sơ bị từ chối và gửi lại |
 
@@ -50,9 +53,9 @@ Ngoài các trạng thái trên, seed tạo sẵn:
 - Chủ thể nhìn thấy 6 sản phẩm thuộc đơn vị của mình.
 - Admin nhìn thấy 1 sản phẩm mới ở hàng đợi kiểm duyệt.
 - Admin nhìn thấy 2 yêu cầu sửa/ngừng hiển thị.
-- Sản phẩm hồng treo gió và mật ong xuất hiện trên API công khai khi chưa xử lý
-  yêu cầu thay đổi.
-- Sản phẩm draft, pending, needs_revision và rejected không xuất hiện công khai.
-- Sau khi admin duyệt mứt dâu, sản phẩm này xuất hiện ở trang sản phẩm công khai.
+- Cả sáu sản phẩm đều được đánh dấu `is_demo` và không xuất hiện trên API công
+  khai, kể cả khi trạng thái là `approved`.
+- Việc duyệt mứt dâu vẫn đổi trạng thái và cho phép kiểm tra đầy đủ quy trình
+  chủ thể - quản trị viên trong khu vực nội bộ.
 - Sau khi admin duyệt ngừng hiển thị mật ong, sản phẩm chuyển thành archived và
   API công khai trả 404.
