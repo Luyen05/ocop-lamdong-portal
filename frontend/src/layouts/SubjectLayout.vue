@@ -36,9 +36,14 @@ async function logout(): Promise<void> {
     </aside>
     <section class="subject-main">
       <header class="subject-topbar">
-        <div>
+        <div class="subject-page-heading">
           <small>Quản lý nội dung OCOP</small>
           <strong>{{ pageTitle }}</strong>
+        </div>
+        <div class="subject-mobile-actions" aria-label="Tiện ích chủ thể">
+          <RouterLink to="/tai-khoan" aria-label="Mở trang tài khoản">TK</RouterLink>
+          <RouterLink to="/" aria-label="Về trang công khai">Trang chủ</RouterLink>
+          <button type="button" aria-label="Đăng xuất" @click="logout">Thoát</button>
         </div>
         <RouterLink to="/tai-khoan" class="subject-account">
           <span>{{ initial }}</span>
@@ -59,7 +64,7 @@ async function logout(): Promise<void> {
 .subject-brand { display: flex; padding: 0 8px 20px; align-items: center; gap: 10px; border-bottom: 1px solid rgb(255 255 255 / 12%); color: #fff; text-decoration: none; }
 .subject-brand > span { display: grid; width: 38px; height: 38px; place-items: center; border-radius: 10px; background: var(--ocop-primary-700); }
 .subject-brand img { width: 22px; }
-.subject-brand div, .subject-topbar > div, .subject-account div { display: grid; }
+.subject-brand div, .subject-page-heading, .subject-account div { display: grid; }
 .subject-brand strong { font-size: 13px; }
 .subject-brand small, .subject-topbar small, .subject-account small { color: #91aaa3; font-size: 10px; }
 .subject-sidebar nav { display: grid; margin-top: 24px; gap: 6px; }
@@ -73,6 +78,7 @@ async function logout(): Promise<void> {
 .subject-account { display: flex; margin-left: auto; align-items: center; gap: 8px; color: var(--ocop-navy); text-decoration: none; }
 .subject-account > span { display: grid; width: 36px; height: 36px; place-items: center; border-radius: 50%; background: var(--ocop-primary-700); color: #fff; font-size: 12px; font-weight: 800; }
 .subject-account div strong { font-size: 12px; }
+.subject-mobile-actions { display: none; }
 .subject-content { width: min(100%, 1280px); margin-inline: auto; padding: 28px; }
 @media (max-width: 767.98px) {
   .subject-shell { grid-template-columns: 1fr; }
@@ -80,7 +86,9 @@ async function logout(): Promise<void> {
   .subject-sidebar nav { grid-template-columns: 1fr 1fr; margin-top: 14px; }
   .subject-sidebar-footer { display: none; }
   .subject-topbar { padding-inline: 16px; }
-  .subject-account div { display: none; }
+  .subject-account { display: none; }
+  .subject-mobile-actions { display: flex; margin-left: auto; align-items: center; gap: 6px; }
+  .subject-mobile-actions a, .subject-mobile-actions button { padding: 7px 9px; border: 1px solid var(--ocop-border); border-radius: 7px; background: #fff; color: var(--ocop-primary-900); font-size: 10px; font-weight: 800; text-decoration: none; }
   .subject-content { padding: 20px 16px; }
 }
 </style>
