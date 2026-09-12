@@ -143,6 +143,15 @@ docker compose exec frontend npm run type-check
 docker compose exec frontend npm run build
 ```
 
+Để chạy toàn bộ kiểm tra backend, frontend, build, kết nối database và các địa
+chỉ chính bằng một lệnh:
+
+```powershell
+.\scripts\verify-mvp.ps1
+```
+
+Lệnh này chỉ đọc dữ liệu qua API công khai, không tạo, sửa hoặc xóa bản ghi.
+
 ## Cài thêm dependency
 
 Backend: thêm package có phiên bản cố định vào `backend/requirements.txt`, sau
