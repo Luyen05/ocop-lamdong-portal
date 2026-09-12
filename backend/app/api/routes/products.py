@@ -32,7 +32,7 @@ def to_product_list_item(product: Product) -> ProductListItem:
         name=product.name,
         slug=product.slug,
         star=product.star,
-        price=float(product.price),
+        price=float(product.price) if product.price is not None else None,
         unit=product.unit,
         description=product.description,
         rating_avg=float(product.rating_avg),
@@ -78,7 +78,12 @@ def list_products(
             },
         )
 
-    filters = [Product.status == "approved", Subject.status == "approved"]
+    filters = [
+        Product.status == "approved",
+        Subject.status == "approved",
+        Product.star.is_not(None),
+        Product.description.is_not(None),
+    ]
     if search:
         keyword = f"%{search.strip()}%"
         filters.append(
