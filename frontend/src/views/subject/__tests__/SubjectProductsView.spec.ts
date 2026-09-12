@@ -84,6 +84,7 @@ const revisionRequest = {
   base_version: 2,
   submitted_at: '2026-01-03T00:00:00Z',
   reviewed_at: '2026-01-04T00:00:00Z',
+  reviewed_by_name: 'Quản trị viên A',
   review_note: 'Bổ sung ảnh chứng nhận.',
   product_name: 'Trà atiso',
   subject_name: 'HTX Đà Lạt',
@@ -114,6 +115,7 @@ describe('SubjectProductsView', () => {
     await flushPromises()
 
     expect(wrapper.text()).toContain('Bổ sung yêu cầu')
+    expect(wrapper.text()).toContain('Quản trị viên A phản hồi')
     const cancelButton = wrapper.findAll('button').find((button) => button.text() === 'Hủy yêu cầu')
     await cancelButton!.trigger('click')
     await flushPromises()

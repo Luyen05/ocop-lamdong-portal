@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { flushPromises, mount } from '@vue/test-utils'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import {
   getProductEvidence,
@@ -61,6 +61,11 @@ const pendingProduct = {
 }
 
 describe('AdminProductsView', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.stubGlobal('confirm', vi.fn(() => true))
+  })
+
   it('admin mo ho so va duyet hien thi san pham', async () => {
     vi.mocked(listAdminProducts).mockResolvedValue({
       items: [pendingProduct],
@@ -184,5 +189,40 @@ describe('AdminProductsView', () => {
     expect(wrapper.text()).toContain('Đang công khai')
     expect(wrapper.text()).toContain('180000')
     expect(wrapper.text()).toContain('200000')
+  })
+
+  it('phan trang san pham va giu bo loc hien tai', async () => {
+    vi.mocked(listAdminProducts).mockResolvedValue({
+      items: [pendingProduct],
+      page: 1,
+      page_size: 20,
+      total: 45,
+    })
+    vi.mocked(listProductChangeRequests).mockResolvedValue({
+      items: [],
+      page: 1,
+      page_size: 100,
+      total: 0,
+    })
+
+    const wrapper = mount(AdminProductsView)
+    await flushPromises()
+    await wrapper.get('select').setValue('pending')
+    await wrapper.get('.filter-panel').trigger('submit')
+    await flushPromises()
+    expect(listAdminProducts).toHaveBeenLastCalledWith(expect.objectContaining({
+      page: 1,
+      page_size: 20,
+      status: 'pending',
+    }))
+
+    const nextButton = wrapper.findAll('button').find((button) => button.text() === 'Sau →')
+    await nextButton!.trigger('click')
+    await flushPromises()
+    expect(listAdminProducts).toHaveBeenLastCalledWith(expect.objectContaining({
+      page: 2,
+      page_size: 20,
+      status: 'pending',
+    }))
   })
 })
