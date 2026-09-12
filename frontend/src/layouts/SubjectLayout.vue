@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
 import { authStore } from '@/stores/auth'
 
 const router = useRouter()
+const route = useRoute()
 const initial = computed(() => authStore.currentUser.value?.full_name.charAt(0).toUpperCase() || 'C')
+const pageTitle = computed(() => String(route.meta.title || 'Khu vực chủ thể'))
 
 async function logout(): Promise<void> {
   authStore.logout()
@@ -25,7 +27,7 @@ async function logout(): Promise<void> {
       </RouterLink>
       <nav aria-label="Điều hướng chủ thể">
         <RouterLink to="/chu-the/san-pham">◈ Sản phẩm của tôi</RouterLink>
-        <RouterLink to="/dang-ky-chu-the">♢ Hồ sơ chủ thể</RouterLink>
+        <RouterLink to="/chu-the/ho-so">♢ Hồ sơ chủ thể</RouterLink>
       </nav>
       <div class="subject-sidebar-footer">
         <RouterLink to="/">← Về trang công khai</RouterLink>
@@ -36,7 +38,7 @@ async function logout(): Promise<void> {
       <header class="subject-topbar">
         <div>
           <small>Quản lý nội dung OCOP</small>
-          <strong>Sản phẩm của chủ thể</strong>
+          <strong>{{ pageTitle }}</strong>
         </div>
         <RouterLink to="/tai-khoan" class="subject-account">
           <span>{{ initial }}</span>
