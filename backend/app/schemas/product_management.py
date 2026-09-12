@@ -88,7 +88,8 @@ class ProductWritePayload(BaseModel):
     cert_issued_at: date
     cert_expires_at: date
     issuing_authority: str = Field(min_length=2, max_length=255)
-    certificate_url: str = Field(min_length=8, max_length=500)
+    certificate_url: str | None = Field(default=None, max_length=500)
+    certificate_storage_path: str | None = Field(default=None, max_length=500)
     vietgap_code: str | None = Field(default=None, max_length=100)
     description: str = Field(min_length=10, max_length=5000)
     story: str | None = Field(default=None, max_length=10000)
@@ -124,11 +125,13 @@ class ProductWritePayload(BaseModel):
 
     @field_validator("certificate_url")
     @classmethod
-    def validate_certificate_url(cls, value: str) -> str:
-        return _validate_http_url(value)
+    def validate_certificate_url(cls, value: str | None) -> str | None:
+        return _validate_http_url(value) if value else None
 
     @model_validator(mode="after")
     def validate_certificate_and_images(self) -> "ProductWritePayload":
+        if not self.certificate_url and not self.certificate_storage_path:
+            raise ValueError("Cần tải lên hoặc cung cấp tài liệu chứng nhận.")
         if self.cert_expires_at <= self.cert_issued_at:
             raise ValueError("Ngày hết hạn phải sau ngày cấp chứng nhận.")
         if sum(image.is_primary for image in self.images) != 1:
@@ -152,6 +155,7 @@ class ProductDraftCreate(BaseModel):
     cert_expires_at: date | None = None
     issuing_authority: str | None = Field(default=None, max_length=255)
     certificate_url: str | None = Field(default=None, max_length=500)
+    certificate_storage_path: str | None = Field(default=None, max_length=500)
     vietgap_code: str | None = Field(default=None, max_length=100)
     description: str | None = Field(default=None, max_length=5000)
     story: str | None = Field(default=None, max_length=10000)
@@ -165,6 +169,7 @@ class ProductDraftCreate(BaseModel):
         "cert_code",
         "issuing_authority",
         "certificate_url",
+        "certificate_storage_path",
         "vietgap_code",
         "description",
         "story",
@@ -210,6 +215,7 @@ class ProductDraftUpdate(BaseModel):
     cert_expires_at: date | None = None
     issuing_authority: str | None = Field(default=None, max_length=255)
     certificate_url: str | None = Field(default=None, max_length=500)
+    certificate_storage_path: str | None = Field(default=None, max_length=500)
     vietgap_code: str | None = Field(default=None, max_length=100)
     description: str | None = Field(default=None, max_length=5000)
     story: str | None = Field(default=None, max_length=10000)
@@ -223,6 +229,7 @@ class ProductDraftUpdate(BaseModel):
         "cert_code",
         "issuing_authority",
         "certificate_url",
+        "certificate_storage_path",
         "vietgap_code",
         "description",
         "story",
@@ -260,6 +267,13 @@ class ProductImageUploadResponse(BaseModel):
     size_bytes: int
 
 
+class ProductCertificateUploadResponse(BaseModel):
+    storage_path: str
+    content_type: Literal["application/pdf", "image/jpeg", "image/png"]
+    size_bytes: int
+    original_filename: str
+
+
 class ManagedProductCategoryRead(BaseModel):
     id: int
     name: str
@@ -287,6 +301,7 @@ class ManagedProductRead(BaseModel):
     cert_expires_at: date | None
     issuing_authority: str | None
     certificate_url: str | None
+    certificate_storage_path: str | None
     vietgap_code: str | None
     description: str | None
     story: str | None
@@ -467,6 +482,7 @@ class ProductSnapshotRead(BaseModel):
     cert_expires_at: date | None
     issuing_authority: str | None
     certificate_url: str | None
+    certificate_storage_path: str | None
     vietgap_code: str | None
     description: str | None
     story: str | None

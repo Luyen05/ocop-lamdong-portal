@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, Query, status
+from fastapi.responses import FileResponse
 from sqlalchemy import and_, case, func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -32,6 +33,7 @@ from app.services.product_workflow import (
     validate_certificate_is_current,
     workflow_error,
 )
+from app.api.routes.subject_product_certificates import certificate_response
 
 
 router = APIRouter(prefix="/products")
@@ -150,6 +152,14 @@ def get_product_evidence(
     db: Session = Depends(get_db),
 ) -> ProductEvidenceResponse:
     return to_product_evidence_response(get_product_for_admin(db, product_id))
+
+
+@router.get("/{product_id}/certificate", response_class=FileResponse)
+def download_product_certificate(
+    product_id: int,
+    db: Session = Depends(get_db),
+) -> FileResponse:
+    return certificate_response(get_product_for_admin(db, product_id))
 
 
 @router.post(

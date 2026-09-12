@@ -22,6 +22,7 @@ from app.services.product_workflow import (
     get_change_request,
     get_owned_product,
     to_change_request_read,
+    validate_certificate_storage,
     workflow_error,
 )
 
@@ -81,6 +82,7 @@ def request_product_update(
 ) -> ProductChangeRequestRead:
     subject = get_approved_subject(db, current_user)
     product = ensure_product_accepts_request(db, product_id, subject.id)
+    validate_certificate_storage(product, payload.proposed_data.certificate_storage_path)
     if payload.proposed_data.cert_expires_at < date.today():
         raise workflow_error(
             status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -209,6 +211,10 @@ def resubmit_product_change_request(
                 "CERTIFICATE_EXPIRED",
                 "Không thể gửi cập nhật với giấy chứng nhận đã hết hạn.",
             )
+        validate_certificate_storage(
+            change_request.product,
+            payload.proposed_data.certificate_storage_path,
+        )
         change_request.proposed_data = payload.proposed_data.model_dump(mode="json")
     if payload.reason is not None:
         change_request.reason = payload.reason.strip() or None

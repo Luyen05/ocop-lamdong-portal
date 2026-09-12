@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     jwt_access_token_expire_minutes: int = Field(default=60, ge=1, le=1440)
     upload_directory: Path = BACKEND_ROOT / "uploads"
     upload_max_bytes: int = Field(default=5 * 1024 * 1024, ge=1024)
+    certificate_upload_max_bytes: int = Field(default=10 * 1024 * 1024, ge=1024)
 
     model_config = SettingsConfigDict(
         env_file=PROJECT_ROOT / ".env",
