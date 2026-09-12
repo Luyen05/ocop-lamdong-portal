@@ -19,7 +19,7 @@ async function submitSearch(): Promise<void> {
   <section class="home-hero" aria-labelledby="home-hero-title">
     <img
       class="hero-image"
-      :src="asset('hero-agriculture.png')"
+      :src="asset('hero-agriculture.jpg')"
       alt="Nông nghiệp cao nguyên Lâm Đồng"
     />
     <div class="hero-overlay" />

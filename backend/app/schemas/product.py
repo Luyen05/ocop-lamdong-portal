@@ -24,6 +24,7 @@ class ProductListItem(BaseModel):
     unit: str | None
     description: str
     rating_avg: float
+    vietgap_code: str | None
     primary_image_url: str | None
     category: ProductCategoryRead
     subject: ProductSubjectRead
