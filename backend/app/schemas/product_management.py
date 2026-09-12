@@ -285,6 +285,8 @@ class ManagedProductSubjectRead(BaseModel):
     name: str
     representative: str
     tax_code: str | None
+    status: Literal["pending", "approved", "rejected"]
+    is_active: bool
 
 
 class ManagedProductRead(BaseModel):

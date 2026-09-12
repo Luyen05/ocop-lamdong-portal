@@ -107,7 +107,14 @@ export interface ManagedProduct extends ProductDraftPayload {
   moderation_note: string | null
   version: number
   category: { id: number; name: string; slug: string }
-  subject: { id: number; name: string; representative: string; tax_code: string | null }
+  subject: {
+    id: number
+    name: string
+    representative: string
+    tax_code: string | null
+    status?: 'pending' | 'approved' | 'rejected'
+    is_active?: boolean
+  }
   images: Array<ProductImagePayload & { id: number }>
   verification_level: VerificationLevel | null
   verification_status: ProductVerificationStatus

@@ -61,7 +61,7 @@ def get_approved_subject(db: Session, user: User) -> Subject:
 def product_load_options() -> tuple:
     return (
         joinedload(Product.category),
-        joinedload(Product.subject),
+        joinedload(Product.subject).joinedload(Subject.user),
         joinedload(Product.reviewer),
         selectinload(Product.images),
         selectinload(Product.source_links).joinedload(ProductSource.source),
@@ -371,6 +371,8 @@ def to_managed_product_read(product: Product) -> ManagedProductRead:
             name=product.subject.name,
             representative=product.subject.representative,
             tax_code=product.subject.tax_code,
+            status=product.subject.status,
+            is_active=product.subject.user.is_active,
         ),
         images=[
             ManagedProductImageRead(
