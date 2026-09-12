@@ -112,6 +112,11 @@ const router = createRouter({
         },
       ],
     },
+    {
+      path: '/:pathMatch(.*)*',
+      name: 'not-found',
+      component: () => import('@/views/NotFoundView.vue'),
+    },
   ],
   scrollBehavior: (to) =>
     to.hash ? { el: to.hash, behavior: 'smooth' } : { top: 0 },
