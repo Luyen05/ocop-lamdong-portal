@@ -4,6 +4,7 @@ import { computed, onMounted, ref } from 'vue'
 import ProductEvidenceManager from '@/components/admin/ProductEvidenceManager.vue'
 import { getApiErrorMessage } from '@/services/api-error'
 import {
+  downloadProductCertificate,
   getProductEvidence,
   listAdminProducts,
   listProductChangeRequests,
@@ -59,6 +60,8 @@ const reviewNote = ref('')
 const submitting = ref(false)
 const brokenProductImages = ref(new Set<number>())
 const showAdvancedFilters = ref(false)
+const showExceptionalAction = ref(false)
+const downloadingCertificate = ref(false)
 
 const search = ref('')
 const workflowStatus = ref<ProductWorkflowStatus | ''>('pending')
@@ -77,6 +80,20 @@ const modalTitle = computed(() => {
   }
   if (selectedRequest.value?.request_type === 'update') return 'Duyệt yêu cầu cập nhật'
   return 'Duyệt yêu cầu ngừng hiển thị'
+})
+const selectedProductWarnings = computed(() => {
+  const product = selectedProduct.value
+  if (!product) return []
+  const warnings: string[] = []
+  if (!product.description || !product.star || !product.cert_code || !product.cert_issued_at || !product.cert_expires_at || !product.issuing_authority) {
+    warnings.push('Hồ sơ còn thiếu thông tin bắt buộc.')
+  }
+  if (!product.certificate_storage_path && !product.certificate_url) warnings.push('Chưa có tài liệu chứng nhận.')
+  if (!product.images.some((image) => image.is_primary)) warnings.push('Chưa có ảnh đại diện.')
+  if (product.cert_expires_at && new Date(product.cert_expires_at) < new Date(new Date().toDateString())) warnings.push('Giấy chứng nhận đã hết hạn.')
+  if (product.subject.status && product.subject.status !== 'approved') warnings.push('Hồ sơ chủ thể không còn ở trạng thái đã duyệt.')
+  if (product.subject.is_active === false) warnings.push('Tài khoản chủ thể đang bị khóa.')
+  return warnings
 })
 
 function buildProductFilters(): AdminProductFilters {
@@ -139,6 +156,7 @@ async function openProduct(product: ManagedProduct): Promise<void> {
   evidenceError.value = ''
   decision.value = 'approved'
   reviewNote.value = ''
+  showExceptionalAction.value = false
   evidenceLoading.value = true
   try {
     evidence.value = await getProductEvidence(product.id)
@@ -163,6 +181,25 @@ function closeModal(force = false): void {
   selectedRequest.value = null
   evidence.value = null
   evidenceError.value = ''
+}
+
+async function openCertificate(scope: 'subject' | 'admin', productId: number): Promise<void> {
+  downloadingCertificate.value = true
+  evidenceError.value = ''
+  try {
+    const blob = await downloadProductCertificate(scope, productId)
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.target = '_blank'
+    link.rel = 'noopener'
+    link.click()
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000)
+  } catch (error) {
+    evidenceError.value = getApiErrorMessage(error, 'Không thể mở file chứng nhận.')
+  } finally {
+    downloadingCertificate.value = false
+  }
 }
 
 async function submitDecision(): Promise<void> {
@@ -428,8 +465,19 @@ onMounted(loadData)
             <p v-if="selectedProduct.moderation_note"><strong>Ghi chú:</strong> {{ selectedProduct.moderation_note }}</p>
           </section>
           <div class="document-links">
-            <a v-if="selectedProduct.certificate_url" :href="selectedProduct.certificate_url" target="_blank" rel="noopener">Mở tài liệu chứng nhận ↗</a>
+            <button
+              v-if="selectedProduct.certificate_storage_path"
+              type="button"
+              :disabled="downloadingCertificate"
+              @click="openCertificate('admin', selectedProduct.id)"
+            >{{ downloadingCertificate ? 'Đang mở...' : 'Mở file chứng nhận ↗' }}</button>
+            <a v-else-if="selectedProduct.certificate_url" :href="selectedProduct.certificate_url" target="_blank" rel="noopener">Mở tài liệu chứng nhận ↗</a>
             <a v-if="selectedProduct.images[0]?.image_url" :href="selectedProduct.images[0].image_url" target="_blank" rel="noopener">Mở ảnh sản phẩm ↗</a>
+          </div>
+
+          <div v-if="selectedProductWarnings.length" class="review-warnings" role="alert">
+            <strong>Cần kiểm tra trước khi duyệt</strong>
+            <ul><li v-for="warning in selectedProductWarnings" :key="warning">{{ warning }}</li></ul>
           </div>
 
           <p v-if="canModerateSelectedProduct" class="workflow-guide">
@@ -494,13 +542,20 @@ onMounted(loadData)
         </template>
 
         <section v-if="canModerateSelectedRequest || canModerateSelectedProduct" class="decision-box">
-          <label>Quyết định
-            <select v-model="decision">
-              <option value="approved">{{ selectedProduct ? 'Duyệt hiển thị' : 'Chấp thuận yêu cầu' }}</option>
-              <option value="needs_revision">Yêu cầu bổ sung</option>
-              <option value="rejected">Từ chối</option>
-            </select>
-          </label>
+          <div class="decision-options" aria-label="Quyết định kiểm duyệt">
+            <button type="button" :class="{ active: decision === 'approved' }" @click="decision = 'approved'">
+              ✓ {{ selectedProduct ? 'Duyệt hiển thị' : 'Chấp thuận yêu cầu' }}
+            </button>
+            <button type="button" :class="{ active: decision === 'needs_revision' }" @click="decision = 'needs_revision'">
+              ↻ Yêu cầu bổ sung
+            </button>
+          </div>
+          <button class="exception-toggle" type="button" @click="showExceptionalAction = !showExceptionalAction">
+            {{ showExceptionalAction ? 'Ẩn thao tác đặc biệt' : 'Hồ sơ không hợp lệ?' }}
+          </button>
+          <button v-if="showExceptionalAction" class="reject-option" :class="{ active: decision === 'rejected' }" type="button" @click="decision = 'rejected'">
+            Từ chối hồ sơ
+          </button>
           <label>Phản hồi cho chủ thể
             <textarea v-model="reviewNote" rows="3" :required="decision !== 'approved'" placeholder="Bắt buộc khi yêu cầu bổ sung hoặc từ chối" />
           </label>
@@ -571,8 +626,10 @@ onMounted(loadData)
 .last-review-box strong { font-size: 11px; }
 .last-review-box p { grid-column: 1 / -1; margin: 0; color: #425466; font-size: 10px; }
 .document-links { display: flex; margin-top: 12px; gap: 8px; }
-.document-links a, .evidence-card a { color: #1d4f91; font-size: 11px; font-weight: 700; text-decoration: none; }
-.document-links a { padding: 8px 10px; border-radius: 7px; background: #eff6ff; }
+.document-links a, .document-links button, .evidence-card a { color: #1d4f91; font-size: 11px; font-weight: 700; text-decoration: none; }
+.document-links a, .document-links button { padding: 8px 10px; border: 0; border-radius: 7px; background: #eff6ff; }
+.review-warnings { margin-top: 13px; padding: 11px 13px; border: 1px solid #fed7aa; border-radius: 9px; background: #fff7ed; color: #914515; font-size: 11px; }
+.review-warnings ul { margin: 6px 0 0; padding-left: 18px; }
 .workflow-guide { margin: 14px 0 0; padding: 12px 14px; border: 1px solid #a7d9c8; border-radius: 9px; background: #f0fdf8; color: #28574a; font-size: 11px; line-height: 1.55; }
 .evidence-disclosure { margin-top: 14px; border: 1px solid var(--ocop-border); border-radius: 10px; background: #fff; }
 .evidence-disclosure summary { display: flex; padding: 12px 14px; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer; color: #334155; font-size: 12px; font-weight: 800; }
@@ -605,6 +662,12 @@ onMounted(loadData)
 .comparison-row.changed { background: #fffaf0; }
 .comparison-row.changed > strong { color: #9a4d12; }
 .decision-box { display: grid; margin-top: 18px; gap: 12px; }
+.decision-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.decision-options button { padding: 11px; }
+.decision-options button.active { border-color: var(--ocop-primary-700); background: #edf9f4; color: var(--ocop-primary-700); }
+.exception-toggle { justify-self: start; border: 0 !important; color: var(--ocop-slate); text-decoration: underline; }
+.reject-option { justify-self: start; border-color: #fecaca !important; color: #b42318; }
+.reject-option.active { background: #fef2f2; }
 .decision-box label { display: grid; gap: 5px; color: #526277; font-size: 11px; font-weight: 700; }
 .decision-box select, .decision-box textarea { padding: 9px; border: 1px solid var(--ocop-border); border-radius: 8px; }
 .decision-box textarea { resize: vertical; }
@@ -633,5 +696,6 @@ onMounted(loadData)
   .comparison-heading { align-items: start; flex-direction: column; }
   .comparison-header { display: none; }
   .comparison-row { grid-template-columns: 1fr; gap: 4px; }
+  .decision-options { grid-template-columns: 1fr; }
 }
 </style>
