@@ -27,6 +27,11 @@ const activeImage = computed(
   () => selectedImageUrl.value || product.value?.primary_image_url || null,
 )
 
+function formatDate(value: string | null): string {
+  if (!value) return 'Chưa cập nhật'
+  return new Intl.DateTimeFormat('vi-VN').format(new Date(`${value}T00:00:00`))
+}
+
 async function loadProduct(slug: string): Promise<void> {
   isLoading.value = true
   errorMessage.value = ''
@@ -136,13 +141,25 @@ onUnmounted(() => {
             </div>
 
             <dl class="certification-list">
-              <div v-if="product.cert_code">
-                <dt>Mã chứng nhận OCOP</dt>
-                <dd>{{ product.cert_code }}</dd>
+              <div>
+                <dt>Số quyết định / chứng nhận</dt>
+                <dd>{{ product.cert_code || 'Chưa cập nhật' }}</dd>
               </div>
-              <div v-if="product.cert_year">
+              <div>
                 <dt>Năm chứng nhận</dt>
-                <dd>{{ product.cert_year }}</dd>
+                <dd>{{ product.cert_year || 'Chưa cập nhật' }}</dd>
+              </div>
+              <div>
+                <dt>Ngày cấp</dt>
+                <dd>{{ formatDate(product.cert_issued_at) }}</dd>
+              </div>
+              <div>
+                <dt>Hiệu lực đến</dt>
+                <dd>{{ formatDate(product.cert_expires_at) }}</dd>
+              </div>
+              <div class="certification-authority">
+                <dt>Cơ quan công nhận</dt>
+                <dd>{{ product.issuing_authority || 'Chưa cập nhật' }}</dd>
               </div>
               <div v-if="product.vietgap_code">
                 <dt>Mã VietGAP</dt>
@@ -345,6 +362,10 @@ onUnmounted(() => {
   border: 1px solid #e0e7dd;
   border-radius: 0.75rem;
   background: #fff;
+}
+
+.certification-list .certification-authority {
+  grid-column: 1 / -1;
 }
 
 .certification-list dt {

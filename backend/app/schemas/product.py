@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 
 from pydantic import BaseModel
 
@@ -48,7 +48,9 @@ class ProductImageRead(BaseModel):
 class ProductDetail(ProductListItem):
     cert_code: str | None
     cert_year: int | None
-    vietgap_code: str | None
+    cert_issued_at: date | None
+    cert_expires_at: date | None
+    issuing_authority: str | None
     story: str | None
     ingredients: str | None
     usage_instructions: str | None

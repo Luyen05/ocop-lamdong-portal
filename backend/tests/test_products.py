@@ -281,6 +281,9 @@ def test_get_product_returns_public_detail(product_client: TestClient) -> None:
     assert body["name"] == "Cà phê Arabica Cầu Đất"
     assert body["cert_code"] == "OCOP-LD-001"
     assert body["cert_year"] == 2025
+    assert body["cert_issued_at"] == "2025-01-01"
+    assert body["cert_expires_at"] == "2028-01-01"
+    assert body["issuing_authority"] == "Ủy ban nhân dân tỉnh Lâm Đồng"
     assert body["category"]["slug"] == "do-uong"
     assert body["subject"]["name"] == "Hợp tác xã Cầu Đất"
     assert [image["image_url"] for image in body["images"]] == [
