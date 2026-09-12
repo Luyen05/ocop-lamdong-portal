@@ -27,6 +27,7 @@ const successMessage = ref('')
 const deletingProduct = ref<ManagedProduct | null>(null)
 const revisingDeletionRequest = ref<ProductChangeRequest | null>(null)
 const deletionReason = ref('')
+const brokenProductImages = ref(new Set<number>())
 
 const statusLabels: Record<ProductWorkflowStatus, string> = {
   draft: 'Bản nháp',
@@ -95,6 +96,8 @@ async function removeDraft(product: ManagedProduct): Promise<void> {
 
 async function sendDeletionRequest(): Promise<void> {
   if (!deletingProduct.value) return
+  const actionLabel = revisingDeletionRequest.value ? 'gửi lại yêu cầu' : 'đề nghị ngừng hiển thị'
+  if (!window.confirm(`Xác nhận ${actionLabel} sản phẩm “${deletingProduct.value.name}”?`)) return
   actionId.value = deletingProduct.value.id
   errorMessage.value = ''
   try {
@@ -152,6 +155,10 @@ function formatDate(value: string | null): string {
   return value ? new Intl.DateTimeFormat('vi-VN').format(new Date(value)) : '—'
 }
 
+function markImageBroken(productId: number): void {
+  brokenProductImages.value = new Set([...brokenProductImages.value, productId])
+}
+
 onMounted(loadData)
 </script>
 
@@ -185,7 +192,13 @@ onMounted(loadData)
       <p v-else-if="!filteredProducts.length" class="state-message">Chưa có sản phẩm phù hợp.</p>
       <div v-else class="product-list">
         <article v-for="product in filteredProducts" :key="product.id">
-          <img :src="product.images.find((image) => image.is_primary)?.image_url" alt="" />
+          <img
+            v-if="product.images.find((image) => image.is_primary)?.image_url && !brokenProductImages.has(product.id)"
+            :src="product.images.find((image) => image.is_primary)?.image_url"
+            :alt="`Ảnh ${product.name}`"
+            @error="markImageBroken(product.id)"
+          />
+          <span v-else class="product-placeholder" role="img" :aria-label="`Chưa có ảnh ${product.name}`">OCOP</span>
           <div class="product-copy">
             <div>
               <span :class="['status', 'status-' + product.status]">{{ statusLabels[product.status] }}</span>
@@ -195,11 +208,17 @@ onMounted(loadData)
             <p>{{ product.category.name }} · {{ product.cert_code }}</p>
             <small>Cập nhật {{ formatDate(product.updated_at) }}</small>
             <p v-if="product.moderation_note" class="moderation-note">
-              Phản hồi: {{ product.moderation_note }}
+              Phản hồi của {{ product.reviewed_by_name || 'quản trị viên' }}
+              <template v-if="product.reviewed_at"> ngày {{ formatDate(product.reviewed_at) }}</template>:
+              {{ product.moderation_note }}
             </p>
             <p v-if="activeRequest(product.id)" class="request-note">
               Có yêu cầu {{ activeRequest(product.id)?.request_type === 'update' ? 'cập nhật' : 'ngừng hiển thị' }}
               — {{ activeRequest(product.id)?.status === 'pending' ? 'đang chờ duyệt' : 'cần bổ sung' }}.
+              <template v-if="activeRequest(product.id)?.review_note">
+                {{ activeRequest(product.id)?.reviewed_by_name || 'Quản trị viên' }} phản hồi:
+                {{ activeRequest(product.id)?.review_note }}
+              </template>
             </p>
           </div>
           <div class="product-actions">
@@ -272,7 +291,7 @@ onMounted(loadData)
         </label>
         <div>
           <button type="button" @click="closeDeletionDialog">Đóng</button>
-          <button class="danger-fill" type="submit">{{ revisingDeletionRequest ? 'Gửi lại yêu cầu' : 'Gửi yêu cầu' }}</button>
+          <button class="danger-fill" type="submit" :disabled="actionId === deletingProduct.id">{{ actionId === deletingProduct.id ? 'Đang gửi...' : revisingDeletionRequest ? 'Gửi lại yêu cầu' : 'Gửi yêu cầu' }}</button>
         </div>
       </form>
     </div>
@@ -294,6 +313,7 @@ onMounted(loadData)
 .product-list article { display: grid; padding: 16px; align-items: center; grid-template-columns: 88px minmax(0, 1fr) auto; gap: 16px; border-bottom: 1px solid #edf1f4; }
 .product-list article:last-child { border-bottom: 0; }
 .product-list article > img { width: 88px; height: 76px; border-radius: 10px; background: #edf2f0; object-fit: cover; }
+.product-placeholder { display: grid; width: 88px; height: 76px; place-items: center; border-radius: 10px; background: linear-gradient(135deg, #e8f5ef, #d7eee5); color: var(--ocop-primary-700); font-size: 13px; font-weight: 800; }
 .product-copy h2 { margin: 7px 0 3px; font-size: 16px; }
 .product-copy p, .product-copy small { margin: 0; color: var(--ocop-slate); font-size: 11px; }
 .product-copy > div { display: flex; gap: 7px; }
@@ -319,6 +339,7 @@ onMounted(loadData)
   .primary-button { text-align: center; }
   .product-list article { grid-template-columns: 64px minmax(0, 1fr); }
   .product-list article > img { width: 64px; height: 64px; }
+  .product-placeholder { width: 64px; height: 64px; }
   .product-actions { grid-column: 1 / -1; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 </style>

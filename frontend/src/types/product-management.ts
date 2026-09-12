@@ -84,6 +84,7 @@ export interface ManagedProduct
   status: ProductWorkflowStatus
   submitted_at: string | null
   reviewed_at: string | null
+  reviewed_by_name?: string | null
   moderation_note: string | null
   version: number
   category: { id: number; name: string; slug: string }
@@ -129,6 +130,7 @@ export interface ProductChangeRequest {
   base_version: number
   submitted_at: string
   reviewed_at: string | null
+  reviewed_by_name?: string | null
   review_note: string | null
   product_name: string
   subject_name: string
@@ -217,6 +219,8 @@ export interface ProductEvidenceResponse {
 }
 
 export interface AdminProductFilters {
+  page?: number
+  page_size?: number
   status?: ProductWorkflowStatus
   search?: string
   verification_level?: VerificationLevel

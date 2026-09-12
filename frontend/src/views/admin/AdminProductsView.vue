@@ -42,6 +42,8 @@ const comparisonFields: Array<{ key: ComparableProductField; label: string }> = 
 
 const products = ref<ManagedProduct[]>([])
 const productTotal = ref(0)
+const page = ref(1)
+const pageSize = 20
 const requests = ref<ProductChangeRequest[]>([])
 const loading = ref(true)
 const errorMessage = ref('')
@@ -55,6 +57,7 @@ const evidenceError = ref('')
 const decision = ref<ProductModerationDecision>('approved')
 const reviewNote = ref('')
 const submitting = ref(false)
+const brokenProductImages = ref(new Set<number>())
 
 const search = ref('')
 const workflowStatus = ref<ProductWorkflowStatus | ''>('')
@@ -65,6 +68,8 @@ const evidenceIssue = ref<EvidenceIssueFilter>('')
 const pendingProducts = computed(() => products.value.filter((item) => item.status === 'pending'))
 const pendingRequests = computed(() => requests.value.filter((item) => item.status === 'pending'))
 const canModerateSelectedProduct = computed(() => selectedProduct.value?.status === 'pending')
+const canModerateSelectedRequest = computed(() => selectedRequest.value?.status === 'pending')
+const totalPages = computed(() => Math.max(1, Math.ceil(productTotal.value / pageSize)))
 const modalTitle = computed(() => {
   if (selectedProduct.value) {
     return canModerateSelectedProduct.value ? 'Kiểm tra và duyệt sản phẩm' : 'Hồ sơ và chứng cứ sản phẩm'
@@ -74,7 +79,7 @@ const modalTitle = computed(() => {
 })
 
 function buildProductFilters(): AdminProductFilters {
-  const filters: AdminProductFilters = {}
+  const filters: AdminProductFilters = { page: page.value, page_size: pageSize }
   const normalizedSearch = search.value.trim()
   if (normalizedSearch) filters.search = normalizedSearch
   if (workflowStatus.value) filters.status = workflowStatus.value
@@ -105,6 +110,7 @@ async function loadData(): Promise<void> {
 
 async function applyFilters(): Promise<void> {
   successMessage.value = ''
+  page.value = 1
   await loadData()
 }
 
@@ -114,6 +120,13 @@ async function resetFilters(): Promise<void> {
   verificationLevel.value = ''
   verificationStatus.value = ''
   evidenceIssue.value = ''
+  page.value = 1
+  await loadData()
+}
+
+async function changePage(nextPage: number): Promise<void> {
+  if (nextPage < 1 || nextPage > totalPages.value || nextPage === page.value) return
+  page.value = nextPage
   await loadData()
 }
 
@@ -142,8 +155,8 @@ function openRequest(request: ProductChangeRequest): void {
   reviewNote.value = ''
 }
 
-function closeModal(): void {
-  if (submitting.value) return
+function closeModal(force = false): void {
+  if (submitting.value && !force) return
   selectedProduct.value = null
   selectedRequest.value = null
   evidence.value = null
@@ -152,10 +165,22 @@ function closeModal(): void {
 
 async function submitDecision(): Promise<void> {
   if (selectedProduct.value && !canModerateSelectedProduct.value) return
+  if (selectedRequest.value && !canModerateSelectedRequest.value) return
   if ((decision.value === 'needs_revision' || decision.value === 'rejected') && !reviewNote.value.trim()) {
     errorMessage.value = 'Cần nhập nội dung phản hồi khi yêu cầu bổ sung hoặc từ chối.'
     return
   }
+  const targetLabel = selectedProduct.value
+    ? `sản phẩm “${selectedProduct.value.name}”`
+    : selectedRequest.value?.request_type === 'delete'
+      ? `yêu cầu ngừng hiển thị “${selectedRequest.value.product_name}”`
+      : `yêu cầu cập nhật “${selectedRequest.value?.product_name || ''}”`
+  const actionLabel = {
+    approved: 'chấp thuận',
+    needs_revision: 'yêu cầu bổ sung',
+    rejected: 'từ chối',
+  }[decision.value]
+  if (!window.confirm(`Xác nhận ${actionLabel} ${targetLabel}?`)) return
   submitting.value = true
   errorMessage.value = ''
   try {
@@ -171,7 +196,7 @@ async function submitDecision(): Promise<void> {
         : decision.value === 'needs_revision'
           ? 'Đã gửi yêu cầu bổ sung cho chủ thể.'
           : 'Đã từ chối yêu cầu và lưu lý do.'
-    closeModal()
+    closeModal(true)
     await loadData()
   } catch (error) {
     errorMessage.value = getApiErrorMessage(error, 'Không thể xử lý yêu cầu kiểm duyệt.')
@@ -180,8 +205,29 @@ async function submitDecision(): Promise<void> {
   }
 }
 
+function updateEvidenceSummary(nextEvidence: ProductEvidenceResponse): void {
+  evidence.value = nextEvidence
+  const product = products.value.find((item) => item.id === nextEvidence.product_id)
+  if (!product) return
+  product.verification_level = nextEvidence.verification_level
+  product.verification_status = nextEvidence.verification_status
+  product.evidence_count = nextEvidence.evidence_count
+  product.missing_decision = nextEvidence.issues.includes('missing_decision')
+  product.missing_issued_at = nextEvidence.issues.includes('missing_issued_at')
+}
+
+function markImageBroken(productId: number): void {
+  brokenProductImages.value = new Set([...brokenProductImages.value, productId])
+}
+
 function formatDate(value: string | null): string {
   return value ? new Intl.DateTimeFormat('vi-VN').format(new Date(value)) : 'Chưa có'
+}
+
+function formatDateTime(value: string | null): string {
+  return value
+    ? new Intl.DateTimeFormat('vi-VN', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(value))
+    : 'Chưa có'
 }
 
 function comparisonValue(
@@ -238,7 +284,7 @@ onMounted(loadData)
         Sản phẩm <span>{{ productTotal }}</span>
       </button>
       <button :class="{ active: activeTab === 'changes' }" type="button" @click="activeTab = 'changes'">
-        Sửa / ngừng hiển thị <span>{{ pendingRequests.length }}</span>
+        Sửa / ngừng hiển thị <span>{{ requests.length }}</span>
       </button>
     </nav>
 
@@ -293,7 +339,12 @@ onMounted(loadData)
       <template v-else-if="activeTab === 'products'">
         <p v-if="!products.length" class="empty-state">Không tìm thấy sản phẩm phù hợp bộ lọc.</p>
         <article v-for="product in products" v-else :key="product.id">
-          <img v-if="product.images.find((image) => image.is_primary)?.image_url" :src="product.images.find((image) => image.is_primary)?.image_url" alt="" />
+          <img
+            v-if="product.images.find((image) => image.is_primary)?.image_url && !brokenProductImages.has(product.id)"
+            :src="product.images.find((image) => image.is_primary)?.image_url"
+            :alt="`Ảnh ${product.name}`"
+            @error="markImageBroken(product.id)"
+          />
           <span v-else class="request-symbol">◇</span>
           <div class="product-summary">
             <small>Hồ sơ #{{ product.id }} · cập nhật {{ formatDate(product.updated_at) }}</small>
@@ -311,29 +362,39 @@ onMounted(loadData)
             {{ product.status === 'pending' ? 'Kiểm tra hồ sơ' : 'Xem hồ sơ' }}
           </button>
         </article>
+        <nav v-if="productTotal > pageSize" class="pagination-bar" aria-label="Phân trang sản phẩm">
+          <span>Trang {{ page }} / {{ totalPages }} · {{ productTotal }} sản phẩm</span>
+          <div>
+            <button type="button" :disabled="page <= 1 || loading" @click="changePage(page - 1)">← Trước</button>
+            <button type="button" :disabled="page >= totalPages || loading" @click="changePage(page + 1)">Sau →</button>
+          </div>
+        </nav>
       </template>
       <template v-else>
-        <p v-if="!pendingRequests.length" class="empty-state">Không có yêu cầu thay đổi chờ duyệt.</p>
-        <article v-for="request in pendingRequests" v-else :key="request.id">
+        <p v-if="!requests.length" class="empty-state">Chưa có yêu cầu thay đổi sản phẩm.</p>
+        <article v-for="request in requests" v-else :key="request.id">
           <span class="request-symbol">{{ request.request_type === 'update' ? '↻' : '×' }}</span>
           <div>
             <small>Yêu cầu #{{ request.id }} · gửi {{ formatDate(request.submitted_at) }}</small>
             <h2>{{ request.product_name }}</h2>
             <p>{{ request.subject_name }} · {{ request.request_type === 'update' ? 'Đề nghị cập nhật thông tin' : 'Đề nghị ngừng hiển thị' }}</p>
+            <div class="status-row">
+              <span class="status-chip" :data-status="request.status">{{ request.status === 'pending' ? 'Chờ duyệt' : request.status === 'approved' ? 'Đã duyệt' : request.status === 'needs_revision' ? 'Cần bổ sung' : request.status === 'cancelled' ? 'Đã hủy' : 'Bị từ chối' }}</span>
+            </div>
           </div>
-          <button type="button" @click="openRequest(request)">Kiểm tra yêu cầu</button>
+          <button type="button" @click="openRequest(request)">{{ request.status === 'pending' ? 'Kiểm tra yêu cầu' : 'Xem lần xử lý' }}</button>
         </article>
       </template>
     </section>
 
-    <div v-if="selectedProduct || selectedRequest" class="modal-backdrop" @click.self="closeModal">
+    <div v-if="selectedProduct || selectedRequest" class="modal-backdrop" @click.self="closeModal()">
       <form class="review-modal" @submit.prevent="submitDecision">
         <header>
           <div>
             <span>Kiểm duyệt sản phẩm</span>
             <h2>{{ modalTitle }}</h2>
           </div>
-          <button type="button" aria-label="Đóng" @click="closeModal">×</button>
+          <button type="button" aria-label="Đóng" @click="closeModal()">×</button>
         </header>
 
         <template v-if="selectedProduct">
@@ -351,6 +412,12 @@ onMounted(loadData)
             <div><small>Ngày hết hạn</small><strong>{{ formatDate(selectedProduct.cert_expires_at) }}</strong></div>
             <div class="wide"><small>Cơ quan công nhận</small><strong>{{ selectedProduct.issuing_authority || 'Chưa có' }}</strong></div>
           </section>
+          <section v-if="selectedProduct.reviewed_at" class="last-review-box">
+            <div><small>Lần xử lý gần nhất</small><strong>{{ workflowLabel(selectedProduct.status) }}</strong></div>
+            <div><small>Người xử lý</small><strong>{{ selectedProduct.reviewed_by_name || 'Quản trị viên' }}</strong></div>
+            <div><small>Thời điểm</small><strong>{{ formatDateTime(selectedProduct.reviewed_at) }}</strong></div>
+            <p v-if="selectedProduct.moderation_note"><strong>Ghi chú:</strong> {{ selectedProduct.moderation_note }}</p>
+          </section>
           <div class="document-links">
             <a v-if="selectedProduct.certificate_url" :href="selectedProduct.certificate_url" target="_blank" rel="noopener">Mở tài liệu chứng nhận ↗</a>
             <a v-if="selectedProduct.images[0]?.image_url" :href="selectedProduct.images[0].image_url" target="_blank" rel="noopener">Mở ảnh sản phẩm ↗</a>
@@ -362,7 +429,7 @@ onMounted(loadData)
             v-else-if="evidence"
             :product-id="selectedProduct.id"
             :evidence="evidence"
-            @updated="evidence = $event"
+            @updated="updateEvidenceSummary"
           />
         </template>
 
@@ -373,6 +440,12 @@ onMounted(loadData)
             <div><small>Loại yêu cầu</small><strong>{{ selectedRequest.request_type === 'update' ? 'Cập nhật' : 'Ngừng hiển thị' }}</strong></div>
           </section>
           <p v-if="selectedRequest.reason" class="reason-box"><strong>Lý do:</strong> {{ selectedRequest.reason }}</p>
+          <section v-if="selectedRequest.reviewed_at" class="last-review-box">
+            <div><small>Lần xử lý gần nhất</small><strong>{{ selectedRequest.status === 'approved' ? 'Đã duyệt' : selectedRequest.status === 'needs_revision' ? 'Cần bổ sung' : selectedRequest.status === 'cancelled' ? 'Đã hủy' : 'Bị từ chối' }}</strong></div>
+            <div><small>Người xử lý</small><strong>{{ selectedRequest.reviewed_by_name || 'Quản trị viên' }}</strong></div>
+            <div><small>Thời điểm</small><strong>{{ formatDateTime(selectedRequest.reviewed_at) }}</strong></div>
+            <p v-if="selectedRequest.review_note"><strong>Ghi chú:</strong> {{ selectedRequest.review_note }}</p>
+          </section>
           <section v-if="selectedRequest.request_type === 'update'" class="comparison-section">
             <div class="comparison-heading">
               <strong>So sánh nội dung thay đổi</strong>
@@ -398,7 +471,7 @@ onMounted(loadData)
           <p v-else class="warning-box">Nếu chấp thuận, sản phẩm sẽ bị ẩn khỏi API công khai và chuyển vào trạng thái lưu trữ. Dữ liệu không bị xóa cứng.</p>
         </template>
 
-        <section v-if="selectedRequest || canModerateSelectedProduct" class="decision-box">
+        <section v-if="canModerateSelectedRequest || canModerateSelectedProduct" class="decision-box">
           <label>Quyết định
             <select v-model="decision">
               <option value="approved">{{ selectedProduct ? 'Duyệt hiển thị' : 'Chấp thuận yêu cầu' }}</option>
@@ -411,8 +484,8 @@ onMounted(loadData)
           </label>
         </section>
         <footer>
-          <button type="button" @click="closeModal">{{ selectedRequest || canModerateSelectedProduct ? 'Hủy' : 'Đóng' }}</button>
-          <button v-if="selectedRequest || canModerateSelectedProduct" class="submit-button" type="submit" :disabled="submitting">
+          <button type="button" @click="closeModal()">{{ canModerateSelectedRequest || canModerateSelectedProduct ? 'Hủy' : 'Đóng' }}</button>
+          <button v-if="canModerateSelectedRequest || canModerateSelectedProduct" class="submit-button" type="submit" :disabled="submitting">
             {{ submitting ? 'Đang xử lý...' : 'Xác nhận quyết định' }}
           </button>
         </footer>
@@ -445,11 +518,17 @@ onMounted(loadData)
 .queue-panel h2 { margin: 4px 0; font-size: 15px; }
 .queue-panel p { margin: 0; color: var(--ocop-slate); font-size: 11px; }
 .queue-panel button, .review-modal button { padding: 8px 11px; border: 1px solid var(--ocop-border); border-radius: 8px; background: #fff; font-size: 11px; font-weight: 700; }
+.pagination-bar { display: flex; padding: 13px 16px; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px solid var(--ocop-border); background: #f8fafc; }
+.pagination-bar span { color: var(--ocop-slate); font-size: 10px; font-weight: 700; }
+.pagination-bar div { display: flex; gap: 7px; }
+.pagination-bar button:disabled { cursor: not-allowed; opacity: .45; }
 .status-row { display: flex; margin-top: 8px; flex-wrap: wrap; gap: 6px; }
 .status-chip, .issue-chip { padding: 4px 7px; border-radius: 999px; background: #f1f5f9; color: #475569; font-size: 9px; font-weight: 800; }
 .status-chip[data-status="pending"], .issue-chip { background: #fff7ed; color: #9a4d12; }
 .status-chip[data-status="approved"] { background: #ecfdf5; color: #08745a; }
 .status-chip[data-status="rejected"], .status-chip[data-status="suspended"] { background: #fef2f2; color: #b42323; }
+.status-chip[data-status="needs_revision"] { background: #fff7ed; color: #9a4d12; }
+.status-chip[data-status="cancelled"], .status-chip[data-status="archived"] { background: #f1f5f9; color: #475569; }
 .status-chip.verification { background: #eff6ff; color: #1d4f91; }
 .empty-state { padding: 50px 20px; color: var(--ocop-slate); text-align: center; }
 .modal-backdrop { position: fixed; z-index: 80; inset: 0; display: grid; padding: 20px; place-items: center; overflow-y: auto; background: rgb(15 23 43 / 58%); }
@@ -462,6 +541,11 @@ onMounted(loadData)
 .subject-box small, .review-grid small, .evidence-overview small { color: var(--ocop-slate); font-size: 9px; font-weight: 700; text-transform: uppercase; }
 .subject-box strong, .review-grid strong, .evidence-overview strong { font-size: 12px; overflow-wrap: anywhere; }
 .review-grid .wide { grid-column: 1 / -1; }
+.last-review-box { display: grid; margin-top: 13px; padding: 13px 15px; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; border: 1px solid #bfdbd2; border-radius: 10px; background: #f4fbf8; }
+.last-review-box div { display: grid; gap: 3px; }
+.last-review-box small { color: var(--ocop-slate); font-size: 9px; font-weight: 700; text-transform: uppercase; }
+.last-review-box strong { font-size: 11px; }
+.last-review-box p { grid-column: 1 / -1; margin: 0; color: #425466; font-size: 10px; }
 .document-links { display: flex; margin-top: 12px; gap: 8px; }
 .document-links a, .evidence-card a { color: #1d4f91; font-size: 11px; font-weight: 700; text-decoration: none; }
 .document-links a { padding: 8px 10px; border-radius: 7px; background: #eff6ff; }
@@ -506,10 +590,13 @@ onMounted(loadData)
   .tab-list { display: grid; }
   .search-field { grid-column: auto; }
   .filter-actions button { flex: 1; }
+  .pagination-bar { align-items: stretch; flex-direction: column; }
+  .pagination-bar div, .pagination-bar button { flex: 1; }
   .queue-panel article { grid-template-columns: 52px minmax(0, 1fr); }
   .queue-panel article > img { width: 52px; height: 52px; }
   .queue-panel article > button { grid-column: 1 / -1; }
-  .subject-box, .review-grid, .evidence-overview { grid-template-columns: 1fr; }
+  .subject-box, .review-grid, .evidence-overview, .last-review-box { grid-template-columns: 1fr; }
+  .last-review-box p { grid-column: auto; }
   .review-grid .wide { grid-column: auto; }
   .document-links { flex-direction: column; }
   .comparison-heading { align-items: start; flex-direction: column; }

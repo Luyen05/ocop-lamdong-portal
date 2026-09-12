@@ -140,7 +140,7 @@ export async function listAdminProducts(
   filters: AdminProductFilters = {},
 ): Promise<ManagedProductListResponse> {
   const response = await http.get<ManagedProductListResponse>('/admin/products', {
-    params: { ...filters, page_size: 100 },
+    params: { page_size: 20, ...filters },
   })
   return response.data
 }
