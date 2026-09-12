@@ -7,6 +7,18 @@ hệ thống không chấm điểm hoặc cấp hạng sao OCOP. Chủ thể kha
 giấy chứng nhận do cơ quan có thẩm quyền cấp; quản trị viên chỉ đối chiếu hồ sơ
 và quyết định có cho phép thông tin đó xuất hiện trên cổng hay không.
 
+Đây không phải hệ thống tiếp nhận hồ sơ để Hội đồng OCOP chấm điểm. Dữ liệu được
+phân định rõ trách nhiệm như sau:
+
+- Chủ thể cung cấp tên, danh mục, mô tả, giá nếu có, quy cách, thành phần, hướng
+  dẫn sử dụng, câu chuyện sản phẩm, ảnh và bản chụp giấy chứng nhận.
+- Cơ quan có thẩm quyền bên ngoài hệ thống quyết định hạng sao, số quyết định,
+  ngày cấp, thời hạn và cơ quan công nhận.
+- Quản trị viên website đối chiếu thông tin với giấy chứng nhận, phản hồi hồ sơ,
+  duyệt hiển thị hoặc tạm ẩn; không sửa thay nội dung do chủ thể chịu trách nhiệm.
+- Hệ thống tự quản lý chủ thể sở hữu, slug, trạng thái, phiên bản, thời điểm gửi
+  và thông tin người xử lý.
+
 Trên giao diện sử dụng cụm từ **Duyệt hiển thị**, không sử dụng **Cấp sao**.
 
 ## 2. Quyền của các vai trò
@@ -26,13 +38,15 @@ draft -> pending -> approved
              |----> rejected ------> pending (sau khi chỉnh sửa)
 ```
 
-1. Chủ thể tạo và chỉnh sửa bản nháp.
+1. Chủ thể tạo và chỉnh sửa bản nháp. Bản nháp ban đầu chỉ cần tên và danh mục;
+   các thông tin còn lại được kiểm tra khi gửi duyệt.
 2. Chủ thể cung cấp thông tin sản phẩm, hạng sao theo giấy chứng nhận, số chứng
    nhận/quyết định, ngày cấp, ngày hết hạn, cơ quan cấp, đường dẫn minh chứng và
    ít nhất một ảnh sản phẩm.
 3. Khi gửi duyệt, sản phẩm chuyển sang `pending` và không còn được sửa trực tiếp.
-4. Quản trị viên có thể duyệt, yêu cầu bổ sung hoặc từ chối. Yêu cầu bổ sung và
-   từ chối bắt buộc có ghi chú.
+4. Hai thao tác chính của quản trị viên là duyệt hiển thị hoặc yêu cầu bổ sung.
+   Yêu cầu bổ sung bắt buộc có ghi chú. Từ chối chỉ dùng cho hồ sơ giả mạo hoặc
+   không thuộc phạm vi OCOP và được đặt trong nhóm thao tác phụ.
 5. Chỉ sản phẩm `approved` thuộc chủ thể `approved` mới xuất hiện công khai.
 
 ## 4. Cập nhật sản phẩm đã duyệt
@@ -75,13 +89,26 @@ Yêu cầu cập nhật hoặc ngừng hiển thị sử dụng các trạng th�
 
 - Hạng sao phải từ 3 đến 5 và là hạng ghi trên giấy chứng nhận.
 - Số chứng nhận, ngày cấp, ngày hết hạn và cơ quan cấp là bắt buộc khi gửi duyệt.
+- Chủ thể tải lên một bản chụp chứng nhận PDF, JPEG hoặc PNG để quản trị viên đối
+  chiếu. File này không được công khai trực tiếp cho khách.
 - Ngày hết hạn phải sau ngày cấp.
 - Quản trị viên không sửa hoặc nâng hạng sao khi duyệt. Nếu thông tin không khớp,
   quản trị viên yêu cầu chủ thể chỉnh sửa hoặc từ chối hồ sơ.
 - Sản phẩm chưa có chứng nhận có thể được lưu ở trạng thái `draft`, nhưng không
   được gửi duyệt hoặc xuất hiện công khai.
+- Giá bán không bắt buộc. API trả `null` và giao diện hiển thị “Liên hệ” khi chủ
+  thể không cung cấp giá.
+- Chứng nhận hết hạn của sản phẩm đang công khai tạo cảnh báo cho quản trị viên;
+  phiên bản MVP không tự động ẩn bằng tác vụ nền.
 
-## 8. Nhật ký và tính toàn vẹn dữ liệu
+## 8. Nguồn chứng cứ tham khảo
+
+Phân cấp nguồn A/B1/B2/C phục vụ dữ liệu do quản trị viên tổng hợp từ quyết định
+và cổng thông tin công khai. Chủ thể không phải tự tạo hoặc liên kết các nguồn
+này. Với sản phẩm do chủ thể gửi, bản chụp giấy chứng nhận là tài liệu đối chiếu
+chính và nguồn tham khảo nâng cao không phải điều kiện bắt buộc để duyệt.
+
+## 9. Nhật ký và tính toàn vẹn dữ liệu
 
 - Lưu người xử lý, thời gian xử lý và ghi chú ở mọi quyết định kiểm duyệt.
 - Việc áp dụng yêu cầu cập nhật hoặc lưu trữ phải chạy trong một transaction.
