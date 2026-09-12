@@ -36,6 +36,9 @@ export interface ProductListItem {
 export interface ProductDetail extends ProductListItem {
   cert_code: string | null
   cert_year: number | null
+  cert_issued_at: string | null
+  cert_expires_at: string | null
+  issuing_authority: string | null
   story: string | null
   ingredients: string | null
   usage_instructions: string | null
