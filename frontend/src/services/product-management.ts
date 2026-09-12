@@ -16,9 +16,23 @@ import type {
   ProductEvidenceLinkPayload,
   ProductEvidenceLinkUpdatePayload,
   ProductDataSource,
+  ProductImageUpload,
   ProductWorkflowStatus,
   ProductWritePayload,
 } from '@/types/product-management'
+
+export async function uploadProductImage(file: File): Promise<ProductImageUpload> {
+  const formData = new FormData()
+  formData.append('file', file)
+  const response = await http.post<ProductImageUpload>('/subject/product-images', formData)
+  return response.data
+}
+
+export async function deleteTemporaryProductImage(storagePath: string): Promise<void> {
+  const fileName = storagePath.split('/').pop()
+  if (!fileName) return
+  await http.delete(`/subject/product-images/${encodeURIComponent(fileName)}`)
+}
 
 export async function listMyProducts(
   status?: ProductWorkflowStatus,
