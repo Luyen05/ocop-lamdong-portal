@@ -7,13 +7,14 @@ const props = defineProps<{
   product: ProductListItem
 }>()
 
-const formattedPrice = computed(() =>
-  new Intl.NumberFormat('vi-VN', {
+const formattedPrice = computed(() => {
+  if (props.product.price === null) return 'Liên hệ'
+  return new Intl.NumberFormat('vi-VN', {
     style: 'currency',
     currency: 'VND',
     maximumFractionDigits: 0,
-  }).format(props.product.price),
-)
+  }).format(props.product.price)
+})
 
 const truncatedSubject = computed(() => {
   const name = props.product.subject.name
@@ -54,7 +55,7 @@ const truncatedSubject = computed(() => {
       <div class="product-price-row">
         <div class="product-price">
           <strong>{{ formattedPrice }}</strong>
-          <small>/ {{ product.unit }}</small>
+          <small v-if="product.price !== null && product.unit">/ {{ product.unit }}</small>
         </div>
         <span class="product-rating">★ {{ product.rating_avg.toFixed(1) }}</span>
       </div>

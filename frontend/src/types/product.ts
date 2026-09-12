@@ -22,8 +22,8 @@ export interface ProductListItem {
   name: string
   slug: string
   star: number
-  price: number
-  unit: string
+  price: number | null
+  unit: string | null
   description: string
   rating_avg: number
   primary_image_url: string | null

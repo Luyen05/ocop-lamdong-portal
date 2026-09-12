@@ -15,6 +15,7 @@ const errorMessage = ref('')
 
 const formattedPrice = computed(() => {
   if (!product.value) return ''
+  if (product.value.price === null) return 'Liên hệ'
   return new Intl.NumberFormat('vi-VN', {
     style: 'currency',
     currency: 'VND',
@@ -131,7 +132,7 @@ onUnmounted(() => {
 
             <div class="price-box">
               <strong>{{ formattedPrice }}</strong>
-              <span>/ {{ product.unit }}</span>
+              <span v-if="product.price !== null && product.unit">/ {{ product.unit }}</span>
             </div>
 
             <dl class="certification-list">
