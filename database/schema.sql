@@ -91,17 +91,18 @@ CREATE TABLE ocop_products (
   category_id BIGINT NOT NULL REFERENCES categories(id) ON DELETE RESTRICT,
   name VARCHAR(255) NOT NULL,
   slug VARCHAR(255) NOT NULL UNIQUE,
-  star SMALLINT NOT NULL CHECK (star BETWEEN 3 AND 5),
-  price NUMERIC(12,2) NOT NULL DEFAULT 0 CHECK (price >= 0),
-  unit VARCHAR(50) NOT NULL,
+  star SMALLINT CHECK (star BETWEEN 3 AND 5),
+  price NUMERIC(12,2) DEFAULT 0 CHECK (price >= 0),
+  unit VARCHAR(50),
   cert_code VARCHAR(100) UNIQUE,
   cert_year SMALLINT CHECK (cert_year BETWEEN 2000 AND 2100),
   cert_issued_at DATE,
   cert_expires_at DATE,
   issuing_authority VARCHAR(255),
   certificate_url VARCHAR(500),
+  certificate_storage_path VARCHAR(500),
   vietgap_code VARCHAR(100),
-  description TEXT NOT NULL,
+  description TEXT,
   story TEXT,
   ingredients TEXT,
   usage_instructions TEXT,
@@ -248,6 +249,9 @@ CREATE TABLE news_images (
 CREATE INDEX idx_subjects_geom ON subjects USING GIST (geom);
 CREATE INDEX idx_tourism_locations_geom ON tourism_locations USING GIST (geom);
 CREATE INDEX idx_products_public_filters ON ocop_products (status, category_id, star);
+CREATE UNIQUE INDEX uq_products_certificate_storage_path
+  ON ocop_products (certificate_storage_path)
+  WHERE certificate_storage_path IS NOT NULL;
 CREATE INDEX idx_locations_public_filters ON tourism_locations (status, district, type);
 CREATE INDEX idx_reviews_product_status ON reviews (product_id, status);
 CREATE INDEX idx_reviews_location_status ON reviews (location_id, status);
