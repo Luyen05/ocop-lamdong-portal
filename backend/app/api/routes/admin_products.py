@@ -289,6 +289,7 @@ def moderate_product(
 
     product.status = payload.status
     product.reviewed_by = current_admin.id
+    product.reviewer = current_admin
     product.reviewed_at = datetime.now(timezone.utc)
     product.review_note = payload.note
     if payload.status == "approved":

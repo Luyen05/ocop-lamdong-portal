@@ -199,6 +199,7 @@ def test_admin_approves_product_before_it_becomes_public(subject_product_context
     assert hidden.status_code == 404
     assert approved.status_code == 200
     assert approved.json()["status"] == "approved"
+    assert approved.json()["reviewed_by_name"] == "Quản trị viên"
     assert approved.json()["moderation_note"] == "Đã đối chiếu giấy chứng nhận."
     assert public.status_code == 200
 
@@ -526,6 +527,7 @@ def test_approved_product_update_waits_for_admin(subject_product_context) -> Non
     assert public_before.json()["name"] == "Cà phê Arabica Cầu Đất"
     assert moderated.status_code == 200
     assert moderated.json()["status"] == "approved"
+    assert moderated.json()["reviewed_by_name"] == "Quản trị viên"
     assert public_after.json()["name"] == proposed["name"]
     assert public_after.json()["price"] == 195000
 

@@ -27,6 +27,7 @@ if TYPE_CHECKING:
     from app.models.category import Category
     from app.models.data_source import ProductSource
     from app.models.subject import Subject
+    from app.models.user import User
 
 
 class Product(Base):
@@ -95,6 +96,7 @@ class Product(Base):
 
     subject: Mapped[Subject] = relationship(back_populates="products")
     category: Mapped[Category] = relationship()
+    reviewer: Mapped[User | None] = relationship(foreign_keys=[reviewed_by])
     images: Mapped[list[ProductImage]] = relationship(
         back_populates="product",
         cascade="all, delete-orphan",
@@ -191,3 +193,4 @@ class ProductChangeRequest(Base):
     )
 
     product: Mapped[Product] = relationship(back_populates="change_requests")
+    reviewer: Mapped[User | None] = relationship(foreign_keys=[reviewed_by])
