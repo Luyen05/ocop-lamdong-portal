@@ -18,7 +18,7 @@ from app.models.product import Product
 from app.models.role import Role
 from app.models.subject import Subject
 from app.models.user import User
-from app.api.routes import subject_product_images
+from app.api.routes import subject_product_certificates, subject_product_images
 from app.schemas.product_management import ProductImagePayload
 from app.services.product_workflow import get_change_request, get_product_for_admin
 
@@ -204,6 +204,37 @@ def test_subject_creates_draft_and_submits_for_moderation(subject_product_contex
     assert submitted.status_code == 200
     assert submitted.json()["status"] == "pending"
     assert submitted.json()["submitted_at"] is not None
+
+
+def test_subject_saves_incomplete_draft_but_cannot_submit(subject_product_context) -> None:
+    client, _ = subject_product_context
+    headers = auth_header(1, "subject")
+    created = client.post(
+        "/api/v1/subject/products",
+        headers=headers,
+        json={"category_id": 1, "name": "Bản nháp trà atiso"},
+    )
+
+    assert created.status_code == 201
+    assert created.json()["status"] == "draft"
+    assert created.json()["star"] is None
+    assert created.json()["description"] is None
+
+    patched = client.patch(
+        f"/api/v1/subject/products/{created.json()['id']}",
+        headers=headers,
+        json={"description": "Mô tả sản phẩm đang được hoàn thiện."},
+    )
+    submitted = client.post(
+        f"/api/v1/subject/products/{created.json()['id']}/submit",
+        headers=headers,
+    )
+
+    assert patched.status_code == 200
+    assert submitted.status_code == 422
+    assert submitted.json()["code"] == "PRODUCT_SUBMISSION_INCOMPLETE"
+    assert "certificate_document" in submitted.json()["details"]["missing_fields"]
+    assert "primary_image" in submitted.json()["details"]["missing_fields"]
 
 
 def test_admin_approves_product_before_it_becomes_public(subject_product_context) -> None:
@@ -751,4 +782,94 @@ def test_product_image_upload_validates_role_type_content_and_size(
     assert invalid_content.json()["code"] == "INVALID_IMAGE_CONTENT"
     assert oversized.status_code == 413
     assert oversized.json()["code"] == "IMAGE_TOO_LARGE"
+    assert forbidden.status_code == 403
+
+
+def test_subject_uploads_private_certificate_for_admin_review(
+    subject_product_context,
+    tmp_path,
+    monkeypatch,
+) -> None:
+    client, _ = subject_product_context
+    monkeypatch.setattr(subject_product_certificates.settings, "upload_directory", tmp_path)
+    pdf_content = b"%PDF-1.7\ncertificate"
+
+    uploaded = client.post(
+        "/api/v1/subject/product-certificates",
+        headers=auth_header(1, "subject"),
+        files={"file": ("chung-nhan.pdf", pdf_content, "application/pdf")},
+    )
+    assert uploaded.status_code == 201
+    storage_path = uploaded.json()["storage_path"]
+    assert storage_path.startswith("certificates/1/")
+
+    payload = product_payload("OCOP-LD-CERTIFICATE-UPLOAD")
+    payload["certificate_url"] = None
+    payload["certificate_storage_path"] = storage_path
+    created = client.post(
+        "/api/v1/subject/products",
+        headers=auth_header(1, "subject"),
+        json=payload,
+    )
+    assert created.status_code == 201
+
+    product_id = created.json()["id"]
+    owner_download = client.get(
+        f"/api/v1/subject/product-certificates/products/{product_id}",
+        headers=auth_header(1, "subject"),
+    )
+    admin_download = client.get(
+        f"/api/v1/admin/products/{product_id}/certificate",
+        headers=auth_header(4, "admin"),
+    )
+    other_subject = client.get(
+        f"/api/v1/subject/product-certificates/products/{product_id}",
+        headers=auth_header(2, "subject"),
+    )
+    public_download = client.get(f"/uploads/{storage_path}")
+
+    assert owner_download.status_code == 200
+    assert owner_download.content == pdf_content
+    assert admin_download.status_code == 200
+    assert other_subject.status_code == 404
+    assert public_download.status_code == 404
+
+
+def test_certificate_upload_validates_type_content_size_and_role(
+    subject_product_context,
+    tmp_path,
+    monkeypatch,
+) -> None:
+    client, _ = subject_product_context
+    monkeypatch.setattr(subject_product_certificates.settings, "upload_directory", tmp_path)
+    monkeypatch.setattr(subject_product_certificates.settings, "certificate_upload_max_bytes", 20)
+    headers = auth_header(1, "subject")
+
+    invalid_type = client.post(
+        "/api/v1/subject/product-certificates",
+        headers=headers,
+        files={"file": ("notes.txt", b"plain text", "text/plain")},
+    )
+    invalid_content = client.post(
+        "/api/v1/subject/product-certificates",
+        headers=headers,
+        files={"file": ("fake.pdf", b"not a pdf", "application/pdf")},
+    )
+    oversized = client.post(
+        "/api/v1/subject/product-certificates",
+        headers=headers,
+        files={"file": ("large.pdf", b"%PDF-" + b"0" * 20, "application/pdf")},
+    )
+    forbidden = client.post(
+        "/api/v1/subject/product-certificates",
+        headers=auth_header(3, "user"),
+        files={"file": ("certificate.pdf", b"%PDF-1.7", "application/pdf")},
+    )
+
+    assert invalid_type.status_code == 422
+    assert invalid_type.json()["code"] == "INVALID_CERTIFICATE_TYPE"
+    assert invalid_content.status_code == 422
+    assert invalid_content.json()["code"] == "INVALID_CERTIFICATE_CONTENT"
+    assert oversized.status_code == 413
+    assert oversized.json()["code"] == "CERTIFICATE_TOO_LARGE"
     assert forbidden.status_code == 403

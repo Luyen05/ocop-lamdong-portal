@@ -12,6 +12,7 @@ import AdminProductsView from '@/views/admin/AdminProductsView.vue'
 
 vi.mock('@/services/product-management', () => ({
   createDataSource: vi.fn(),
+  downloadProductCertificate: vi.fn(),
   getProductEvidence: vi.fn(),
   linkProductEvidence: vi.fn(),
   listDataSources: vi.fn(),
@@ -124,6 +125,13 @@ describe('AdminProductsView', () => {
     await flushPromises()
     expect(wrapper.text()).toContain('Cơ quan có thẩm quyền tỉnh Lâm Đồng')
     expect(wrapper.text()).toContain('3981/QĐ-UBND')
+    expect(wrapper.text()).toContain('Duyệt hiển thị')
+    expect(wrapper.text()).toContain('Yêu cầu bổ sung')
+    expect(wrapper.text()).not.toContain('Từ chối hồ sơ')
+
+    const exceptionalButton = wrapper.findAll('button').find((button) => button.text() === 'Hồ sơ không hợp lệ?')
+    await exceptionalButton!.trigger('click')
+    expect(wrapper.text()).toContain('Từ chối hồ sơ')
 
     await wrapper.get('.review-modal').trigger('submit')
     await flushPromises()
