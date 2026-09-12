@@ -208,6 +208,24 @@ def replace_product_images(
         )
 
 
+def validate_certificate_storage(product: Product, storage_path: str | None) -> None:
+    if storage_path is None:
+        return
+    storage_pattern = rf"certificates/{product.subject_id}/[0-9a-f]{{32}}\.(pdf|jpg|png)"
+    if re.fullmatch(storage_pattern, storage_path) is None:
+        raise workflow_error(
+            status.HTTP_403_FORBIDDEN,
+            "PRODUCT_CERTIFICATE_NOT_OWNED",
+            "File chứng nhận không thuộc chủ thể hiện tại.",
+        )
+    if not (get_settings().upload_directory / storage_path).is_file():
+        raise workflow_error(
+            status.HTTP_422_UNPROCESSABLE_ENTITY,
+            "PRODUCT_CERTIFICATE_NOT_FOUND",
+            "Không tìm thấy file chứng nhận đã tải lên.",
+        )
+
+
 def apply_product_payload(
     db: Session,
     product: Product,
@@ -215,6 +233,7 @@ def apply_product_payload(
     *,
     update_slug: bool,
 ) -> None:
+    validate_certificate_storage(product, payload.certificate_storage_path)
     product.category = get_category(db, payload.category_id)
     if update_slug:
         product.slug = build_unique_slug(db, payload.name, product.id)
@@ -245,6 +264,8 @@ def apply_product_draft_payload(
                 "Danh mục sản phẩm không được để trống.",
             )
         product.category = get_category(db, payload.category_id)
+    if "certificate_storage_path" in fields:
+        validate_certificate_storage(product, payload.certificate_storage_path)
     if "name" in values and values["name"] is None:
         raise workflow_error(
             status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -279,7 +300,7 @@ def validate_product_submission(product: Product) -> None:
         "cert_issued_at": product.cert_issued_at,
         "cert_expires_at": product.cert_expires_at,
         "issuing_authority": product.issuing_authority,
-        "certificate_url": product.certificate_url,
+        "certificate_document": product.certificate_storage_path or product.certificate_url,
     }
     missing_fields = [field for field, value in required_values.items() if value in (None, "")]
     if product.price is not None and product.price > 0 and not product.unit:
@@ -328,6 +349,7 @@ def to_managed_product_read(product: Product) -> ManagedProductRead:
         cert_expires_at=product.cert_expires_at,
         issuing_authority=product.issuing_authority,
         certificate_url=product.certificate_url,
+        certificate_storage_path=product.certificate_storage_path,
         vietgap_code=product.vietgap_code,
         description=product.description,
         story=product.story,
@@ -453,6 +475,7 @@ def to_change_request_read(change_request: ProductChangeRequest) -> ProductChang
         cert_expires_at=product.cert_expires_at,
         issuing_authority=product.issuing_authority,
         certificate_url=product.certificate_url,
+        certificate_storage_path=product.certificate_storage_path,
         vietgap_code=product.vietgap_code,
         description=product.description,
         story=product.story,
