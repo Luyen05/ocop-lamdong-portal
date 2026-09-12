@@ -84,9 +84,16 @@ const router = createRouter({
       children: [
         { path: '', redirect: '/chu-the/san-pham' },
         {
+          path: 'ho-so',
+          name: 'subject-profile',
+          component: () => import('@/views/subject/SubjectProfileView.vue'),
+          meta: { title: 'Hồ sơ chủ thể' },
+        },
+        {
           path: 'san-pham',
           name: 'subject-products',
           component: () => import('@/views/subject/SubjectProductsView.vue'),
+          meta: { title: 'Sản phẩm của chủ thể' },
         },
         {
           path: 'san-pham/them',
