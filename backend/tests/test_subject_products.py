@@ -19,6 +19,7 @@ from app.models.role import Role
 from app.models.subject import Subject
 from app.models.user import User
 from app.api.routes import subject_product_images
+from app.schemas.product_management import ProductImagePayload
 from app.services.product_workflow import get_change_request, get_product_for_admin
 
 
@@ -169,6 +170,15 @@ def test_postgresql_row_locks_target_only_the_workflow_table() -> None:
     request_sql = str(session.statements[1].compile(dialect=postgresql.dialect()))
     assert "FOR UPDATE OF ocop_products" in product_sql
     assert "FOR UPDATE OF product_change_requests" in request_sql
+
+
+def test_product_image_accepts_legacy_local_asset_url() -> None:
+    image = ProductImagePayload(
+        image_url="/assets/demo/products/public-reference.svg",
+        is_primary=True,
+        sort_order=0,
+    )
+    assert image.image_url == "/assets/demo/products/public-reference.svg"
 
 
 def test_subject_creates_draft_and_submits_for_moderation(subject_product_context) -> None:
