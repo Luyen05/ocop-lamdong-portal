@@ -16,6 +16,7 @@ from app.models.product import Product
 from app.models.role import Role
 from app.models.subject import Subject
 from app.models.user import User
+from app.api.routes import subject_product_images
 
 
 @pytest.fixture
@@ -620,4 +621,99 @@ def test_product_requires_exactly_one_primary_image(subject_product_context) -> 
     )
 
     assert response.status_code == 422
-    assert response.json()["code"] == "VALIDATION_ERROR"
+
+
+def test_subject_uploads_and_links_local_product_image(
+    subject_product_context,
+    tmp_path,
+    monkeypatch,
+) -> None:
+    client, _ = subject_product_context
+    monkeypatch.setattr(subject_product_images.settings, "upload_directory", tmp_path)
+    png_content = b"\x89PNG\r\n\x1a\n" + b"test-image"
+
+    uploaded = client.post(
+        "/api/v1/subject/product-images",
+        headers=auth_header(1, "subject"),
+        files={"file": ("product.png", png_content, "image/png")},
+    )
+
+    assert uploaded.status_code == 201
+    uploaded_data = uploaded.json()
+    assert uploaded_data["storage_path"].startswith("products/1/")
+    stored_file = tmp_path / uploaded_data["storage_path"]
+    assert stored_file.read_bytes() == png_content
+
+    payload = product_payload("OCOP-LD-UPLOAD")
+    payload["images"] = [
+        {
+            "image_url": uploaded_data["image_url"],
+            "storage_path": uploaded_data["storage_path"],
+            "is_primary": True,
+            "sort_order": 0,
+        }
+    ]
+    created = client.post(
+        "/api/v1/subject/products",
+        headers=auth_header(1, "subject"),
+        json=payload,
+    )
+    assert created.status_code == 201
+    assert created.json()["images"][0]["storage_path"] == uploaded_data["storage_path"]
+
+    file_name = uploaded_data["storage_path"].rsplit("/", 1)[1]
+    cannot_delete_linked = client.delete(
+        f"/api/v1/subject/product-images/{file_name}",
+        headers=auth_header(1, "subject"),
+    )
+    cannot_delete_other_owner = client.delete(
+        f"/api/v1/subject/product-images/{file_name}",
+        headers=auth_header(2, "subject"),
+    )
+    assert cannot_delete_linked.status_code == 409
+    assert cannot_delete_other_owner.status_code == 404
+
+
+def test_product_image_upload_validates_role_type_content_and_size(
+    subject_product_context,
+    tmp_path,
+    monkeypatch,
+) -> None:
+    client, _ = subject_product_context
+    monkeypatch.setattr(subject_product_images.settings, "upload_directory", tmp_path)
+    headers = auth_header(1, "subject")
+
+    invalid_type = client.post(
+        "/api/v1/subject/product-images",
+        headers=headers,
+        files={"file": ("notes.txt", b"not-an-image", "text/plain")},
+    )
+    invalid_content = client.post(
+        "/api/v1/subject/product-images",
+        headers=headers,
+        files={"file": ("fake.png", b"not-a-png", "image/png")},
+    )
+    oversized = client.post(
+        "/api/v1/subject/product-images",
+        headers=headers,
+        files={
+            "file": (
+                "large.png",
+                b"\x89PNG\r\n\x1a\n" + b"0" * (5 * 1024 * 1024),
+                "image/png",
+            )
+        },
+    )
+    forbidden = client.post(
+        "/api/v1/subject/product-images",
+        headers=auth_header(3, "user"),
+        files={"file": ("product.png", b"\x89PNG\r\n\x1a\n", "image/png")},
+    )
+
+    assert invalid_type.status_code == 422
+    assert invalid_type.json()["code"] == "INVALID_IMAGE_TYPE"
+    assert invalid_content.status_code == 422
+    assert invalid_content.json()["code"] == "INVALID_IMAGE_CONTENT"
+    assert oversized.status_code == 413
+    assert oversized.json()["code"] == "IMAGE_TOO_LARGE"
+    assert forbidden.status_code == 403

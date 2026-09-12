@@ -58,10 +58,12 @@ services:
       JWT_SECRET_KEY: "${JWT_SECRET_KEY:?Set JWT_SECRET_KEY in .env}"
       JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
       JWT_ACCESS_TOKEN_EXPIRE_MINUTES: ${JWT_ACCESS_TOKEN_EXPIRE_MINUTES:-60}
+      UPLOAD_DIRECTORY: /app/uploads
 
     volumes:
       - ./backend/app:/app/app
       - ./backend/tests:/app/tests
+      - backend_uploads:/app/uploads
 
     command:
       - uvicorn
@@ -121,3 +123,4 @@ services:
 volumes:
   postgres_data:
   frontend_node_modules:
+  backend_uploads:

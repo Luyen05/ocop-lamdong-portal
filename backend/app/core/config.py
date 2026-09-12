@@ -6,6 +6,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
+BACKEND_ROOT = Path(__file__).resolve().parents[2]
 
 
 class Settings(BaseSettings):
@@ -19,6 +20,8 @@ class Settings(BaseSettings):
     )
     jwt_algorithm: str = "HS256"
     jwt_access_token_expire_minutes: int = Field(default=60, ge=1, le=1440)
+    upload_directory: Path = BACKEND_ROOT / "uploads"
+    upload_max_bytes: int = Field(default=5 * 1024 * 1024, ge=1024)
 
     model_config = SettingsConfigDict(
         env_file=PROJECT_ROOT / ".env",
