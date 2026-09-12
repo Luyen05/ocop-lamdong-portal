@@ -256,7 +256,7 @@ onMounted(load)
     <div v-if="errorMessage" class="alert alert-danger" role="alert">{{ errorMessage }}</div>
     <p v-if="loading" class="loading-card">Đang tải biểu mẫu...</p>
 
-    <form v-else class="product-form" @submit.prevent="save(isApprovedUpdate || isRequestRevision)">
+    <form v-else class="product-form" @submit.prevent="save(true)">
       <section>
         <div class="section-heading">
           <strong>1. Thông tin sản phẩm</strong>
