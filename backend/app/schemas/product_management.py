@@ -55,6 +55,13 @@ def _validate_http_url(value: str) -> str:
     return normalized
 
 
+def _validate_image_url(value: str) -> str:
+    normalized = value.strip()
+    if normalized.startswith(("/assets/", "/uploads/")):
+        return normalized
+    return _validate_http_url(normalized)
+
+
 class ProductImagePayload(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -66,7 +73,7 @@ class ProductImagePayload(BaseModel):
     @field_validator("image_url")
     @classmethod
     def validate_image_url(cls, value: str) -> str:
-        return _validate_http_url(value)
+        return _validate_image_url(value)
 
 
 class ProductWritePayload(BaseModel):
