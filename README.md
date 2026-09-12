@@ -115,9 +115,9 @@ JWT hoặc tự hiện nút quản trị trên frontend không làm tăng quyề
 Sau khi backend và frontend đã chạy, mở các địa chỉ:
 
 - Danh sách sản phẩm: `http://localhost:5173/san-pham`.
-- Chi tiết dữ liệu mẫu: `http://localhost:5173/san-pham/ca-phe-arabica-cau-dat-demo`.
+- Chi tiết dữ liệu tham khảo: `http://localhost:5173/san-pham/tham-khao-2026-mam-nem-seagull`.
 - API danh sách: `http://localhost:8000/api/v1/products`.
-- API chi tiết: `http://localhost:8000/api/v1/products/ca-phe-arabica-cau-dat-demo`.
+- API chi tiết: `http://localhost:8000/api/v1/products/tham-khao-2026-mam-nem-seagull`.
 
 Ví dụ lọc sản phẩm 5 sao thuộc danh mục đồ uống tại Đà Lạt:
 
@@ -125,8 +125,8 @@ Ví dụ lọc sản phẩm 5 sao thuộc danh mục đồ uống tại Đà L�
 http://localhost:8000/api/v1/products?category=do-uong&star=5&district=Đà%20Lạt
 ```
 
-API công khai không trả sản phẩm `pending`, `rejected` hoặc sản phẩm thuộc chủ
-thể chưa được duyệt.
+API công khai chỉ trả sản phẩm đã duyệt, thuộc chủ thể đã duyệt và không phải dữ
+liệu demo. Sản phẩm cần có chứng nhận còn hiệu lực hoặc nguồn công nhận mức A/B1.
 
 ## Kiểm thử trong Docker
 
@@ -182,14 +182,19 @@ docker compose down
 Lệnh trên giữ volume PostgreSQL. Không dùng `docker compose down -v` nếu chưa
 chủ động sao lưu và xác nhận có thể xóa toàn bộ dữ liệu local.
 
-## Migration kiểm duyệt sản phẩm
+## Migration cho database đã có dữ liệu
 
-Với database đã có volume, chạy migration mới trước khi sử dụng màn hình quản lý
-sản phẩm:
+Với database đã có volume từ phiên bản cũ, chạy lần lượt các migration còn thiếu
+trước khi sử dụng màn hình quản lý sản phẩm:
 
     Get-Content .\database\migrations\004_product_moderation.sql -Raw | docker compose exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+    Get-Content .\database\migrations\005_add_product_sources.sql -Raw | docker compose exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+    Get-Content .\database\migrations\006_simplify_subject_product_flow.sql -Raw | docker compose exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+    Get-Content .\database\migrations\007_hide_demo_products.sql -Raw | docker compose exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
 
-Không cần chạy lệnh này với database được tạo mới từ schema hiện tại.
+Mỗi file đều chạy trong transaction và dùng `ON_ERROR_STOP=1`; nếu có lỗi, dừng
+để kiểm tra thay vì chạy tiếp. Không cần chạy các lệnh này với database được tạo
+mới từ `database/schema.sql` hiện tại.
 
 ## Tài liệu nền
 
