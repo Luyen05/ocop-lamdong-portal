@@ -130,7 +130,7 @@ def get_owned_product(db: Session, product_id: int, subject_id: int) -> Product:
 def get_product_for_admin(db: Session, product_id: int, *, lock: bool = False) -> Product:
     statement = select(Product).where(Product.id == product_id)
     if lock:
-        statement = statement.with_for_update()
+        statement = statement.with_for_update(of=Product)
     product = db.scalar(statement.options(*product_load_options()))
     if product is None:
         raise workflow_error(
@@ -347,7 +347,7 @@ def get_change_request(
         filters.append(ProductChangeRequest.subject_id == subject_id)
     statement = select(ProductChangeRequest).where(*filters)
     if lock:
-        statement = statement.with_for_update()
+        statement = statement.with_for_update(of=ProductChangeRequest)
     change_request = db.scalar(statement.options(*change_request_load_options()))
     if change_request is None:
         raise workflow_error(

@@ -2,8 +2,10 @@ from collections.abc import Generator
 from datetime import date, timedelta
 
 import pytest
+from fastapi import HTTPException
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
+from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
@@ -17,6 +19,7 @@ from app.models.role import Role
 from app.models.subject import Subject
 from app.models.user import User
 from app.api.routes import subject_product_images
+from app.services.product_workflow import get_change_request, get_product_for_admin
 
 
 @pytest.fixture
@@ -146,6 +149,26 @@ def product_payload(cert_code: str = "OCOP-LD-001") -> dict:
             }
         ],
     }
+
+
+def test_postgresql_row_locks_target_only_the_workflow_table() -> None:
+    class CapturingSession:
+        statements = []
+
+        def scalar(self, statement):
+            self.statements.append(statement)
+            return None
+
+    session = CapturingSession()
+    with pytest.raises(HTTPException):
+        get_product_for_admin(session, 10, lock=True)
+    with pytest.raises(HTTPException):
+        get_change_request(session, 20, lock=True)
+
+    product_sql = str(session.statements[0].compile(dialect=postgresql.dialect()))
+    request_sql = str(session.statements[1].compile(dialect=postgresql.dialect()))
+    assert "FOR UPDATE OF ocop_products" in product_sql
+    assert "FOR UPDATE OF product_change_requests" in request_sql
 
 
 def test_subject_creates_draft_and_submits_for_moderation(subject_product_context) -> None:
