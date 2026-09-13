@@ -181,7 +181,6 @@ async function submit(): Promise<void> {
 
 .profile-heading h1 {
   color: #18351f;
-  font-family: "Segoe UI", Arial, sans-serif;
   font-size: clamp(2rem, 4vw, 3rem);
 }
 
@@ -217,7 +216,6 @@ async function submit(): Promise<void> {
   place-items: center;
   background: #2f6f3e;
   color: #fff;
-  font-family: "Segoe UI", Arial, sans-serif;
   font-size: 2.75rem;
 }
 
