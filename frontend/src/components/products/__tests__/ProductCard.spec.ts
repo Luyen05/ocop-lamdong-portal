@@ -22,7 +22,7 @@ const product: ProductListItem = {
 }
 
 describe('ProductCard', () => {
-  it('hien thi gia lien he va khong con lien ket ban do minh hoa', async () => {
+  it('hien thi thong tin cot loi trong mot lien ket duy nhat', async () => {
     const wrapper = mount(ProductCard, {
       props: { product },
       global: {
@@ -33,8 +33,10 @@ describe('ProductCard', () => {
     })
 
     expect(wrapper.text()).toContain('Liên hệ')
-    expect(wrapper.text()).toContain('Xem chi tiết')
+    expect(wrapper.text()).toContain('Thảo dược')
+    expect(wrapper.text()).not.toContain(product.description)
     expect(wrapper.text()).not.toContain('Bản Đồ')
+    expect(wrapper.findAll('a')).toHaveLength(1)
 
     await wrapper.get('img').trigger('error')
     expect(wrapper.find('.product-placeholder').exists()).toBe(true)
