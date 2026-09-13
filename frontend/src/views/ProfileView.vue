@@ -180,7 +180,7 @@ async function submit(): Promise<void> {
 }
 
 .profile-heading h1 {
-  color: #18351f;
+  color: var(--ocop-primary-950);
   font-size: clamp(2rem, 4vw, 3rem);
 }
 
@@ -214,7 +214,7 @@ async function submit(): Promise<void> {
   display: grid;
   margin-inline: auto;
   place-items: center;
-  background: #2f6f3e;
+  background: var(--ocop-primary-700);
   color: #fff;
   font-size: 2.75rem;
 }
@@ -226,7 +226,7 @@ async function submit(): Promise<void> {
 
 .profile-summary > p {
   margin-bottom: 0.75rem;
-  color: #68736b;
+  color: var(--ocop-slate);
 }
 
 .role-badge {
@@ -234,7 +234,7 @@ async function submit(): Promise<void> {
   padding: 0.35rem 0.75rem;
   border-radius: 999px;
   background: #e9f3df;
-  color: #2f6f3e;
+  color: var(--ocop-primary-700);
   font-size: 0.8rem;
   font-weight: 700;
 }

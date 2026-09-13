@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
+import AppIcon from '@/components/ui/AppIcon.vue'
 import { authStore } from '@/stores/auth'
 
 const route = useRoute()
@@ -17,13 +18,13 @@ const pageTitle = computed(() =>
 )
 
 const navigation = [
-  { label: 'Tổng quan', symbol: '▦', to: '/quan-tri', available: true },
-  { label: 'Sản phẩm', symbol: '◈', to: '/quan-tri/san-pham', available: true },
-  { label: 'Điểm du lịch', symbol: '⌖', to: '', available: false },
-  { label: 'Chủ thể / HTX', symbol: '♢', to: '/quan-tri/ho-so-chu-the', available: true },
-  { label: 'Người dùng', symbol: '♙', to: '', available: false },
-  { label: 'Đánh giá', symbol: '★', to: '', available: false },
-  { label: 'Bài viết', symbol: '▤', to: '', available: false },
+  { label: 'Tổng quan', icon: 'dashboard', to: '/quan-tri', available: true },
+  { label: 'Sản phẩm', icon: 'package', to: '/quan-tri/san-pham', available: true },
+  { label: 'Điểm du lịch', icon: 'map-pin', to: '', available: false },
+  { label: 'Chủ thể / HTX', icon: 'building', to: '/quan-tri/ho-so-chu-the', available: true },
+  { label: 'Người dùng', icon: 'users', to: '', available: false },
+  { label: 'Đánh giá', icon: 'star', to: '', available: false },
+  { label: 'Bài viết', icon: 'newspaper', to: '', available: false },
 ]
 
 function closeSidebar(): void {
@@ -60,11 +61,11 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
       <nav class="admin-nav" aria-label="Điều hướng quản trị">
         <template v-for="item in navigation" :key="item.label">
           <RouterLink v-if="item.available" :to="item.to" @click="closeSidebar">
-            <span aria-hidden="true">{{ item.symbol }}</span>
+            <span aria-hidden="true"><AppIcon :name="item.icon" :size="18" /></span>
             {{ item.label }}
           </RouterLink>
           <button v-else type="button" disabled :title="`${item.label} sẽ được triển khai ở commit sau`">
-            <span aria-hidden="true">{{ item.symbol }}</span>
+            <span aria-hidden="true"><AppIcon :name="item.icon" :size="18" /></span>
             {{ item.label }}
             <small>Sắp phát triển</small>
           </button>
@@ -72,8 +73,8 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
       </nav>
 
       <div class="sidebar-footer">
-        <RouterLink to="/">← Về trang công khai</RouterLink>
-        <button type="button" @click="logout">Đăng xuất</button>
+        <RouterLink to="/"><AppIcon name="arrowLeft" :size="15" /> Về trang công khai</RouterLink>
+        <button type="button" @click="logout"><AppIcon name="logout" :size="15" /> Đăng xuất</button>
       </div>
     </aside>
 
@@ -95,7 +96,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
           aria-label="Mở hoặc đóng menu quản trị"
           @click="isSidebarOpen = !isSidebarOpen"
         >
-          ☰
+          <AppIcon name="menu" :size="20" />
         </button>
         <div>
           <span class="topbar-label">Hệ thống quản lý OCOP</span>
@@ -122,7 +123,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   display: grid;
   min-height: 100vh;
   grid-template-columns: 260px minmax(0, 1fr);
-  background: #f3f6f8;
+  background: var(--ocop-surface);
 }
 
 .admin-sidebar {
@@ -133,8 +134,8 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   height: 100vh;
   padding: 20px 16px;
   flex-direction: column;
-  background: #101a30;
-  color: #cbd5e1;
+  background: var(--ocop-sidebar);
+  color: var(--ocop-sidebar-muted);
 }
 
 .admin-brand {
@@ -143,7 +144,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   align-items: center;
   gap: 10px;
   border-bottom: 1px solid rgb(148 163 184 / 14%);
-  color: #fff;
+  color: var(--ocop-white);
   text-decoration: none;
 }
 
@@ -172,7 +173,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 
 .admin-brand small {
   margin-top: 2px;
-  color: #8290a6;
+  color: var(--ocop-sidebar-muted);
   font-size: 10px;
 }
 
@@ -192,7 +193,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   border: 1px solid transparent;
   border-radius: 10px;
   background: transparent;
-  color: #aab6c8;
+  color: var(--ocop-sidebar-muted);
   font-size: 12px;
   font-weight: 650;
   text-align: left;
@@ -204,15 +205,15 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   display: grid;
   width: 22px;
   place-items: center;
-  color: #6ee7b7;
+  color: #83d7ad;
   font-size: 16px;
 }
 
 .admin-nav a:hover,
 .admin-nav a.router-link-exact-active {
-  border-color: rgb(52 211 153 / 18%);
-  background: rgb(0 122 85 / 22%);
-  color: #fff;
+  border-color: rgb(102 201 150 / 24%);
+  background: rgb(53 164 117 / 22%);
+  color: var(--ocop-white);
 }
 
 .admin-nav button {
@@ -237,11 +238,15 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 
 .sidebar-footer a,
 .sidebar-footer button {
+  display: flex;
   padding: 9px 10px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
   border: 1px solid rgb(148 163 184 / 18%);
   border-radius: 9px;
   background: transparent;
-  color: #cbd5e1;
+  color: #d9e9e3;
   font-size: 11px;
   font-weight: 650;
   text-align: center;
@@ -289,6 +294,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   border-radius: 9px;
   background: #fff;
   color: var(--ocop-primary-900);
+  place-items: center;
 }
 
 .admin-account {
@@ -357,7 +363,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   }
 
   .sidebar-toggle {
-    display: block;
+    display: grid;
   }
 
   .sidebar-backdrop {

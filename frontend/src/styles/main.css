@@ -1,21 +1,30 @@
 :root {
   --ocop-font-family-sans: "Segoe UI", Arial, sans-serif;
-  --ocop-primary-950: #004f3b;
-  --ocop-primary-900: #006045;
-  --ocop-primary-700: #007a55;
-  --ocop-primary-500: #00a878;
-  --ocop-mint: #00d492;
-  --ocop-mint-soft: #ecfdf5;
-  --ocop-mint-border: #a4f4cf;
-  --ocop-blue: #0084d1;
-  --ocop-gold: #ffb900;
-  --ocop-danger: #fb2c36;
-  --ocop-navy: #0f172b;
-  --ocop-slate: #62748e;
-  --ocop-surface: #f8fafc;
-  --ocop-surface-muted: #f1f5f9;
-  --ocop-border: #e2e8f0;
+  --ocop-primary-950: #12372a;
+  --ocop-primary-900: #18543f;
+  --ocop-primary-700: #1e714f;
+  --ocop-primary-500: #35a475;
+  --ocop-mint: #66c996;
+  --ocop-mint-soft: #edf8f1;
+  --ocop-mint-border: #b8dfc8;
+  --ocop-blue: #2878a5;
+  --ocop-gold: #d99b24;
+  --ocop-danger: #c2414b;
+  --ocop-success: #247a4f;
+  --ocop-warning: #a96f16;
+  --ocop-info: #2878a5;
+  --ocop-success-soft: #eaf7ef;
+  --ocop-warning-soft: #fff7e6;
+  --ocop-danger-soft: #fff0f1;
+  --ocop-info-soft: #edf6fb;
+  --ocop-navy: #18251f;
+  --ocop-slate: #66756d;
+  --ocop-surface: #f7f9f7;
+  --ocop-surface-muted: #eef3ef;
+  --ocop-border: #dce5df;
   --ocop-white: #ffffff;
+  --ocop-sidebar: #102d25;
+  --ocop-sidebar-muted: #a9c1b8;
   --ocop-radius-xs: 4px;
   --ocop-radius-sm: 8px;
   --ocop-radius-md: 12px;
@@ -28,6 +37,14 @@
   --ocop-cream: var(--ocop-surface);
   --bs-font-sans-serif: var(--ocop-font-family-sans);
   --bs-body-font-family: var(--ocop-font-family-sans);
+  --bs-primary: var(--ocop-primary-700);
+  --bs-primary-rgb: 30, 113, 79;
+  --bs-success: var(--ocop-success);
+  --bs-success-rgb: 36, 122, 79;
+  --bs-danger: var(--ocop-danger);
+  --bs-danger-rgb: 194, 65, 75;
+  --bs-link-color: var(--ocop-primary-700);
+  --bs-link-hover-color: var(--ocop-primary-900);
   font-family: var(--ocop-font-family-sans);
   color: var(--ocop-navy);
   background: var(--ocop-surface);
@@ -105,7 +122,7 @@ img {
 .form-control:focus,
 .form-check-input:focus {
   border-color: var(--ocop-primary-500);
-  box-shadow: 0 0 0 0.2rem rgb(0 122 85 / 14%);
+  box-shadow: 0 0 0 0.2rem rgb(30 113 79 / 14%);
 }
 
 @media (min-width: 768px) {

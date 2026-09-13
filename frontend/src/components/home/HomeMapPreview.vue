@@ -1,10 +1,11 @@
 <script setup lang="ts">
+import AppIcon from '@/components/ui/AppIcon.vue'
 import { mapMarkerFixtures } from '@/data/home-fixtures'
 
 const markerIcons = {
-  'ocop-5': '✨',
-  'ocop-4': '⭐',
-  tourism: '🏡',
+  'ocop-5': 'award',
+  'ocop-4': 'star',
+  tourism: 'store',
 }
 </script>
 
@@ -33,7 +34,7 @@ const markerIcons = {
         :style="{ left: `${marker.x}%`, top: `${marker.y}%` }"
         :title="marker.label"
       >
-        {{ markerIcons[marker.type] }}
+        <AppIcon :name="markerIcons[marker.type]" :size="15" />
         <span>{{ marker.label }}</span>
       </span>
 
@@ -44,14 +45,14 @@ const markerIcons = {
 
       <div class="map-legend">
         <strong>Chú giải bản đồ OCOP:</strong>
-        <span>✨ OCOP 5 Sao</span>
-        <span>⭐ OCOP 4 Sao</span>
-        <span>🏡 Điểm Du Lịch Canh Nông</span>
+        <span><AppIcon name="award" :size="14" /> OCOP 5 Sao</span>
+        <span><AppIcon name="star" :size="14" /> OCOP 4 Sao</span>
+        <span><AppIcon name="store" :size="14" /> Điểm Du Lịch Canh Nông</span>
       </div>
     </div>
 
     <button class="map-button" type="button" disabled title="Bản đồ tương tác sẽ được triển khai ở module GIS">
-      Mở Bản Đồ Toàn Màn Hình →
+      Mở Bản Đồ Toàn Màn Hình <AppIcon name="chevronRight" :size="16" />
     </button>
   </section>
 </template>
@@ -156,6 +157,10 @@ h2 {
   transform: translate(-50%, -50%) rotate(-45deg);
 }
 
+.map-marker :deep(.app-icon) {
+  transform: rotate(45deg);
+}
+
 .map-marker > span {
   position: absolute;
   left: 31px;
@@ -174,8 +179,8 @@ h2 {
   display: block;
 }
 
-.marker-ocop-5 { background: #e11d48; }
-.marker-ocop-4 { background: #f59e0b; }
+.marker-ocop-5 { background: var(--ocop-danger); }
+.marker-ocop-4 { background: var(--ocop-gold); }
 .marker-tourism { background: var(--ocop-primary-700); }
 
 .map-marker:not(:hover) {
@@ -231,10 +236,18 @@ h2 {
   color: var(--ocop-navy);
 }
 
+.map-legend span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .map-button {
-  display: block;
+  display: flex;
   margin: 12px 0 0 auto;
   padding: 9px 14px;
+  align-items: center;
+  gap: 5px;
   border: 1px solid var(--ocop-primary-700);
   border-radius: var(--ocop-radius-md);
   background: var(--ocop-primary-700);

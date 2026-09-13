@@ -425,17 +425,17 @@ onUnmounted(() => {
 <style scoped>
 .products-page {
   min-height: calc(100vh - 4.5rem);
-  background: #f7f8f4;
+  background: var(--ocop-surface);
 }
 
 .page-banner {
   background:
     radial-gradient(circle at 82% 25%, rgb(184 214 145 / 52%), transparent 22rem),
-    #edf4e5;
+    var(--ocop-mint-soft);
 }
 
 .page-eyebrow {
-  color: #2f6f3e;
+  color: var(--ocop-primary-700);
   font-size: 0.76rem;
   font-weight: 750;
   letter-spacing: 0.11em;
@@ -444,7 +444,7 @@ onUnmounted(() => {
 
 .page-banner h1 {
   margin: 0.7rem 0;
-  color: #18351f;
+  color: var(--ocop-primary-950);
   font-size: clamp(2.2rem, 5vw, 3.7rem);
   font-weight: 800;
 }
@@ -492,7 +492,7 @@ onUnmounted(() => {
 .btn-reset {
   border: 0;
   background: transparent;
-  color: #2f6f3e;
+  color: var(--ocop-primary-700);
   font-size: 0.82rem;
   font-weight: 700;
 }
@@ -593,14 +593,14 @@ onUnmounted(() => {
   border: 1px solid #b7cbb8;
   border-radius: 0.55rem;
   background: #fff;
-  color: #2f6f3e;
+  color: var(--ocop-primary-700);
   font-size: 0.85rem;
   font-weight: 700;
 }
 
 .page-number.active {
-  border-color: #2f6f3e;
-  background: #2f6f3e;
+  border-color: var(--ocop-primary-700);
+  background: var(--ocop-primary-700);
   color: #fff;
 }
 

@@ -51,14 +51,14 @@ defineProps<{
   min-height: 100vh;
   background:
     radial-gradient(circle at 8% 8%, rgb(232 244 222 / 85%), transparent 32rem),
-    #f7f8f2;
+    var(--ocop-surface);
 }
 
 .brand-link {
   display: inline-flex;
   align-items: center;
   gap: 0.75rem;
-  color: #17351f;
+  color: var(--ocop-primary-950);
   text-decoration: none;
 }
 
@@ -73,7 +73,7 @@ defineProps<{
 
 .brand-link small {
   margin-top: 0.25rem;
-  color: #66736a;
+  color: var(--ocop-slate);
   font-size: 0.72rem;
 }
 
@@ -83,7 +83,7 @@ defineProps<{
   height: 2.75rem;
   place-items: center;
   border-radius: 50%;
-  background: #2f6f3e;
+  background: var(--ocop-primary-700);
   color: #fff;
   font-size: 1.55rem;
 }
@@ -105,8 +105,8 @@ defineProps<{
   justify-content: space-between;
   padding: 4rem;
   background:
-    linear-gradient(160deg, rgb(18 65 31 / 96%), rgb(47 111 62 / 90%)),
-    #245b31;
+    linear-gradient(160deg, rgb(18 55 42 / 97%), rgb(30 113 79 / 91%)),
+    var(--ocop-primary-900);
   color: #fff;
 }
 
@@ -161,7 +161,7 @@ defineProps<{
 
 .auth-form-copy p {
   margin-bottom: 2rem;
-  color: #68736b;
+  color: var(--ocop-slate);
 }
 
 @media (min-width: 992px) {

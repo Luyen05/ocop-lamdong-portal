@@ -1,29 +1,30 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 
+import AppIcon from '@/components/ui/AppIcon.vue'
 import { getCategories } from '@/services/categories'
 import type { Category } from '@/types/category'
 
 interface CategoryTheme {
-  emoji: string
+  icon: string
   background: string
   foreground: string
 }
 
 const themes: Record<string, CategoryTheme> = {
-  'nong-san-tuoi': { emoji: '🍓', background: '#ecfdf5', foreground: '#006045' },
-  'thuc-pham': { emoji: '🍯', background: '#fffbeb', foreground: '#973c00' },
-  'do-uong': { emoji: '🍷', background: '#f0f9ff', foreground: '#00598a' },
-  'thao-duoc': { emoji: '🌿', background: '#faf5ff', foreground: '#6e11b0' },
-  'thu-cong-my-nghe': { emoji: '🎨', background: '#fff1f2', foreground: '#a50036' },
-  'sinh-vat-canh': { emoji: '🌸', background: '#fdf2f8', foreground: '#9d174d' },
-  'dich-vu-du-lich-cong-dong': { emoji: '🏡', background: '#eff6ff', foreground: '#1d4ed8' },
+  'nong-san-tuoi': { icon: 'sprout', background: '#edf8f1', foreground: '#1e714f' },
+  'thuc-pham': { icon: 'food', background: '#fff7e6', foreground: '#a96f16' },
+  'do-uong': { icon: 'drink', background: '#edf6fb', foreground: '#2878a5' },
+  'thao-duoc': { icon: 'sprout', background: '#f0f7ed', foreground: '#527a36' },
+  'thu-cong-my-nghe': { icon: 'palette', background: '#fff2ed', foreground: '#b85c38' },
+  'sinh-vat-canh': { icon: 'flower', background: '#fdf1f5', foreground: '#a84b6a' },
+  'dich-vu-du-lich-cong-dong': { icon: 'store', background: '#edf6fb', foreground: '#2878a5' },
 }
 
 const fallbackTheme: CategoryTheme = {
-  emoji: '🌱',
-  background: '#ecfdf5',
-  foreground: '#006045',
+  icon: 'package',
+  background: '#edf8f1',
+  foreground: '#1e714f',
 }
 
 const categories = ref<Category[]>([])
@@ -80,7 +81,7 @@ onMounted(loadCategories)
           '--category-color': themeFor(category.slug).foreground,
         }"
       >
-        <span class="category-emoji" aria-hidden="true">{{ themeFor(category.slug).emoji }}</span>
+        <span class="category-icon" aria-hidden="true"><AppIcon :name="themeFor(category.slug).icon" :size="23" /></span>
         <strong>{{ category.name }}</strong>
         <small>Xem sản phẩm</small>
       </RouterLink>
@@ -159,10 +160,14 @@ onMounted(loadCategories)
   box-shadow: 0 12px 22px rgb(15 23 43 / 9%);
 }
 
-.category-emoji {
+.category-icon {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border-radius: 10px;
+  background: rgb(255 255 255 / 62%);
   color: var(--category-color);
-  font-size: 24px;
-  line-height: 32px;
 }
 
 .category-card strong {

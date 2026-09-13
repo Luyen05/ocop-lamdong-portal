@@ -317,9 +317,9 @@ onMounted(loadApplications)
 .table td small { display: block; }
 .table td small { margin-top: 3px; color: var(--ocop-slate); font-size: 11px; }
 .status-badge { display: inline-flex; padding: 5px 9px; border-radius: 999px; font-size: 10px; font-weight: 800; white-space: nowrap; }
-.status-pending { background: #fff7d6; color: #8a5900; }
-.status-approved { background: var(--ocop-mint-soft); color: var(--ocop-primary-900); }
-.status-rejected { background: #fff0f1; color: #b4232c; }
+.status-pending { background: var(--ocop-warning-soft); color: var(--ocop-warning); }
+.status-approved { background: var(--ocop-success-soft); color: var(--ocop-success); }
+.status-rejected { background: var(--ocop-danger-soft); color: var(--ocop-danger); }
 .row-actions { display: flex; justify-content: flex-end; gap: 6px; }
 .state-row { display: flex; min-height: 180px; align-items: center; justify-content: center; gap: 10px; color: var(--ocop-slate); }
 .pagination-bar { display: flex; align-items: center; justify-content: flex-end; gap: 12px; color: var(--ocop-slate); font-size: 12px; }

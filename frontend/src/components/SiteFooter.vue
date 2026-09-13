@@ -1,9 +1,11 @@
 <script setup lang="ts">
+import AppIcon from '@/components/ui/AppIcon.vue'
+
 const stats = [
-  { icon: '♕', value: '3–5★', label: 'Sản phẩm OCOP được kiểm duyệt', tone: 'green' },
-  { icon: '⌖', value: 'GIS', label: 'Bản đồ điểm đến nông nghiệp', tone: 'gold' },
-  { icon: '♢', value: 'HTX', label: 'Không gian dành cho chủ thể', tone: 'blue' },
-  { icon: '◎', value: '124', label: 'Xã, phường & đặc khu Lâm Đồng', tone: 'purple' },
+  { icon: 'award', value: '3–5★', label: 'Sản phẩm OCOP được kiểm duyệt', tone: 'green' },
+  { icon: 'map', value: 'GIS', label: 'Bản đồ điểm đến nông nghiệp', tone: 'gold' },
+  { icon: 'building', value: 'HTX', label: 'Không gian dành cho chủ thể', tone: 'blue' },
+  { icon: 'map-pin', value: '124', label: 'Xã, phường & đặc khu Lâm Đồng', tone: 'purple' },
 ]
 </script>
 
@@ -12,7 +14,7 @@ const stats = [
     <div class="site-content footer-inner">
       <div class="stat-grid" aria-label="Số liệu tổng quan">
         <div v-for="stat in stats" :key="stat.label" class="stat-card" :class="`tone-${stat.tone}`">
-          <span class="stat-icon" aria-hidden="true">{{ stat.icon }}</span>
+          <span class="stat-icon" aria-hidden="true"><AppIcon :name="stat.icon" :size="19" /></span>
           <span>
             <strong>{{ stat.value }}</strong>
             <small>{{ stat.label }}</small>
@@ -28,9 +30,9 @@ const stats = [
           </h2>
           <p>Hệ thống Cổng thông tin trực tuyến quảng bá sản phẩm OCOP và Bản đồ số Du lịch Nông nghiệp tỉnh Lâm Đồng.</p>
           <address>
-            <span>⌖ Trung tâm Hành chính Tỉnh Lâm Đồng, 36 Trần Phú, TP. Đà Lạt</span>
-            <span>☎ 0263.3822000 - 0263.3831200</span>
-            <span>✉ sonnptnt@lamdong.gov.vn</span>
+            <span><AppIcon name="map-pin" :size="14" /> Trung tâm Hành chính Tỉnh Lâm Đồng, 36 Trần Phú, TP. Đà Lạt</span>
+            <span><AppIcon name="phone" :size="14" /> 0263.3822000 - 0263.3831200</span>
+            <span><AppIcon name="mail" :size="14" /> sonnptnt@lamdong.gov.vn</span>
           </address>
         </section>
 
@@ -53,7 +55,7 @@ const stats = [
         </section>
 
         <aside class="info-card">
-          <strong>✓ THÔNG TIN MINH BẠCH</strong>
+          <strong><AppIcon name="shieldCheck" :size="15" /> THÔNG TIN MINH BẠCH</strong>
           <p>Nội dung sản phẩm, chủ thể và điểm đến chỉ được công khai sau khi hoàn thành quy trình kiểm duyệt.</p>
           <span>Dữ liệu cập nhật theo phê duyệt</span>
         </aside>
@@ -70,8 +72,8 @@ const stats = [
 <style scoped>
 .site-footer {
   padding: 48px 0 28px;
-  background: #101a30;
-  color: #91a0b6;
+  background: var(--ocop-sidebar);
+  color: var(--ocop-sidebar-muted);
 }
 
 .stat-grid {
@@ -103,10 +105,10 @@ const stats = [
   font-size: 18px;
 }
 
-.tone-green .stat-icon { background: rgb(0 212 146 / 12%); color: #34d399; }
-.tone-gold .stat-icon { background: rgb(255 185 0 / 12%); color: #fbbf24; }
-.tone-blue .stat-icon { background: rgb(0 132 209 / 14%); color: #38bdf8; }
-.tone-purple .stat-icon { background: rgb(147 51 234 / 14%); color: #c084fc; }
+.tone-green .stat-icon { background: rgb(102 201 150 / 14%); color: #83d7ad; }
+.tone-gold .stat-icon { background: rgb(217 155 36 / 14%); color: #e9b958; }
+.tone-blue .stat-icon { background: rgb(40 120 165 / 18%); color: #75b5d6; }
+.tone-purple .stat-icon { background: rgb(141 99 164 / 16%); color: #c09bd0; }
 
 .stat-card strong,
 .stat-card small {
@@ -188,7 +190,18 @@ const stats = [
 
 .footer-brand address {
   display: grid;
-  gap: 2px;
+  gap: 5px;
+}
+
+.footer-brand address span {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+}
+
+.footer-brand address :deep(.app-icon) {
+  margin-top: 2px;
+  color: #83d7ad;
 }
 
 .info-card {
@@ -200,6 +213,9 @@ const stats = [
 }
 
 .info-card strong {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   color: #6ee7b7;
   font-size: 10px;
 }

@@ -172,7 +172,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   min-height: 28px;
   padding: 6px 0;
   background: var(--ocop-primary-950);
-  color: #a4f4cf;
+  color: #cdebd9;
   font-size: 12px;
 }
 
@@ -192,7 +192,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 .announcement-inner p {
   gap: 8px;
   margin: 0;
-  color: #d0fae5;
+  color: #e3f4ea;
   font-weight: 500;
 }
 
@@ -212,9 +212,9 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 .capstone-label {
   gap: 5px;
   padding: 2px 10px;
-  border: 1px solid rgb(0 153 102 / 50%);
+  border: 1px solid rgb(102 201 150 / 42%);
   border-radius: var(--ocop-radius-xs);
-  background: rgb(0 96 69 / 80%);
+  background: rgb(18 55 42 / 72%);
 }
 
 .capstone-label img {
@@ -255,7 +255,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   place-items: center;
   border-radius: var(--ocop-radius-md);
   background: var(--ocop-primary-700);
-  box-shadow: 0 4px 5px rgb(0 122 85 / 20%);
+  box-shadow: 0 4px 8px rgb(30 113 79 / 22%);
 }
 
 .brand-symbol img {
@@ -285,10 +285,10 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 
 .brand-title small {
   padding: 2px 6px;
-  border: 1px solid #ffd230;
+  border: 1px solid #e9c36d;
   border-radius: var(--ocop-radius-xs);
-  background: #fef3c6;
-  color: #973c00;
+  background: var(--ocop-warning-soft);
+  color: var(--ocop-warning);
   font-size: 10px;
   font-weight: 700;
   line-height: 12px;
@@ -318,14 +318,14 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   border: 1px solid var(--ocop-border);
   border-radius: var(--ocop-radius-sm);
   outline: 0;
-  background: rgb(241 245 249 / 80%);
+  background: rgb(238 243 239 / 82%);
   color: var(--ocop-navy);
   font-size: 12px;
 }
 
 .header-search input:focus {
   border-color: var(--ocop-primary-500);
-  box-shadow: 0 0 0 3px rgb(0 122 85 / 12%);
+  box-shadow: 0 0 0 3px rgb(30 113 79 / 12%);
 }
 
 .navigation-panel,
@@ -357,7 +357,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   padding: 7px 8px;
   border: 1px solid transparent;
   border-radius: var(--ocop-radius-sm);
-  color: #45556c;
+  color: var(--ocop-slate);
   font-size: 12px;
   font-weight: 650;
   line-height: 14px;
