@@ -1,17 +1,22 @@
 <script setup lang="ts">
 import { computed, onUnmounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
+import axios from 'axios'
 
+import ProductCard from '@/components/products/ProductCard.vue'
 import { getApiErrorMessage } from '@/services/api-error'
-import { getProduct } from '@/services/products'
-import type { ProductDetail } from '@/types/product'
+import { getProduct, getProducts } from '@/services/products'
+import type { ProductDetail, ProductListItem } from '@/types/product'
 
 const route = useRoute()
 
 const product = ref<ProductDetail | null>(null)
 const selectedImageUrl = ref<string | null>(null)
+const activeImageFailed = ref(false)
+const relatedProducts = ref<ProductListItem[]>([])
 const isLoading = ref(true)
 const errorMessage = ref('')
+const errorTitle = ref('Không thể tải sản phẩm')
 
 const formattedPrice = computed(() => {
   if (!product.value) return ''
@@ -32,16 +37,40 @@ function formatDate(value: string | null): string {
   return new Intl.DateTimeFormat('vi-VN').format(new Date(`${value}T00:00:00`))
 }
 
+function selectImage(imageUrl: string): void {
+  selectedImageUrl.value = imageUrl
+  activeImageFailed.value = false
+}
+
 async function loadProduct(slug: string): Promise<void> {
   isLoading.value = true
   errorMessage.value = ''
   product.value = null
   selectedImageUrl.value = null
+  activeImageFailed.value = false
+  relatedProducts.value = []
   try {
     product.value = await getProduct(slug)
     selectedImageUrl.value = product.value.images[0]?.image_url ?? null
     document.title = `${product.value.name} | OCOP Lâm Đồng`
+
+    try {
+      const related = await getProducts({
+        page: 1,
+        page_size: 4,
+        category: product.value.category.slug,
+        sort: 'newest',
+      })
+      relatedProducts.value = related.items
+        .filter((item) => item.id !== product.value?.id)
+        .slice(0, 3)
+    } catch {
+      relatedProducts.value = []
+    }
   } catch (error) {
+    errorTitle.value = axios.isAxiosError(error) && error.response?.status === 404
+      ? 'Không tìm thấy sản phẩm'
+      : 'Không thể tải sản phẩm'
     errorMessage.value = getApiErrorMessage(
       error,
       'Không thể tải thông tin sản phẩm. Vui lòng thử lại.',
@@ -89,7 +118,7 @@ onUnmounted(() => {
 
       <section v-else-if="errorMessage" class="error-state">
         <span class="error-symbol">!</span>
-        <h1>Không tìm thấy sản phẩm</h1>
+        <h1>{{ errorTitle }}</h1>
         <p>{{ errorMessage }}</p>
         <RouterLink class="btn btn-success" to="/san-pham">
           Quay lại danh sách
@@ -100,7 +129,12 @@ onUnmounted(() => {
         <section class="product-overview">
           <div class="gallery">
             <div class="main-image">
-              <img v-if="activeImage" :src="activeImage" :alt="product.name" />
+              <img
+                v-if="activeImage && !activeImageFailed"
+                :src="activeImage"
+                :alt="product.name"
+                @error="activeImageFailed = true"
+              />
               <div v-else class="image-placeholder" aria-hidden="true">OCOP</div>
             </div>
             <div v-if="product.images.length > 1" class="thumbnail-list" aria-label="Ảnh sản phẩm">
@@ -110,7 +144,7 @@ onUnmounted(() => {
                 class="thumbnail"
                 :class="{ active: activeImage === image.image_url }"
                 type="button"
-                @click="selectedImageUrl = image.image_url"
+                @click="selectImage(image.image_url)"
               >
                 <img :src="image.image_url" :alt="`Ảnh ${product.name}`" />
               </button>
@@ -191,6 +225,41 @@ onUnmounted(() => {
               <h2>Hướng dẫn sử dụng</h2>
               <p>{{ product.usage_instructions }}</p>
             </article>
+          </div>
+
+          <article v-if="product.recognition_sources.length" class="content-block source-block">
+            <span class="section-eyebrow">Nguồn đối chiếu công khai</span>
+            <h2>Văn bản và nguồn công nhận</h2>
+            <ul>
+              <li v-for="source in product.recognition_sources" :key="source.id">
+                <div>
+                  <strong>{{ source.title }}</strong>
+                  <span>
+                    {{ source.verification_level === 'A' ? 'Văn bản chính thức' : 'Cổng thông tin cơ quan nhà nước' }}
+                    <template v-if="source.document_number"> · {{ source.document_number }}</template>
+                    <template v-if="source.published_at"> · {{ formatDate(source.published_at) }}</template>
+                  </span>
+                </div>
+                <a :href="source.source_url" target="_blank" rel="noopener noreferrer">
+                  Mở nguồn
+                </a>
+              </li>
+            </ul>
+          </article>
+        </section>
+
+        <section v-if="relatedProducts.length" class="related-section" aria-labelledby="related-title">
+          <div class="related-heading">
+            <div>
+              <span class="section-eyebrow">Có thể bạn quan tâm</span>
+              <h2 id="related-title">Sản phẩm cùng danh mục</h2>
+            </div>
+            <RouterLink :to="{ name: 'products', query: { category: product.category.slug } }">
+              Xem tất cả
+            </RouterLink>
+          </div>
+          <div class="related-grid">
+            <ProductCard v-for="item in relatedProducts" :key="item.id" :product="item" />
           </div>
         </section>
       </template>
@@ -405,6 +474,35 @@ onUnmounted(() => {
   margin-top: 3rem;
 }
 
+.source-block ul {
+  display: grid;
+  margin: 1.25rem 0 0;
+  padding: 0;
+  gap: 0.75rem;
+  list-style: none;
+}
+
+.source-block li {
+  display: flex;
+  padding: 0.9rem 1rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border: 1px solid #e0e7dd;
+  border-radius: 0.8rem;
+  background: #f8faf7;
+}
+
+.source-block li div { display: grid; gap: 0.25rem; }
+.source-block li span { color: #718075; font-size: 0.78rem; }
+.source-block li a { flex: 0 0 auto; color: #2f6f3e; font-size: 0.82rem; font-weight: 750; }
+
+.related-section { margin-top: 3.5rem; }
+.related-heading { display: flex; margin-bottom: 1.25rem; align-items: end; justify-content: space-between; gap: 1rem; }
+.related-heading h2 { margin: 0.35rem 0 0; color: #213b28; font-size: clamp(1.5rem, 4vw, 2rem); }
+.related-heading > a { color: #2f6f3e; font-size: 0.85rem; font-weight: 750; }
+.related-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.25rem; }
+
 .content-block {
   padding: clamp(1.4rem, 4vw, 2.25rem);
   border: 1px solid rgb(29 72 39 / 10%);
@@ -479,6 +577,15 @@ onUnmounted(() => {
   .detail-columns {
     grid-template-columns: 1fr 1fr;
   }
+}
+
+@media (max-width: 767.98px) {
+  .source-block li { align-items: flex-start; flex-direction: column; }
+  .related-grid { grid-template-columns: 1fr; }
+}
+
+@media (min-width: 768px) and (max-width: 991.98px) {
+  .related-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (min-width: 992px) {
