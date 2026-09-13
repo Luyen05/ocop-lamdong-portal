@@ -3,7 +3,7 @@ from decimal import Decimal
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import and_, func, or_, select
+from sqlalchemy import and_, case, func, or_, select
 from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.core.database import get_db
@@ -145,13 +145,17 @@ def list_products(
         .where(*filters)
     ) or 0
 
+    unavailable_price = case(
+        (or_(Product.price.is_(None), Product.price <= 0), 1),
+        else_=0,
+    )
     sort_columns = {
-        "newest": Product.created_at.desc(),
-        "name": Product.name.asc(),
-        "-name": Product.name.desc(),
-        "price": Product.price.asc(),
-        "-price": Product.price.desc(),
-        "rating": Product.rating_avg.desc(),
+        "newest": (Product.created_at.desc(),),
+        "name": (Product.name.asc(),),
+        "-name": (Product.name.desc(),),
+        "price": (unavailable_price.asc(), Product.price.asc()),
+        "-price": (unavailable_price.asc(), Product.price.desc()),
+        "rating": (Product.rating_avg.desc(),),
     }
     statement = (
         base_statement.options(
@@ -159,7 +163,7 @@ def list_products(
             joinedload(Product.subject),
             selectinload(Product.images),
         )
-        .order_by(sort_columns[sort], Product.id.desc())
+        .order_by(*sort_columns[sort], Product.id.desc())
         .offset((page - 1) * page_size)
         .limit(page_size)
     )
