@@ -18,16 +18,23 @@ function Invoke-NativeStep {
   }
 }
 
-if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
-  throw 'Khong tim thay Docker. Hay mo Docker Desktop va thu lai.'
+$dockerCommand = Get-Command docker -ErrorAction SilentlyContinue
+$dockerCli = if ($dockerCommand) {
+  $dockerCommand.Source
+} else {
+  Join-Path $env:LOCALAPPDATA 'Programs\DockerDesktop\resources\bin\docker.exe'
 }
 
-Invoke-NativeStep 'Kiem tra cau hinh Docker Compose' { docker compose config --quiet }
-Invoke-NativeStep 'Kiem tra cac dich vu dang chay' { docker compose ps }
-Invoke-NativeStep 'Chay kiem thu backend' { docker compose exec -T backend python -m pytest -q }
-Invoke-NativeStep 'Chay kiem thu frontend' { docker compose exec -T frontend npm test }
-Invoke-NativeStep 'Kiem tra TypeScript' { docker compose exec -T frontend npm run type-check }
-Invoke-NativeStep 'Build frontend' { docker compose exec -T frontend npm run build }
+if (-not (Test-Path -LiteralPath $dockerCli)) {
+  throw 'Khong tim thay Docker. Hay cai dat hoac mo Docker Desktop va thu lai.'
+}
+
+Invoke-NativeStep 'Kiem tra cau hinh Docker Compose' { & $dockerCli compose config --quiet }
+Invoke-NativeStep 'Kiem tra cac dich vu dang chay' { & $dockerCli compose ps }
+Invoke-NativeStep 'Chay kiem thu backend' { & $dockerCli compose exec -T backend python -m pytest -q }
+Invoke-NativeStep 'Chay kiem thu frontend' { & $dockerCli compose exec -T frontend npm test }
+Invoke-NativeStep 'Kiem tra TypeScript' { & $dockerCli compose exec -T frontend npm run type-check }
+Invoke-NativeStep 'Build frontend' { & $dockerCli compose exec -T frontend npm run build }
 
 Write-Host "`n==> Kiem tra API va giao dien" -ForegroundColor Cyan
 $health = Invoke-RestMethod -Uri "$BackendUrl/health" -TimeoutSec 10
