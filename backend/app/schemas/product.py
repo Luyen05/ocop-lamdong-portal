@@ -38,11 +38,25 @@ class ProductListResponse(BaseModel):
     total: int
 
 
+class ProductFilterOptions(BaseModel):
+    districts: list[str]
+
+
 class ProductImageRead(BaseModel):
     id: int
     image_url: str
     is_primary: bool
     sort_order: int
+
+
+class ProductPublicSourceRead(BaseModel):
+    id: int
+    title: str
+    document_number: str | None
+    issuing_body: str | None
+    published_at: date | None
+    source_url: str
+    verification_level: str
 
 
 class ProductDetail(ProductListItem):
@@ -56,4 +70,5 @@ class ProductDetail(ProductListItem):
     usage_instructions: str | None
     views: int
     images: list[ProductImageRead]
+    recognition_sources: list[ProductPublicSourceRead]
     updated_at: datetime

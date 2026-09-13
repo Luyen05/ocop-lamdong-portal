@@ -263,6 +263,13 @@ def test_list_products_supports_public_filters(product_client: TestClient) -> No
     assert response.json()["items"][0]["slug"] == "ca-phe-arabica-cau-dat"
 
 
+def test_product_filter_options_only_use_public_products(product_client: TestClient) -> None:
+    response = product_client.get("/api/v1/products/filter-options")
+
+    assert response.status_code == 200
+    assert response.json() == {"districts": ["Đà Lạt"]}
+
+
 def test_list_products_rejects_invalid_price_range(product_client: TestClient) -> None:
     response = product_client.get(
         "/api/v1/products",
@@ -290,6 +297,17 @@ def test_get_product_returns_public_detail(product_client: TestClient) -> None:
         "https://example.com/coffee.webp",
         "https://example.com/coffee-detail.webp",
     ]
+    assert body["recognition_sources"] == []
+
+
+def test_get_product_returns_public_recognition_source(product_client: TestClient) -> None:
+    response = product_client.get("/api/v1/products/mut-dau-da-lat")
+
+    assert response.status_code == 200
+    source = response.json()["recognition_sources"][0]
+    assert source["title"] == "Bài công bố sản phẩm OCOP"
+    assert source["verification_level"] == "B1"
+    assert source["source_url"] == "https://example.com/cong-bo-ocop"
 
 
 @pytest.mark.parametrize(
