@@ -236,6 +236,7 @@ onUnmounted(() => {
                   <strong>{{ source.title }}</strong>
                   <span>
                     {{ source.verification_level === 'A' ? 'Văn bản chính thức' : 'Cổng thông tin cơ quan nhà nước' }}
+                    <template v-if="source.issuing_body"> · {{ source.issuing_body }}</template>
                     <template v-if="source.document_number"> · {{ source.document_number }}</template>
                     <template v-if="source.published_at"> · {{ formatDate(source.published_at) }}</template>
                   </span>
