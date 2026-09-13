@@ -219,7 +219,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 }
 
 .main-header {
-  background: #fff;
+  background: var(--ocop-card);
 }
 
 .header-inner {
@@ -410,7 +410,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 }
 
 .user-copy small {
-  color: #90a1b9;
+  color: var(--ocop-text-tertiary);
   font-size: 9px;
   text-transform: uppercase;
 }
@@ -452,7 +452,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   padding: 0;
   border: 1px solid var(--ocop-border);
   border-radius: var(--ocop-radius-sm);
-  background: #fff;
+  background: var(--ocop-card);
   align-items: center;
   justify-content: center;
   color: var(--ocop-primary-950);
@@ -487,7 +487,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
     padding: 16px;
     overflow-y: auto;
     border-bottom: 1px solid var(--ocop-border);
-    background: #fff;
+    background: var(--ocop-card);
     box-shadow: 0 18px 30px rgb(15 23 43 / 12%);
   }
 
