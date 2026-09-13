@@ -9,8 +9,9 @@ describe('AppIcon', () => {
     const wrapper = mount(AppIcon, { props: { name: 'package', size: 18 } })
 
     expect(wrapper.attributes('aria-hidden')).toBe('true')
-    expect(wrapper.attributes('width')).toBe('18')
-    expect(wrapper.findAll('path').length).toBeGreaterThan(0)
+    expect(wrapper.classes()).toContain('bi')
+    expect(wrapper.classes()).toContain('bi-box-seam')
+    expect(wrapper.attributes('style')).toContain('font-size: 18px')
   })
 
   it('hien thi nhan khi icon mang y nghia doc lap', () => {
@@ -18,5 +19,12 @@ describe('AppIcon', () => {
 
     expect(wrapper.attributes('role')).toBe('img')
     expect(wrapper.attributes('aria-label')).toBe('Tài khoản')
+    expect(wrapper.classes()).toContain('bi-person-circle')
+  })
+
+  it('dung icon mac dinh khi ten khong ton tai', () => {
+    const wrapper = mount(AppIcon, { props: { name: 'khong-ton-tai' } })
+
+    expect(wrapper.classes()).toContain('bi-check-circle')
   })
 })

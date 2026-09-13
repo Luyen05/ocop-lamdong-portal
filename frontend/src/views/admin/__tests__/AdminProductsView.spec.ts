@@ -234,7 +234,7 @@ describe('AdminProductsView', () => {
       status: 'pending',
     }))
 
-    const nextButton = wrapper.findAll('button').find((button) => button.text() === 'Sau →')
+    const nextButton = wrapper.findAll('button').find((button) => button.text() === 'Sau')
     await nextButton!.trigger('click')
     await flushPromises()
     expect(listAdminProducts).toHaveBeenLastCalledWith(expect.objectContaining({

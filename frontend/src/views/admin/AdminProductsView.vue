@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 
 import ProductEvidenceManager from '@/components/admin/ProductEvidenceManager.vue'
+import AppIcon from '@/components/ui/AppIcon.vue'
 import { getApiErrorMessage } from '@/services/api-error'
 import {
   downloadProductCertificate,
@@ -411,15 +412,15 @@ onMounted(loadData)
         <nav v-if="productTotal > pageSize" class="pagination-bar" aria-label="Phân trang sản phẩm">
           <span>Trang {{ page }} / {{ totalPages }} · {{ productTotal }} sản phẩm</span>
           <div>
-            <button type="button" :disabled="page <= 1 || loading" @click="changePage(page - 1)">← Trước</button>
-            <button type="button" :disabled="page >= totalPages || loading" @click="changePage(page + 1)">Sau →</button>
+            <button type="button" :disabled="page <= 1 || loading" @click="changePage(page - 1)"><AppIcon name="chevronLeft" :size="13" /> Trước</button>
+            <button type="button" :disabled="page >= totalPages || loading" @click="changePage(page + 1)">Sau <AppIcon name="chevronRight" :size="13" /></button>
           </div>
         </nav>
       </template>
       <template v-else>
         <p v-if="!requests.length" class="empty-state">Chưa có yêu cầu thay đổi sản phẩm.</p>
         <article v-for="request in requests" v-else :key="request.id">
-          <span class="request-symbol">{{ request.request_type === 'update' ? '↻' : '×' }}</span>
+          <span class="request-symbol"><AppIcon :name="request.request_type === 'update' ? 'refresh' : 'close'" :size="16" /></span>
           <div>
             <small>Yêu cầu #{{ request.id }} · gửi {{ formatDate(request.submitted_at) }}</small>
             <h2>{{ request.product_name }}</h2>
@@ -440,7 +441,7 @@ onMounted(loadData)
             <span>Kiểm duyệt sản phẩm</span>
             <h2>{{ modalTitle }}</h2>
           </div>
-          <button type="button" aria-label="Đóng" @click="closeModal()">×</button>
+          <button type="button" aria-label="Đóng" @click="closeModal()"><AppIcon name="close" :size="17" /></button>
         </header>
 
         <template v-if="selectedProduct">
@@ -544,10 +545,10 @@ onMounted(loadData)
         <section v-if="canModerateSelectedRequest || canModerateSelectedProduct" class="decision-box">
           <div class="decision-options" aria-label="Quyết định kiểm duyệt">
             <button type="button" :class="{ active: decision === 'approved' }" @click="decision = 'approved'">
-              ✓ {{ selectedProduct ? 'Duyệt hiển thị' : 'Chấp thuận yêu cầu' }}
+              <AppIcon name="checkCircle" :size="15" /> {{ selectedProduct ? 'Duyệt hiển thị' : 'Chấp thuận yêu cầu' }}
             </button>
             <button type="button" :class="{ active: decision === 'needs_revision' }" @click="decision = 'needs_revision'">
-              ↻ Yêu cầu bổ sung
+              <AppIcon name="refresh" :size="15" /> Yêu cầu bổ sung
             </button>
           </div>
           <button class="exception-toggle" type="button" @click="showExceptionalAction = !showExceptionalAction">

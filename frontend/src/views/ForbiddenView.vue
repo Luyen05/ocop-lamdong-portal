@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
+import AppIcon from '@/components/ui/AppIcon.vue'
 import { authStore } from '@/stores/auth'
 
 const roleLabel = computed(() => {
@@ -17,7 +18,7 @@ const roleLabel = computed(() => {
   <main class="forbidden-page">
     <section class="forbidden-card" aria-labelledby="forbidden-title">
       <span class="error-code">403</span>
-      <span class="lock-icon" aria-hidden="true">🔒</span>
+      <span class="lock-icon" aria-hidden="true"><AppIcon name="lock" :size="42" /></span>
       <h1 id="forbidden-title">Bạn không có quyền truy cập</h1>
       <p>
         Tài khoản hiện tại có vai trò <strong>{{ roleLabel }}</strong> và không được phép mở khu vực này.

@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router'
 import axios from 'axios'
 
 import ProductCard from '@/components/products/ProductCard.vue'
+import AppIcon from '@/components/ui/AppIcon.vue'
 import { getApiErrorMessage } from '@/services/api-error'
 import { getProduct, getProducts } from '@/services/products'
 import type { ProductDetail, ProductListItem } from '@/types/product'
@@ -164,7 +165,7 @@ onUnmounted(() => {
 
             <h1>{{ product.name }}</h1>
             <div v-if="product.rating_avg > 0 || product.views > 0" class="rating-row">
-              <span v-if="product.rating_avg > 0">★ {{ product.rating_avg.toFixed(1) }}</span>
+              <span v-if="product.rating_avg > 0"><AppIcon name="star" :size="14" /> {{ product.rating_avg.toFixed(1) }}</span>
               <span v-if="product.views > 0">{{ product.views }} lượt xem</span>
             </div>
             <p class="lead-description">{{ product.description }}</p>

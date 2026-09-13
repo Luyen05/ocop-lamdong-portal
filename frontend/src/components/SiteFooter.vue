@@ -2,7 +2,7 @@
 import AppIcon from '@/components/ui/AppIcon.vue'
 
 const stats = [
-  { icon: 'award', value: '3–5★', label: 'Sản phẩm OCOP được kiểm duyệt', tone: 'green' },
+  { icon: 'award', value: '3–5 sao', label: 'Sản phẩm OCOP được kiểm duyệt', tone: 'green' },
   { icon: 'map', value: 'GIS', label: 'Bản đồ điểm đến nông nghiệp', tone: 'gold' },
   { icon: 'building', value: 'HTX', label: 'Không gian dành cho chủ thể', tone: 'blue' },
   { icon: 'map-pin', value: '124', label: 'Xã, phường & đặc khu Lâm Đồng', tone: 'purple' },
