@@ -15,9 +15,11 @@ from app.schemas.error import ErrorResponse
 from app.schemas.product import (
     ProductCategoryRead,
     ProductDetail,
+    ProductFilterOptions,
     ProductImageRead,
     ProductListItem,
     ProductListResponse,
+    ProductPublicSourceRead,
     ProductSubjectRead,
 )
 
@@ -47,6 +49,17 @@ def public_eligibility_filter():
         Product.issuing_authority != "",
     )
     return or_(has_recognition_source, has_current_certificate)
+
+
+def public_product_filters():
+    return (
+        Product.status == "approved",
+        Product.is_demo.is_(False),
+        Subject.status == "approved",
+        Product.star.is_not(None),
+        Product.description.is_not(None),
+        public_eligibility_filter(),
+    )
 
 
 def to_product_list_item(product: Product) -> ProductListItem:
@@ -103,14 +116,7 @@ def list_products(
             },
         )
 
-    filters = [
-        Product.status == "approved",
-        Product.is_demo.is_(False),
-        Subject.status == "approved",
-        Product.star.is_not(None),
-        Product.description.is_not(None),
-        public_eligibility_filter(),
-    ]
+    filters = list(public_product_filters())
     if search:
         keyword = f"%{search.strip()}%"
         filters.append(
@@ -167,6 +173,24 @@ def list_products(
     )
 
 
+@router.get("/filter-options", response_model=ProductFilterOptions)
+def get_product_filter_options(db: Session = Depends(get_db)) -> ProductFilterOptions:
+    districts = list(
+        db.scalars(
+            select(Subject.district)
+            .join(Product, Product.subject_id == Subject.id)
+            .where(
+                *public_product_filters(),
+                Subject.district.is_not(None),
+                func.trim(Subject.district) != "",
+            )
+            .distinct()
+            .order_by(Subject.district)
+        ).all()
+    )
+    return ProductFilterOptions(districts=districts)
+
+
 @router.get(
     "/{slug}",
     response_model=ProductDetail,
@@ -178,17 +202,13 @@ def get_product(slug: str, db: Session = Depends(get_db)) -> ProductDetail:
         .join(Product.subject)
         .where(
             Product.slug == slug,
-            Product.status == "approved",
-            Product.is_demo.is_(False),
-            Subject.status == "approved",
-            Product.star.is_not(None),
-            Product.description.is_not(None),
-            public_eligibility_filter(),
+            *public_product_filters(),
         )
         .options(
             joinedload(Product.category),
             joinedload(Product.subject),
             selectinload(Product.images),
+            selectinload(Product.source_links).joinedload(ProductSource.source),
         )
     )
     if product is None:
@@ -221,6 +241,20 @@ def get_product(slug: str, db: Session = Depends(get_db)) -> ProductDetail:
                 sort_order=image.sort_order,
             )
             for image in product.images
+        ],
+        recognition_sources=[
+            ProductPublicSourceRead(
+                id=link.source.id,
+                title=link.source.title,
+                document_number=link.source.document_number,
+                issuing_body=link.source.issuing_body,
+                published_at=link.source.published_at,
+                source_url=link.source.source_url,
+                verification_level=link.verification_level,
+            )
+            for link in product.source_links
+            if link.evidence_role == "recognition"
+            and link.verification_level in {"A", "B1"}
         ],
         updated_at=product.updated_at,
     )
