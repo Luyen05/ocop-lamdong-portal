@@ -44,6 +44,7 @@ Các API đầu tiên:
 - `GET /api/v1/categories`: danh sách danh mục, hỗ trợ `page`, `page_size`, `search`, `sort`.
 - `GET /api/v1/categories/{slug}`: chi tiết một danh mục.
 - `GET /api/v1/products`: danh sách sản phẩm đã duyệt, hỗ trợ tìm kiếm, lọc và phân trang.
+- `GET /api/v1/products/filter-options`: danh sách địa bàn có sản phẩm công khai để gợi ý bộ lọc.
 - `GET /api/v1/products/{slug}`: chi tiết sản phẩm đã duyệt.
 - `POST /api/v1/auth/register`: đăng ký tài khoản với role `user`.
 - `POST /api/v1/auth/login`: đăng nhập bằng JSON và nhận JWT access token.
