@@ -18,7 +18,7 @@ Base URL: `/api/v1`. Tất cả endpoint có biểu tượng khóa trong Swagger
 | Auth | `GET/PATCH /auth/me` | Đã đăng nhập |
 | Subject application | `POST /subject-applications` | User |
 | Subject application | `GET/PUT /subject-applications/me` | User hoặc subject |
-| Public | `GET /categories`, `GET /products`, `GET /products/{slug}` | Public |
+| Public | `GET /categories`, `GET /products`, `GET /products/filter-options`, `GET /products/{slug}` | Public |
 | Public | `GET /locations`, `GET /locations/{slug}` | Public |
 | Public | `GET /news`, `GET /news/{slug}` | Public |
 | Reviews | `GET/POST /products/{id}/reviews`, `GET/POST /locations/{id}/reviews` | GET public, POST đăng nhập |
