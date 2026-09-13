@@ -92,7 +92,7 @@ const stats = [
   gap: 12px;
   border: 1px solid rgb(148 163 184 / 10%);
   border-radius: var(--ocop-radius-md);
-  background: #1a263c;
+  background: var(--ocop-sidebar-card);
 }
 
 .stat-icon {
@@ -209,7 +209,7 @@ const stats = [
   padding: 16px;
   border: 1px solid rgb(148 163 184 / 14%);
   border-radius: var(--ocop-radius-md);
-  background: #1b2940;
+  background: color-mix(in srgb, var(--ocop-sidebar-card) 88%, white);
 }
 
 .info-card strong {
