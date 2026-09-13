@@ -262,7 +262,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 .brand-copy {
   display: grid;
   color: var(--ocop-slate);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 500;
   line-height: 16px;
 }
@@ -353,7 +353,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   border: 1px solid transparent;
   border-radius: var(--ocop-radius-sm);
   color: var(--ocop-slate);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 650;
   line-height: 14px;
   text-align: center;
@@ -411,13 +411,13 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 
 .user-copy small {
   color: var(--ocop-text-tertiary);
-  font-size: 9px;
+  font-size: 11px;
   text-transform: uppercase;
 }
 
 .user-copy strong {
   color: var(--ocop-navy);
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .logout-button,

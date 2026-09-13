@@ -174,7 +174,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 .admin-brand small {
   margin-top: 2px;
   color: var(--ocop-sidebar-muted);
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .admin-nav {
@@ -194,7 +194,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   border-radius: 10px;
   background: transparent;
   color: var(--ocop-sidebar-muted);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 650;
   text-align: left;
   text-decoration: none;
@@ -247,7 +247,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   border-radius: 9px;
   background: transparent;
   color: #d9e9e3;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 650;
   text-align: center;
   text-decoration: none;
@@ -277,7 +277,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 
 .topbar-label {
   color: var(--ocop-slate);
-  font-size: 10px;
+  font-size: 11px;
   text-transform: uppercase;
 }
 
