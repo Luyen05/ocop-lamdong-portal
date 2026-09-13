@@ -43,6 +43,7 @@ const iconNames: Record<string, string> = {
   clock: 'clock',
   navigation: 'cursor',
   eye: 'eye',
+  eyeSlash: 'eye-slash',
   search: 'search',
   compass: 'compass',
   lock: 'lock',
