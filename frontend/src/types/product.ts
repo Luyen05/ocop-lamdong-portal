@@ -17,6 +17,20 @@ export interface ProductImage {
   sort_order: number
 }
 
+export interface ProductPublicSource {
+  id: number
+  title: string
+  document_number: string | null
+  issuing_body: string | null
+  published_at: string | null
+  source_url: string
+  verification_level: 'A' | 'B1'
+}
+
+export interface ProductFilterOptions {
+  districts: string[]
+}
+
 export interface ProductListItem {
   id: number
   name: string
@@ -44,6 +58,7 @@ export interface ProductDetail extends ProductListItem {
   usage_instructions: string | null
   views: number
   images: ProductImage[]
+  recognition_sources: ProductPublicSource[]
   updated_at: string
 }
 
