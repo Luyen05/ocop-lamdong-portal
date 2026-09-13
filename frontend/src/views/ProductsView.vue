@@ -3,6 +3,7 @@ import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import ProductCard from '@/components/products/ProductCard.vue'
+import AppIcon from '@/components/ui/AppIcon.vue'
 import { getApiErrorMessage } from '@/services/api-error'
 import { getCategories } from '@/services/categories'
 import { getProductFilterOptions, getProducts } from '@/services/products'
@@ -352,7 +353,7 @@ onUnmounted(() => {
               :aria-label="`Bỏ ${filter.label}`"
               @click="removeFilter(filter.key)"
             >
-              {{ filter.label }} <span aria-hidden="true">×</span>
+              {{ filter.label }} <AppIcon name="close" :size="11" />
             </button>
           </div>
 

@@ -46,9 +46,9 @@ const truncatedSubject = computed(() => {
         <span class="placeholder-mark">OCOP</span>
         <span>Lâm Đồng</span>
       </div>
-      <span class="star-badge">★ OCOP {{ product.star }} SAO</span>
+      <span class="star-badge"><AppIcon name="star" :size="12" /> OCOP {{ product.star }} SAO</span>
       <span class="category-badge">{{ product.category.name }}</span>
-      <span v-if="product.vietgap_code" class="vietgap-badge">✓ VietGAP</span>
+      <span v-if="product.vietgap_code" class="vietgap-badge"><AppIcon name="checkCircle" :size="12" /> VietGAP</span>
     </RouterLink>
 
     <div class="product-body">
@@ -68,7 +68,7 @@ const truncatedSubject = computed(() => {
           <strong>{{ formattedPrice }}</strong>
           <small v-if="product.price !== null && product.price > 0 && product.unit">/ {{ product.unit }}</small>
         </div>
-        <span v-if="product.rating_avg > 0" class="product-rating">★ {{ product.rating_avg.toFixed(1) }}</span>
+        <span v-if="product.rating_avg > 0" class="product-rating"><AppIcon name="star" :size="12" /> {{ product.rating_avg.toFixed(1) }}</span>
       </div>
 
       <div class="product-actions">

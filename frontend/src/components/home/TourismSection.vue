@@ -17,7 +17,7 @@ import { tourismFixtures } from '@/data/home-fixtures'
       <article v-for="place in tourismFixtures" :key="place.id" class="tourism-card">
         <div class="tourism-visual" :class="`theme-${place.theme}`">
           <span class="type-badge"><AppIcon :name="place.icon" :size="14" /> {{ place.type }}</span>
-          <span class="rating-badge">★ {{ place.rating.toFixed(1) }}</span>
+          <span class="rating-badge"><AppIcon name="star" :size="13" /> {{ place.rating.toFixed(1) }}</span>
           <span class="visual-mark" aria-hidden="true"><AppIcon :name="place.icon" :size="56" :stroke-width="1.4" /></span>
         </div>
 

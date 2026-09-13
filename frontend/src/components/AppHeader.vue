@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
+import AppIcon from '@/components/ui/AppIcon.vue'
 import { authStore } from '@/stores/auth'
 
 const route = useRoute()
@@ -23,11 +24,11 @@ const roleLabel = computed(() => {
 const userInitial = computed(() => currentUser.value?.full_name.trim().charAt(0).toUpperCase() || 'U')
 
 const publicNavigation = [
-  { label: 'Trang chủ', to: '/', icon: 'icon-home.svg' },
-  { label: 'Sản phẩm OCOP', to: '/san-pham', icon: 'icon-products.svg' },
-  { label: 'Điểm du lịch', to: '/#diem-du-lich', icon: 'icon-tourism.svg' },
-  { label: 'Bản đồ số GIS', to: '/#ban-do', icon: 'icon-map.svg' },
-  { label: 'Tin tức', to: '/#tin-tuc', icon: 'icon-news.svg' },
+  { label: 'Trang chủ', to: '/', icon: 'home' },
+  { label: 'Sản phẩm OCOP', to: '/san-pham', icon: 'package' },
+  { label: 'Điểm du lịch', to: '/#diem-du-lich', icon: 'map-pin' },
+  { label: 'Bản đồ số GIS', to: '/#ban-do', icon: 'map' },
+  { label: 'Tin tức', to: '/#tin-tuc', icon: 'newspaper' },
 ]
 
 const navigation = computed(() => [
@@ -36,11 +37,11 @@ const navigation = computed(() => [
     ? [{
         label: currentUser.value.role === 'subject' ? 'Quản lý sản phẩm' : 'Đăng ký chủ thể',
         to: currentUser.value.role === 'subject' ? '/chu-the/san-pham' : '/dang-ky-chu-the',
-        icon: 'icon-admin.svg',
+        icon: currentUser.value.role === 'subject' ? 'package' : 'building',
       }]
     : []),
   ...(currentUser.value?.role === 'admin'
-    ? [{ label: 'Quản trị', to: '/quan-tri', icon: 'icon-admin.svg' }]
+    ? [{ label: 'Quản trị', to: '/quan-tri', icon: 'dashboard' }]
     : []),
 ])
 
@@ -83,7 +84,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
         </p>
         <div class="announcement-actions">
           <span class="capstone-label">
-            <img :src="asset('icon-capstone.svg')" alt="" />
+            <AppIcon name="shieldCheck" :size="14" />
             Dữ liệu OCOP được kiểm duyệt
           </span>
           <span>Hotline: 0263.3822000</span>
@@ -107,7 +108,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
         </RouterLink>
 
         <form class="header-search" role="search" @submit.prevent="submitHeaderSearch">
-          <img :src="asset('icon-search-header.svg')" alt="" />
+          <AppIcon name="search" :size="16" />
           <input
             v-model="headerSearch"
             type="search"
@@ -124,15 +125,13 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
           aria-label="Mở hoặc đóng menu"
           @click="isMenuOpen = !isMenuOpen"
         >
-          <span />
-          <span />
-          <span />
+          <AppIcon name="menu" :size="22" />
         </button>
 
         <div id="main-navigation" class="navigation-panel" :class="{ open: isMenuOpen }">
           <nav class="main-nav" aria-label="Điều hướng chính">
             <RouterLink v-for="item in navigation" :key="item.label" :to="item.to" @click="closeMenu">
-              <img :src="asset(item.icon)" alt="" />
+              <AppIcon :name="item.icon" :size="15" />
               <span>{{ item.label }}</span>
             </RouterLink>
           </nav>
@@ -145,7 +144,9 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
                 <strong>{{ currentUser?.full_name }}</strong>
               </span>
             </RouterLink>
-            <button class="logout-button" type="button" @click="logout">Đăng xuất</button>
+            <button class="logout-button" type="button" @click="logout">
+              <AppIcon name="logout" :size="14" /> Đăng xuất
+            </button>
           </div>
           <div v-else class="account-actions guest-actions">
             <RouterLink to="/dang-nhap" @click="closeMenu">Đăng nhập</RouterLink>
@@ -215,11 +216,6 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   border: 1px solid rgb(102 201 150 / 42%);
   border-radius: var(--ocop-radius-xs);
   background: rgb(18 55 42 / 72%);
-}
-
-.capstone-label img {
-  width: 14px;
-  height: 14px;
 }
 
 .main-header {
@@ -302,13 +298,12 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   max-width: 220px;
 }
 
-.header-search img {
+.header-search .app-icon {
   position: absolute;
   top: 50%;
   left: 12px;
-  width: 16px;
-  height: 16px;
   transform: translateY(-50%);
+  color: var(--ocop-slate);
 }
 
 .header-search input {
@@ -363,12 +358,6 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   line-height: 14px;
   text-align: center;
   text-decoration: none;
-}
-
-.main-nav a img {
-  width: 15px;
-  height: 15px;
-  flex: 0 0 auto;
 }
 
 .main-nav a:hover,
@@ -442,6 +431,9 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 }
 
 .logout-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   padding: 7px;
 }
 
@@ -457,18 +449,13 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   width: 40px;
   height: 40px;
   margin-left: auto;
-  padding: 9px;
+  padding: 0;
   border: 1px solid var(--ocop-border);
   border-radius: var(--ocop-radius-sm);
   background: #fff;
-}
-
-.menu-toggle span {
-  display: block;
-  height: 2px;
-  margin: 4px 0;
-  border-radius: 2px;
-  background: var(--ocop-primary-950);
+  align-items: center;
+  justify-content: center;
+  color: var(--ocop-primary-950);
 }
 
 @media (min-width: 1320px) {
@@ -486,7 +473,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   }
 
   .menu-toggle {
-    display: block;
+    display: inline-flex;
   }
 
   .navigation-panel {

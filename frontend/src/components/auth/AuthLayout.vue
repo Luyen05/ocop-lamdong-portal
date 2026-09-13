@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import AppIcon from '@/components/ui/AppIcon.vue'
+
 defineProps<{
   title: string
   subtitle: string
@@ -27,9 +29,9 @@ defineProps<{
             </p>
           </div>
           <ul class="feature-list">
-            <li>Thông tin được kiểm duyệt</li>
-            <li>Trải nghiệm bản đồ trực quan</li>
-            <li>Kết nối người dùng và chủ thể OCOP</li>
+            <li><AppIcon name="checkCircle" :size="15" /> Thông tin được kiểm duyệt</li>
+            <li><AppIcon name="checkCircle" :size="15" /> Trải nghiệm bản đồ trực quan</li>
+            <li><AppIcon name="checkCircle" :size="15" /> Kết nối người dùng và chủ thể OCOP</li>
           </ul>
         </div>
 
@@ -140,11 +142,14 @@ defineProps<{
   list-style: none;
 }
 
-.feature-list li::before {
-  margin-right: 0.65rem;
-  content: '✓';
+.feature-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.feature-list .app-icon {
   color: #d6eaaa;
-  font-weight: 800;
 }
 
 .auth-form-panel {

@@ -2,6 +2,8 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 
+import AppIcon from '@/components/ui/AppIcon.vue'
+
 const router = useRouter()
 const search = ref('')
 
@@ -26,7 +28,7 @@ async function submitSearch(): Promise<void> {
 
     <div class="hero-content">
       <div class="hero-badge">
-        <img :src="asset('icon-hero-badge.svg')" alt="" />
+        <AppIcon name="award" :size="16" />
         Cổng thông tin quảng bá OCOP Lâm Đồng
       </div>
 
@@ -41,7 +43,7 @@ async function submitSearch(): Promise<void> {
       <form class="hero-search" role="search" @submit.prevent="submitSearch">
         <label class="search-field">
           <span class="visually-hidden">Tên sản phẩm cần tìm</span>
-          <img :src="asset('icon-search.svg')" alt="" />
+          <AppIcon name="search" :size="16" />
           <input
             v-model="search"
             type="search"
@@ -49,18 +51,18 @@ async function submitSearch(): Promise<void> {
           />
         </label>
         <button type="submit">
-          <img :src="asset('icon-search-white.svg')" alt="" />
+          <AppIcon name="search" :size="16" />
           Tra Cứu Ngay
         </button>
       </form>
 
       <div class="hero-actions">
         <a class="map-action" href="#ban-do">
-          <img :src="asset('icon-compass.svg')" alt="" />
+          <AppIcon name="compass" :size="16" />
           Khám Phá Bản Đồ Số GIS
         </a>
         <a class="tourism-action" href="#diem-du-lich">
-          <img :src="asset('icon-pin.svg')" alt="" />
+          <AppIcon name="map-pin" :size="16" />
           Điểm Du Lịch Canh Nông
         </a>
       </div>
@@ -126,11 +128,6 @@ async function submitSearch(): Promise<void> {
   text-transform: uppercase;
 }
 
-.hero-badge img {
-  width: 16px;
-  height: 16px;
-}
-
 h1 {
   max-width: 896px;
   margin: 24px 0 0;
@@ -166,13 +163,12 @@ h1 {
   display: block;
 }
 
-.search-field img {
+.search-field .app-icon {
   position: absolute;
   top: 50%;
   left: 12px;
-  width: 16px;
-  height: 16px;
   transform: translateY(-50%);
+  color: var(--ocop-slate);
 }
 
 .search-field input {
@@ -214,12 +210,6 @@ h1 {
 
 .hero-search button:hover {
   background: var(--ocop-primary-900);
-}
-
-.hero-search button img,
-.hero-actions img {
-  width: 16px;
-  height: 16px;
 }
 
 .hero-actions {

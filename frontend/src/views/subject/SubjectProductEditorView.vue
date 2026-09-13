@@ -2,6 +2,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
+import AppIcon from '@/components/ui/AppIcon.vue'
 import { getCategories } from '@/services/categories'
 import { getApiErrorMessage } from '@/services/api-error'
 import {
@@ -313,7 +314,7 @@ onMounted(load)
 <template>
   <main class="editor-page">
     <header>
-      <RouterLink to="/chu-the/san-pham">← Danh sách sản phẩm</RouterLink>
+      <RouterLink to="/chu-the/san-pham"><AppIcon name="arrowLeft" :size="14" /> Danh sách sản phẩm</RouterLink>
       <span>{{ isApprovedUpdate || isRequestRevision ? 'Yêu cầu thay đổi' : 'Hồ sơ sản phẩm OCOP' }}</span>
       <h1>{{ pageTitle }}</h1>
       <p v-if="isRequestRevision">
@@ -335,7 +336,7 @@ onMounted(load)
         <div><strong>Tiến độ hồ sơ</strong><span>{{ completionItems.filter((item) => item.complete).length }}/{{ completionItems.length }} mục</span></div>
         <ul>
           <li v-for="item in completionItems" :key="item.label" :class="{ complete: item.complete }">
-            <span>{{ item.complete ? '✓' : '○' }}</span>{{ item.label }}
+            <span><AppIcon :name="item.complete ? 'checkCircle' : 'circle'" :size="14" /></span>{{ item.label }}
           </li>
         </ul>
       </aside>
@@ -389,7 +390,7 @@ onMounted(load)
           <p v-if="uploadingCertificate" class="upload-status wide" role="status">Đang tải giấy chứng nhận...</p>
           <div v-if="certificateErrorMessage" class="alert alert-danger image-alert wide" role="alert">{{ certificateErrorMessage }}</div>
           <div v-if="form.certificate_storage_path || form.certificate_url" class="certificate-file wide">
-            <span>✓</span>
+            <span><AppIcon name="checkCircle" :size="16" /></span>
             <div><strong>{{ certificateFileName || 'Tài liệu chứng nhận đã liên kết' }}</strong><small>{{ form.certificate_storage_path ? 'File riêng tư trên hệ thống' : 'Tài liệu từ dữ liệu cũ' }}</small></div>
           </div>
           <label class="wide">Mã VietGAP (nếu có)<input v-model="form.vietgap_code" /></label>

@@ -59,7 +59,7 @@ onMounted(loadCategories)
         <h2 id="category-title">Danh Mục Sản Phẩm OCOP</h2>
         <p>Phân loại sản phẩm đạt chuẩn sao OCOP theo ngành hàng</p>
       </div>
-      <RouterLink to="/san-pham">Xem tất cả <span aria-hidden="true">→</span></RouterLink>
+      <RouterLink to="/san-pham">Xem tất cả <AppIcon name="chevronRight" :size="14" /></RouterLink>
     </div>
 
     <div v-if="isLoading" class="category-grid" aria-label="Đang tải danh mục">

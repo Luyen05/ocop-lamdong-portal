@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 
 import ProductCard from '@/components/products/ProductCard.vue'
+import AppIcon from '@/components/ui/AppIcon.vue'
 import { getApiErrorMessage } from '@/services/api-error'
 import { getProducts } from '@/services/products'
 import type { ProductListItem } from '@/types/product'
@@ -36,11 +37,11 @@ onMounted(loadProducts)
   <section id="san-pham-noi-bat" class="featured-section" aria-labelledby="featured-title">
     <div class="section-heading">
       <div>
-        <span class="eyebrow">★ Chất Lượng Xuất Sắc</span>
+        <span class="eyebrow"><AppIcon name="star" :size="13" /> Chất Lượng Xuất Sắc</span>
         <h2 id="featured-title">Sản Phẩm OCOP Nổi Bật 4 - 5 Sao</h2>
       </div>
       <RouterLink :to="{ name: 'products', query: { sort: 'rating' } }">
-        Tất cả sản phẩm <span aria-hidden="true">→</span>
+        Tất cả sản phẩm <AppIcon name="chevronRight" :size="14" />
       </RouterLink>
     </div>
 

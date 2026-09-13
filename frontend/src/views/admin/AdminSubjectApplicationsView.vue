@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
 
+import AppIcon from '@/components/ui/AppIcon.vue'
 import { getApiErrorMessage } from '@/services/api-error'
 import {
   listSubjectApplications,
@@ -247,7 +248,7 @@ onMounted(loadApplications)
             <span>Hồ sơ #{{ selectedApplication.id }}</span>
             <h2 id="moderation-title">{{ selectedApplication.name }}</h2>
           </div>
-          <button type="button" aria-label="Đóng" @click="closeModeration">×</button>
+          <button type="button" aria-label="Đóng" @click="closeModeration"><AppIcon name="close" :size="17" /></button>
         </header>
 
         <dl class="detail-grid">
