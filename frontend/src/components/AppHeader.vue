@@ -10,6 +10,7 @@ const router = useRouter()
 const currentUser = authStore.currentUser
 const isAuthenticated = authStore.isAuthenticated
 const isMenuOpen = ref(false)
+const isSearchOpen = ref(false)
 const headerSearch = ref('')
 
 const roleLabel = computed(() => {
@@ -53,6 +54,10 @@ function closeMenu(): void {
   isMenuOpen.value = false
 }
 
+function closeSearch(): void {
+  isSearchOpen.value = false
+}
+
 function onKeydown(event: KeyboardEvent): void {
   if (event.key === 'Escape') closeMenu()
 }
@@ -61,6 +66,7 @@ async function submitHeaderSearch(): Promise<void> {
   const search = headerSearch.value.trim()
   await router.push({ name: 'products', query: search ? { search } : {} })
   closeMenu()
+  closeSearch()
 }
 
 async function logout(): Promise<void> {
@@ -69,7 +75,10 @@ async function logout(): Promise<void> {
   await router.push('/')
 }
 
-watch(() => route.fullPath, closeMenu)
+watch(() => route.fullPath, () => {
+  closeMenu()
+  closeSearch()
+})
 onMounted(() => document.addEventListener('keydown', onKeydown))
 onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 </script>
@@ -118,6 +127,17 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
         </form>
 
         <button
+          class="search-toggle"
+          type="button"
+          :aria-expanded="isSearchOpen"
+          aria-controls="responsive-header-search"
+          aria-label="Mở hoặc đóng tìm kiếm sản phẩm"
+          @click="isSearchOpen = !isSearchOpen"
+        >
+          <AppIcon name="search" :size="18" />
+        </button>
+
+        <button
           class="menu-toggle"
           type="button"
           :aria-expanded="isMenuOpen"
@@ -154,6 +174,24 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
           </div>
         </div>
       </div>
+
+      <form
+        v-if="isSearchOpen"
+        id="responsive-header-search"
+        class="responsive-search site-container"
+        role="search"
+        @submit.prevent="submitHeaderSearch"
+      >
+        <AppIcon name="search" :size="17" />
+        <input
+          v-model="headerSearch"
+          type="search"
+          aria-label="Tìm kiếm sản phẩm"
+          placeholder="Nhập tên sản phẩm OCOP..."
+          autofocus
+        />
+        <button type="submit">Tìm kiếm</button>
+      </form>
     </div>
   </header>
 </template>
@@ -296,6 +334,54 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   min-width: 0;
   flex: 1 1 180px;
   max-width: 220px;
+}
+
+.search-toggle {
+  display: inline-flex;
+  width: 40px;
+  height: 40px;
+  margin-left: auto;
+  padding: 0;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--ocop-border);
+  border-radius: var(--ocop-radius-sm);
+  background: var(--ocop-card);
+  color: var(--ocop-primary-900);
+}
+
+.responsive-search {
+  display: grid;
+  padding-block: 10px;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  border-top: 1px solid var(--ocop-border-soft);
+}
+
+.responsive-search input {
+  min-width: 0;
+  height: 40px;
+  padding: 8px 12px;
+  border: 1px solid var(--ocop-border);
+  border-radius: var(--ocop-radius-sm);
+  outline: 0;
+}
+
+.responsive-search input:focus {
+  border-color: var(--ocop-primary-500);
+  box-shadow: 0 0 0 3px rgb(30 113 79 / 12%);
+}
+
+.responsive-search button {
+  min-height: 40px;
+  padding: 8px 14px;
+  border: 0;
+  border-radius: var(--ocop-radius-sm);
+  background: var(--ocop-primary-700);
+  color: var(--ocop-white);
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .header-search .app-icon {
@@ -462,6 +548,11 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   .header-search {
     display: block;
   }
+
+  .search-toggle,
+  .responsive-search {
+    display: none;
+  }
 }
 
 @media (max-width: 1199.98px) {
@@ -474,6 +565,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 
   .menu-toggle {
     display: inline-flex;
+    margin-left: 0;
   }
 
   .navigation-panel {
@@ -556,6 +648,15 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   .brand-copy > span:last-child,
   .brand-title small {
     display: none;
+  }
+
+  .responsive-search {
+    width: min(calc(100% - 2rem), var(--ocop-container));
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .responsive-search button {
+    grid-column: 1 / -1;
   }
 }
 </style>
