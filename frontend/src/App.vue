@@ -3,6 +3,7 @@ import { useRoute } from 'vue-router'
 
 import AppHeader from '@/components/AppHeader.vue'
 import SiteFooter from '@/components/SiteFooter.vue'
+import ScrollToTop from '@/components/ui/ScrollToTop.vue'
 
 const route = useRoute()
 </script>
@@ -17,6 +18,9 @@ const route = useRoute()
     </Transition>
   </RouterView>
   <SiteFooter
+    v-if="route.meta.layout !== 'auth' && route.meta.layout !== 'admin' && route.meta.layout !== 'subject'"
+  />
+  <ScrollToTop
     v-if="route.meta.layout !== 'auth' && route.meta.layout !== 'admin' && route.meta.layout !== 'subject'"
   />
 </template>

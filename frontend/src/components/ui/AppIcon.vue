@@ -53,6 +53,7 @@ const iconNames: Record<string, string> = {
   checkCircle: 'check-circle',
   chevronRight: 'chevron-right',
   chevronLeft: 'chevron-left',
+  chevronUp: 'chevron-up',
 }
 
 const iconName = computed(() => iconNames[props.name] ?? 'check-circle')
