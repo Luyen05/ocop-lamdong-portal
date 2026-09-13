@@ -26,58 +26,48 @@ const formattedPrice = computed(() => {
   }).format(props.product.price)
 })
 
-const truncatedSubject = computed(() => {
-  const name = props.product.subject.name
-  return name.length > 46 ? `${name.slice(0, 46)}…` : name
-})
 </script>
 
 <template>
   <article class="product-card">
-    <RouterLink class="product-media" :to="`/san-pham/${product.slug}`">
-      <img
-        v-if="product.primary_image_url && !imageFailed"
-        :src="product.primary_image_url"
-        :alt="product.name"
-        loading="lazy"
-        @error="imageFailed = true"
-      />
-      <div v-else class="product-placeholder" aria-hidden="true">
-        <span class="placeholder-mark">OCOP</span>
-        <span>Lâm Đồng</span>
-      </div>
-      <span class="star-badge"><AppIcon name="star" :size="12" /> OCOP {{ product.star }} SAO</span>
-      <span class="category-badge">{{ product.category.name }}</span>
-      <span v-if="product.vietgap_code" class="vietgap-badge"><AppIcon name="checkCircle" :size="12" /> VietGAP</span>
-    </RouterLink>
-
-    <div class="product-body">
-      <span class="product-location"><AppIcon name="map-pin" :size="14" /> {{ product.subject.district }}</span>
-      <h2>
-        <RouterLink :to="`/san-pham/${product.slug}`">{{ product.name }}</RouterLink>
-      </h2>
-      <p class="product-description">{{ product.description }}</p>
-
-      <div class="product-subject">
-        <span>Chủ thể:</span>
-        <strong :title="product.subject.name">{{ truncatedSubject }}</strong>
-      </div>
-
-      <div class="product-price-row">
-        <div class="product-price">
-          <strong>{{ formattedPrice }}</strong>
-          <small v-if="product.price !== null && product.price > 0 && product.unit">/ {{ product.unit }}</small>
+    <RouterLink class="product-card-link" :to="`/san-pham/${product.slug}`">
+      <div class="product-media">
+        <img
+          v-if="product.primary_image_url && !imageFailed"
+          :src="product.primary_image_url"
+          :alt="product.name"
+          loading="lazy"
+          @error="imageFailed = true"
+        />
+        <div v-else class="product-placeholder" aria-hidden="true">
+          <span class="placeholder-mark">OCOP</span>
+          <span>Lâm Đồng</span>
         </div>
-        <span v-if="product.rating_avg > 0" class="product-rating"><AppIcon name="star" :size="12" /> {{ product.rating_avg.toFixed(1) }}</span>
+        <span class="star-badge"><AppIcon name="star" :size="12" /> OCOP {{ product.star }} sao</span>
       </div>
 
-      <div class="product-actions">
-        <RouterLink :to="`/san-pham/${product.slug}`">
-          <AppIcon name="eye" :size="15" />
-          Xem chi tiết
-        </RouterLink>
+      <div class="product-body">
+        <span class="product-location"><AppIcon name="map-pin" :size="14" /> {{ product.subject.district }}</span>
+        <h2>{{ product.name }}</h2>
+        <p class="product-meta">
+          {{ product.category.name }}
+          <span v-if="product.vietgap_code"><AppIcon name="checkCircle" :size="12" /> VietGAP</span>
+        </p>
+
+        <div class="product-subject">
+          <span>Chủ thể</span>
+          <strong :title="product.subject.name">{{ product.subject.name }}</strong>
+        </div>
+
+        <div class="product-price-row">
+          <div class="product-price">
+            <strong>{{ formattedPrice }}</strong>
+            <small v-if="product.price !== null && product.price > 0 && product.unit">/ {{ product.unit }}</small>
+          </div>
+          <span v-if="product.rating_avg > 0" class="product-rating"><AppIcon name="star" :size="12" /> {{ product.rating_avg.toFixed(1) }}</span>
+        </div>
       </div>
-    </div>
+    </RouterLink>
   </article>
 </template>
 
@@ -90,9 +80,18 @@ const truncatedSubject = computed(() => {
   flex-direction: column;
   border: 1px solid var(--ocop-border);
   border-radius: var(--ocop-radius-lg);
-  background: #fff;
+  background: var(--ocop-card);
   box-shadow: 0 4px 12px rgb(15 23 43 / 5%);
   transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.product-card-link {
+  display: flex;
+  height: 100%;
+  min-width: 0;
+  flex-direction: column;
+  color: inherit;
+  text-decoration: none;
 }
 
 .product-card:hover {
@@ -148,15 +147,13 @@ const truncatedSubject = computed(() => {
   letter-spacing: 0.1em;
 }
 
-.star-badge,
-.category-badge,
-.vietgap-badge {
+.star-badge {
   position: absolute;
   z-index: 1;
   padding: 5px 10px;
   border-radius: var(--ocop-radius-sm);
-  color: #fff;
-  font-size: 10px;
+  color: var(--ocop-white);
+  font-size: 11px;
   font-weight: 700;
   line-height: 14px;
 }
@@ -164,30 +161,13 @@ const truncatedSubject = computed(() => {
 .star-badge {
   top: 12px;
   left: 12px;
-  background: #ff9500;
+  background: var(--ocop-star-strong);
   box-shadow: 0 3px 8px rgb(151 60 0 / 20%);
-}
-
-.category-badge {
-  top: 12px;
-  right: 12px;
-  max-width: calc(100% - 130px);
-  overflow: hidden;
-  background: rgb(15 23 43 / 78%);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.vietgap-badge {
-  top: 42px;
-  left: 12px;
-  padding-block: 3px;
-  background: var(--ocop-primary-700);
 }
 
 .product-body {
   display: flex;
-  min-height: 264px;
+  min-height: 188px;
   flex: 1;
   flex-direction: column;
   padding: 16px;
@@ -197,65 +177,62 @@ const truncatedSubject = computed(() => {
   display: flex;
   align-items: center;
   gap: 4px;
-  color: #78909c;
-  font-size: 11px;
+  color: var(--ocop-text-secondary);
+  font-size: 12px;
   font-weight: 500;
 }
 
 .product-body h2 {
   display: -webkit-box;
   overflow: hidden;
-  min-height: 39px;
-  margin: 6px 0;
-  font-size: 15px;
+  min-height: 42px;
+  margin: 7px 0 4px;
+  color: var(--ocop-text-primary);
+  font-size: 16px;
   font-weight: 750;
   line-height: 1.4;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }
 
-.product-body h2 a {
-  color: var(--ocop-navy);
-  text-decoration: none;
-}
-
-.product-body h2 a:hover {
-  color: var(--ocop-primary-700);
-}
-
-.product-description {
-  display: -webkit-box;
-  overflow: hidden;
-  min-height: 48px;
+.product-meta {
+  display: flex;
   margin: 0;
-  color: var(--ocop-slate);
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: var(--ocop-text-secondary);
   font-size: 12px;
-  line-height: 17px;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
+}
+
+.product-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--ocop-success);
+  font-weight: 700;
 }
 
 .product-subject {
-  display: flex;
+  display: grid;
   min-width: 0;
   margin-top: auto;
   padding-top: 12px;
-  gap: 4px;
-  border-top: 1px solid #edf0f3;
-  color: #90a1b9;
-  font-size: 10px;
-  white-space: nowrap;
+  gap: 2px;
+  color: var(--ocop-text-tertiary);
+  font-size: 11px;
 }
 
 .product-subject strong {
   overflow: hidden;
-  color: #45556c;
+  color: var(--ocop-text-muted);
+  font-size: 12px;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .product-price-row,
-.product-price,
-.product-actions {
+.product-price {
   display: flex;
   align-items: center;
 }
@@ -280,47 +257,22 @@ const truncatedSubject = computed(() => {
 
 .product-price small {
   overflow: hidden;
-  color: #90a1b9;
-  font-size: 10px;
+  color: var(--ocop-text-tertiary);
+  font-size: 11px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .product-rating {
   flex: 0 0 auto;
-  color: #f59e0b;
-  font-size: 11px;
+  color: var(--ocop-star);
+  font-size: 12px;
   font-weight: 700;
 }
 
-.product-actions {
-  margin-top: 12px;
-  gap: 8px;
-}
-
-.product-actions a {
-  display: inline-flex;
-  min-height: 36px;
-  flex: 1;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  border: 1px solid var(--ocop-border);
-  border-radius: var(--ocop-radius-md);
-  background: var(--ocop-surface-muted);
-  color: #45556c;
-  font-size: 11px;
-  font-weight: 700;
-  text-decoration: none;
-}
-
-.product-actions a:first-child {
-  border-color: var(--ocop-primary-700);
-  background: var(--ocop-primary-700);
-  color: #fff;
-}
-
-.product-actions a:hover {
-  filter: brightness(0.96);
+.product-card-link:focus-visible {
+  border-radius: inherit;
+  outline: 3px solid rgb(53 164 117 / 28%);
+  outline-offset: -3px;
 }
 </style>
