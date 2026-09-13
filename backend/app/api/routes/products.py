@@ -183,6 +183,9 @@ def get_product_filter_options(db: Session = Depends(get_db)) -> ProductFilterOp
                 *public_product_filters(),
                 Subject.district.is_not(None),
                 func.trim(Subject.district) != "",
+                func.lower(func.trim(Subject.district)).not_in(
+                    ("chưa xác định", "không xác định")
+                ),
             )
             .distinct()
             .order_by(Subject.district)
