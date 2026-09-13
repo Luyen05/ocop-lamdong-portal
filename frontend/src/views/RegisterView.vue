@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import AuthLayout from '@/components/auth/AuthLayout.vue'
+import AppIcon from '@/components/ui/AppIcon.vue'
 import { getApiErrorMessage } from '@/services/api-error'
 import { authStore } from '@/stores/auth'
 
@@ -13,9 +14,31 @@ const email = ref('')
 const phone = ref('')
 const password = ref('')
 const passwordConfirmation = ref('')
+const showPassword = ref(false)
+const showPasswordConfirmation = ref(false)
 const acceptedTerms = ref(false)
 const isSubmitting = ref(false)
 const errorMessage = ref('')
+
+const passwordScore = computed(() => {
+  let score = 0
+  if (password.value.length >= 8) score += 1
+  if (/[a-z]/.test(password.value) && /[A-Z]/.test(password.value)) score += 1
+  if (/\d/.test(password.value)) score += 1
+  if (/[^A-Za-z0-9]/.test(password.value)) score += 1
+  return score
+})
+
+const passwordStrength = computed(() => {
+  if (!password.value) return { label: 'Chưa nhập', tone: 'muted' }
+  if (passwordScore.value <= 1) return { label: 'Yếu', tone: 'danger' }
+  if (passwordScore.value <= 2) return { label: 'Trung bình', tone: 'warning' }
+  return { label: 'Tốt', tone: 'success' }
+})
+
+const confirmationMismatch = computed(() =>
+  Boolean(passwordConfirmation.value && password.value !== passwordConfirmation.value),
+)
 
 async function submit(): Promise<void> {
   if (isSubmitting.value) return
@@ -103,31 +126,64 @@ async function submit(): Promise<void> {
       <div class="row g-3">
         <div class="col-md-6">
           <label class="form-label fw-semibold" for="register-password">Mật khẩu</label>
-          <input
-            id="register-password"
-            v-model="password"
-            class="form-control"
-            type="password"
-            autocomplete="new-password"
-            minlength="8"
-            maxlength="128"
-            required
-          />
+          <div class="input-group">
+            <input
+              id="register-password"
+              v-model="password"
+              class="form-control"
+              :type="showPassword ? 'text' : 'password'"
+              autocomplete="new-password"
+              minlength="8"
+              maxlength="128"
+              aria-describedby="password-strength"
+              required
+            />
+            <button
+              class="btn btn-outline-secondary password-toggle"
+              type="button"
+              :aria-label="showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'"
+              :aria-pressed="showPassword"
+              @click="showPassword = !showPassword"
+            >
+              <AppIcon :name="showPassword ? 'eyeSlash' : 'eye'" :size="17" />
+            </button>
+          </div>
+          <div id="password-strength" class="password-strength" :data-tone="passwordStrength.tone">
+            <span><i :style="{ width: `${passwordScore * 25}%` }" /></span>
+            <small>Độ mạnh: {{ passwordStrength.label }}</small>
+          </div>
         </div>
         <div class="col-md-6">
           <label class="form-label fw-semibold" for="register-confirmation">
             Xác nhận mật khẩu
           </label>
-          <input
-            id="register-confirmation"
-            v-model="passwordConfirmation"
-            class="form-control"
-            type="password"
-            autocomplete="new-password"
-            minlength="8"
-            maxlength="128"
-            required
-          />
+          <div class="input-group">
+            <input
+              id="register-confirmation"
+              v-model="passwordConfirmation"
+              class="form-control"
+              :class="{ 'is-invalid': confirmationMismatch }"
+              :type="showPasswordConfirmation ? 'text' : 'password'"
+              autocomplete="new-password"
+              minlength="8"
+              maxlength="128"
+              :aria-invalid="confirmationMismatch"
+              aria-describedby="confirmation-feedback"
+              required
+            />
+            <button
+              class="btn btn-outline-secondary password-toggle"
+              type="button"
+              :aria-label="showPasswordConfirmation ? 'Ẩn mật khẩu xác nhận' : 'Hiện mật khẩu xác nhận'"
+              :aria-pressed="showPasswordConfirmation"
+              @click="showPasswordConfirmation = !showPasswordConfirmation"
+            >
+              <AppIcon :name="showPasswordConfirmation ? 'eyeSlash' : 'eye'" :size="17" />
+            </button>
+          </div>
+          <div v-if="confirmationMismatch" id="confirmation-feedback" class="invalid-feedback d-block">
+            Mật khẩu xác nhận chưa khớp.
+          </div>
         </div>
       </div>
 
@@ -160,3 +216,45 @@ async function submit(): Promise<void> {
     </form>
   </AuthLayout>
 </template>
+
+<style scoped>
+.password-toggle {
+  display: inline-grid;
+  min-width: 44px;
+  place-items: center;
+}
+
+.password-strength {
+  display: grid;
+  margin-top: 7px;
+  grid-template-columns: minmax(72px, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  color: var(--ocop-text-secondary);
+}
+
+.password-strength > span {
+  height: 5px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--ocop-surface-muted);
+}
+
+.password-strength i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--ocop-text-tertiary);
+  transition: width 180ms ease, background-color 180ms ease;
+}
+
+.password-strength[data-tone='danger'] i { background: var(--ocop-danger); }
+.password-strength[data-tone='warning'] i { background: var(--ocop-warning); }
+.password-strength[data-tone='success'] i { background: var(--ocop-success); }
+
+.password-strength small {
+  min-width: 88px;
+  font-size: 12px;
+  text-align: right;
+}
+</style>

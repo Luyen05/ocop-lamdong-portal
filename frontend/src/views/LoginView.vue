@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import AuthLayout from '@/components/auth/AuthLayout.vue'
+import AppIcon from '@/components/ui/AppIcon.vue'
 import { resolvePostLoginTarget } from '@/router/access'
 import { getApiErrorMessage } from '@/services/api-error'
 import { authStore } from '@/stores/auth'
@@ -12,6 +13,7 @@ const router = useRouter()
 
 const email = ref(typeof route.query.email === 'string' ? route.query.email : '')
 const password = ref('')
+const showPassword = ref(false)
 const isSubmitting = ref(false)
 const errorMessage = ref('')
 const wasRegistered = route.query.registered === '1'
@@ -65,15 +67,26 @@ async function submit(): Promise<void> {
 
       <div>
         <label class="form-label fw-semibold" for="login-password">Mật khẩu</label>
-        <input
-          id="login-password"
-          v-model="password"
-          class="form-control form-control-lg"
-          type="password"
-          autocomplete="current-password"
-          placeholder="Nhập mật khẩu"
-          required
-        />
+        <div class="input-group input-group-lg">
+          <input
+            id="login-password"
+            v-model="password"
+            class="form-control"
+            :type="showPassword ? 'text' : 'password'"
+            autocomplete="current-password"
+            placeholder="Nhập mật khẩu"
+            required
+          />
+          <button
+            class="btn btn-outline-secondary password-toggle"
+            type="button"
+            :aria-label="showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'"
+            :aria-pressed="showPassword"
+            @click="showPassword = !showPassword"
+          >
+            <AppIcon :name="showPassword ? 'eyeSlash' : 'eye'" :size="18" />
+          </button>
+        </div>
       </div>
 
       <button class="btn btn-success btn-lg mt-2" type="submit" :disabled="isSubmitting">
@@ -92,3 +105,11 @@ async function submit(): Promise<void> {
     </form>
   </AuthLayout>
 </template>
+
+<style scoped>
+.password-toggle {
+  display: inline-grid;
+  min-width: 48px;
+  place-items: center;
+}
+</style>
