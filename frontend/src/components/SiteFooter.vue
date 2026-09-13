@@ -124,7 +124,7 @@ const stats = [
 .stat-card small {
   margin-top: 2px;
   color: #7f8da4;
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .footer-grid {
@@ -168,7 +168,7 @@ const stats = [
 .footer-grid address {
   margin: 0;
   color: #8290a6;
-  font-size: 10px;
+  font-size: 11px;
   font-style: normal;
   line-height: 18px;
   text-decoration: none;
@@ -217,7 +217,7 @@ const stats = [
   align-items: center;
   gap: 6px;
   color: #6ee7b7;
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .info-card p {
@@ -230,7 +230,7 @@ const stats = [
   border-radius: 6px;
   background: var(--ocop-primary-700);
   color: #fff;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   text-align: center;
 }
@@ -241,7 +241,7 @@ const stats = [
   justify-content: space-between;
   gap: 20px;
   color: #65748b;
-  font-size: 9px;
+  font-size: 11px;
 }
 
 @media (max-width: 991.98px) {

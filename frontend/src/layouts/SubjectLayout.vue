@@ -67,13 +67,13 @@ async function logout(): Promise<void> {
 .subject-brand img { width: 22px; }
 .subject-brand div, .subject-page-heading, .subject-account div { display: grid; }
 .subject-brand strong { font-size: 13px; }
-.subject-brand small, .subject-topbar small, .subject-account small { color: var(--ocop-sidebar-muted); font-size: 10px; }
+.subject-brand small, .subject-topbar small, .subject-account small { color: var(--ocop-sidebar-muted); font-size: 11px; }
 .subject-sidebar nav { display: grid; margin-top: 24px; gap: 6px; }
-.subject-sidebar nav a { display: flex; padding: 11px 12px; align-items: center; gap: 10px; border: 1px solid transparent; border-radius: 9px; color: var(--ocop-sidebar-muted); font-size: 12px; font-weight: 700; text-decoration: none; }
+.subject-sidebar nav a { display: flex; padding: 11px 12px; align-items: center; gap: 10px; border: 1px solid transparent; border-radius: 9px; color: var(--ocop-sidebar-muted); font-size: 13px; font-weight: 700; text-decoration: none; }
 .subject-sidebar nav a :deep(.app-icon) { color: #83d7ad; }
 .subject-sidebar nav a:hover, .subject-sidebar nav a.router-link-active { border-color: rgb(102 201 150 / 24%); background: rgb(53 164 117 / 22%); color: #fff; }
 .subject-sidebar-footer { display: grid; margin-top: auto; gap: 8px; }
-.subject-sidebar-footer a, .subject-sidebar-footer button { display: flex; padding: 9px; align-items: center; justify-content: center; gap: 7px; border: 1px solid rgb(255 255 255 / 14%); border-radius: 8px; background: transparent; color: #d9e9e4; font-size: 11px; text-align: center; text-decoration: none; }
+.subject-sidebar-footer a, .subject-sidebar-footer button { display: flex; padding: 9px; align-items: center; justify-content: center; gap: 7px; border: 1px solid rgb(255 255 255 / 14%); border-radius: 8px; background: transparent; color: var(--ocop-text-on-dark); font-size: 12px; text-align: center; text-decoration: none; }
 .subject-main { min-width: 0; }
 .subject-topbar { display: flex; min-height: 72px; padding: 12px 28px; align-items: center; border-bottom: 1px solid var(--ocop-border); background: #fff; }
 .subject-topbar > div strong { color: var(--ocop-navy); font-size: 16px; }
