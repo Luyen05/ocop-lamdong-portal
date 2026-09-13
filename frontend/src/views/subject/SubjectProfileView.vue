@@ -124,16 +124,16 @@ onMounted(loadProfile)
 .summary-card { display: grid; padding: 22px; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 16px; }
 .subject-mark { display: grid; width: 54px; height: 54px; place-items: center; border-radius: 14px; background: #e4f4ed; color: var(--ocop-primary-700); font-size: 22px; font-weight: 800; }
 .status-badge { display: inline-flex; width: fit-content; padding: 3px 8px; border-radius: 999px; background: #fff5d8; color: #8a5b00; font-size: 9px; font-weight: 800; text-transform: uppercase; }
-.status-approved { background: #e4f4ed; color: #006045; }
-.status-rejected { background: #fff0f1; color: #b42318; }
+.status-approved { background: var(--ocop-success-soft); color: var(--ocop-success); }
+.status-rejected { background: var(--ocop-danger-soft); color: var(--ocop-danger); }
 .subject-name h2 { margin: 5px 0 2px; color: var(--ocop-navy); font-size: 20px; }
 .subject-name p, .review-note p, .profile-help p { margin: 0; color: var(--ocop-slate); font-size: 12px; }
 .review-time { display: grid; text-align: right; }
 .review-time small { color: var(--ocop-slate); font-size: 9px; }
 .review-time strong { font-size: 11px; }
-.review-note { padding: 17px 20px; border-color: #f5d48b; background: #fffbeb; }
-.review-note strong { color: #76520a; font-size: 12px; }
-.review-note p { margin: 5px 0 10px; color: #76520a; }
+.review-note { padding: 17px 20px; border-color: #e8cf98; background: var(--ocop-warning-soft); }
+.review-note strong { color: var(--ocop-warning); font-size: 12px; }
+.review-note p { margin: 5px 0 10px; color: var(--ocop-warning); }
 .review-note a { color: #76520a; font-size: 11px; font-weight: 750; }
 .details-card { padding: 22px; }
 .card-heading { display: flex; padding-bottom: 16px; align-items: end; justify-content: space-between; border-bottom: 1px solid var(--ocop-border); gap: 15px; }

@@ -339,11 +339,11 @@ onMounted(loadData)
 .product-copy p, .product-copy small { margin: 0; color: var(--ocop-slate); font-size: 11px; }
 .product-copy > div { display: flex; gap: 7px; }
 .status, .stars { padding: 3px 7px; border-radius: 999px; background: #eef2f6; color: #526277; font-size: 9px; font-weight: 800; }
-.status-approved { background: #dcfce7; color: #167044; }
-.status-pending { background: #fff7d6; color: #8d6200; }
-.status-needs_revision, .status-rejected { background: #fee2e2; color: #b42318; }
-.moderation-note, .request-note { margin-top: 7px !important; padding: 6px 8px; border-radius: 6px; background: #fff7ed; color: #9a4f10 !important; }
-.request-note { background: #eff6ff; color: #1d4f91 !important; }
+.status-approved { background: var(--ocop-success-soft); color: var(--ocop-success); }
+.status-pending { background: var(--ocop-warning-soft); color: var(--ocop-warning); }
+.status-needs_revision, .status-rejected { background: var(--ocop-danger-soft); color: var(--ocop-danger); }
+.moderation-note, .request-note { margin-top: 7px !important; padding: 6px 8px; border-radius: 6px; background: var(--ocop-warning-soft); color: var(--ocop-warning) !important; }
+.request-note { background: var(--ocop-info-soft); color: var(--ocop-info) !important; }
 .product-actions { display: grid; min-width: 140px; gap: 7px; }
 .product-actions button, .dialog-card button { padding: 8px 10px; border: 1px solid var(--ocop-border); border-radius: 8px; background: #fff; font-size: 11px; font-weight: 700; }
 .approve-button { border-color: var(--ocop-primary-700) !important; color: var(--ocop-primary-700); }

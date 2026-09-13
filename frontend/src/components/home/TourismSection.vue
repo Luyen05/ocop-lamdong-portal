@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppIcon from '@/components/ui/AppIcon.vue'
 import { tourismFixtures } from '@/data/home-fixtures'
 </script>
 
@@ -15,26 +16,26 @@ import { tourismFixtures } from '@/data/home-fixtures'
     <div class="tourism-grid">
       <article v-for="place in tourismFixtures" :key="place.id" class="tourism-card">
         <div class="tourism-visual" :class="`theme-${place.theme}`">
-          <span class="type-badge">{{ place.icon }} {{ place.type }}</span>
+          <span class="type-badge"><AppIcon :name="place.icon" :size="14" /> {{ place.type }}</span>
           <span class="rating-badge">★ {{ place.rating.toFixed(1) }}</span>
-          <span class="visual-mark" aria-hidden="true">{{ place.icon }}</span>
+          <span class="visual-mark" aria-hidden="true"><AppIcon :name="place.icon" :size="56" :stroke-width="1.4" /></span>
         </div>
 
         <div class="tourism-body">
           <div class="place-meta">
-            <span>◷ {{ place.openingHours }}</span>
-            <span>⌖ {{ place.district }}</span>
+            <span><AppIcon name="clock" :size="14" /> {{ place.openingHours }}</span>
+            <span><AppIcon name="map-pin" :size="14" /> {{ place.district }}</span>
           </div>
           <h3>{{ place.name }}</h3>
           <p>{{ place.description }}</p>
           <ul>
-            <li v-for="experience in place.experiences" :key="experience">✓ {{ experience }}</li>
+            <li v-for="experience in place.experiences" :key="experience"><AppIcon name="checkCircle" :size="14" /> {{ experience }}</li>
           </ul>
           <div class="tourism-actions">
             <button type="button" disabled title="Trang chi tiết sẽ được triển khai ở module du lịch">
               Khám Phá
             </button>
-            <a href="#ban-do">⌖ Chỉ Đường</a>
+            <a href="#ban-do"><AppIcon name="navigation" :size="15" /> Chỉ Đường</a>
           </div>
         </div>
       </article>
@@ -140,7 +141,7 @@ h2 {
 }
 
 .visual-mark {
-  font-size: 66px;
+  color: rgb(255 255 255 / 88%);
   filter: drop-shadow(0 10px 12px rgb(15 23 43 / 20%));
 }
 
@@ -158,7 +159,10 @@ h2 {
 }
 
 .type-badge {
+  display: flex;
   left: 12px;
+  align-items: center;
+  gap: 5px;
 }
 
 .rating-badge {
@@ -179,6 +183,13 @@ h2 {
   gap: 8px;
   color: var(--ocop-slate);
   font-size: 10px;
+}
+
+.place-meta span,
+.tourism-body li {
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 
 .tourism-body h3 {
@@ -211,7 +222,7 @@ h2 {
   list-style: none;
 }
 
-.tourism-body li::first-letter {
+.tourism-body li :deep(.app-icon) {
   color: var(--ocop-primary-700);
 }
 
@@ -229,6 +240,7 @@ h2 {
   flex: 1;
   align-items: center;
   justify-content: center;
+  gap: 5px;
   border-radius: var(--ocop-radius-md);
   font-size: 11px;
   font-weight: 700;

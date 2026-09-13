@@ -316,7 +316,7 @@ onUnmounted(() => {
   background:
     radial-gradient(circle at 68% 25%, rgb(222 236 186 / 90%), transparent 12rem),
     linear-gradient(145deg, #edf4e5, #cbdcbc);
-  color: #2f6f3e;
+  color: var(--ocop-primary-700);
   font-size: 1.6rem;
   font-weight: 800;
   letter-spacing: 0.2em;
@@ -341,7 +341,7 @@ onUnmounted(() => {
 }
 
 .thumbnail.active {
-  border-color: #2f6f3e;
+  border-color: var(--ocop-primary-700);
 }
 
 .thumbnail img {
@@ -369,7 +369,7 @@ onUnmounted(() => {
 
 .category-badge {
   background: #e6f1de;
-  color: #2f6f3e;
+  color: var(--ocop-primary-700);
 }
 
 .ocop-badge {
@@ -412,7 +412,7 @@ onUnmounted(() => {
 }
 
 .price-box strong {
-  color: #2f6f3e;
+  color: var(--ocop-primary-700);
   font-size: 1.7rem;
 }
 
@@ -454,7 +454,7 @@ onUnmounted(() => {
 .subject-card {
   display: grid;
   padding: 1rem 1.15rem;
-  border-left: 3px solid #2f6f3e;
+  border-left: 3px solid var(--ocop-primary-700);
   background: #fff;
 }
 
@@ -496,12 +496,12 @@ onUnmounted(() => {
 
 .source-block li div { display: grid; gap: 0.25rem; }
 .source-block li span { color: #718075; font-size: 0.78rem; }
-.source-block li a { flex: 0 0 auto; color: #2f6f3e; font-size: 0.82rem; font-weight: 750; }
+.source-block li a { flex: 0 0 auto; color: var(--ocop-primary-700); font-size: 0.82rem; font-weight: 750; }
 
 .related-section { margin-top: 3.5rem; }
 .related-heading { display: flex; margin-bottom: 1.25rem; align-items: end; justify-content: space-between; gap: 1rem; }
 .related-heading h2 { margin: 0.35rem 0 0; color: #213b28; font-size: clamp(1.5rem, 4vw, 2rem); }
-.related-heading > a { color: #2f6f3e; font-size: 0.85rem; font-weight: 750; }
+.related-heading > a { color: var(--ocop-primary-700); font-size: 0.85rem; font-weight: 750; }
 .related-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.25rem; }
 
 .content-block {
@@ -530,7 +530,7 @@ onUnmounted(() => {
 }
 
 .section-eyebrow {
-  color: #2f6f3e;
+  color: var(--ocop-primary-700);
   font-size: 0.75rem;
   font-weight: 750;
   letter-spacing: 0.1em;

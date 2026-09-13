@@ -17,7 +17,7 @@ export interface TourismFixture {
 export const tourismFixtures: TourismFixture[] = [
   {
     id: 'cau-dat-farm',
-    icon: '🏡',
+    icon: 'sprout',
     type: 'Đồi chè & Cà phê',
     openingHours: '06:00 - 17:30 Hàng ngày',
     district: 'TP. Đà Lạt',
@@ -30,7 +30,7 @@ export const tourismFixtures: TourismFixture[] = [
   },
   {
     id: 'biofresh',
-    icon: '🍓',
+    icon: 'store',
     type: 'Trang trại dâu tây',
     openingHours: '07:30 - 17:00 Hàng ngày',
     district: 'TP. Đà Lạt',
@@ -43,7 +43,7 @@ export const tourismFixtures: TourismFixture[] = [
   },
   {
     id: 'dalat-milk-farm',
-    icon: '🐄',
+    icon: 'building',
     type: 'Nông trại bò sữa',
     openingHours: '07:30 - 17:00 Hàng ngày',
     district: 'Huyện Đức Trọng',

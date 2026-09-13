@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 
+import AppIcon from '@/components/ui/AppIcon.vue'
 import type { ProductListItem } from '@/types/product'
 
 const props = defineProps<{
@@ -51,7 +52,7 @@ const truncatedSubject = computed(() => {
     </RouterLink>
 
     <div class="product-body">
-      <span class="product-location">⌖ {{ product.subject.district }}</span>
+      <span class="product-location"><AppIcon name="map-pin" :size="14" /> {{ product.subject.district }}</span>
       <h2>
         <RouterLink :to="`/san-pham/${product.slug}`">{{ product.name }}</RouterLink>
       </h2>
@@ -72,7 +73,7 @@ const truncatedSubject = computed(() => {
 
       <div class="product-actions">
         <RouterLink :to="`/san-pham/${product.slug}`">
-          <span aria-hidden="true">◉</span>
+          <AppIcon name="eye" :size="15" />
           Xem chi tiết
         </RouterLink>
       </div>
@@ -193,6 +194,9 @@ const truncatedSubject = computed(() => {
 }
 
 .product-location {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   color: #78909c;
   font-size: 11px;
   font-weight: 500;

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppIcon from '@/components/ui/AppIcon.vue'
 import { newsFixtures } from '@/data/home-fixtures'
 </script>
 
@@ -16,7 +17,7 @@ import { newsFixtures } from '@/data/home-fixtures'
     <div class="news-grid">
       <article v-for="article in newsFixtures" :key="article.id" class="news-card">
         <div class="news-visual" :class="`theme-${article.theme}`">
-          <span aria-hidden="true">{{ article.theme === 'policy' ? '🏅' : '🌿' }}</span>
+          <span aria-hidden="true"><AppIcon :name="article.theme === 'policy' ? 'award' : 'sprout'" :size="54" :stroke-width="1.35" /></span>
         </div>
         <div class="news-body">
           <div class="news-meta">
@@ -26,7 +27,7 @@ import { newsFixtures } from '@/data/home-fixtures'
           <h3>{{ article.title }}</h3>
           <p>{{ article.summary }}</p>
           <button type="button" disabled title="Trang tin tức sẽ được triển khai ở module sau">
-            Đọc bài viết →
+            Đọc bài viết <AppIcon name="chevronRight" :size="15" />
           </button>
         </div>
       </article>
@@ -113,7 +114,7 @@ h2 {
 }
 
 .news-visual span {
-  font-size: 62px;
+  color: rgb(255 255 255 / 90%);
   filter: drop-shadow(0 8px 10px rgb(15 23 43 / 18%));
 }
 
@@ -160,9 +161,12 @@ h2 {
 }
 
 .news-body button {
+  display: flex;
   width: max-content;
   margin-top: auto;
   padding: 0;
+  align-items: center;
+  gap: 4px;
   border: 0;
   background: transparent;
   color: var(--ocop-primary-700);

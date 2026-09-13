@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 
+import AppIcon from '@/components/ui/AppIcon.vue'
 import { getAdminDashboard, type AdminDashboardStats } from '@/services/admin'
 import { getApiErrorMessage } from '@/services/api-error'
 import { authStore } from '@/stores/auth'
@@ -12,10 +13,10 @@ const loading = ref(true)
 const errorMessage = ref('')
 
 const systemCards = computed(() => [
-  { label: 'Tổng sản phẩm', value: stats.value?.total_products ?? 0, note: 'Tất cả trạng thái', tone: 'green' },
-  { label: 'Đang công khai', value: stats.value?.approved_products ?? 0, note: 'Đã được quản trị viên duyệt', tone: 'blue' },
-  { label: 'Sản phẩm chờ duyệt', value: stats.value?.pending_products ?? 0, note: 'Cần kiểm tra hồ sơ', tone: 'gold' },
-  { label: 'Hồ sơ chủ thể chờ duyệt', value: stats.value?.pending_subject_applications ?? 0, note: 'Cần xác minh đơn vị', tone: 'purple' },
+  { label: 'Tổng sản phẩm', value: stats.value?.total_products ?? 0, note: 'Tất cả trạng thái', tone: 'green', icon: 'package' },
+  { label: 'Đang công khai', value: stats.value?.approved_products ?? 0, note: 'Đã được quản trị viên duyệt', tone: 'blue', icon: 'checkCircle' },
+  { label: 'Sản phẩm chờ duyệt', value: stats.value?.pending_products ?? 0, note: 'Cần kiểm tra hồ sơ', tone: 'gold', icon: 'award' },
+  { label: 'Hồ sơ chủ thể chờ duyệt', value: stats.value?.pending_subject_applications ?? 0, note: 'Cần xác minh đơn vị', tone: 'purple', icon: 'building' },
 ])
 
 const priorities = computed(() => [
@@ -68,7 +69,7 @@ onMounted(loadDashboard)
         <h1>Xin chào, {{ greetingName }}</h1>
         <p>Theo dõi tiến độ xây dựng hệ thống và truy cập các module quản lý từ một giao diện thống nhất.</p>
       </div>
-      <RouterLink to="/">Xem trang công khai →</RouterLink>
+      <RouterLink to="/">Xem trang công khai <AppIcon name="chevronRight" :size="17" /></RouterLink>
     </section>
 
     <div v-if="errorMessage" class="alert alert-danger" role="alert">
@@ -86,7 +87,7 @@ onMounted(loadDashboard)
       </div>
       <div class="system-grid">
         <article v-for="card in systemCards" :key="card.label" :class="`tone-${card.tone}`">
-          <span>{{ card.label }}</span>
+          <span class="card-label"><AppIcon :name="card.icon" :size="17" /> {{ card.label }}</span>
           <strong>{{ card.value }}</strong>
           <p>{{ card.note }}</p>
         </article>
@@ -114,7 +115,7 @@ onMounted(loadDashboard)
       </section>
 
       <aside class="security-panel">
-        <span class="security-icon" aria-hidden="true">🛡️</span>
+        <span class="security-icon" aria-hidden="true"><AppIcon name="shieldCheck" :size="25" /></span>
         <h2>Phân quyền hai lớp</h2>
         <p>Vue Router ngăn truy cập sai vai trò trên giao diện. FastAPI vẫn phải xác minh JWT và role ở mọi API quản trị.</p>
         <ul>
@@ -143,8 +144,8 @@ onMounted(loadDashboard)
   overflow: hidden;
   border-radius: 20px;
   background:
-    radial-gradient(circle at 86% 15%, rgb(110 231 183 / 28%), transparent 18rem),
-    linear-gradient(135deg, #004f3b, #0f3c36 60%, #101a30);
+    radial-gradient(circle at 86% 15%, rgb(102 201 150 / 26%), transparent 18rem),
+    linear-gradient(135deg, var(--ocop-primary-950), var(--ocop-primary-900) 60%, var(--ocop-sidebar));
   color: #fff;
   box-shadow: 0 18px 35px rgb(15 23 43 / 12%);
 }
@@ -174,8 +175,11 @@ onMounted(loadDashboard)
 }
 
 .welcome-card a {
+  display: flex;
   flex: 0 0 auto;
   padding: 10px 15px;
+  align-items: center;
+  gap: 5px;
   border: 1px solid rgb(255 255 255 / 25%);
   border-radius: 10px;
   background: rgb(255 255 255 / 10%);
@@ -232,11 +236,13 @@ onMounted(loadDashboard)
   padding: 18px;
   border: 1px solid var(--ocop-border);
   border-radius: 13px;
-  background: #f8fafc;
+  background: var(--ocop-surface);
 }
 
-.system-grid article > span {
-  display: block;
+.system-grid article > .card-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
   color: var(--ocop-slate);
   font-size: 10px;
   font-weight: 700;
@@ -257,9 +263,9 @@ onMounted(loadDashboard)
   line-height: 16px;
 }
 
-.tone-blue { --card-color: #0284c7; }
-.tone-purple { --card-color: #7e22ce; }
-.tone-gold { --card-color: #b45309; }
+.tone-blue { --card-color: var(--ocop-blue); }
+.tone-purple { --card-color: #806098; }
+.tone-gold { --card-color: var(--ocop-warning); }
 
 .dashboard-grid {
   display: grid;
@@ -318,11 +324,18 @@ onMounted(loadDashboard)
 }
 
 .security-panel {
-  background: #f0fdf4;
+  border-color: var(--ocop-mint-border);
+  background: var(--ocop-success-soft);
 }
 
 .security-icon {
-  font-size: 34px;
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border-radius: 12px;
+  background: #fff;
+  color: var(--ocop-primary-700);
 }
 
 .security-panel p,
