@@ -1,6 +1,7 @@
 import http from '@/services/http'
 import type {
   ProductDetail,
+  ProductFilterOptions,
   ProductFilters,
   ProductListResponse,
 } from '@/types/product'
@@ -12,5 +13,10 @@ export async function getProducts(filters: ProductFilters = {}): Promise<Product
 
 export async function getProduct(slug: string): Promise<ProductDetail> {
   const response = await http.get<ProductDetail>(`/products/${encodeURIComponent(slug)}`)
+  return response.data
+}
+
+export async function getProductFilterOptions(): Promise<ProductFilterOptions> {
+  const response = await http.get<ProductFilterOptions>('/products/filter-options')
   return response.data
 }

@@ -1,11 +1,20 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 import type { ProductListItem } from '@/types/product'
 
 const props = defineProps<{
   product: ProductListItem
 }>()
+
+const imageFailed = ref(false)
+
+watch(
+  () => props.product.primary_image_url,
+  () => {
+    imageFailed.value = false
+  },
+)
 
 const formattedPrice = computed(() => {
   if (props.product.price === null || props.product.price <= 0) return 'Liên hệ'
@@ -26,10 +35,11 @@ const truncatedSubject = computed(() => {
   <article class="product-card">
     <RouterLink class="product-media" :to="`/san-pham/${product.slug}`">
       <img
-        v-if="product.primary_image_url"
+        v-if="product.primary_image_url && !imageFailed"
         :src="product.primary_image_url"
         :alt="product.name"
         loading="lazy"
+        @error="imageFailed = true"
       />
       <div v-else class="product-placeholder" aria-hidden="true">
         <span class="placeholder-mark">OCOP</span>
@@ -63,12 +73,8 @@ const truncatedSubject = computed(() => {
       <div class="product-actions">
         <RouterLink :to="`/san-pham/${product.slug}`">
           <span aria-hidden="true">◉</span>
-          Chi Tiết
+          Xem chi tiết
         </RouterLink>
-        <a href="/#ban-do">
-          <span aria-hidden="true">⌖</span>
-          Bản Đồ
-        </a>
       </div>
     </div>
   </article>

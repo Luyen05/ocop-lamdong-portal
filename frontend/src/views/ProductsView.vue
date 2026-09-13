@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import ProductCard from '@/components/products/ProductCard.vue'
 import { getApiErrorMessage } from '@/services/api-error'
 import { getCategories } from '@/services/categories'
-import { getProducts } from '@/services/products'
+import { getProductFilterOptions, getProducts } from '@/services/products'
 import type { Category } from '@/types/category'
 import type {
   ProductFilters,
@@ -17,12 +17,15 @@ const route = useRoute()
 const router = useRouter()
 
 const categories = ref<Category[]>([])
+const districts = ref<string[]>([])
 const products = ref<ProductListItem[]>([])
 const total = ref(0)
 const currentPage = ref(1)
 const pageSize = 12
 const isLoading = ref(false)
 const errorMessage = ref('')
+const validationMessage = ref('')
+let latestRequestId = 0
 
 const form = reactive({
   search: '',
@@ -45,6 +48,27 @@ const sortOptions: Array<{ value: ProductSort; label: string }> = [
 
 const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize)))
 const resultText = computed(() => `${total.value} sản phẩm phù hợp`)
+const pageNumbers = computed(() => {
+  const maxVisible = 5
+  let start = Math.max(1, currentPage.value - Math.floor(maxVisible / 2))
+  const end = Math.min(totalPages.value, start + maxVisible - 1)
+  start = Math.max(1, end - maxVisible + 1)
+  return Array.from({ length: end - start + 1 }, (_, index) => start + index)
+})
+
+const activeFilters = computed(() => {
+  const filters: Array<{ key: keyof typeof form; label: string }> = []
+  if (form.search) filters.push({ key: 'search', label: `Từ khóa: ${form.search}` })
+  if (form.category) {
+    const category = categories.value.find((item) => item.slug === form.category)
+    filters.push({ key: 'category', label: `Danh mục: ${category?.name || form.category}` })
+  }
+  if (form.star) filters.push({ key: 'star', label: `${form.star} sao` })
+  if (form.district) filters.push({ key: 'district', label: `Địa bàn: ${form.district}` })
+  if (form.minPrice) filters.push({ key: 'minPrice', label: `Giá từ ${Number(form.minPrice).toLocaleString('vi-VN')}đ` })
+  if (form.maxPrice) filters.push({ key: 'maxPrice', label: `Giá đến ${Number(form.maxPrice).toLocaleString('vi-VN')}đ` })
+  return filters
+})
 
 function queryText(value: unknown): string {
   return typeof value === 'string' ? value : ''
@@ -88,13 +112,22 @@ function filtersFromRoute(): ProductFilters {
 }
 
 async function loadProducts(): Promise<void> {
+  const requestId = ++latestRequestId
   isLoading.value = true
   errorMessage.value = ''
   try {
     const response = await getProducts(filtersFromRoute())
+    if (requestId !== latestRequestId) return
+
+    const responseTotalPages = Math.max(1, Math.ceil(response.total / pageSize))
+    if (response.total > 0 && currentPage.value > responseTotalPages) {
+      await router.replace({ name: 'products', query: filterQuery(responseTotalPages) })
+      return
+    }
     products.value = response.items
     total.value = response.total
   } catch (error) {
+    if (requestId !== latestRequestId) return
     products.value = []
     total.value = 0
     errorMessage.value = getApiErrorMessage(
@@ -102,7 +135,7 @@ async function loadProducts(): Promise<void> {
       'Không thể tải danh sách sản phẩm. Vui lòng thử lại.',
     )
   } finally {
-    isLoading.value = false
+    if (requestId === latestRequestId) isLoading.value = false
   }
 }
 
@@ -111,6 +144,14 @@ async function loadCategories(): Promise<void> {
     categories.value = (await getCategories()).items
   } catch {
     categories.value = []
+  }
+}
+
+async function loadFilterOptions(): Promise<void> {
+  try {
+    districts.value = (await getProductFilterOptions()).districts
+  } catch {
+    districts.value = []
   }
 }
 
@@ -128,10 +169,18 @@ function filterQuery(page = 1): Record<string, string> {
 }
 
 async function applyFilters(): Promise<void> {
+  validationMessage.value = ''
+  const minPrice = queryNumber(form.minPrice)
+  const maxPrice = queryNumber(form.maxPrice)
+  if (minPrice !== undefined && maxPrice !== undefined && minPrice > maxPrice) {
+    validationMessage.value = 'Giá tối thiểu không được lớn hơn giá tối đa.'
+    return
+  }
   await router.push({ name: 'products', query: filterQuery() })
 }
 
 async function clearFilters(): Promise<void> {
+  validationMessage.value = ''
   Object.assign(form, {
     search: '',
     category: '',
@@ -144,9 +193,16 @@ async function clearFilters(): Promise<void> {
   await router.push({ name: 'products' })
 }
 
+async function removeFilter(key: keyof typeof form): Promise<void> {
+  if (key === 'sort') form.sort = 'newest'
+  else form[key] = ''
+  await applyFilters()
+}
+
 async function goToPage(page: number): Promise<void> {
   if (page < 1 || page > totalPages.value || page === currentPage.value) return
   await router.push({ name: 'products', query: filterQuery(page) })
+  window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
 watch(
@@ -160,6 +216,12 @@ watch(
 
 onMounted(() => {
   void loadCategories()
+  void loadFilterOptions()
+  document.title = 'Sản phẩm OCOP | OCOP Lâm Đồng'
+})
+
+onUnmounted(() => {
+  document.title = 'OCOP Lâm Đồng'
 })
 </script>
 
@@ -219,9 +281,13 @@ onMounted(() => {
                   id="product-district"
                   v-model.trim="form.district"
                   class="form-control"
+                  list="product-district-options"
                   type="text"
-                  placeholder="Đà Lạt"
+                  placeholder="Chọn hoặc nhập địa bàn"
                 />
+                <datalist id="product-district-options">
+                  <option v-for="district in districts" :key="district" :value="district" />
+                </datalist>
               </div>
             </div>
 
@@ -253,11 +319,16 @@ onMounted(() => {
               </div>
             </div>
 
-            <button class="btn btn-success w-100" type="submit">Áp dụng bộ lọc</button>
+            <p v-if="validationMessage" class="filter-error" role="alert">
+              {{ validationMessage }}
+            </p>
+            <button class="btn btn-success w-100" type="submit" :disabled="isLoading">
+              {{ isLoading ? 'Đang tải...' : 'Áp dụng bộ lọc' }}
+            </button>
           </form>
         </aside>
 
-        <section aria-live="polite">
+        <section :aria-busy="isLoading" aria-live="polite">
           <div class="result-toolbar">
             <p class="mb-0 fw-semibold">{{ resultText }}</p>
             <select
@@ -270,6 +341,19 @@ onMounted(() => {
                 {{ option.label }}
               </option>
             </select>
+          </div>
+
+          <div v-if="activeFilters.length" class="active-filters" aria-label="Bộ lọc đang áp dụng">
+            <span>Bộ lọc:</span>
+            <button
+              v-for="filter in activeFilters"
+              :key="filter.key"
+              type="button"
+              :aria-label="`Bỏ ${filter.label}`"
+              @click="removeFilter(filter.key)"
+            >
+              {{ filter.label }} <span aria-hidden="true">×</span>
+            </button>
           </div>
 
           <div v-if="errorMessage" class="alert alert-danger" role="alert">
@@ -309,7 +393,20 @@ onMounted(() => {
             >
               Trang trước
             </button>
-            <span>Trang {{ currentPage }} / {{ totalPages }}</span>
+            <div class="page-number-list">
+              <button
+                v-for="page in pageNumbers"
+                :key="page"
+                class="page-number"
+                :class="{ active: page === currentPage }"
+                type="button"
+                :aria-current="page === currentPage ? 'page' : undefined"
+                :aria-label="`Trang ${page}`"
+                @click="goToPage(page)"
+              >
+                {{ page }}
+              </button>
+            </div>
             <button
               class="btn btn-outline-success"
               type="button"
@@ -404,6 +501,32 @@ onMounted(() => {
   margin-bottom: 1.25rem;
 }
 
+.active-filters {
+  display: flex;
+  margin: -0.45rem 0 1.25rem;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+  color: #69766c;
+  font-size: 0.78rem;
+}
+
+.active-filters button {
+  padding: 0.35rem 0.6rem;
+  border: 1px solid #cbd9c8;
+  border-radius: 999px;
+  background: #fff;
+  color: #315d3a;
+  font-size: 0.76rem;
+}
+
+.filter-error {
+  margin: 0;
+  color: #a63e31;
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
 .sort-select {
   width: min(12rem, 48%);
 }
@@ -455,6 +578,38 @@ onMounted(() => {
   color: #5f6b62;
   font-size: 0.9rem;
   font-weight: 650;
+}
+
+.page-number-list {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.page-number {
+  display: grid;
+  width: 2.35rem;
+  height: 2.35rem;
+  place-items: center;
+  border: 1px solid #b7cbb8;
+  border-radius: 0.55rem;
+  background: #fff;
+  color: #2f6f3e;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.page-number.active {
+  border-color: #2f6f3e;
+  background: #2f6f3e;
+  color: #fff;
+}
+
+@media (max-width: 575.98px) {
+  .result-toolbar { align-items: flex-start; }
+  .result-toolbar p { padding-top: 0.45rem; }
+  .pagination-wrap { flex-wrap: wrap; }
+  .pagination-wrap > .btn { flex: 1; }
+  .page-number-list { order: -1; width: 100%; justify-content: center; }
 }
 
 @media (min-width: 992px) {
