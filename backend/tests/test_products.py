@@ -177,6 +177,18 @@ def product_client() -> Generator[TestClient, None, None]:
                 description="Chứng nhận đã hết hạn.",
                 status="approved",
             ),
+            Product(
+                id=8,
+                subject_id=1,
+                category_id=1,
+                name="Sản phẩm liên hệ chủ thể",
+                slug="san-pham-lien-he-chu-the",
+                star=3,
+                price=Decimal("0"),
+                unit="liên hệ chủ thể",
+                description="Nguồn công khai không công bố giá bán.",
+                status="approved",
+            ),
         ]
         session.add_all([*users, *categories, *subjects, *products])
         session.flush()
@@ -192,6 +204,15 @@ def product_client() -> Generator[TestClient, None, None]:
         session.add(
             ProductSource(
                 product_id=2,
+                source_id=source.id,
+                evidence_role="recognition",
+                verification_level="B1",
+                verified_at=date(2026, 9, 13),
+            )
+        )
+        session.add(
+            ProductSource(
+                product_id=8,
                 source_id=source.id,
                 evidence_role="recognition",
                 verification_level="B1",
@@ -234,15 +255,27 @@ def test_list_products_only_returns_approved_content(product_client: TestClient)
 
     assert response.status_code == 200
     body = response.json()
-    assert body["total"] == 2
+    assert body["total"] == 3
     assert [item["slug"] for item in body["items"]] == [
         "ca-phe-arabica-cau-dat",
         "mut-dau-da-lat",
+        "san-pham-lien-he-chu-the",
     ]
     assert body["items"][0]["primary_image_url"] == "https://example.com/coffee.webp"
     assert body["items"][0]["subject"]["district"] == "Đà Lạt"
     assert body["items"][0]["vietgap_code"] == "VIETGAP-LD-001"
     assert body["items"][1]["vietgap_code"] is None
+
+
+def test_price_sort_places_contact_products_last(product_client: TestClient) -> None:
+    response = product_client.get("/api/v1/products", params={"sort": "price"})
+
+    assert response.status_code == 200
+    assert [item["slug"] for item in response.json()["items"]] == [
+        "mut-dau-da-lat",
+        "ca-phe-arabica-cau-dat",
+        "san-pham-lien-he-chu-the",
+    ]
 
 
 def test_list_products_supports_public_filters(product_client: TestClient) -> None:
