@@ -42,7 +42,7 @@ const stats = [
           <RouterLink to="/san-pham">Tra cứu sản phẩm OCOP 3-5 sao</RouterLink>
           <a href="/#diem-du-lich">Khám phá điểm du lịch nông nghiệp</a>
           <a href="/#ban-do">Bản đồ số GIS &amp; Chỉ đường</a>
-          <a href="/#tin-tuc">Tin tức &amp; Sự kiện OCOP</a>
+          <RouterLink to="/tin-tuc">Tin tức &amp; Sự kiện OCOP</RouterLink>
         </nav>
 
         <section aria-labelledby="footer-product-title">

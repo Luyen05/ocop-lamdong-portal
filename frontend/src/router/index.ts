@@ -48,6 +48,11 @@ const router = createRouter({
       component: () => import('@/views/ProductDetailView.vue'),
     },
     {
+      path: '/tin-tuc',
+      name: 'news',
+      component: () => import('@/views/NewsView.vue'),
+    },
+    {
       path: '/khong-co-quyen',
       name: 'forbidden',
       component: () => import('@/views/ForbiddenView.vue'),
