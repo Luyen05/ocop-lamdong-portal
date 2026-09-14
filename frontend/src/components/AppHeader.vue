@@ -29,7 +29,7 @@ const publicNavigation = [
   { label: 'Sản phẩm OCOP', to: '/san-pham', icon: 'package' },
   { label: 'Điểm du lịch', to: '/#diem-du-lich', icon: 'map-pin' },
   { label: 'Bản đồ số GIS', to: '/#ban-do', icon: 'map' },
-  { label: 'Tin tức', to: '/#tin-tuc', icon: 'newspaper' },
+  { label: 'Tin tức', to: '/tin-tuc', icon: 'newspaper' },
 ]
 
 const navigation = computed(() => [
