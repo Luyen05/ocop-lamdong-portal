@@ -1,11 +1,16 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 import type { ProductListItem } from '@/types/product'
 
 const props = defineProps<{
   product: ProductListItem
 }>()
+
+const imageFailed = ref(false)
+watch(() => props.product.primary_image_url, () => {
+  imageFailed.value = false
+})
 
 const formattedPrice = computed(() =>
   new Intl.NumberFormat('vi-VN', {
@@ -25,10 +30,11 @@ const truncatedSubject = computed(() => {
   <article class="product-card">
     <RouterLink class="product-media" :to="`/san-pham/${product.slug}`">
       <img
-        v-if="product.primary_image_url"
+        v-if="product.primary_image_url && !imageFailed"
         :src="product.primary_image_url"
         :alt="product.name"
         loading="lazy"
+        @error="imageFailed = true"
       />
       <div v-else class="product-placeholder" aria-hidden="true">
         <span class="placeholder-mark">OCOP</span>
@@ -36,7 +42,6 @@ const truncatedSubject = computed(() => {
       </div>
       <span class="star-badge">★ OCOP {{ product.star }} SAO</span>
       <span class="category-badge">{{ product.category.name }}</span>
-      <span v-if="product.star >= 4" class="vietgap-badge">✓ VietGAP</span>
     </RouterLink>
 
     <div class="product-body">
@@ -141,8 +146,7 @@ const truncatedSubject = computed(() => {
 }
 
 .star-badge,
-.category-badge,
-.vietgap-badge {
+.category-badge {
   position: absolute;
   z-index: 1;
   padding: 5px 10px;
@@ -168,13 +172,6 @@ const truncatedSubject = computed(() => {
   background: rgb(15 23 43 / 78%);
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.vietgap-badge {
-  top: 42px;
-  left: 12px;
-  padding-block: 3px;
-  background: var(--ocop-primary-700);
 }
 
 .product-body {
