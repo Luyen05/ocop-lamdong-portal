@@ -1,201 +1,101 @@
 <script setup lang="ts">
+import { onMounted, ref } from 'vue'
+
+import NewsCard from '@/components/news/NewsCard.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
-import { newsFixtures } from '@/data/home-fixtures'
+import { getNews } from '@/services/news'
+import type { NewsItem } from '@/types/news'
+
+const articles = ref<NewsItem[]>([])
+const isLoading = ref(true)
+const hasError = ref(false)
+
+async function loadNews(): Promise<void> {
+  isLoading.value = true
+  hasError.value = false
+  try {
+    const response = await getNews({ page: 1, page_size: 4 })
+    articles.value = response.items
+  } catch {
+    articles.value = []
+    hasError.value = true
+  } finally {
+    isLoading.value = false
+  }
+}
+
+onMounted(() => void loadNews())
 </script>
 
 <template>
-  <section id="tin-tuc" class="news-section" aria-labelledby="news-title">
+  <section id="tin-tuc" class="news-section" aria-labelledby="home-news-title">
     <div class="section-heading">
       <div>
-        <span class="eyebrow">Tin Tức &amp; Sự Kiện OCOP</span>
-        <h2 id="news-title">Cập nhật hoạt động OCOP Lâm Đồng</h2>
-        <p class="section-copy">Chính sách khuyến nông, chương trình xúc tiến và câu chuyện du lịch nông nghiệp.</p>
+        <span class="eyebrow">Tin tức &amp; sự kiện OCOP</span>
+        <h2 id="home-news-title">Cập nhật hoạt động OCOP Lâm Đồng</h2>
+        <p class="section-copy">Thông tin mới được tổng hợp từ Cổng TTĐT OCOP Lâm Đồng.</p>
       </div>
-      <span class="demo-label">Dữ liệu minh họa</span>
+      <RouterLink class="view-all" to="/tin-tuc">
+        Xem tất cả <AppIcon name="chevronRight" :size="14" />
+      </RouterLink>
     </div>
 
-    <div class="news-grid">
-      <article v-for="article in newsFixtures" :key="article.id" class="news-card">
-        <div class="news-visual" :class="`theme-${article.theme}`">
-          <span aria-hidden="true"><AppIcon :name="article.theme === 'policy' ? 'award' : 'sprout'" :size="54" :stroke-width="1.35" /></span>
-        </div>
-        <div class="news-body">
-          <div class="news-meta">
-            <span>{{ article.category }}</span>
-            <time>{{ article.date }}</time>
-          </div>
-          <h3>{{ article.title }}</h3>
-          <p>{{ article.summary }}</p>
-          <button type="button" disabled title="Trang tin tức sẽ được triển khai ở module sau">
-            Đọc bài viết <AppIcon name="chevronRight" :size="15" />
-          </button>
-        </div>
-      </article>
+    <div v-if="isLoading" class="news-grid" aria-live="polite" aria-label="Đang tải tin tức">
+      <div v-for="index in 2" :key="index" class="news-skeleton placeholder-glow">
+        <span class="placeholder visual-placeholder" />
+        <span class="skeleton-copy">
+          <span class="placeholder col-5" />
+          <span class="placeholder col-10" />
+          <span class="placeholder col-8" />
+        </span>
+      </div>
+    </div>
+
+    <div v-else-if="hasError" class="state-card" role="alert">
+      <AppIcon name="refresh" :size="24" />
+      <div>
+        <strong>Chưa thể tải tin tức mới</strong>
+        <p>Nguồn tin đang tạm thời không phản hồi.</p>
+      </div>
+      <button type="button" @click="loadNews">Thử lại</button>
+    </div>
+
+    <div v-else-if="!articles.length" class="state-card">
+      <AppIcon name="newspaper" :size="24" />
+      <div>
+        <strong>Chưa có tin mới</strong>
+        <p>Các bài viết mới sẽ được cập nhật tại đây.</p>
+      </div>
+    </div>
+
+    <div v-else class="news-grid">
+      <NewsCard v-for="article in articles" :key="article.id" :article="article" compact />
     </div>
   </section>
 </template>
 
 <style scoped>
-.news-section {
-  padding: 48px 0;
-}
-
-.section-heading {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.eyebrow {
-  color: var(--ocop-primary-700);
-  font-size: 11px;
-  font-weight: 800;
-  line-height: 16px;
-  text-transform: uppercase;
-}
-
-h2 {
-  max-width: 680px;
-  margin: 4px 0 0;
-  color: var(--ocop-navy);
-  font-size: 22px;
-  font-weight: 800;
-  letter-spacing: -0.5px;
-  line-height: 28px;
-}
-
-.section-copy {
-  margin: 2px 0 0;
-  color: var(--ocop-slate);
-  font-size: 13px;
-}
-
-.demo-label {
-  flex: 0 0 auto;
-  padding: 5px 9px;
-  border: 1px solid #fde68a;
-  border-radius: 999px;
-  background: #fffbeb;
-  color: #92400e;
-  font-size: 10px;
-  font-weight: 700;
-}
-
-.news-grid {
-  display: grid;
-  margin-top: 16px;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.news-card {
-  display: grid;
-  overflow: hidden;
-  grid-template-columns: minmax(160px, 38%) minmax(0, 1fr);
-  border: 1px solid var(--ocop-border);
-  border-radius: var(--ocop-radius-lg);
-  background: #fff;
-  box-shadow: 0 4px 12px rgb(15 23 43 / 5%);
-}
-
-.news-visual {
-  display: grid;
-  min-height: 230px;
-  place-items: center;
-}
-
-.theme-policy {
-  background: linear-gradient(145deg, #d4ebd0, #6da06b);
-}
-
-.theme-tourism {
-  background: linear-gradient(145deg, #f7dfb5, #b67d40);
-}
-
-.news-visual span {
-  color: rgb(255 255 255 / 90%);
-  filter: drop-shadow(0 8px 10px rgb(15 23 43 / 18%));
-}
-
-.news-body {
-  display: flex;
-  padding: 18px;
-  flex-direction: column;
-}
-
-.news-meta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  color: var(--ocop-slate);
-  font-size: 10px;
-}
-
-.news-meta span {
-  padding: 4px 8px;
-  border-radius: 999px;
-  background: var(--ocop-mint-soft);
-  color: var(--ocop-primary-900);
-  font-weight: 700;
-}
-
-.news-body h3 {
-  margin: 12px 0 7px;
-  color: var(--ocop-navy);
-  font-size: 15px;
-  font-weight: 750;
-  line-height: 21px;
-}
-
-.news-body p {
-  display: -webkit-box;
-  overflow: hidden;
-  margin: 0;
-  color: var(--ocop-slate);
-  font-size: 11px;
-  line-height: 17px;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
-}
-
-.news-body button {
-  display: flex;
-  width: max-content;
-  margin-top: auto;
-  padding: 0;
-  align-items: center;
-  gap: 4px;
-  border: 0;
-  background: transparent;
-  color: var(--ocop-primary-700);
-  font-size: 11px;
-  font-weight: 700;
-  opacity: 0.72;
-}
-
-@media (max-width: 991.98px) {
-  .news-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
+.news-section { padding: 48px 0; }
+.section-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
+.eyebrow { color: var(--ocop-primary-700); font-size: 11px; font-weight: 800; line-height: 16px; text-transform: uppercase; }
+h2 { max-width: 680px; margin: 4px 0 0; color: var(--ocop-navy); font-size: 22px; font-weight: 800; letter-spacing: -.5px; line-height: 28px; }
+.section-copy { margin: 2px 0 0; color: var(--ocop-slate); font-size: 13px; }
+.view-all { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 4px; color: var(--ocop-primary-700); font-size: 12px; font-weight: 750; text-decoration: none; }
+.view-all:hover { color: var(--ocop-primary-950); text-decoration: underline; }
+.news-grid { display: grid; margin-top: 16px; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.news-skeleton { display: grid; min-height: 230px; overflow: hidden; grid-template-columns: minmax(150px, 36%) minmax(0, 1fr); border: 1px solid var(--ocop-border); border-radius: var(--ocop-radius-lg); background: #fff; }
+.visual-placeholder { width: 100%; height: 100%; border-radius: 0; }
+.skeleton-copy { display: grid; padding: 24px 18px; align-content: start; gap: 15px; }
+.state-card { display: flex; min-height: 130px; margin-top: 16px; padding: 24px; align-items: center; justify-content: center; gap: 13px; border: 1px solid var(--ocop-border); border-radius: var(--ocop-radius-lg); background: #fff; color: var(--ocop-primary-700); text-align: left; }
+.state-card strong { color: var(--ocop-navy); }
+.state-card p { margin: 2px 0 0; color: var(--ocop-slate); font-size: 13px; }
+.state-card button { margin-left: 12px; padding: 8px 13px; border: 1px solid var(--ocop-primary-700); border-radius: 8px; background: #fff; color: var(--ocop-primary-700); font-size: 12px; font-weight: 700; }
+@media (max-width: 991.98px) { .news-grid { grid-template-columns: 1fr; } }
 @media (max-width: 575.98px) {
-  .section-heading {
-    align-items: flex-start;
-  }
-
-  .news-card {
-    grid-template-columns: 1fr;
-  }
-
-  .news-visual {
-    min-height: 170px;
-  }
-
-  .news-body {
-    min-height: 230px;
-  }
+  .section-heading { align-items: flex-start; flex-direction: column; }
+  .news-skeleton { min-height: 360px; grid-template-columns: 1fr; }
+  .visual-placeholder { min-height: 170px; }
+  .state-card { align-items: flex-start; flex-wrap: wrap; }
+  .state-card button { width: 100%; margin-left: 0; }
 }
 </style>

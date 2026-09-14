@@ -23,6 +23,10 @@ class Settings(BaseSettings):
     upload_directory: Path = BACKEND_ROOT / "uploads"
     upload_max_bytes: int = Field(default=5 * 1024 * 1024, ge=1024)
     certificate_upload_max_bytes: int = Field(default=10 * 1024 * 1024, ge=1024)
+    news_rss_url: str = "https://ocoplamdong.gov.vn/rssChanel/tin-tuc-su-kien.rss"
+    news_rss_timeout_seconds: float = Field(default=8.0, ge=1.0, le=30.0)
+    news_rss_max_bytes: int = Field(default=1024 * 1024, ge=1024, le=5 * 1024 * 1024)
+    news_cache_ttl_seconds: int = Field(default=900, ge=60, le=86400)
 
     model_config = SettingsConfigDict(
         env_file=PROJECT_ROOT / ".env",

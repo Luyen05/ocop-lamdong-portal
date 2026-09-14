@@ -59,6 +59,10 @@ services:
       JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
       JWT_ACCESS_TOKEN_EXPIRE_MINUTES: ${JWT_ACCESS_TOKEN_EXPIRE_MINUTES:-60}
       UPLOAD_DIRECTORY: /app/uploads
+      NEWS_RSS_URL: ${NEWS_RSS_URL:-https://ocoplamdong.gov.vn/rssChanel/tin-tuc-su-kien.rss}
+      NEWS_RSS_TIMEOUT_SECONDS: ${NEWS_RSS_TIMEOUT_SECONDS:-8}
+      NEWS_RSS_MAX_BYTES: ${NEWS_RSS_MAX_BYTES:-1048576}
+      NEWS_CACHE_TTL_SECONDS: ${NEWS_CACHE_TTL_SECONDS:-900}
 
     volumes:
       - ./backend/app:/app/app
