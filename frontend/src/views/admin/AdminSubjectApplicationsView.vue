@@ -2,6 +2,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 
 import AppIcon from '@/components/ui/AppIcon.vue'
+import { useDialogFocus } from '@/composables/useDialogFocus'
 import { getApiErrorMessage } from '@/services/api-error'
 import {
   listSubjectApplications,
@@ -24,6 +25,7 @@ const moderationStatus = ref<'approved' | 'rejected'>('approved')
 const moderationNote = ref('')
 const isModerating = ref(false)
 const moderationError = ref('')
+const moderationDialog = ref<HTMLElement | null>(null)
 
 const filters = reactive<{ search: string; status: SubjectStatus | '' }>({
   search: '',
@@ -44,6 +46,7 @@ const typeLabels: Record<SubjectType, string> = {
 }
 
 const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize)))
+const isModerationDialogOpen = computed(() => Boolean(selectedApplication.value))
 
 function formatDate(value: string): string {
   return new Intl.DateTimeFormat('vi-VN', {
@@ -95,6 +98,8 @@ function closeModeration(): void {
   if (isModerating.value) return
   selectedApplication.value = null
 }
+
+useDialogFocus(isModerationDialogOpen, moderationDialog, closeModeration)
 
 async function submitModeration(): Promise<void> {
   if (!selectedApplication.value || isModerating.value) return
@@ -242,7 +247,14 @@ onMounted(loadApplications)
     </nav>
 
     <div v-if="selectedApplication" class="modal-layer" role="presentation" @click.self="closeModeration">
-      <section class="moderation-dialog" role="dialog" aria-modal="true" aria-labelledby="moderation-title">
+      <section
+        ref="moderationDialog"
+        class="moderation-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="moderation-title"
+        tabindex="-1"
+      >
         <header>
           <div>
             <span>Hồ sơ #{{ selectedApplication.id }}</span>

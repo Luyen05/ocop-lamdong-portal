@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 
 import ProductEvidenceManager from '@/components/admin/ProductEvidenceManager.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
+import { useDialogFocus } from '@/composables/useDialogFocus'
 import { getApiErrorMessage } from '@/services/api-error'
 import {
   downloadProductCertificate,
@@ -63,6 +64,7 @@ const brokenProductImages = ref(new Set<number>())
 const showAdvancedFilters = ref(false)
 const showExceptionalAction = ref(false)
 const downloadingCertificate = ref(false)
+const reviewDialog = ref<HTMLElement | null>(null)
 
 const search = ref('')
 const workflowStatus = ref<ProductWorkflowStatus | ''>('pending')
@@ -75,6 +77,7 @@ const pendingRequests = computed(() => requests.value.filter((item) => item.stat
 const canModerateSelectedProduct = computed(() => selectedProduct.value?.status === 'pending')
 const canModerateSelectedRequest = computed(() => selectedRequest.value?.status === 'pending')
 const totalPages = computed(() => Math.max(1, Math.ceil(productTotal.value / pageSize)))
+const isReviewDialogOpen = computed(() => Boolean(selectedProduct.value || selectedRequest.value))
 const modalTitle = computed(() => {
   if (selectedProduct.value) {
     return canModerateSelectedProduct.value ? 'Kiểm tra và duyệt sản phẩm' : 'Hồ sơ và chứng cứ sản phẩm'
@@ -183,6 +186,8 @@ function closeModal(force = false): void {
   evidence.value = null
   evidenceError.value = ''
 }
+
+useDialogFocus(isReviewDialogOpen, reviewDialog, () => closeModal())
 
 async function openCertificate(scope: 'subject' | 'admin', productId: number): Promise<void> {
   downloadingCertificate.value = true
@@ -434,12 +439,20 @@ onMounted(loadData)
       </template>
     </section>
 
-    <div v-if="selectedProduct || selectedRequest" class="modal-backdrop" @click.self="closeModal()">
-      <form class="review-modal" @submit.prevent="submitDecision">
+    <div v-if="selectedProduct || selectedRequest" class="modal-backdrop" role="presentation" @click.self="closeModal()">
+      <form
+        ref="reviewDialog"
+        class="review-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="product-review-title"
+        tabindex="-1"
+        @submit.prevent="submitDecision"
+      >
         <header>
           <div>
             <span>Kiểm duyệt sản phẩm</span>
-            <h2>{{ modalTitle }}</h2>
+            <h2 id="product-review-title">{{ modalTitle }}</h2>
           </div>
           <button type="button" aria-label="Đóng" @click="closeModal()"><AppIcon name="close" :size="17" /></button>
         </header>
