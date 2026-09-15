@@ -54,6 +54,12 @@ const iconNames: Record<string, string> = {
   chevronRight: 'chevron-right',
   chevronLeft: 'chevron-left',
   chevronUp: 'chevron-up',
+  chevronDown: 'chevron-down',
+  leaf: 'leaf',
+  tree: 'tree',
+  wheat: 'flower3',
+  coffee: 'cup-hot',
+  cherry: 'circle-fill',
 }
 
 const iconName = computed(() => iconNames[props.name] ?? 'check-circle')

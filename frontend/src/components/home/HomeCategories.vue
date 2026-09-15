@@ -14,11 +14,11 @@ interface CategoryTheme {
 const themes: Record<string, CategoryTheme> = {
   'nong-san-tuoi': { icon: 'sprout', background: '#edf8f1', foreground: '#1e714f' },
   'thuc-pham': { icon: 'food', background: '#fff7e6', foreground: '#a96f16' },
-  'do-uong': { icon: 'drink', background: '#edf6fb', foreground: '#2878a5' },
-  'thao-duoc': { icon: 'sprout', background: '#f0f7ed', foreground: '#527a36' },
+  'do-uong': { icon: 'coffee', background: '#edf6fb', foreground: '#2878a5' },
+  'thao-duoc': { icon: 'leaf', background: '#f0f7ed', foreground: '#527a36' },
   'thu-cong-my-nghe': { icon: 'palette', background: '#fff2ed', foreground: '#b85c38' },
   'sinh-vat-canh': { icon: 'flower', background: '#fdf1f5', foreground: '#a84b6a' },
-  'dich-vu-du-lich-cong-dong': { icon: 'store', background: '#edf6fb', foreground: '#2878a5' },
+  'dich-vu-du-lich-cong-dong': { icon: 'compass', background: '#edf6fb', foreground: '#2878a5' },
 }
 
 const fallbackTheme: CategoryTheme = {

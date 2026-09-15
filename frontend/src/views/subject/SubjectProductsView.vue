@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 
+import { useDialogFocus } from '@/composables/useDialogFocus'
 import { getApiErrorMessage } from '@/services/api-error'
 import {
   cancelProductChangeRequest,
@@ -29,6 +30,7 @@ const deletingProduct = ref<ManagedProduct | null>(null)
 const revisingDeletionRequest = ref<ProductChangeRequest | null>(null)
 const deletionReason = ref('')
 const brokenProductImages = ref(new Set<number>())
+const deletionDialog = ref<HTMLElement | null>(null)
 
 const statusLabels: Record<ProductWorkflowStatus, string> = {
   draft: 'Bản nháp',
@@ -47,6 +49,7 @@ const filteredProducts = computed(() =>
       ? products.value.filter((item) => ['needs_revision', 'rejected'].includes(item.status))
       : products.value.filter((item) => item.status === filter.value),
 )
+const isDeletionDialogOpen = computed(() => Boolean(deletingProduct.value))
 
 const productGroups: Array<{ value: ProductGroup; label: string }> = [
   { value: 'all', label: 'Tất cả' },
@@ -153,6 +156,8 @@ function closeDeletionDialog(): void {
   revisingDeletionRequest.value = null
   deletionReason.value = ''
 }
+
+useDialogFocus(isDeletionDialogOpen, deletionDialog, closeDeletionDialog)
 
 async function cancelRequest(request?: ProductChangeRequest): Promise<void> {
   if (!request) return
@@ -301,9 +306,17 @@ onMounted(loadData)
       </div>
     </section>
 
-    <div v-if="deletingProduct" class="dialog-backdrop" @click.self="closeDeletionDialog">
-      <form class="dialog-card" @submit.prevent="sendDeletionRequest">
-        <h2>{{ revisingDeletionRequest ? 'Bổ sung yêu cầu ngừng hiển thị' : 'Đề nghị ngừng hiển thị' }}</h2>
+    <div v-if="deletingProduct" class="dialog-backdrop" role="presentation" @click.self="closeDeletionDialog">
+      <form
+        ref="deletionDialog"
+        class="dialog-card"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="deletion-dialog-title"
+        tabindex="-1"
+        @submit.prevent="sendDeletionRequest"
+      >
+        <h2 id="deletion-dialog-title">{{ revisingDeletionRequest ? 'Bổ sung yêu cầu ngừng hiển thị' : 'Đề nghị ngừng hiển thị' }}</h2>
         <p>“{{ deletingProduct.name }}” vẫn công khai cho đến khi quản trị viên chấp thuận.</p>
         <label>
           Lý do

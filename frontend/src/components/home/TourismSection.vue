@@ -1,6 +1,14 @@
 <script setup lang="ts">
+import { ref } from 'vue'
+
 import AppIcon from '@/components/ui/AppIcon.vue'
 import { tourismFixtures } from '@/data/home-fixtures'
+
+const brokenImages = ref(new Set<string>())
+
+function markImageBroken(placeId: string): void {
+  brokenImages.value = new Set([...brokenImages.value, placeId])
+}
 </script>
 
 <template>
@@ -10,14 +18,21 @@ import { tourismFixtures } from '@/data/home-fixtures'
         <span class="eyebrow">Trải Nghiệm Du Lịch Nông Nghiệp</span>
         <h2 id="tourism-title">Điểm Đến Canh Nông Tiêu Biểu</h2>
       </div>
-      <span class="demo-label">Dữ liệu minh họa</span>
+      <span class="demo-label">Dữ liệu minh họa · chưa công khai</span>
     </div>
 
     <div class="tourism-grid">
       <article v-for="place in tourismFixtures" :key="place.id" class="tourism-card">
         <div class="tourism-visual" :class="`theme-${place.theme}`">
+          <img
+            v-if="!brokenImages.has(place.id)"
+            :src="place.image"
+            :alt="`Ảnh minh họa ${place.name}`"
+            class="tourism-image"
+            @error="markImageBroken(place.id)"
+          />
+          <div class="tourism-overlay" />
           <span class="type-badge"><AppIcon :name="place.icon" :size="14" /> {{ place.type }}</span>
-          <span class="rating-badge"><AppIcon name="star" :size="13" /> {{ place.rating.toFixed(1) }}</span>
           <span class="visual-mark" aria-hidden="true"><AppIcon :name="place.icon" :size="56" :stroke-width="1.4" /></span>
         </div>
 
@@ -32,10 +47,8 @@ import { tourismFixtures } from '@/data/home-fixtures'
             <li v-for="experience in place.experiences" :key="experience"><AppIcon name="checkCircle" :size="14" /> {{ experience }}</li>
           </ul>
           <div class="tourism-actions">
-            <button type="button" disabled title="Trang chi tiết sẽ được triển khai ở module du lịch">
-              Khám Phá
-            </button>
-            <a href="#ban-do"><AppIcon name="navigation" :size="15" /> Chỉ Đường</a>
+            <span><AppIcon name="compass" :size="15" /> Trang chi tiết đang phát triển</span>
+            <a href="#ban-do"><AppIcon name="navigation" :size="15" /> Xem bản đồ minh họa</a>
           </div>
         </div>
       </article>
@@ -45,7 +58,7 @@ import { tourismFixtures } from '@/data/home-fixtures'
 
 <style scoped>
 .tourism-section {
-  padding-top: 48px;
+  padding-top: var(--ocop-space-12);
 }
 
 .section-heading {
@@ -57,7 +70,7 @@ import { tourismFixtures } from '@/data/home-fixtures'
 
 .eyebrow {
   color: var(--ocop-primary-700);
-  font-size: 11px;
+  font-size: var(--ocop-font-size-caption);
   font-weight: 800;
   line-height: 16px;
   text-transform: uppercase;
@@ -66,7 +79,7 @@ import { tourismFixtures } from '@/data/home-fixtures'
 h2 {
   margin: 4px 0 0;
   color: var(--ocop-navy);
-  font-size: 22px;
+  font-size: var(--ocop-font-size-title-md);
   font-weight: 800;
   letter-spacing: -0.5px;
   line-height: 28px;
@@ -74,11 +87,11 @@ h2 {
 
 .demo-label {
   padding: 5px 9px;
-  border: 1px solid #fde68a;
+  border: 1px solid #efd79a;
   border-radius: 999px;
-  background: #fffbeb;
+  background: var(--ocop-accent-soft);
   color: #92400e;
-  font-size: 10px;
+  font-size: var(--ocop-font-size-caption);
   font-weight: 700;
 }
 
@@ -93,16 +106,35 @@ h2 {
   overflow: hidden;
   border: 1px solid var(--ocop-border);
   border-radius: var(--ocop-radius-lg);
-  background: #fff;
-  box-shadow: 0 4px 12px rgb(15 23 43 / 5%);
+  background: var(--ocop-card);
+  box-shadow: var(--ocop-shadow-sm);
+  transition: transform var(--ocop-transition), box-shadow var(--ocop-transition);
+}
+
+.tourism-card:hover {
+  box-shadow: var(--ocop-shadow-card);
+  transform: translateY(-2px);
 }
 
 .tourism-visual {
   position: relative;
   display: grid;
-  min-height: 165px;
+  min-height: 185px;
   overflow: hidden;
   place-items: center;
+}
+
+.tourism-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.tourism-overlay {
+  position: absolute;
+  inset: 0;
 }
 
 .tourism-visual::before,
@@ -128,25 +160,25 @@ h2 {
   background: rgb(15 23 43 / 10%);
 }
 
-.theme-tea {
-  background: linear-gradient(145deg, #b7d89b, #357a4d);
+.theme-tea .tourism-overlay {
+  background: linear-gradient(145deg, rgb(183 216 155 / 55%), rgb(53 122 77 / 60%));
 }
 
-.theme-strawberry {
-  background: linear-gradient(145deg, #f8b4b4, #bf3030);
+.theme-strawberry .tourism-overlay {
+  background: linear-gradient(145deg, rgb(248 180 180 / 55%), rgb(191 48 48 / 60%));
 }
 
-.theme-milk {
-  background: linear-gradient(145deg, #dce9f5, #6ca8c0);
+.theme-milk .tourism-overlay {
+  background: linear-gradient(145deg, rgb(220 233 245 / 55%), rgb(108 168 192 / 60%));
 }
 
 .visual-mark {
+  z-index: 1;
   color: rgb(255 255 255 / 88%);
   filter: drop-shadow(0 10px 12px rgb(15 23 43 / 20%));
 }
 
-.type-badge,
-.rating-badge {
+.type-badge {
   position: absolute;
   z-index: 1;
   top: 12px;
@@ -154,7 +186,7 @@ h2 {
   border-radius: var(--ocop-radius-sm);
   background: rgb(15 23 43 / 76%);
   color: #fff;
-  font-size: 10px;
+  font-size: var(--ocop-font-size-caption);
   font-weight: 700;
 }
 
@@ -163,11 +195,6 @@ h2 {
   left: 12px;
   align-items: center;
   gap: 5px;
-}
-
-.rating-badge {
-  right: 12px;
-  color: #fde68a;
 }
 
 .tourism-body {
@@ -182,7 +209,7 @@ h2 {
   justify-content: space-between;
   gap: 8px;
   color: var(--ocop-slate);
-  font-size: 10px;
+  font-size: var(--ocop-font-size-caption);
 }
 
 .place-meta span,
@@ -196,7 +223,7 @@ h2 {
   min-height: 40px;
   margin: 8px 0 6px;
   color: var(--ocop-navy);
-  font-size: 14px;
+  font-size: var(--ocop-font-size-title-sm);
   font-weight: 750;
   line-height: 20px;
 }
@@ -206,8 +233,8 @@ h2 {
   overflow: hidden;
   margin: 0;
   color: var(--ocop-slate);
-  font-size: 11px;
-  line-height: 16px;
+  font-size: var(--ocop-font-size-small);
+  line-height: 1.55;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
 }
@@ -218,7 +245,7 @@ h2 {
   padding: 0;
   gap: 4px;
   color: #45556c;
-  font-size: 10px;
+  font-size: var(--ocop-font-size-caption);
   list-style: none;
 }
 
@@ -233,31 +260,35 @@ h2 {
   gap: 8px;
 }
 
-.tourism-actions button,
+.tourism-actions span,
 .tourism-actions a {
   display: inline-flex;
   min-height: 36px;
-  flex: 1;
+  flex: 1 1 0;
   align-items: center;
   justify-content: center;
   gap: 5px;
   border-radius: var(--ocop-radius-md);
-  font-size: 11px;
+  font-size: var(--ocop-font-size-caption);
   font-weight: 700;
   text-decoration: none;
 }
 
-.tourism-actions button {
-  border: 1px solid var(--ocop-primary-700);
-  background: var(--ocop-primary-700);
-  color: #fff;
-  opacity: 0.72;
+.tourism-actions span {
+  color: var(--ocop-text-muted);
+  text-align: center;
 }
 
 .tourism-actions a {
   border: 1px solid var(--ocop-border);
   background: var(--ocop-surface-muted);
   color: #45556c;
+  transition: border-color var(--ocop-transition), color var(--ocop-transition);
+}
+
+.tourism-actions a:hover {
+  border-color: var(--ocop-mint-border);
+  color: var(--ocop-primary-900);
 }
 
 @media (max-width: 991.98px) {
@@ -273,6 +304,10 @@ h2 {
 
   .tourism-grid {
     grid-template-columns: 1fr;
+  }
+
+  .tourism-actions {
+    flex-direction: column;
   }
 }
 </style>

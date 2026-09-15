@@ -27,8 +27,8 @@ const userInitial = computed(() => currentUser.value?.full_name.trim().charAt(0)
 const publicNavigation = [
   { label: 'Trang chủ', to: '/', icon: 'home' },
   { label: 'Sản phẩm OCOP', to: '/san-pham', icon: 'package' },
-  { label: 'Điểm du lịch', to: '/#diem-du-lich', icon: 'map-pin' },
-  { label: 'Bản đồ số GIS', to: '/#ban-do', icon: 'map' },
+  { label: 'Khám phá Lâm Đồng', to: '/#diem-du-lich', icon: 'map-pin' },
+  { label: 'Bản đồ', to: '/#ban-do', icon: 'map' },
   { label: 'Tin tức', to: '/tin-tuc', icon: 'newspaper' },
 ]
 
@@ -110,7 +110,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
           <span class="brand-copy">
             <span class="brand-title">
               <strong>LÂM ĐỒNG OCOP</strong>
-              <small>GIS Map</small>
+              <small>Cổng thông tin</small>
             </span>
             <span>Nông sản OCOP &amp; Du lịch Nông nghiệp</span>
           </span>
