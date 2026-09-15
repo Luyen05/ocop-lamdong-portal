@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import axios from 'axios'
 import { computed, onUnmounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
@@ -12,6 +13,8 @@ const product = ref<ProductDetail | null>(null)
 const selectedImageUrl = ref<string | null>(null)
 const isLoading = ref(true)
 const errorMessage = ref('')
+const isNotFound = ref(false)
+let requestId = 0
 
 const formattedPrice = computed(() => {
   if (!product.value) return ''
@@ -27,22 +30,33 @@ const activeImage = computed(
 )
 
 async function loadProduct(slug: string): Promise<void> {
+  const currentRequestId = ++requestId
   isLoading.value = true
   errorMessage.value = ''
+  isNotFound.value = false
   product.value = null
   selectedImageUrl.value = null
   try {
-    product.value = await getProduct(slug)
+    const loadedProduct = await getProduct(slug)
+    if (currentRequestId !== requestId) return
+    product.value = loadedProduct
     selectedImageUrl.value = product.value.images[0]?.image_url ?? null
     document.title = `${product.value.name} | OCOP Lâm Đồng`
   } catch (error) {
+    if (currentRequestId !== requestId) return
+    isNotFound.value = axios.isAxiosError(error) && error.response?.status === 404
     errorMessage.value = getApiErrorMessage(
       error,
       'Không thể tải thông tin sản phẩm. Vui lòng thử lại.',
     )
   } finally {
-    isLoading.value = false
+    if (currentRequestId === requestId) isLoading.value = false
   }
+}
+
+function retryProduct(): void {
+  const slug = route.params.slug
+  if (typeof slug === 'string') void loadProduct(slug)
 }
 
 watch(
@@ -83,8 +97,11 @@ onUnmounted(() => {
 
       <section v-else-if="errorMessage" class="error-state">
         <span class="error-symbol">!</span>
-        <h1>Không tìm thấy sản phẩm</h1>
+        <h1>{{ isNotFound ? 'Không tìm thấy sản phẩm' : 'Không thể tải sản phẩm' }}</h1>
         <p>{{ errorMessage }}</p>
+        <button v-if="!isNotFound" class="btn btn-outline-success me-2" type="button" @click="retryProduct">
+          Thử lại
+        </button>
         <RouterLink class="btn btn-success" to="/san-pham">
           Quay lại danh sách
         </RouterLink>
