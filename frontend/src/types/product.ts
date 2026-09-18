@@ -31,6 +31,10 @@ export interface ProductFilterOptions {
   districts: string[]
 }
 
+export interface ProductSearchSuggestions {
+  suggestions: string[]
+}
+
 export interface ProductListItem {
   id: number
   name: string

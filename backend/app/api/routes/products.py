@@ -20,6 +20,7 @@ from app.schemas.product import (
     ProductListItem,
     ProductListResponse,
     ProductPublicSourceRead,
+    ProductSearchSuggestions,
     ProductSubjectRead,
 )
 
@@ -27,6 +28,72 @@ from app.schemas.product import (
 router = APIRouter(prefix="/products", tags=["Products"])
 
 SortOption = Literal["newest", "name", "-name", "price", "-price", "rating"]
+
+
+def search_expressions(search: str, db: Session):
+    normalized = search.strip()
+    if db.bind is not None and db.bind.dialect.name == "postgresql":
+        query = func.websearch_to_tsquery("simple", normalized)
+        vector = func.to_tsvector(
+            "simple",
+            func.concat_ws(
+                " ",
+                Product.name,
+                Product.description,
+                Product.story,
+                Product.ingredients,
+                Product.usage_instructions,
+            ),
+        )
+        return vector.op("@@")(query), func.ts_rank_cd(vector, query)
+
+    keyword = f"%{normalized}%"
+    return (
+        or_(
+            Product.name.ilike(keyword),
+            Product.description.ilike(keyword),
+            Product.story.ilike(keyword),
+            Product.ingredients.ilike(keyword),
+            Product.usage_instructions.ilike(keyword),
+            Category.name.ilike(keyword),
+            Subject.name.ilike(keyword),
+            Subject.district.ilike(keyword),
+        ),
+        case(
+            (Product.name.ilike(keyword), 5),
+            (Category.name.ilike(keyword), 4),
+            (Subject.name.ilike(keyword), 3),
+            else_=1,
+        ),
+    )
+
+
+@router.get("/suggestions", response_model=ProductSearchSuggestions)
+def get_product_search_suggestions(
+    q: str = Query(min_length=2, max_length=80),
+    db: Session = Depends(get_db),
+) -> ProductSearchSuggestions:
+    keyword = f"%{q.strip()}%"
+    product_names = db.scalars(
+        select(Product.name)
+        .join(Product.subject)
+        .where(*public_product_filters(), Product.name.ilike(keyword))
+        .distinct()
+        .order_by(Product.name)
+        .limit(5)
+    ).all()
+    category_names = db.scalars(
+        select(Category.name)
+        .join(Product, Product.category_id == Category.id)
+        .join(Subject, Product.subject_id == Subject.id)
+        .where(*public_product_filters(), Category.name.ilike(keyword))
+        .distinct()
+        .order_by(Category.name)
+        .limit(3)
+    ).all()
+    return ProductSearchSuggestions(
+        suggestions=list(dict.fromkeys([*product_names, *category_names]))
+    )
 
 
 def public_eligibility_filter():
@@ -117,15 +184,10 @@ def list_products(
         )
 
     filters = list(public_product_filters())
+    search_rank = None
     if search:
-        keyword = f"%{search.strip()}%"
-        filters.append(
-            or_(
-                Product.name.ilike(keyword),
-                Product.description.ilike(keyword),
-                Subject.name.ilike(keyword),
-            )
-        )
+        search_filter, search_rank = search_expressions(search, db)
+        filters.append(search_filter)
     if category:
         filters.append(func.lower(Category.slug) == category.strip().lower())
     if star is not None:
@@ -157,6 +219,8 @@ def list_products(
         "-price": (unavailable_price.asc(), Product.price.desc()),
         "rating": (Product.rating_avg.desc(),),
     }
+    if search_rank is not None and sort == "newest":
+        sort_columns[sort] = (search_rank.desc(), Product.created_at.desc())
     statement = (
         base_statement.options(
             joinedload(Product.category),

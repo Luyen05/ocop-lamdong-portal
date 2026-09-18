@@ -6,7 +6,7 @@ import ProductCard from '@/components/products/ProductCard.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
 import { getApiErrorMessage } from '@/services/api-error'
 import { getCategories } from '@/services/categories'
-import { getProductFilterOptions, getProducts } from '@/services/products'
+import { getProductFilterOptions, getProductSearchSuggestions, getProducts } from '@/services/products'
 import type { Category } from '@/types/category'
 import type {
   ProductFilters,
@@ -26,7 +26,10 @@ const pageSize = 12
 const isLoading = ref(false)
 const errorMessage = ref('')
 const validationMessage = ref('')
+const suggestions = ref<string[]>([])
+const isLoadingSuggestions = ref(false)
 let latestRequestId = 0
+let suggestionTimer: ReturnType<typeof setTimeout> | undefined
 
 const form = reactive({
   search: '',
@@ -156,6 +159,31 @@ async function loadFilterOptions(): Promise<void> {
   }
 }
 
+function scheduleSuggestions(): void {
+  if (suggestionTimer) clearTimeout(suggestionTimer)
+  const query = form.search.trim()
+  if (query.length < 2) {
+    suggestions.value = []
+    return
+  }
+  suggestionTimer = setTimeout(async () => {
+    isLoadingSuggestions.value = true
+    try {
+      suggestions.value = await getProductSearchSuggestions(query)
+    } catch {
+      suggestions.value = []
+    } finally {
+      isLoadingSuggestions.value = false
+    }
+  }, 250)
+}
+
+async function chooseSuggestion(suggestion: string): Promise<void> {
+  form.search = suggestion
+  suggestions.value = []
+  await applyFilters()
+}
+
 function filterQuery(page = 1): Record<string, string> {
   const query: Record<string, string> = {}
   if (page > 1) query.page = String(page)
@@ -222,6 +250,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  if (suggestionTimer) clearTimeout(suggestionTimer)
   document.title = 'OCOP Lâm Đồng'
 })
 </script>
@@ -245,7 +274,7 @@ onUnmounted(() => {
               <button class="btn-reset" type="button" @click="clearFilters">Xóa lọc</button>
             </div>
 
-            <div>
+            <div class="search-field">
               <label class="form-label" for="product-search">Từ khóa</label>
               <input
                 id="product-search"
@@ -253,7 +282,23 @@ onUnmounted(() => {
                 class="form-control"
                 type="search"
                 placeholder="Tên sản phẩm, chủ thể..."
+                autocomplete="off"
+                @input="scheduleSuggestions"
               />
+              <div v-if="suggestions.length" class="search-suggestions" role="listbox">
+                <button
+                  v-for="suggestion in suggestions"
+                  :key="suggestion"
+                  type="button"
+                  role="option"
+                  @click="chooseSuggestion(suggestion)"
+                >
+                  {{ suggestion }}
+                </button>
+              </div>
+              <small v-else-if="isLoadingSuggestions" class="suggestion-status">
+                Đang tìm gợi ý...
+              </small>
             </div>
 
             <div>

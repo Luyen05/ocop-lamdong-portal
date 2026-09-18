@@ -296,6 +296,20 @@ def test_list_products_supports_public_filters(product_client: TestClient) -> No
     assert response.json()["items"][0]["slug"] == "ca-phe-arabica-cau-dat"
 
 
+def test_search_ranks_product_name_and_searches_product_context(product_client: TestClient) -> None:
+    response = product_client.get("/api/v1/products", params={"search": "dâu"})
+
+    assert response.status_code == 200
+    assert response.json()["items"][0]["slug"] == "mut-dau-da-lat"
+
+
+def test_product_search_suggestions_only_return_public_matches(product_client: TestClient) -> None:
+    response = product_client.get("/api/v1/products/suggestions", params={"q": "Cà"})
+
+    assert response.status_code == 200
+    assert response.json() == {"suggestions": ["Cà phê Arabica Cầu Đất"]}
+
+
 def test_product_filter_options_only_use_public_products(product_client: TestClient) -> None:
     response = product_client.get("/api/v1/products/filter-options")
 

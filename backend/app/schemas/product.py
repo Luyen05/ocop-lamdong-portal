@@ -42,6 +42,10 @@ class ProductFilterOptions(BaseModel):
     districts: list[str]
 
 
+class ProductSearchSuggestions(BaseModel):
+    suggestions: list[str]
+
+
 class ProductImageRead(BaseModel):
     id: int
     image_url: str
