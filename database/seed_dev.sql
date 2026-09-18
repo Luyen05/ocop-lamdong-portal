@@ -189,3 +189,61 @@ JOIN categories ON categories.slug = demo.category_slug
 WHERE users.email = 'demo-subject@local.invalid'
 ON CONFLICT (slug) DO NOTHING;
 
+
+-- Published demo news uses the existing disabled reviewer; no login account is added.
+-- Images are omitted so the public API can return primary_image_url = null.
+INSERT INTO news (
+  author_id, title, slug, category, summary, content, views, status, published_at
+)
+SELECT
+  users.id,
+  demo.title,
+  demo.slug,
+  demo.category,
+  demo.summary,
+  demo.content,
+  demo.views,
+  'published',
+  demo.published_at
+FROM users
+CROSS JOIN (
+  VALUES
+    (
+      'Chủ thể OCOP Lâm Đồng chú trọng hoàn thiện hồ sơ sản phẩm',
+      'hoan-thien-ho-so-san-pham-ocop-lam-dong-demo',
+      'Chính sách',
+      'Chuẩn hóa thông tin sản phẩm, nguồn nguyên liệu và câu chuyện địa phương giúp chủ thể chuẩn bị hồ sơ OCOP rõ ràng hơn.',
+      E'Trong tình huống minh họa của cổng OCOP Lâm Đồng, một hợp tác xã rà soát hồ sơ cà phê, trà atiso và sản phẩm chế biến từ nông sản trước khi đăng ký đánh giá. Thông tin được tập hợp theo từng sản phẩm để thuận tiện đối chiếu.\n\nChủ thể chú trọng mô tả nguồn nguyên liệu, quy trình sản xuất, nhãn hàng hóa và tài liệu liên quan đến chất lượng. Câu chuyện sản phẩm giới thiệu người làm nghề và đặc trưng địa phương bằng thông tin có thể kiểm chứng.\n\nĐây là bài viết dữ liệu mẫu phục vụ trình diễn, không phải thông báo chính sách hoặc hướng dẫn thủ tục chính thức. Chủ thể cần tra cứu hướng dẫn hiện hành từ cơ quan phụ trách khi chuẩn bị hồ sơ thực tế.',
+      128,
+      TIMESTAMPTZ '2026-08-05 09:00:00+07'
+    ),
+    (
+      'Không gian trải nghiệm giới thiệu hương vị OCOP Lâm Đồng',
+      'khong-gian-trai-nghiem-huong-vi-ocop-lam-dong-demo',
+      'Sự kiện',
+      'Cà phê Cầu Đất, trà atiso và mứt dâu được giới thiệu trong không gian kết nối chủ thể với người tiêu dùng.',
+      E'Không gian trải nghiệm trong kịch bản demo mang đến một hành trình khám phá nông sản Lâm Đồng qua các gian giới thiệu cà phê, trà và sản phẩm từ trái cây. Khách tham quan có thể tìm hiểu cách chế biến và câu chuyện của từng chủ thể.\n\nKhu vực dùng thử giúp người tiêu dùng so sánh hương vị, trao đổi về cách sử dụng và lựa chọn quà tặng phù hợp. Các gian hàng trình bày rõ thành phần, khối lượng và hướng dẫn bảo quản để khách dễ tham khảo.\n\nBài viết mô phỏng hoạt động giới thiệu sản phẩm phục vụ trình diễn cổng thông tin; không công bố lịch tổ chức hoặc địa điểm của một sự kiện thực tế.',
+      246,
+      TIMESTAMPTZ '2026-08-12 08:30:00+07'
+    ),
+    (
+      'Kể câu chuyện nông sản để kết nối sản phẩm OCOP với khách hàng',
+      'ket-noi-san-pham-ocop-voi-khach-hang-demo',
+      'Xúc tiến thương mại',
+      'Thông tin rõ ràng và câu chuyện vùng nguyên liệu giúp sản phẩm địa phương tiếp cận khách hàng qua các kênh giới thiệu trực tuyến.',
+      E'Trong kịch bản xúc tiến thương mại mẫu, hợp tác xã giới thiệu bộ sản phẩm quà tặng gồm cà phê Arabica, mứt dâu và trà atiso. Mỗi sản phẩm có phần mô tả riêng về hương vị, nguồn nguyên liệu và cách sử dụng.\n\nKhi giới thiệu trực tuyến, chủ thể chuẩn bị nội dung dễ đọc, thông tin quy cách đóng gói và kênh liên hệ để khách hàng có thể trao đổi nhu cầu. Phản hồi của người mua được dùng để cải thiện cách trình bày và dịch vụ.\n\nNội dung này là dữ liệu minh họa cho chuyên mục xúc tiến thương mại, không xác nhận hợp đồng, doanh số hoặc chương trình hỗ trợ thực tế.',
+      183,
+      TIMESTAMPTZ '2026-08-19 10:00:00+07'
+    ),
+    (
+      'Khám phá nông nghiệp Đà Lạt qua trải nghiệm vườn và sản phẩm địa phương',
+      'trai-nghiem-vuon-va-san-pham-da-lat-demo',
+      'Du lịch nông nghiệp',
+      'Kết hợp tìm hiểu canh tác, thưởng thức nông sản và lựa chọn quà địa phương tạo nên hành trình trải nghiệm gần gũi với nhà vườn.',
+      E'Hành trình du lịch nông nghiệp trong dữ liệu demo gợi mở trải nghiệm tìm hiểu vườn dâu và câu chuyện cà phê của vùng cao nguyên. Du khách được giới thiệu công việc chăm sóc cây trồng, thu hoạch và chế biến nông sản.\n\nHoạt động trải nghiệm cần được sắp xếp cùng nhà vườn, phù hợp điều kiện thời tiết và mùa vụ. Khách tham quan tôn trọng khu vực sản xuất, giữ vệ sinh và làm theo hướng dẫn của người phụ trách.\n\nCác sản phẩm địa phương như mứt dâu, cà phê và hồng treo gió có thể trở thành quà tặng gắn với câu chuyện chuyến đi. Bài viết phục vụ trình diễn, không đại diện cho tour đang mở bán hoặc cam kết dịch vụ của một cơ sở cụ thể.',
+      312,
+      TIMESTAMPTZ '2026-08-26 14:00:00+07'
+    )
+) AS demo(title, slug, category, summary, content, views, published_at)
+WHERE users.email = 'demo-reviewer@local.invalid'
+ON CONFLICT (slug) DO NOTHING;
