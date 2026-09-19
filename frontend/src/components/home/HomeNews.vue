@@ -1,5 +1,30 @@
 <script setup lang="ts">
-import { newsFixtures } from '@/data/home-fixtures'
+import { onMounted, ref } from 'vue'
+
+import NewsCard from '@/components/news/NewsCard.vue'
+import { getApiErrorMessage } from '@/services/api-error'
+import { listNews } from '@/services/news'
+import type { NewsListItem } from '@/types/news'
+
+const news = ref<NewsListItem[]>([])
+const isLoading = ref(true)
+const errorMessage = ref('')
+
+async function loadNews(): Promise<void> {
+  isLoading.value = true
+  errorMessage.value = ''
+  try {
+    const response = await listNews({ page: 1, page_size: 3 })
+    news.value = response.items.slice(0, 3)
+  } catch (error) {
+    news.value = []
+    errorMessage.value = getApiErrorMessage(error, 'Chưa thể tải tin tức.')
+  } finally {
+    isLoading.value = false
+  }
+}
+
+onMounted(loadNews)
 </script>
 
 <template>
@@ -10,27 +35,18 @@ import { newsFixtures } from '@/data/home-fixtures'
         <h2 id="news-title">Cập nhật hoạt động OCOP Lâm Đồng</h2>
         <p class="section-copy">Chính sách khuyến nông, chương trình xúc tiến và câu chuyện du lịch nông nghiệp.</p>
       </div>
-      <span class="demo-label">Dữ liệu minh họa</span>
+      <RouterLink to="/tin-tuc">Xem tất cả tin tức <span aria-hidden="true">→</span></RouterLink>
     </div>
 
-    <div class="news-grid">
-      <article v-for="article in newsFixtures" :key="article.id" class="news-card">
-        <div class="news-visual" :class="`theme-${article.theme}`">
-          <span aria-hidden="true">{{ article.theme === 'policy' ? '🏅' : '🌿' }}</span>
-        </div>
-        <div class="news-body">
-          <div class="news-meta">
-            <span>{{ article.category }}</span>
-            <time>{{ article.date }}</time>
-          </div>
-          <h3>{{ article.title }}</h3>
-          <p>{{ article.summary }}</p>
-          <button type="button" disabled title="Trang tin tức sẽ được triển khai ở module sau">
-            Đọc bài viết →
-          </button>
-        </div>
-      </article>
+    <div v-if="isLoading" class="news-state" role="status">Đang tải tin tức…</div>
+    <div v-else-if="errorMessage" class="news-state" role="alert">
+      <strong>{{ errorMessage }}</strong>
+      <button type="button" @click="loadNews">Thử lại</button>
     </div>
+    <div v-else-if="news.length" class="news-grid">
+      <NewsCard v-for="article in news" :key="article.id" :news="article" />
+    </div>
+    <div v-else class="news-state" role="status">Chưa có tin tức được xuất bản.</div>
   </section>
 </template>
 
@@ -38,14 +54,12 @@ import { newsFixtures } from '@/data/home-fixtures'
 .news-section {
   padding: 48px 0;
 }
-
 .section-heading {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
   gap: 16px;
 }
-
 .eyebrow {
   color: var(--ocop-primary-700);
   font-size: 11px;
@@ -53,7 +67,6 @@ import { newsFixtures } from '@/data/home-fixtures'
   line-height: 16px;
   text-transform: uppercase;
 }
-
 h2 {
   max-width: 680px;
   margin: 4px 0 0;
@@ -63,135 +76,51 @@ h2 {
   letter-spacing: -0.5px;
   line-height: 28px;
 }
-
 .section-copy {
   margin: 2px 0 0;
   color: var(--ocop-slate);
   font-size: 13px;
 }
-
-.demo-label {
+.section-heading > a {
   flex: 0 0 auto;
-  padding: 5px 9px;
-  border: 1px solid #fde68a;
-  border-radius: 999px;
-  background: #fffbeb;
-  color: #92400e;
-  font-size: 10px;
+  color: var(--ocop-primary-700);
+  font-size: 12px;
   font-weight: 700;
+  text-decoration: none;
 }
-
 .news-grid {
   display: grid;
   margin-top: 16px;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
 }
-
-.news-card {
-  display: grid;
-  overflow: hidden;
-  grid-template-columns: minmax(160px, 38%) minmax(0, 1fr);
-  border: 1px solid var(--ocop-border);
+.news-state {
+  margin-top: 16px;
+  padding: 44px 20px;
+  border: 1px dashed var(--ocop-border);
   border-radius: var(--ocop-radius-lg);
   background: #fff;
-  box-shadow: 0 4px 12px rgb(15 23 43 / 5%);
-}
-
-.news-visual {
-  display: grid;
-  min-height: 230px;
-  place-items: center;
-}
-
-.theme-policy {
-  background: linear-gradient(145deg, #d4ebd0, #6da06b);
-}
-
-.theme-tourism {
-  background: linear-gradient(145deg, #f7dfb5, #b67d40);
-}
-
-.news-visual span {
-  font-size: 62px;
-  filter: drop-shadow(0 8px 10px rgb(15 23 43 / 18%));
-}
-
-.news-body {
-  display: flex;
-  padding: 18px;
-  flex-direction: column;
-}
-
-.news-meta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
   color: var(--ocop-slate);
-  font-size: 10px;
+  text-align: center;
 }
-
-.news-meta span {
-  padding: 4px 8px;
-  border-radius: 999px;
-  background: var(--ocop-mint-soft);
-  color: var(--ocop-primary-900);
-  font-weight: 700;
-}
-
-.news-body h3 {
-  margin: 12px 0 7px;
+.news-state strong {
+  display: block;
   color: var(--ocop-navy);
-  font-size: 15px;
-  font-weight: 750;
-  line-height: 21px;
 }
-
-.news-body p {
-  display: -webkit-box;
-  overflow: hidden;
-  margin: 0;
-  color: var(--ocop-slate);
-  font-size: 11px;
-  line-height: 17px;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
-}
-
-.news-body button {
-  width: max-content;
-  margin-top: auto;
-  padding: 0;
-  border: 0;
-  background: transparent;
+.news-state button {
+  margin-top: 12px;
+  padding: 7px 14px;
+  border: 1px solid var(--ocop-primary-700);
+  border-radius: var(--ocop-radius-sm);
+  background: #fff;
   color: var(--ocop-primary-700);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
-  opacity: 0.72;
 }
-
 @media (max-width: 991.98px) {
-  .news-grid {
-    grid-template-columns: 1fr;
-  }
+  .news-grid { grid-template-columns: 1fr; }
 }
-
 @media (max-width: 575.98px) {
-  .section-heading {
-    align-items: flex-start;
-  }
-
-  .news-card {
-    grid-template-columns: 1fr;
-  }
-
-  .news-visual {
-    min-height: 170px;
-  }
-
-  .news-body {
-    min-height: 230px;
-  }
+  .section-heading { align-items: flex-start; flex-direction: column; }
 }
 </style>
