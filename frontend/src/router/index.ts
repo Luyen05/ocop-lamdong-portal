@@ -48,6 +48,21 @@ const router = createRouter({
       component: () => import('@/views/ProductDetailView.vue'),
     },
     {
+      path: '/diem-du-lich',
+      name: 'locations',
+      component: () => import('@/views/LocationsView.vue'),
+    },
+    {
+      path: '/diem-du-lich/:slug',
+      name: 'location-detail',
+      component: () => import('@/views/LocationDetailView.vue'),
+    },
+    {
+      path: '/ban-do',
+      name: 'map',
+      component: () => import('@/views/MapView.vue'),
+    },
+    {
       path: '/tin-tuc',
       name: 'news',
       component: () => import('@/views/NewsView.vue'),

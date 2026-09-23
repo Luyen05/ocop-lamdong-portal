@@ -10,6 +10,6 @@
   <path d="M0 400 Q200 340 400 370 Q600 330 800 380 L800 500 L0 500Z" fill="#8b1f1f" opacity="0.6"/>
   <g opacity="0.4"><circle cx="200" cy="300" r="8" fill="#ff6b6b"/><circle cx="350" cy="280" r="6" fill="#ff6b6b"/><circle cx="500" cy="310" r="9" fill="#ff6b6b"/><circle cx="600" cy="270" r="7" fill="#ff6b6b"/></g>
   <circle cx="650" cy="100" r="40" fill="#fde68a" opacity="0.5"/>
-  <text x="400" y="240" text-anchor="middle" font-family="system-ui,sans-serif" font-size="22" font-weight="700" fill="white" opacity="0.9">Vườn dâu tây Biofresh — Đà Lạt</text>
+  <text x="400" y="240" text-anchor="middle" font-family="system-ui,sans-serif" font-size="22" font-weight="700" fill="white" opacity="0.9">Vườn trái cây</text>
   <text x="400" y="270" text-anchor="middle" font-family="system-ui,sans-serif" font-size="13" fill="white" opacity="0.7">Ảnh minh họa</text>
 </svg>
