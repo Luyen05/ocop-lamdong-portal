@@ -13,7 +13,6 @@ from app.schemas.location import (
     MapFeatureProperties,
     PointGeometryRead,
 )
-from app.schemas.product import ProductRelatedLocation
 
 
 # Danh mục loại hình dùng chung cho API, bộ lọc và công cụ sinh seed
@@ -91,16 +90,6 @@ def to_location_list_item(location: TourismLocation) -> LocationListItem:
         description=location.description,
         rating_avg=float(location.rating_avg or 0),
         primary_image_url=primary_image_url(location),
-    )
-
-
-def to_product_related_location(location: TourismLocation) -> ProductRelatedLocation:
-    return ProductRelatedLocation(
-        id=location.id,
-        name=location.name,
-        slug=location.slug,
-        type_label=location_type_label(location.type),
-        district=location.district,
     )
 
 
