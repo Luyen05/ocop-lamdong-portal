@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session, joinedload, selectinload
 from app.core.database import get_db
 from app.models.category import Category
 from app.models.data_source import ProductSource
+from app.models.location import TourismLocation, location_ocop_products
 from app.models.product import Product
 from app.models.subject import Subject
 from app.schemas.error import ErrorResponse
@@ -21,6 +22,10 @@ from app.schemas.product import (
     ProductListResponse,
     ProductPublicSourceRead,
     ProductSubjectRead,
+)
+from app.services.location_catalog import (
+    public_location_filters,
+    to_product_related_location,
 )
 
 
@@ -228,6 +233,19 @@ def get_product(slug: str, db: Session = Depends(get_db)) -> ProductDetail:
             },
         )
 
+    related_locations = db.scalars(
+        select(TourismLocation)
+        .join(
+            location_ocop_products,
+            location_ocop_products.c.location_id == TourismLocation.id,
+        )
+        .where(
+            location_ocop_products.c.product_id == product.id,
+            *public_location_filters(),
+        )
+        .order_by(TourismLocation.name.asc(), TourismLocation.id.asc())
+    ).all()
+
     summary = to_product_list_item(product)
     return ProductDetail(
         **summary.model_dump(),
@@ -263,5 +281,6 @@ def get_product(slug: str, db: Session = Depends(get_db)) -> ProductDetail:
             if link.evidence_role == "recognition"
             and link.verification_level in {"A", "B1"}
         ],
+        related_locations=[to_product_related_location(location) for location in related_locations],
         updated_at=product.updated_at,
     )

@@ -59,6 +59,16 @@ class ProductPublicSourceRead(BaseModel):
     verification_level: str
 
 
+class ProductRelatedLocation(BaseModel):
+    """Điểm du lịch đã duyệt có giới thiệu sản phẩm."""
+
+    id: int
+    name: str
+    slug: str
+    type_label: str
+    district: str
+
+
 class ProductDetail(ProductListItem):
     cert_code: str | None
     cert_year: int | None
@@ -71,4 +81,5 @@ class ProductDetail(ProductListItem):
     views: int
     images: list[ProductImageRead]
     recognition_sources: list[ProductPublicSourceRead]
+    related_locations: list[ProductRelatedLocation] = []
     updated_at: datetime

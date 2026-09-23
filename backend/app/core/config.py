@@ -1,7 +1,8 @@
 from functools import lru_cache
 from pathlib import Path
+from urllib.parse import urlparse
 
-from pydantic import Field, SecretStr
+from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -27,12 +28,23 @@ class Settings(BaseSettings):
     news_rss_timeout_seconds: float = Field(default=8.0, ge=1.0, le=30.0)
     news_rss_max_bytes: int = Field(default=1024 * 1024, ge=1024, le=5 * 1024 * 1024)
     news_cache_ttl_seconds: int = Field(default=900, ge=60, le=86400)
+    osrm_base_url: str = "https://router.project-osrm.org"
+    osrm_timeout_seconds: float = Field(default=8.0, ge=1.0, le=30.0)
 
     model_config = SettingsConfigDict(
         env_file=PROJECT_ROOT / ".env",
         env_file_encoding="utf-8",
         extra="ignore",
     )
+
+    @field_validator("osrm_base_url")
+    @classmethod
+    def validate_osrm_base_url(cls, value: str) -> str:
+        normalized = value.strip().rstrip("/")
+        parsed = urlparse(normalized)
+        if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+            raise ValueError("OSRM_BASE_URL phải là đường dẫn http:// hoặc https://.")
+        return normalized
 
     @property
     def cors_origin_list(self) -> list[str]:
