@@ -19,11 +19,11 @@ Base URL: `/api/v1`. Tất cả endpoint có biểu tượng khóa trong Swagger
 | Subject application | `POST /subject-applications` | User |
 | Subject application | `GET/PUT /subject-applications/me` | User hoặc subject |
 | Public | `GET /categories`, `GET /products`, `GET /products/filter-options`, `GET /products/{slug}` | Public |
-| Public | `GET /locations`, `GET /locations/{slug}` | Public |
+| Public | `GET /locations`, `GET /locations/filter-options`, `GET /locations/{slug}` | Public (đã triển khai) |
 | Public | `GET /news`, `GET /news/{slug}` | Public |
 | Reviews | `GET/POST /products/{id}/reviews`, `GET/POST /locations/{id}/reviews` | GET public, POST đăng nhập |
 | Reviews | `PATCH/DELETE /reviews/{id}` | Chính chủ, chỉ khi pending |
-| Map | `GET /map/locations`, `GET /map/nearby`, `GET /map/route` | Public |
+| Map | `GET /map/locations`, `GET /map/nearby`, `GET /map/route` | Public (đã triển khai) |
 | Subject | `GET/PATCH /subject/profile` | Subject đã duyệt |
 | Subject | CRUD `/subject/products`, CRUD `/subject/locations` | Subject, giới hạn sở hữu |
 | Subject | POST/DELETE `/subject/locations/{id}/products...` | Subject, giới hạn sở hữu |
@@ -52,6 +52,26 @@ của từng endpoint.
 - Ngừng hiển thị tạo yêu cầu tại
   POST /subject/products/{id}/deletion-requests. Khi được duyệt, sản phẩm chuyển
   sang trạng thái archived và vẫn được giữ lại để bảo toàn lịch sử.
+
+### Bản đồ số và điểm du lịch đã triển khai
+
+- `GET /locations?search=&type=&district=&sort=name|-name|newest|rating&page=&page_size=`:
+  chỉ trả điểm `approved`. `type` nhận mã loại hình (`tea_coffee_farm`,
+  `fruit_garden`, `flower_garden`, `dairy_farm`, `vegetable_farm`,
+  `craft_village`, `farmstay`, `other`); mã khác trả `422`.
+- `GET /locations/{slug}`: chi tiết, liên hệ, nguồn dữ liệu, ảnh và các sản phẩm
+  OCOP công khai được giới thiệu tại điểm. Điểm chưa duyệt trả `404 LOCATION_NOT_FOUND`.
+- `GET /map/locations`: `FeatureCollection` GeoJSON, tọa độ `[longitude, latitude]`,
+  lọc theo `search`, `type`, `district`.
+- `GET /map/nearby?latitude=&longitude=&radius_km=25&limit=10&type=`: sắp xếp theo
+  khoảng cách (mét) bằng `ST_DWithin`/`ST_Distance` trên `geography`;
+  `radius_km` trong khoảng (0, 200], `limit` 1–50.
+- `GET /map/route?destination={slug}&from_latitude=&from_longitude=`: tuyến đường
+  bộ từ vị trí người dùng qua OSRM. Điểm xuất phát ngoài Việt Nam trả
+  `422 ORIGIN_OUT_OF_RANGE`; không có tuyến trả `422 ROUTE_NOT_FOUND`; OSRM lỗi
+  hoặc quá thời gian chờ trả `503 ROUTING_UNAVAILABLE`.
+- `GET /products/{slug}` bổ sung `related_locations`: các điểm du lịch đã duyệt có
+  giới thiệu sản phẩm.
 
 ## Quy trình trạng thái
 
