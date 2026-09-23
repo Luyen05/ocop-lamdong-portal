@@ -69,8 +69,9 @@ này sau `schema.sql` và `seed_dev.sql`.
   dự án OSRM), giới hạn thời gian chờ `OSRM_TIMEOUT_SECONDS` và chỉ nhận điểm xuất
   phát trong lãnh thổ Việt Nam. Khi OSRM lỗi, API trả `503 ROUTING_UNAVAILABLE`,
   giao diện vẫn có liên kết mở chỉ đường bằng Google Maps.
-- Ảnh nền bản đồ lấy từ OpenStreetMap. Có thể đổi nguồn bằng biến
-  `VITE_MAP_TILE_URL` khai báo trong `frontend/.env`.
+- Ảnh nền bản đồ mặc định lấy từ CARTO Voyager (dữ liệu OpenStreetMap); nếu
+  không tải được sẽ tự chuyển sang máy chủ tile của OpenStreetMap. Có thể đặt nguồn
+  ưu tiên bằng biến `VITE_MAP_TILE_URL` khai báo trong `frontend/.env`.
 
 ## Giới hạn
 
