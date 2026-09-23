@@ -32,8 +32,32 @@ const props = withDefaults(
 const emit = defineEmits<{ select: [slug: string] }>()
 
 const LAM_DONG_CENTER: L.LatLngTuple = [11.9404, 108.4583]
-const TILE_URL = import.meta.env.VITE_MAP_TILE_URL || 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
-const TILE_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+const OSM_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+
+interface TileProvider {
+  url: string
+  attribution: string
+  subdomains: string
+}
+
+// Nguồn ảnh nền theo thứ tự ưu tiên. Một số mạng chặn tile.openstreetmap.org nên
+// mặc định dùng CARTO (dữ liệu OpenStreetMap) và tự chuyển nguồn khi không tải được.
+const TILE_PROVIDERS: TileProvider[] = [
+  ...(import.meta.env.VITE_MAP_TILE_URL
+    ? [{ url: import.meta.env.VITE_MAP_TILE_URL, attribution: OSM_ATTRIBUTION, subdomains: 'abc' }]
+    : []),
+  {
+    url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+    attribution: `${OSM_ATTRIBUTION} &copy; <a href="https://carto.com/attributions">CARTO</a>`,
+    subdomains: 'abcd',
+  },
+  {
+    url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+    attribution: OSM_ATTRIBUTION,
+    subdomains: 'abc',
+  },
+]
+const TILE_ERRORS_BEFORE_FALLBACK = 3
 
 const container = ref<HTMLDivElement | null>(null)
 const loadError = ref('')
@@ -43,6 +67,7 @@ let markerLayer: L.LayerGroup | null = null
 let clusterLayer: L.MarkerClusterGroup | null = null
 let userLayer: L.LayerGroup | null = null
 let routeLayer: L.Polyline | null = null
+let tileLayer: L.TileLayer | null = null
 let resizeObserver: ResizeObserver | null = null
 let isUnmounted = false
 const markers = new Map<string, L.Marker>()
@@ -69,6 +94,31 @@ function tooltipContent(feature: MapFeature): HTMLElement {
   meta.textContent = `${feature.properties.type_label} · ${feature.properties.district}`
   wrapper.append(name, document.createElement('br'), meta)
   return wrapper
+}
+
+function useTileProvider(index: number): void {
+  if (!map) return
+  const provider = TILE_PROVIDERS[index]
+  if (!provider) {
+    loadError.value = 'Không tải được ảnh nền bản đồ. Các điểm du lịch vẫn hiển thị bình thường.'
+    return
+  }
+  tileLayer?.remove()
+  let hasLoadedTile = false
+  let errorCount = 0
+  tileLayer = L.tileLayer(provider.url, {
+    attribution: provider.attribution,
+    subdomains: provider.subdomains,
+    maxZoom: 19,
+  })
+  tileLayer.on('tileload', () => {
+    hasLoadedTile = true
+  })
+  tileLayer.on('tileerror', () => {
+    errorCount += 1
+    if (!hasLoadedTile && errorCount === TILE_ERRORS_BEFORE_FALLBACK) useTileProvider(index + 1)
+  })
+  tileLayer.addTo(map)
 }
 
 function renderMarkers(fitToFeatures: boolean): void {
@@ -160,7 +210,7 @@ async function initialize(): Promise<void> {
   try {
     map = L.map(container.value, { zoomControl: true, attributionControl: true })
     map.setView(LAM_DONG_CENTER, props.initialZoom)
-    L.tileLayer(TILE_URL, { attribution: TILE_ATTRIBUTION, maxZoom: 19 }).addTo(map)
+    useTileProvider(0)
 
     if (props.cluster) {
       // Plugin gom cụm đọc biến toàn cục L theo chuẩn UMD.
@@ -206,6 +256,7 @@ onBeforeUnmount(() => {
   clusterLayer = null
   userLayer = null
   routeLayer = null
+  tileLayer = null
   markers.clear()
   featuresBySlug.clear()
 })
