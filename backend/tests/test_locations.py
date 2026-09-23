@@ -5,7 +5,7 @@ from decimal import Decimal
 import httpx
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine, event, insert, select
+from sqlalchemy import create_engine, event, insert, select, text
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
@@ -509,3 +509,25 @@ def test_product_detail_lists_only_approved_related_locations(
             "district": "Đà Lạt",
         }
     ]
+
+
+def test_outdated_schema_returns_json_error_with_cors_and_keeps_product_detail(
+    location_client: TestClient,
+) -> None:
+    # Mô phỏng database cũ chưa chạy migration 008.
+    session_factory = app.dependency_overrides[get_db]
+    session_generator = session_factory()
+    session = next(session_generator)
+    session.execute(text("ALTER TABLE tourism_locations DROP COLUMN website"))
+    session.commit()
+    session_generator.close()
+    origin = {"Origin": "http://localhost:5173"}
+
+    locations = location_client.get("/api/v1/locations", headers=origin)
+    product = location_client.get("/api/v1/products/tra-xanh-cau-dat", headers=origin)
+
+    assert locations.status_code == 503
+    assert locations.json()["code"] == "DATABASE_SCHEMA_OUTDATED"
+    assert locations.headers["access-control-allow-origin"] == "http://localhost:5173"
+    assert product.status_code == 200
+    assert product.json()["related_locations"][0]["slug"] == "cau-dat-farm"

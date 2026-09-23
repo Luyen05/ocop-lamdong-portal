@@ -21,12 +21,10 @@ from app.schemas.product import (
     ProductListItem,
     ProductListResponse,
     ProductPublicSourceRead,
+    ProductRelatedLocation,
     ProductSubjectRead,
 )
-from app.services.location_catalog import (
-    public_location_filters,
-    to_product_related_location,
-)
+from app.services.location_catalog import location_type_label, public_location_filters
 
 
 router = APIRouter(prefix="/products", tags=["Products"])
@@ -233,8 +231,15 @@ def get_product(slug: str, db: Session = Depends(get_db)) -> ProductDetail:
             },
         )
 
-    related_locations = db.scalars(
-        select(TourismLocation)
+    # Chỉ chọn các cột có từ schema gốc để trang sản phẩm không phụ thuộc migration 008.
+    related_locations = db.execute(
+        select(
+            TourismLocation.id,
+            TourismLocation.name,
+            TourismLocation.slug,
+            TourismLocation.type,
+            TourismLocation.district,
+        )
         .join(
             location_ocop_products,
             location_ocop_products.c.location_id == TourismLocation.id,
@@ -281,6 +286,15 @@ def get_product(slug: str, db: Session = Depends(get_db)) -> ProductDetail:
             if link.evidence_role == "recognition"
             and link.verification_level in {"A", "B1"}
         ],
-        related_locations=[to_product_related_location(location) for location in related_locations],
+        related_locations=[
+            ProductRelatedLocation(
+                id=location.id,
+                name=location.name,
+                slug=location.slug,
+                type_label=location_type_label(location.type),
+                district=location.district,
+            )
+            for location in related_locations
+        ],
         updated_at=product.updated_at,
     )
