@@ -52,6 +52,16 @@ if ($null -eq $products.items -or $null -eq $products.total) {
   throw 'API san pham khong tra dung cau truc phan trang.'
 }
 
+$mapLocations = Invoke-RestMethod -Uri "$BackendUrl/api/v1/map/locations" -TimeoutSec 10
+if ($mapLocations.type -ne 'FeatureCollection' -or $null -eq $mapLocations.features) {
+  throw 'API ban do khong tra dung dinh dang GeoJSON FeatureCollection.'
+}
+
+$nearby = Invoke-RestMethod -Uri "$BackendUrl/api/v1/map/nearby?latitude=11.9404&longitude=108.4383&radius_km=50&limit=3" -TimeoutSec 10
+if ($null -eq $nearby.items) {
+  throw 'API tim diem gan nhat (PostGIS) khong phan hoi dung cau truc.'
+}
+
 $frontend = Invoke-WebRequest -Uri $FrontendUrl -TimeoutSec 10
 if ($frontend.StatusCode -ne 200) {
   throw "Frontend tra ma HTTP $($frontend.StatusCode)."
@@ -59,3 +69,4 @@ if ($frontend.StatusCode -ne 200) {
 
 Write-Host "`nTat ca kiem tra MVP da thanh cong." -ForegroundColor Green
 Write-Host "So san pham cong khai hien tai: $($products.total)"
+Write-Host "So diem du lich tren ban do: $($mapLocations.features.Count)"

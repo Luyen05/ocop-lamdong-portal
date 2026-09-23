@@ -7,7 +7,7 @@ nghiệp và bản đồ số tỉnh Lâm Đồng.
 
 - Backend: FastAPI và PostgreSQL/PostGIS.
 - Frontend: Vue 3, Vue Router, Axios và Bootstrap/CSS.
-- Bản đồ: Leaflet, GeoJSON và OSRM thông qua backend.
+- Bản đồ: Leaflet (gom cụm bằng Leaflet.markercluster), GeoJSON, PostGIS và OSRM thông qua backend.
 
 ## Thiết lập môi trường
 
@@ -54,6 +54,11 @@ Các API đầu tiên:
 - `GET/PUT /api/v1/subject-applications/me`: xem hoặc gửi lại hồ sơ của mình.
 - `GET /api/v1/admin/subject-applications`: admin tìm kiếm và lọc hồ sơ.
 - `PATCH /api/v1/admin/subject-applications/{id}/moderation`: admin duyệt hoặc từ chối.
+- `GET /api/v1/locations`: danh sách điểm du lịch nông nghiệp đã duyệt, hỗ trợ `search`, `type`, `district`, `sort`, phân trang.
+- `GET /api/v1/locations/filter-options`, `GET /api/v1/locations/{slug}`: bộ lọc và chi tiết điểm du lịch.
+- `GET /api/v1/map/locations`: điểm du lịch dạng GeoJSON cho bản đồ.
+- `GET /api/v1/map/nearby`: tìm điểm gần nhất trong bán kính bằng PostGIS.
+- `GET /api/v1/map/route`: gợi ý tuyến đường tới điểm du lịch qua OSRM.
 
 JWT access token mặc định có hiệu lực 60 phút. Tạo `JWT_SECRET_KEY` riêng cho
 mỗi môi trường, dài tối thiểu 32 ký tự; không commit khóa thật lên Git.
@@ -71,8 +76,9 @@ reload. Dependency frontend nằm trong volume `frontend_node_modules`, không t
 `node_modules` trên máy host. Docker Compose tự tạo `DATABASE_URL` từ các biến
 `POSTGRES_*` và sử dụng hostname nội bộ `postgres`.
 
-Khi volume PostgreSQL còn trống, Docker tự chạy `database/schema.sql` rồi
-`database/seed_dev.sql`. Các file trong `docker-entrypoint-initdb.d` không chạy
+Khi volume PostgreSQL còn trống, Docker tự chạy `database/schema.sql`,
+`database/seed_dev.sql` rồi `database/seed_tourism_locations.sql` (dữ liệu điểm du
+lịch cho bản đồ số). Các file trong `docker-entrypoint-initdb.d` không chạy
 lại với volume đã có dữ liệu. Không xóa volume chỉ để nạp lại schema nếu chưa
 sao lưu dữ liệu cần giữ.
 
@@ -128,6 +134,22 @@ http://localhost:8000/api/v1/products?category=do-uong&star=5&district=Đà%20L�
 
 API công khai chỉ trả sản phẩm đã duyệt, thuộc chủ thể đã duyệt và không phải dữ
 liệu demo. Sản phẩm cần có chứng nhận còn hiệu lực hoặc nguồn công nhận mức A/B1.
+
+## Kiểm tra nhanh bản đồ số
+
+- Bản đồ: `http://localhost:5173/ban-do` (gom cụm điểm, lọc, định vị, tìm điểm
+  gần nhất, chỉ đường).
+- Danh sách điểm du lịch: `http://localhost:5173/diem-du-lich`.
+- Chi tiết: `http://localhost:5173/diem-du-lich/cau-dat-farm`.
+- API GeoJSON: `http://localhost:8000/api/v1/map/locations`.
+- Tìm điểm gần trung tâm Đà Lạt:
+  `http://localhost:8000/api/v1/map/nearby?latitude=11.9404&longitude=108.4383&radius_km=20`.
+
+Chức năng chỉ đường cần backend truy cập được `OSRM_BASE_URL`; nếu dịch vụ không
+phản hồi, giao diện hiển thị thông báo và liên kết mở Google Maps. Sau khi `git
+pull`, chạy `docker compose run --rm --no-deps frontend npm ci` để cài thư viện
+Leaflet. Nguồn và cách cập nhật dữ liệu xem tại
+[`docs/DU_LIEU_DIEM_DU_LICH.md`](docs/DU_LIEU_DIEM_DU_LICH.md).
 
 ## Kiểm thử trong Docker
 
@@ -201,6 +223,8 @@ trước khi sử dụng màn hình quản lý sản phẩm:
     Get-Content .\database\migrations\005_add_product_sources.sql -Raw | docker compose exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
     Get-Content .\database\migrations\006_simplify_subject_product_flow.sql -Raw | docker compose exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
     Get-Content .\database\migrations\007_hide_demo_products.sql -Raw | docker compose exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+    Get-Content .\database\migrations\008_tourism_location_map.sql -Raw | docker compose exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+    Get-Content .\database\seed_tourism_locations.sql -Raw | docker compose exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
 
 Mỗi file đều chạy trong transaction và dùng `ON_ERROR_STOP=1`; nếu có lỗi, dừng
 để kiểm tra thay vì chạy tiếp. Không cần chạy các lệnh này với database được tạo
@@ -212,6 +236,7 @@ mới từ `database/schema.sql` hiện tại.
 - ERD: `database/ERD.md`.
 - Hợp đồng REST API dự kiến: `docs/API.md`.
 - Quy trình kiểm duyệt sản phẩm: `docs/QUY_TRINH_KIEM_DUYET_SAN_PHAM.md`.
+- Dữ liệu điểm du lịch và bản đồ số: `docs/DU_LIEU_DIEM_DU_LICH.md`.
 - Tài khoản và dữ liệu kiểm thử: `docs/DU_LIEU_KIEM_THU_SAN_PHAM.md`.
 - Postman collection: `docs/postman/OCOP-Lam-Dong.postman_collection.json`.
 - Hướng dẫn chạy và kế hoạch nhóm: `docs/HUONG_DAN_CHAY_VA_KE_HOACH_NHOM_OCOP_LAM_DONG.docx`.
