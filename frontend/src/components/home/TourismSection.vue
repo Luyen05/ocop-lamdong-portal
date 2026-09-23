@@ -1,14 +1,31 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 
+import LocationCard from '@/components/locations/LocationCard.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
-import { tourismFixtures } from '@/data/home-fixtures'
+import { getLocations } from '@/services/locations'
+import type { LocationListItem } from '@/types/location'
 
-const brokenImages = ref(new Set<string>())
+const locations = ref<LocationListItem[]>([])
+const isLoading = ref(true)
+const hasError = ref(false)
 
-function markImageBroken(placeId: string): void {
-  brokenImages.value = new Set([...brokenImages.value, placeId])
+async function loadLocations(): Promise<void> {
+  isLoading.value = true
+  hasError.value = false
+  try {
+    locations.value = (await getLocations({ page: 1, page_size: 3, sort: 'rating' })).items
+  } catch {
+    locations.value = []
+    hasError.value = true
+  } finally {
+    isLoading.value = false
+  }
 }
+
+onMounted(() => {
+  void loadLocations()
+})
 </script>
 
 <template>
@@ -18,40 +35,30 @@ function markImageBroken(placeId: string): void {
         <span class="eyebrow">Trải Nghiệm Du Lịch Nông Nghiệp</span>
         <h2 id="tourism-title">Điểm Đến Canh Nông Tiêu Biểu</h2>
       </div>
-      <span class="demo-label">Dữ liệu minh họa · chưa công khai</span>
+      <RouterLink class="view-all" :to="{ name: 'locations' }">
+        Xem tất cả <AppIcon name="chevronRight" :size="14" />
+      </RouterLink>
     </div>
 
-    <div class="tourism-grid">
-      <article v-for="place in tourismFixtures" :key="place.id" class="tourism-card">
-        <div class="tourism-visual" :class="`theme-${place.theme}`">
-          <img
-            v-if="!brokenImages.has(place.id)"
-            :src="place.image"
-            :alt="`Ảnh minh họa ${place.name}`"
-            class="tourism-image"
-            @error="markImageBroken(place.id)"
-          />
-          <div class="tourism-overlay" />
-          <span class="type-badge"><AppIcon :name="place.icon" :size="14" /> {{ place.type }}</span>
-          <span class="visual-mark" aria-hidden="true"><AppIcon :name="place.icon" :size="56" :stroke-width="1.4" /></span>
-        </div>
+    <div v-if="isLoading" class="tourism-grid" aria-label="Đang tải điểm du lịch">
+      <div v-for="index in 3" :key="index" class="loading-card placeholder-glow">
+        <span class="placeholder col-12 media-placeholder" />
+        <span class="placeholder col-8 mt-3" />
+        <span class="placeholder col-10 mt-2" />
+      </div>
+    </div>
 
-        <div class="tourism-body">
-          <div class="place-meta">
-            <span><AppIcon name="clock" :size="14" /> {{ place.openingHours }}</span>
-            <span><AppIcon name="map-pin" :size="14" /> {{ place.district }}</span>
-          </div>
-          <h3>{{ place.name }}</h3>
-          <p>{{ place.description }}</p>
-          <ul>
-            <li v-for="experience in place.experiences" :key="experience"><AppIcon name="checkCircle" :size="14" /> {{ experience }}</li>
-          </ul>
-          <div class="tourism-actions">
-            <span><AppIcon name="compass" :size="15" /> Trang chi tiết đang phát triển</span>
-            <a href="#ban-do"><AppIcon name="navigation" :size="15" /> Xem bản đồ minh họa</a>
-          </div>
-        </div>
-      </article>
+    <div v-else-if="locations.length" class="tourism-grid">
+      <LocationCard v-for="location in locations" :key="location.id" :location="location" />
+    </div>
+
+    <div v-else class="tourism-empty" role="status">
+      <p>
+        {{ hasError ? 'Chưa tải được danh sách điểm du lịch.' : 'Chưa có điểm du lịch nào được công bố.' }}
+      </p>
+      <button v-if="hasError" class="btn btn-sm btn-outline-success" type="button" @click="loadLocations">
+        Thử lại
+      </button>
     </div>
   </section>
 </template>
@@ -85,14 +92,14 @@ h2 {
   line-height: 28px;
 }
 
-.demo-label {
-  padding: 5px 9px;
-  border: 1px solid #efd79a;
-  border-radius: 999px;
-  background: var(--ocop-accent-soft);
-  color: #92400e;
-  font-size: var(--ocop-font-size-caption);
+.view-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--ocop-primary-700);
+  font-size: var(--ocop-font-size-small);
   font-weight: 700;
+  text-decoration: none;
 }
 
 .tourism-grid {
@@ -102,193 +109,34 @@ h2 {
   gap: 12px;
 }
 
-.tourism-card {
-  overflow: hidden;
-  border: 1px solid var(--ocop-border);
+.loading-card {
+  min-height: 22rem;
+  padding: 1rem;
   border-radius: var(--ocop-radius-lg);
   background: var(--ocop-card);
-  box-shadow: var(--ocop-shadow-sm);
-  transition: transform var(--ocop-transition), box-shadow var(--ocop-transition);
 }
 
-.tourism-card:hover {
-  box-shadow: var(--ocop-shadow-card);
-  transform: translateY(-2px);
-}
-
-.tourism-visual {
-  position: relative;
-  display: grid;
-  min-height: 185px;
-  overflow: hidden;
-  place-items: center;
-}
-
-.tourism-image {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.tourism-overlay {
-  position: absolute;
-  inset: 0;
-}
-
-.tourism-visual::before,
-.tourism-visual::after {
-  position: absolute;
-  border-radius: 50%;
-  content: '';
-}
-
-.tourism-visual::before {
-  width: 190px;
-  height: 190px;
-  top: -90px;
-  right: -50px;
-  background: rgb(255 255 255 / 20%);
-}
-
-.tourism-visual::after {
-  width: 130px;
-  height: 130px;
-  bottom: -75px;
-  left: -25px;
-  background: rgb(15 23 43 / 10%);
-}
-
-.theme-tea .tourism-overlay {
-  background: linear-gradient(145deg, rgb(183 216 155 / 55%), rgb(53 122 77 / 60%));
-}
-
-.theme-strawberry .tourism-overlay {
-  background: linear-gradient(145deg, rgb(248 180 180 / 55%), rgb(191 48 48 / 60%));
-}
-
-.theme-milk .tourism-overlay {
-  background: linear-gradient(145deg, rgb(220 233 245 / 55%), rgb(108 168 192 / 60%));
-}
-
-.visual-mark {
-  z-index: 1;
-  color: rgb(255 255 255 / 88%);
-  filter: drop-shadow(0 10px 12px rgb(15 23 43 / 20%));
-}
-
-.type-badge {
-  position: absolute;
-  z-index: 1;
-  top: 12px;
-  padding: 5px 9px;
-  border-radius: var(--ocop-radius-sm);
-  background: rgb(15 23 43 / 76%);
-  color: #fff;
-  font-size: var(--ocop-font-size-caption);
-  font-weight: 700;
-}
-
-.type-badge {
-  display: flex;
-  left: 12px;
-  align-items: center;
-  gap: 5px;
-}
-
-.tourism-body {
-  display: flex;
-  min-height: 300px;
-  padding: 16px;
-  flex-direction: column;
-}
-
-.place-meta {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  color: var(--ocop-slate);
-  font-size: var(--ocop-font-size-caption);
-}
-
-.place-meta span,
-.tourism-body li {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.tourism-body h3 {
-  min-height: 40px;
-  margin: 8px 0 6px;
-  color: var(--ocop-navy);
-  font-size: var(--ocop-font-size-title-sm);
-  font-weight: 750;
-  line-height: 20px;
-}
-
-.tourism-body p {
-  display: -webkit-box;
-  overflow: hidden;
-  margin: 0;
-  color: var(--ocop-slate);
-  font-size: var(--ocop-font-size-small);
-  line-height: 1.55;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
-}
-
-.tourism-body ul {
-  display: grid;
-  margin: 12px 0 0;
-  padding: 0;
-  gap: 4px;
-  color: #45556c;
-  font-size: var(--ocop-font-size-caption);
-  list-style: none;
-}
-
-.tourism-body li :deep(.app-icon) {
-  color: var(--ocop-primary-700);
-}
-
-.tourism-actions {
-  display: flex;
-  margin-top: auto;
-  padding-top: 14px;
-  gap: 8px;
-}
-
-.tourism-actions span,
-.tourism-actions a {
-  display: inline-flex;
-  min-height: 36px;
-  flex: 1 1 0;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
+.media-placeholder {
+  display: block;
+  height: 10rem;
   border-radius: var(--ocop-radius-md);
-  font-size: var(--ocop-font-size-caption);
-  font-weight: 700;
-  text-decoration: none;
 }
 
-.tourism-actions span {
-  color: var(--ocop-text-muted);
-  text-align: center;
+.tourism-empty {
+  display: flex;
+  margin-top: 16px;
+  padding: 2rem 1rem;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  border: 1px dashed var(--ocop-border);
+  border-radius: var(--ocop-radius-lg);
+  background: var(--ocop-card);
+  color: var(--ocop-slate);
 }
 
-.tourism-actions a {
-  border: 1px solid var(--ocop-border);
-  background: var(--ocop-surface-muted);
-  color: #45556c;
-  transition: border-color var(--ocop-transition), color var(--ocop-transition);
-}
-
-.tourism-actions a:hover {
-  border-color: var(--ocop-mint-border);
-  color: var(--ocop-primary-900);
+.tourism-empty p {
+  margin: 0;
 }
 
 @media (max-width: 991.98px) {
@@ -304,10 +152,6 @@ h2 {
 
   .tourism-grid {
     grid-template-columns: 1fr;
-  }
-
-  .tourism-actions {
-    flex-direction: column;
   }
 }
 </style>

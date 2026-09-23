@@ -1,59 +1,102 @@
 <script setup lang="ts">
-import AppIcon from '@/components/ui/AppIcon.vue'
-import { mapMarkerFixtures } from '@/data/home-fixtures'
+import { computed, onMounted, ref } from 'vue'
 
-const markerIcons = {
-  'ocop-5': 'award',
-  'ocop-4': 'star',
-  tourism: 'store',
-}
+import AppIcon from '@/components/ui/AppIcon.vue'
+import { getMapLocations } from '@/services/locations'
+import type { MapFeature } from '@/types/location'
+import { locationTypeStyle } from '@/utils/location'
+
+const features = ref<MapFeature[]>([])
+const isLoading = ref(true)
+
+// Ảnh xem trước dùng phép chiếu tuyến tính trong khung bao các điểm thật;
+// bản đồ tương tác đầy đủ nằm ở trang /ban-do.
+const markers = computed(() => {
+  if (!features.value.length) return []
+  const longitudes = features.value.map((feature) => feature.geometry.coordinates[0])
+  const latitudes = features.value.map((feature) => feature.geometry.coordinates[1])
+  const [minLng, maxLng] = [Math.min(...longitudes), Math.max(...longitudes)]
+  const [minLat, maxLat] = [Math.min(...latitudes), Math.max(...latitudes)]
+  const lngSpan = maxLng - minLng || 1
+  const latSpan = maxLat - minLat || 1
+  return features.value.map((feature) => {
+    const [longitude, latitude] = feature.geometry.coordinates
+    const style = locationTypeStyle(feature.properties.type)
+    return {
+      slug: feature.properties.slug,
+      name: feature.properties.name,
+      icon: style.icon,
+      color: style.color,
+      x: maxLng === minLng ? 50 : 8 + ((longitude - minLng) / lngSpan) * 84,
+      y: maxLat === minLat ? 50 : 10 + ((maxLat - latitude) / latSpan) * 72,
+    }
+  })
+})
+
+const legend = computed(() => {
+  const seen = new Map<string, { label: string; icon: string; color: string }>()
+  for (const feature of features.value) {
+    if (seen.has(feature.properties.type)) continue
+    const style = locationTypeStyle(feature.properties.type)
+    seen.set(feature.properties.type, {
+      label: feature.properties.type_label,
+      icon: style.icon,
+      color: style.color,
+    })
+  }
+  return [...seen.values()]
+})
+
+onMounted(async () => {
+  try {
+    features.value = (await getMapLocations()).features
+  } catch {
+    features.value = []
+  } finally {
+    isLoading.value = false
+  }
+})
 </script>
 
 <template>
   <section id="ban-do" class="map-section" aria-labelledby="map-title">
     <div class="section-heading">
       <div>
-        <span class="eyebrow">Hệ Thống Bản Đồ Tọa Độ PostGIS</span>
-        <h2 id="map-title">Xem Nhanh Bản Đồ Số Nông Sản Lâm Đồng</h2>
-        <p>Bản đồ định vị GPS các chủ thể OCOP, đồi chè và trang trại tại Lâm Đồng</p>
+        <span class="eyebrow">Bản Đồ Số PostGIS &amp; Leaflet</span>
+        <h2 id="map-title">Xem Nhanh Bản Đồ Du Lịch Nông Nghiệp Lâm Đồng</h2>
+        <p>Định vị trang trại, đồi chè, vườn dâu và tìm đường đến điểm gần bạn nhất</p>
       </div>
-      <span class="demo-label">Dữ liệu minh họa</span>
+      <span class="demo-label">{{ features.length }} điểm đến</span>
     </div>
 
-    <div class="map-preview" role="img" aria-label="Bản đồ minh họa các điểm OCOP và du lịch Lâm Đồng">
+    <div class="map-preview">
       <div class="map-grid" aria-hidden="true" />
-      <span class="region-label label-da-lat">Đà Lạt</span>
-      <span class="region-label label-bao-loc">Bảo Lộc</span>
-      <span class="region-label label-duc-trong">Đức Trọng</span>
+      <p v-if="isLoading" class="map-empty">Đang tải điểm đến...</p>
+      <p v-else-if="!markers.length" class="map-empty">Chưa có điểm đến được công bố.</p>
 
-      <span
-        v-for="marker in mapMarkerFixtures"
-        :key="marker.id"
+      <RouterLink
+        v-for="marker in markers"
+        :key="marker.slug"
         class="map-marker"
-        :class="`marker-${marker.type}`"
-        :style="{ left: `${marker.x}%`, top: `${marker.y}%` }"
-        :title="marker.label"
+        :style="{ left: `${marker.x}%`, top: `${marker.y}%`, '--marker-color': marker.color }"
+        :to="{ name: 'map', query: { diem: marker.slug } }"
+        :aria-label="`Xem ${marker.name} trên bản đồ`"
       >
-        <AppIcon :name="markerIcons[marker.type]" :size="15" />
-        <span>{{ marker.label }}</span>
-      </span>
+        <AppIcon :name="marker.icon" :size="15" />
+        <span>{{ marker.name }}</span>
+      </RouterLink>
 
-      <div class="map-controls" aria-hidden="true">
-        <span>+</span>
-        <span>−</span>
-      </div>
-
-      <div class="map-legend">
-        <strong>Chú giải bản đồ OCOP:</strong>
-        <span><AppIcon name="award" :size="14" /> OCOP 5 Sao</span>
-        <span><AppIcon name="star" :size="14" /> OCOP 4 Sao</span>
-        <span><AppIcon name="store" :size="14" /> Điểm Du Lịch Canh Nông</span>
+      <div v-if="legend.length" class="map-legend">
+        <strong>Chú giải:</strong>
+        <span v-for="item in legend" :key="item.label">
+          <AppIcon :name="item.icon" :size="14" :style="{ color: item.color }" /> {{ item.label }}
+        </span>
       </div>
     </div>
 
-    <button class="map-button" type="button" disabled title="Bản đồ tương tác sẽ được triển khai ở module GIS">
-      Mở Bản Đồ Toàn Màn Hình <AppIcon name="chevronRight" :size="16" />
-    </button>
+    <RouterLink class="map-button" :to="{ name: 'map' }">
+      Mở Bản Đồ Số Toàn Màn Hình <AppIcon name="chevronRight" :size="16" />
+    </RouterLink>
   </section>
 </template>
 
@@ -130,21 +173,11 @@ h2 {
   transform: rotate(-4deg) scale(1.08);
 }
 
-.region-label {
-  position: absolute;
-  color: #64748b;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.label-da-lat { top: 42%; left: 48%; }
-.label-bao-loc { top: 82%; left: 20%; }
-.label-duc-trong { top: 69%; left: 54%; }
-
 .map-marker {
   position: absolute;
+  padding: 0;
+  background: var(--marker-color, var(--ocop-primary-700));
+  text-decoration: none;
   z-index: 2;
   display: grid;
   width: 34px;
@@ -175,43 +208,13 @@ h2 {
   transform: rotate(45deg);
 }
 
-.map-marker:hover > span {
+.map-marker:hover > span,
+.map-marker:focus-visible > span {
   display: block;
 }
 
-.marker-ocop-5 { background: var(--ocop-danger); }
-.marker-ocop-4 { background: var(--ocop-gold); }
-.marker-tourism { background: var(--ocop-primary-700); }
-
 .map-marker:not(:hover) {
   font-size: 13px;
-}
-
-.map-controls {
-  position: absolute;
-  z-index: 2;
-  top: 16px;
-  left: 16px;
-  display: grid;
-  overflow: hidden;
-  border: 1px solid #cbd5e1;
-  border-radius: var(--ocop-radius-sm);
-  background: #fff;
-  box-shadow: 0 4px 10px rgb(15 23 43 / 10%);
-}
-
-.map-controls span {
-  display: grid;
-  width: 34px;
-  height: 34px;
-  place-items: center;
-  color: var(--ocop-navy);
-  font-size: 20px;
-  font-weight: 600;
-}
-
-.map-controls span + span {
-  border-top: 1px solid var(--ocop-border);
 }
 
 .map-legend {
@@ -244,6 +247,7 @@ h2 {
 
 .map-button {
   display: flex;
+  width: max-content;
   margin: 12px 0 0 auto;
   padding: 9px 14px;
   align-items: center;
@@ -252,9 +256,26 @@ h2 {
   border-radius: var(--ocop-radius-md);
   background: var(--ocop-primary-700);
   color: #fff;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
-  opacity: 0.72;
+  text-decoration: none;
+  transition: background var(--ocop-transition);
+}
+
+.map-button:hover {
+  background: var(--ocop-primary-900);
+  color: #fff;
+}
+
+.map-empty {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  display: grid;
+  margin: 0;
+  place-items: center;
+  color: var(--ocop-slate);
+  font-size: 13px;
 }
 
 @media (max-width: 767.98px) {
