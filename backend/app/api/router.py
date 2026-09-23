@@ -4,6 +4,8 @@ from app.api.routes import (
     admin,
     auth,
     categories,
+    locations,
+    maps,
     news,
     products,
     subject,
@@ -21,3 +23,5 @@ api_router.include_router(subject.router)
 api_router.include_router(categories.router)
 api_router.include_router(news.router)
 api_router.include_router(products.router)
+api_router.include_router(locations.router)
+api_router.include_router(maps.router)
