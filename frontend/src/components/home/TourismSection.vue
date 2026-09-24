@@ -72,7 +72,7 @@ onMounted(() => {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 16px;
+  gap: var(--ocop-space-4);
 }
 
 .eyebrow {
@@ -84,7 +84,7 @@ onMounted(() => {
 }
 
 h2 {
-  margin: 4px 0 0;
+  margin: var(--ocop-space-1) 0 0;
   color: var(--ocop-navy);
   font-size: var(--ocop-font-size-title-md);
   font-weight: 800;
@@ -95,7 +95,7 @@ h2 {
 .view-all {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--ocop-space-1);
   color: var(--ocop-primary-700);
   font-size: var(--ocop-font-size-small);
   font-weight: 700;
@@ -104,9 +104,9 @@ h2 {
 
 .tourism-grid {
   display: grid;
-  margin-top: 16px;
+  margin-top: var(--ocop-space-4);
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
+  gap: var(--ocop-space-3);
 }
 
 .loading-card {
@@ -124,11 +124,11 @@ h2 {
 
 .tourism-empty {
   display: flex;
-  margin-top: 16px;
+  margin-top: var(--ocop-space-4);
   padding: 2rem 1rem;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: var(--ocop-space-2);
   border: 1px dashed var(--ocop-border);
   border-radius: var(--ocop-radius-lg);
   background: var(--ocop-card);

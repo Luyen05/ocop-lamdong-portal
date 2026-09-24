@@ -81,8 +81,8 @@ const formattedPrice = computed(() => {
   border: 1px solid var(--ocop-border);
   border-radius: var(--ocop-radius-lg);
   background: var(--ocop-card);
-  box-shadow: 0 4px 12px rgb(15 23 43 / 5%);
-  transition: transform 180ms ease, box-shadow 180ms ease;
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--ocop-neutral-900) 5%, transparent);
+  transition: transform var(--ocop-transition), box-shadow var(--ocop-transition);
 }
 
 .product-card-link {
@@ -96,7 +96,7 @@ const formattedPrice = computed(() => {
 
 .product-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 16px 28px rgb(15 23 43 / 12%);
+  box-shadow: 0 16px 28px color-mix(in srgb, var(--ocop-neutral-900) 12%, transparent);
 }
 
 .product-media {
@@ -104,7 +104,7 @@ const formattedPrice = computed(() => {
   display: block;
   overflow: hidden;
   aspect-ratio: 1.4 / 1;
-  background: #e9eef2;
+  background: var(--ocop-border-soft);
 }
 
 .product-media > img,
@@ -126,15 +126,15 @@ const formattedPrice = computed(() => {
   display: grid;
   place-content: center;
   background:
-    radial-gradient(circle at 20% 15%, rgb(255 255 255 / 75%), transparent 7rem),
-    linear-gradient(145deg, #dcead8, #a9c6a4);
+    radial-gradient(circle at 20% 15%, color-mix(in srgb, var(--ocop-white) 75%, transparent), transparent 7rem),
+    linear-gradient(145deg, var(--ocop-sage-50), var(--ocop-sage-300));
   color: var(--ocop-primary-900);
   text-align: center;
 }
 
 .product-placeholder span {
-  color: rgb(0 79 59 / 70%);
-  font-size: 11px;
+  color: color-mix(in srgb, var(--ocop-primary-900) 70%, transparent);
+  font-size: var(--ocop-font-size-xs);
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -153,7 +153,7 @@ const formattedPrice = computed(() => {
   padding: 5px 10px;
   border-radius: var(--ocop-radius-sm);
   color: var(--ocop-white);
-  font-size: 11px;
+  font-size: var(--ocop-font-size-xs);
   font-weight: 700;
   line-height: 14px;
 }
@@ -162,7 +162,7 @@ const formattedPrice = computed(() => {
   top: 12px;
   left: 12px;
   background: var(--ocop-star-strong);
-  box-shadow: 0 3px 8px rgb(151 60 0 / 20%);
+  box-shadow: 0 3px 8px color-mix(in srgb, var(--ocop-notice) 20%, transparent);
 }
 
 .product-body {
@@ -170,15 +170,15 @@ const formattedPrice = computed(() => {
   min-height: 188px;
   flex: 1;
   flex-direction: column;
-  padding: 16px;
+  padding: var(--ocop-space-4);
 }
 
 .product-location {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--ocop-space-1);
   color: var(--ocop-text-secondary);
-  font-size: 12px;
+  font-size: var(--ocop-font-size-caption);
   font-weight: 500;
 }
 
@@ -186,9 +186,9 @@ const formattedPrice = computed(() => {
   display: -webkit-box;
   overflow: hidden;
   min-height: 42px;
-  margin: 7px 0 4px;
+  margin: 7px 0 var(--ocop-space-1);
   color: var(--ocop-text-primary);
-  font-size: 16px;
+  font-size: var(--ocop-font-size-body-lg);
   font-weight: 750;
   line-height: 1.4;
   -webkit-box-orient: vertical;
@@ -200,15 +200,15 @@ const formattedPrice = computed(() => {
   margin: 0;
   align-items: center;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--ocop-space-2);
   color: var(--ocop-text-secondary);
-  font-size: 12px;
+  font-size: var(--ocop-font-size-caption);
 }
 
 .product-meta span {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--ocop-space-1);
   color: var(--ocop-success);
   font-weight: 700;
 }
@@ -217,16 +217,16 @@ const formattedPrice = computed(() => {
   display: grid;
   min-width: 0;
   margin-top: auto;
-  padding-top: 12px;
+  padding-top: var(--ocop-space-3);
   gap: 2px;
   color: var(--ocop-text-tertiary);
-  font-size: 11px;
+  font-size: var(--ocop-font-size-xs);
 }
 
 .product-subject strong {
   overflow: hidden;
   color: var(--ocop-text-muted);
-  font-size: 12px;
+  font-size: var(--ocop-font-size-caption);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -240,7 +240,7 @@ const formattedPrice = computed(() => {
 .product-price-row {
   margin-top: 7px;
   justify-content: space-between;
-  gap: 8px;
+  gap: var(--ocop-space-2);
 }
 
 .product-price {
@@ -250,7 +250,7 @@ const formattedPrice = computed(() => {
 
 .product-price strong {
   color: var(--ocop-primary-700);
-  font-size: 16px;
+  font-size: var(--ocop-font-size-body-lg);
   line-height: 20px;
   white-space: nowrap;
 }
@@ -258,7 +258,7 @@ const formattedPrice = computed(() => {
 .product-price small {
   overflow: hidden;
   color: var(--ocop-text-tertiary);
-  font-size: 11px;
+  font-size: var(--ocop-font-size-xs);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -266,13 +266,13 @@ const formattedPrice = computed(() => {
 .product-rating {
   flex: 0 0 auto;
   color: var(--ocop-star);
-  font-size: 12px;
+  font-size: var(--ocop-font-size-caption);
   font-weight: 700;
 }
 
 .product-card-link:focus-visible {
   border-radius: inherit;
-  outline: 3px solid rgb(53 164 117 / 28%);
+  outline: 3px solid color-mix(in srgb, var(--ocop-primary-500) 28%, transparent);
   outline-offset: -3px;
 }
 </style>

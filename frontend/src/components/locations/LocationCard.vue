@@ -105,7 +105,7 @@ const visibleServices = computed(() => props.location.services.slice(0, 3))
   padding: 5px 9px;
   border-radius: var(--ocop-radius-sm);
   background: var(--type-color, var(--ocop-primary-700));
-  color: #fff;
+  color: var(--ocop-white);
   font-size: var(--ocop-font-size-caption);
   font-weight: 700;
 }
@@ -114,7 +114,7 @@ const visibleServices = computed(() => props.location.services.slice(0, 3))
   display: flex;
   flex: 1;
   flex-direction: column;
-  padding: 16px;
+  padding: var(--ocop-space-4);
 }
 
 .location-meta {
@@ -129,11 +129,11 @@ const visibleServices = computed(() => props.location.services.slice(0, 3))
 .location-meta span {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--ocop-space-1);
 }
 
 h3 {
-  margin: 8px 0 6px;
+  margin: var(--ocop-space-2) 0 6px;
   font-size: var(--ocop-font-size-title-sm);
   font-weight: 750;
   line-height: 1.35;
@@ -163,14 +163,14 @@ p {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  margin: 12px 0 0;
+  margin: var(--ocop-space-3) 0 0;
   padding: 0;
   list-style: none;
 }
 
 .service-list li {
-  padding: 3px 8px;
-  border-radius: 999px;
+  padding: 3px var(--ocop-space-2);
+  border-radius: var(--ocop-radius-pill);
   background: var(--ocop-mint-soft);
   color: var(--ocop-primary-900);
   font-size: var(--ocop-font-size-caption);
@@ -181,7 +181,7 @@ p {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: var(--ocop-space-2);
   margin-top: auto;
   padding-top: 14px;
 }
@@ -196,11 +196,11 @@ p {
   min-height: 36px;
   align-items: center;
   gap: 5px;
-  padding: 0 12px;
+  padding: 0 var(--ocop-space-3);
   border: 1px solid var(--ocop-border);
   border-radius: var(--ocop-radius-md);
   background: var(--ocop-surface-muted);
-  color: #45556c;
+  color: var(--ocop-text-muted);
   font-size: var(--ocop-font-size-caption);
   font-weight: 700;
   text-decoration: none;

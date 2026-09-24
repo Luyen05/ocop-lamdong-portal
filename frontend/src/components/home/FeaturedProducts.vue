@@ -68,21 +68,21 @@ onMounted(loadProducts)
 
 <style scoped>
 .featured-section {
-  padding-top: 48px;
+  padding-top: var(--ocop-space-12);
 }
 
 .section-heading {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 16px;
+  gap: var(--ocop-space-4);
 }
 
 .eyebrow {
   display: block;
-  margin-bottom: 4px;
-  color: #c2410c;
-  font-size: 11px;
+  margin-bottom: var(--ocop-space-1);
+  color: var(--ocop-notice-strong);
+  font-size: var(--ocop-font-size-xs);
   font-weight: 800;
   line-height: 16px;
   text-transform: uppercase;
@@ -100,24 +100,24 @@ onMounted(loadProducts)
 .section-heading > a {
   flex: 0 0 auto;
   color: var(--ocop-primary-700);
-  font-size: 12px;
+  font-size: var(--ocop-font-size-caption);
   font-weight: 700;
   text-decoration: none;
 }
 
 .product-grid {
   display: grid;
-  margin-top: 16px;
+  margin-top: var(--ocop-space-4);
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
+  gap: var(--ocop-space-3);
 }
 
 .product-skeleton {
   min-height: 410px;
-  padding: 12px;
+  padding: var(--ocop-space-3);
   border: 1px solid var(--ocop-border);
   border-radius: var(--ocop-radius-lg);
-  background: #fff;
+  background: var(--ocop-card);
 }
 
 .product-skeleton .placeholder {
@@ -131,11 +131,11 @@ onMounted(loadProducts)
 }
 
 .featured-empty {
-  margin-top: 16px;
-  padding: 44px 20px;
+  margin-top: var(--ocop-space-4);
+  padding: 44px var(--ocop-space-5);
   border: 1px dashed var(--ocop-border);
   border-radius: var(--ocop-radius-lg);
-  background: #fff;
+  background: var(--ocop-card);
   color: var(--ocop-slate);
   text-align: center;
 }
@@ -147,17 +147,17 @@ onMounted(loadProducts)
 
 .featured-empty p {
   margin: 6px 0 0;
-  font-size: 12px;
+  font-size: var(--ocop-font-size-caption);
 }
 
 .featured-empty button {
-  margin-top: 12px;
+  margin-top: var(--ocop-space-3);
   padding: 7px 14px;
   border: 1px solid var(--ocop-primary-700);
   border-radius: var(--ocop-radius-sm);
-  background: #fff;
+  background: var(--ocop-card);
   color: var(--ocop-primary-700);
-  font-size: 12px;
+  font-size: var(--ocop-font-size-caption);
   font-weight: 700;
 }
 

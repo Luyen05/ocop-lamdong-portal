@@ -71,26 +71,26 @@ const stats = [
 
 <style scoped>
 .site-footer {
-  padding: 48px 0 28px;
+  padding: var(--ocop-space-12) 0 28px;
   background: var(--ocop-sidebar);
   color: var(--ocop-sidebar-muted);
 }
 
 .stat-grid {
   display: grid;
-  padding-bottom: 32px;
+  padding-bottom: var(--ocop-space-8);
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 16px;
-  border-bottom: 1px solid rgb(148 163 184 / 12%);
+  gap: var(--ocop-space-4);
+  border-bottom: 1px solid color-mix(in srgb, var(--ocop-neutral-400) 12%, transparent);
 }
 
 .stat-card {
   display: flex;
   min-height: 82px;
-  padding: 16px;
+  padding: var(--ocop-space-4);
   align-items: center;
-  gap: 12px;
-  border: 1px solid rgb(148 163 184 / 10%);
+  gap: var(--ocop-space-3);
+  border: 1px solid color-mix(in srgb, var(--ocop-neutral-400) 10%, transparent);
   border-radius: var(--ocop-radius-md);
   background: var(--ocop-sidebar-card);
 }
@@ -102,13 +102,13 @@ const stats = [
   flex: 0 0 auto;
   place-items: center;
   border-radius: var(--ocop-radius-sm);
-  font-size: 18px;
+  font-size: var(--ocop-font-size-title-sm);
 }
 
-.tone-green .stat-icon { background: rgb(102 201 150 / 14%); color: #83d7ad; }
-.tone-gold .stat-icon { background: rgb(217 155 36 / 14%); color: #e9b958; }
-.tone-blue .stat-icon { background: rgb(40 120 165 / 18%); color: #75b5d6; }
-.tone-purple .stat-icon { background: rgb(141 99 164 / 16%); color: #c09bd0; }
+.tone-green .stat-icon { background: color-mix(in srgb, var(--ocop-mint) 14%, transparent); color: var(--ocop-mint-300); }
+.tone-gold .stat-icon { background: color-mix(in srgb, var(--ocop-gold) 14%, transparent); color: var(--ocop-gold-300); }
+.tone-blue .stat-icon { background: color-mix(in srgb, var(--ocop-blue) 18%, transparent); color: var(--ocop-blue-300); }
+.tone-purple .stat-icon { background: color-mix(in srgb, var(--ocop-tone-purple) 16%, transparent); color: var(--ocop-tone-purple-light); }
 
 .stat-card strong,
 .stat-card small {
@@ -116,29 +116,29 @@ const stats = [
 }
 
 .stat-card strong {
-  color: #fff;
-  font-size: 18px;
+  color: var(--ocop-white);
+  font-size: var(--ocop-font-size-title-sm);
   line-height: 22px;
 }
 
 .stat-card small {
   margin-top: 2px;
-  color: #7f8da4;
-  font-size: 11px;
+  color: var(--ocop-text-on-dark-muted);
+  font-size: var(--ocop-font-size-xs);
 }
 
 .footer-grid {
   display: grid;
-  padding: 36px 0 32px;
+  padding: 36px 0 var(--ocop-space-8);
   grid-template-columns: 1.15fr 1fr 1.1fr 1fr;
-  gap: 48px;
-  border-bottom: 1px solid rgb(148 163 184 / 12%);
+  gap: var(--ocop-space-12);
+  border-bottom: 1px solid color-mix(in srgb, var(--ocop-neutral-400) 12%, transparent);
 }
 
 .footer-grid h2 {
-  margin: 0 0 12px;
-  color: #f8fafc;
-  font-size: 12px;
+  margin: 0 0 var(--ocop-space-3);
+  color: var(--ocop-surface-subtle);
+  font-size: var(--ocop-font-size-caption);
   font-weight: 750;
   line-height: 18px;
 }
@@ -167,8 +167,8 @@ const stats = [
 .footer-grid a,
 .footer-grid address {
   margin: 0;
-  color: #8290a6;
-  font-size: 11px;
+  color: var(--ocop-text-on-dark-muted);
+  font-size: var(--ocop-font-size-xs);
   font-style: normal;
   line-height: 18px;
   text-decoration: none;
@@ -181,11 +181,11 @@ const stats = [
 }
 
 .footer-grid a:hover {
-  color: #d0fae5;
+  color: var(--ocop-mint-100);
 }
 
 .footer-brand > p {
-  margin-bottom: 12px;
+  margin-bottom: var(--ocop-space-3);
 }
 
 .footer-brand address {
@@ -201,23 +201,23 @@ const stats = [
 
 .footer-brand address :deep(.app-icon) {
   margin-top: 2px;
-  color: #83d7ad;
+  color: var(--ocop-mint-300);
 }
 
 .info-card {
   align-self: start;
-  padding: 16px;
-  border: 1px solid rgb(148 163 184 / 14%);
+  padding: var(--ocop-space-4);
+  border: 1px solid color-mix(in srgb, var(--ocop-neutral-400) 14%, transparent);
   border-radius: var(--ocop-radius-md);
-  background: color-mix(in srgb, var(--ocop-sidebar-card) 88%, white);
+  background: color-mix(in srgb, var(--ocop-sidebar-card) 88%, var(--ocop-white));
 }
 
 .info-card strong {
   display: flex;
   align-items: center;
   gap: 6px;
-  color: #6ee7b7;
-  font-size: 11px;
+  color: var(--ocop-mint-400);
+  font-size: var(--ocop-font-size-xs);
 }
 
 .info-card p {
@@ -229,19 +229,19 @@ const stats = [
   padding: 7px 10px;
   border-radius: 6px;
   background: var(--ocop-primary-700);
-  color: #fff;
-  font-size: 11px;
+  color: var(--ocop-white);
+  font-size: var(--ocop-font-size-xs);
   font-weight: 700;
   text-align: center;
 }
 
 .footer-bottom {
   display: flex;
-  padding-top: 24px;
+  padding-top: var(--ocop-space-6);
   justify-content: space-between;
-  gap: 20px;
-  color: #65748b;
-  font-size: 11px;
+  gap: var(--ocop-space-5);
+  color: var(--ocop-neutral-500);
+  font-size: var(--ocop-font-size-xs);
 }
 
 @media (max-width: 991.98px) {
@@ -251,13 +251,13 @@ const stats = [
   }
 
   .footer-grid {
-    gap: 32px;
+    gap: var(--ocop-space-8);
   }
 }
 
 @media (max-width: 575.98px) {
   .site-footer {
-    padding-top: 32px;
+    padding-top: var(--ocop-space-8);
   }
 
   .stat-grid,

@@ -1,0 +1,182 @@
+/*
+ * Design token dùng chung của Cổng thông tin OCOP Lâm Đồng.
+ * Mọi màu, khoảng cách, bo góc, cỡ chữ, đổ bóng trong component phải lấy từ đây.
+ * Màu có độ trong suốt: color-mix(in srgb, var(--ocop-...) 20%, transparent).
+ */
+:root {
+  /* Kiểu chữ */
+  --ocop-font-family-sans: "Segoe UI", Arial, sans-serif;
+
+  /* Màu thương hiệu: xanh lá cao nguyên */
+  --ocop-primary-950: #12372a;
+  --ocop-primary-900: #18543f;
+  --ocop-primary-700: #1e714f;
+  --ocop-primary-500: #35a475;
+  --ocop-mint: #66c996;
+  --ocop-mint-soft: #edf8f1;
+  --ocop-mint-border: #b8dfc8;
+  --ocop-mint-100: #d0fae5;
+  --ocop-mint-200: #a4f4cf;
+  --ocop-mint-300: #83d7ad;
+  --ocop-mint-400: #6ee7b7;
+  --ocop-emerald-500: #00bc7d;
+
+  /* Màu phụ: vàng OCOP, nâu đất, xanh dương */
+  --ocop-blue: #2878a5;
+  --ocop-gold: #d99b24;
+  --ocop-accent: var(--ocop-gold);
+  --ocop-accent-soft: #fff7e6;
+  --ocop-secondary-700: #7a5137;
+  --ocop-secondary-100: #f4ebe4;
+  --ocop-gold-300: #e9b958;
+  --ocop-gold-700: #936e0b;
+  --ocop-blue-300: #75b5d6;
+  --ocop-blue-600: #2563eb;
+  --ocop-blue-700: #1d4ed8;
+
+  /* Màu trạng thái */
+  --ocop-danger: #c2414b;
+  --ocop-success: #247a4f;
+  --ocop-warning: #a96f16;
+  --ocop-info: #2878a5;
+  --ocop-success-soft: #eaf7ef;
+  --ocop-warning-soft: #fff7e6;
+  --ocop-danger-soft: #fff0f1;
+  --ocop-info-soft: #edf6fb;
+  --ocop-danger-strong: #b42318;
+  --ocop-danger-border: #fecaca;
+  --ocop-warning-strong: #8a5900;
+  --ocop-warning-surface: #fff7d6;
+  --ocop-warning-border: #e8cf98;
+  --ocop-notice: #9a4d12;
+  --ocop-notice-strong: #c2410c;
+  --ocop-notice-deep: #7c4a11;
+  --ocop-notice-soft: #fff7ed;
+  --ocop-notice-border: #fed7aa;
+  --ocop-info-strong: #1d4f91;
+  --ocop-info-border: #c7d9ee;
+
+  /* Chữ */
+  --ocop-navy: #18251f;
+  --ocop-slate: #66756d;
+  --ocop-text-primary: var(--ocop-navy);
+  --ocop-text-secondary: var(--ocop-slate);
+  --ocop-text-muted: #45556c;
+  --ocop-text-tertiary: #90a1b9;
+  --ocop-text-on-dark: #d9e9e3;
+  --ocop-text-on-dark-muted: #8290a6;
+
+  /* Nền, viền, thanh bên */
+  --ocop-surface: #f7f9f7;
+  --ocop-surface-muted: #eef3ef;
+  --ocop-surface-subtle: #f8fafc;
+  --ocop-card: #ffffff;
+  --ocop-border: #dce5df;
+  --ocop-border-soft: #edf1f4;
+  --ocop-white: #ffffff;
+  --ocop-sidebar: #102d25;
+  --ocop-sidebar-card: #1a263c;
+  --ocop-sidebar-muted: #a9c1b8;
+  --ocop-border-strong: #becbbb;
+  --ocop-black: #000000;
+
+  /* Trung tính lạnh (khu quản trị, chủ thể) */
+  --ocop-neutral-100: #f1f5f9;
+  --ocop-neutral-200: #e2e8f0;
+  --ocop-neutral-300: #cbd5e1;
+  --ocop-neutral-400: #94a3b8;
+  --ocop-neutral-500: #64748b;
+  --ocop-neutral-600: #526277;
+  --ocop-neutral-700: #334155;
+  --ocop-neutral-900: #0f172b;
+  --ocop-neutral-950: #020618;
+
+  /* Xanh lá trung tính và xanh chanh (trang công khai, trang trí) */
+  --ocop-sage-50: #edf4e5;
+  --ocop-sage-200: #cbdcbc;
+  --ocop-sage-300: #a9c6a4;
+  --ocop-sage-800: #4f5d52;
+  --ocop-lime-100: #deecba;
+  --ocop-lime-200: #d6eaaa;
+  --ocop-lime-300: #b8d691;
+
+  /* Bảng màu phân loại: danh mục sản phẩm, loại hình điểm du lịch, thống kê */
+  --ocop-tone-leaf: #527a36;
+  --ocop-tone-leaf-soft: #f0f7ed;
+  --ocop-tone-clay: #b85c38;
+  --ocop-tone-clay-soft: #fff2ed;
+  --ocop-tone-rose: #a84b6a;
+  --ocop-tone-rose-soft: #fdf1f5;
+  --ocop-tone-violet: #8e4fb3;
+  --ocop-tone-purple: #806098;
+  --ocop-tone-purple-light: #c09bd0;
+  --ocop-tone-lime: #5b8c2a;
+
+  /* Loại hình điểm du lịch (marker bản đồ, huy hiệu loại hình) */
+  --ocop-location-tea-coffee: var(--ocop-primary-700);
+  --ocop-location-fruit: var(--ocop-danger);
+  --ocop-location-flower: var(--ocop-tone-violet);
+  --ocop-location-dairy: var(--ocop-blue);
+  --ocop-location-vegetable: var(--ocop-tone-lime);
+  --ocop-location-craft: var(--ocop-secondary-700);
+  --ocop-location-farmstay: var(--ocop-warning);
+  --ocop-location-other: var(--ocop-blue);
+  --ocop-location-user: var(--ocop-blue-600);
+  --ocop-location-route: var(--ocop-primary-700);
+
+  /* Huy hiệu sao OCOP */
+  --ocop-star: #f59e0b;
+  --ocop-star-strong: #ff9500;
+
+  /* Bo góc */
+  --ocop-radius-xs: 4px;
+  --ocop-radius-sm: 8px;
+  --ocop-radius-md: 12px;
+  --ocop-radius-lg: 16px;
+  --ocop-radius-xl: 24px;
+  --ocop-radius-pill: 999px;
+
+  /* Khoảng cách (bước 4px) */
+  --ocop-space-1: 4px;
+  --ocop-space-2: 8px;
+  --ocop-space-3: 12px;
+  --ocop-space-4: 16px;
+  --ocop-space-5: 20px;
+  --ocop-space-6: 24px;
+  --ocop-space-8: 32px;
+  --ocop-space-12: 48px;
+  --ocop-space-16: 64px;
+
+  /* Cỡ chữ (2xs, xs là cỡ cũ còn dùng, cần nâng lên khi thiết kế lại) */
+  --ocop-font-size-2xs: 0.625rem;
+  --ocop-font-size-xs: 0.6875rem;
+  --ocop-font-size-caption: 0.75rem;
+  --ocop-font-size-small: 0.8125rem;
+  --ocop-font-size-body: 0.9375rem;
+  --ocop-font-size-body-lg: 1rem;
+  --ocop-font-size-title-sm: 1.125rem;
+  --ocop-font-size-title-md: 1.5rem;
+  --ocop-font-size-title-lg: clamp(2rem, 4vw, 2.875rem);
+
+  /* Chiều cao control, đổ bóng, chuyển động */
+  --ocop-control-sm: 40px;
+  --ocop-control-md: 44px;
+  --ocop-control-lg: 48px;
+  --ocop-shadow-sm: 0 2px 8px rgb(18 55 42 / 8%);
+  --ocop-shadow-card: 0 10px 28px rgb(18 55 42 / 10%);
+  --ocop-shadow-overlay: 0 30px 70px rgb(15 23 43 / 28%);
+  --ocop-transition: 180ms ease;
+
+  /* Bố cục và điểm ngắt (điểm ngắt chỉ để tham chiếu: CSS không cho dùng biến trong @media) */
+  --ocop-container: 1280px;
+  --ocop-content: 1216px;
+  --ocop-breakpoint-sm: 576px;
+  --ocop-breakpoint-md: 768px;
+  --ocop-breakpoint-lg: 992px;
+  --ocop-breakpoint-xl: 1200px;
+
+  /* Tên cũ giữ lại để tương thích */
+  --ocop-green: var(--ocop-primary-700);
+  --ocop-green-dark: var(--ocop-primary-950);
+  --ocop-cream: var(--ocop-surface);
+}

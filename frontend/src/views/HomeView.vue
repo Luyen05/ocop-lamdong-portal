@@ -27,7 +27,7 @@ import TourismSection from '@/components/home/TourismSection.vue'
 }
 
 .home-content {
-  padding-top: 24px;
+  padding-top: var(--ocop-space-6);
 }
 
 </style>

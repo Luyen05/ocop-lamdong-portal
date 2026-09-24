@@ -46,10 +46,10 @@ onBeforeUnmount(() => window.removeEventListener('scroll', updateVisibility))
   height: 44px;
   padding: 0;
   place-items: center;
-  border: 1px solid rgb(255 255 255 / 28%);
+  border: 1px solid color-mix(in srgb, var(--ocop-white) 28%, transparent);
   border-radius: 50%;
   background: var(--ocop-primary-700);
-  box-shadow: 0 10px 24px rgb(18 55 42 / 24%);
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--ocop-primary-950) 24%, transparent);
   color: var(--ocop-white);
 }
 
@@ -59,7 +59,7 @@ onBeforeUnmount(() => window.removeEventListener('scroll', updateVisibility))
 }
 
 .scroll-to-top:focus-visible {
-  outline: 3px solid rgb(53 164 117 / 32%);
+  outline: 3px solid color-mix(in srgb, var(--ocop-primary-500) 32%, transparent);
   outline-offset: 3px;
 }
 

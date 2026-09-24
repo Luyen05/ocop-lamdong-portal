@@ -202,8 +202,8 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   z-index: 100;
   top: 0;
   border-bottom: 1px solid var(--ocop-border);
-  background: rgb(255 255 255 / 96%);
-  box-shadow: 0 1px 1px rgb(0 0 0 / 5%);
+  background: color-mix(in srgb, var(--ocop-white) 96%, transparent);
+  box-shadow: 0 1px 1px color-mix(in srgb, var(--ocop-black) 5%, transparent);
   backdrop-filter: blur(14px);
 }
 
@@ -211,8 +211,8 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   min-height: 28px;
   padding: 6px 0;
   background: var(--ocop-primary-950);
-  color: #cdebd9;
-  font-size: 12px;
+  color: var(--ocop-mint-100);
+  font-size: var(--ocop-font-size-caption);
 }
 
 .announcement-inner,
@@ -225,13 +225,13 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 
 .announcement-inner {
   justify-content: space-between;
-  gap: 16px;
+  gap: var(--ocop-space-4);
 }
 
 .announcement-inner p {
-  gap: 8px;
+  gap: var(--ocop-space-2);
   margin: 0;
-  color: #e3f4ea;
+  color: var(--ocop-success-soft);
   font-weight: 500;
 }
 
@@ -245,15 +245,15 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 
 .announcement-actions {
   flex: 0 0 auto;
-  gap: 16px;
+  gap: var(--ocop-space-4);
 }
 
 .capstone-label {
   gap: 5px;
   padding: 2px 10px;
-  border: 1px solid rgb(102 201 150 / 42%);
+  border: 1px solid color-mix(in srgb, var(--ocop-mint) 42%, transparent);
   border-radius: var(--ocop-radius-xs);
-  background: rgb(18 55 42 / 72%);
+  background: color-mix(in srgb, var(--ocop-primary-950) 72%, transparent);
 }
 
 .main-header {
@@ -265,7 +265,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   display: flex;
   min-height: 72px;
   align-items: center;
-  gap: 16px;
+  gap: var(--ocop-space-4);
 }
 
 .site-brand,
@@ -278,7 +278,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 
 .site-brand {
   min-width: 248px;
-  gap: 12px;
+  gap: var(--ocop-space-3);
 }
 
 .brand-symbol {
@@ -289,7 +289,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   place-items: center;
   border-radius: var(--ocop-radius-md);
   background: var(--ocop-primary-700);
-  box-shadow: 0 4px 8px rgb(30 113 79 / 22%);
+  box-shadow: 0 4px 8px color-mix(in srgb, var(--ocop-primary-700) 22%, transparent);
 }
 
 .brand-symbol img {
@@ -300,7 +300,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 .brand-copy {
   display: grid;
   color: var(--ocop-slate);
-  font-size: 13px;
+  font-size: var(--ocop-font-size-small);
   font-weight: 500;
   line-height: 16px;
 }
@@ -313,17 +313,17 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 
 .brand-title strong {
   color: var(--ocop-navy);
-  font-size: 16px;
+  font-size: var(--ocop-font-size-body-lg);
   letter-spacing: -0.4px;
 }
 
 .brand-title small {
   padding: 2px 6px;
-  border: 1px solid #e9c36d;
+  border: 1px solid var(--ocop-gold-300);
   border-radius: var(--ocop-radius-xs);
   background: var(--ocop-warning-soft);
   color: var(--ocop-warning);
-  font-size: 10px;
+  font-size: var(--ocop-font-size-2xs);
   font-weight: 700;
   line-height: 12px;
 }
@@ -362,7 +362,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 .responsive-search input {
   min-width: 0;
   height: 40px;
-  padding: 8px 12px;
+  padding: var(--ocop-space-2) var(--ocop-space-3);
   border: 1px solid var(--ocop-border);
   border-radius: var(--ocop-radius-sm);
   outline: 0;
@@ -370,17 +370,17 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 
 .responsive-search input:focus {
   border-color: var(--ocop-primary-500);
-  box-shadow: 0 0 0 3px rgb(30 113 79 / 12%);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ocop-primary-700) 12%, transparent);
 }
 
 .responsive-search button {
   min-height: 40px;
-  padding: 8px 14px;
+  padding: var(--ocop-space-2) 14px;
   border: 0;
   border-radius: var(--ocop-radius-sm);
   background: var(--ocop-primary-700);
   color: var(--ocop-white);
-  font-size: 12px;
+  font-size: var(--ocop-font-size-caption);
   font-weight: 700;
 }
 
@@ -395,18 +395,18 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 .header-search input {
   width: 100%;
   height: 36px;
-  padding: 6px 12px 6px 36px;
+  padding: 6px var(--ocop-space-3) 6px 36px;
   border: 1px solid var(--ocop-border);
   border-radius: var(--ocop-radius-sm);
   outline: 0;
-  background: rgb(238 243 239 / 82%);
+  background: color-mix(in srgb, var(--ocop-surface-muted) 82%, transparent);
   color: var(--ocop-navy);
-  font-size: 12px;
+  font-size: var(--ocop-font-size-caption);
 }
 
 .header-search input:focus {
   border-color: var(--ocop-primary-500);
-  box-shadow: 0 0 0 3px rgb(30 113 79 / 12%);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ocop-primary-700) 12%, transparent);
 }
 
 .navigation-panel,
@@ -421,7 +421,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   min-width: 0;
   flex: 1;
   justify-content: flex-end;
-  gap: 8px;
+  gap: var(--ocop-space-2);
 }
 
 .main-nav {
@@ -435,11 +435,11 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   align-items: center;
   justify-content: center;
   gap: 5px;
-  padding: 7px 8px;
+  padding: 7px var(--ocop-space-2);
   border: 1px solid transparent;
   border-radius: var(--ocop-radius-sm);
   color: var(--ocop-slate);
-  font-size: 13px;
+  font-size: var(--ocop-font-size-small);
   font-weight: 650;
   line-height: 14px;
   text-align: center;
@@ -460,8 +460,8 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 
 .user-link {
   max-width: 160px;
-  gap: 8px;
-  padding: 5px 8px;
+  gap: var(--ocop-space-2);
+  padding: 5px var(--ocop-space-2);
   border: 1px solid var(--ocop-border);
   border-radius: var(--ocop-radius-sm);
   background: var(--ocop-surface);
@@ -475,8 +475,8 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   place-items: center;
   border-radius: 50%;
   background: var(--ocop-primary-700);
-  color: #fff;
-  font-size: 12px;
+  color: var(--ocop-white);
+  font-size: var(--ocop-font-size-caption);
   font-weight: 800;
 }
 
@@ -497,13 +497,13 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 
 .user-copy small {
   color: var(--ocop-text-tertiary);
-  font-size: 11px;
+  font-size: var(--ocop-font-size-xs);
   text-transform: uppercase;
 }
 
 .user-copy strong {
   color: var(--ocop-navy);
-  font-size: 12px;
+  font-size: var(--ocop-font-size-caption);
 }
 
 .logout-button,
@@ -511,7 +511,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   border: 0;
   background: transparent;
   color: var(--ocop-primary-900);
-  font-size: 12px;
+  font-size: var(--ocop-font-size-caption);
   font-weight: 700;
   text-decoration: none;
 }
@@ -524,10 +524,10 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 }
 
 .guest-actions .register-button {
-  padding: 8px 12px;
+  padding: var(--ocop-space-2) var(--ocop-space-3);
   border-radius: var(--ocop-radius-sm);
   background: var(--ocop-primary-700);
-  color: #fff;
+  color: var(--ocop-white);
 }
 
 .menu-toggle {
@@ -576,11 +576,11 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
     display: none;
     max-height: calc(100vh - 96px);
     align-items: stretch;
-    padding: 16px;
+    padding: var(--ocop-space-4);
     overflow-y: auto;
     border-bottom: 1px solid var(--ocop-border);
     background: var(--ocop-card);
-    box-shadow: 0 18px 30px rgb(15 23 43 / 12%);
+    box-shadow: 0 18px 30px color-mix(in srgb, var(--ocop-neutral-900) 12%, transparent);
   }
 
   .navigation-panel.open,
@@ -589,7 +589,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   }
 
   .navigation-panel.open {
-    gap: 12px;
+    gap: var(--ocop-space-3);
   }
 
   .main-nav {
@@ -598,13 +598,13 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 
   .main-nav a {
     justify-content: flex-start;
-    padding: 10px 12px;
+    padding: 10px var(--ocop-space-3);
     text-align: left;
   }
 
   .account-actions {
     justify-content: flex-end;
-    padding-top: 12px;
+    padding-top: var(--ocop-space-3);
     border-top: 1px solid var(--ocop-border);
   }
 }
@@ -621,7 +621,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 
   .announcement-inner p {
     max-width: 100%;
-    font-size: 10px;
+    font-size: var(--ocop-font-size-2xs);
   }
 
   .announcement-actions {

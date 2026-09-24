@@ -12,19 +12,19 @@ interface CategoryTheme {
 }
 
 const themes: Record<string, CategoryTheme> = {
-  'nong-san-tuoi': { icon: 'sprout', background: '#edf8f1', foreground: '#1e714f' },
-  'thuc-pham': { icon: 'food', background: '#fff7e6', foreground: '#a96f16' },
-  'do-uong': { icon: 'coffee', background: '#edf6fb', foreground: '#2878a5' },
-  'thao-duoc': { icon: 'leaf', background: '#f0f7ed', foreground: '#527a36' },
-  'thu-cong-my-nghe': { icon: 'palette', background: '#fff2ed', foreground: '#b85c38' },
-  'sinh-vat-canh': { icon: 'flower', background: '#fdf1f5', foreground: '#a84b6a' },
-  'dich-vu-du-lich-cong-dong': { icon: 'compass', background: '#edf6fb', foreground: '#2878a5' },
+  'nong-san-tuoi': { icon: 'sprout', background: 'var(--ocop-mint-soft)', foreground: 'var(--ocop-primary-700)' },
+  'thuc-pham': { icon: 'food', background: 'var(--ocop-accent-soft)', foreground: 'var(--ocop-warning)' },
+  'do-uong': { icon: 'coffee', background: 'var(--ocop-info-soft)', foreground: 'var(--ocop-blue)' },
+  'thao-duoc': { icon: 'leaf', background: 'var(--ocop-tone-leaf-soft)', foreground: 'var(--ocop-tone-leaf)' },
+  'thu-cong-my-nghe': { icon: 'palette', background: 'var(--ocop-tone-clay-soft)', foreground: 'var(--ocop-tone-clay)' },
+  'sinh-vat-canh': { icon: 'flower', background: 'var(--ocop-tone-rose-soft)', foreground: 'var(--ocop-tone-rose)' },
+  'dich-vu-du-lich-cong-dong': { icon: 'compass', background: 'var(--ocop-info-soft)', foreground: 'var(--ocop-blue)' },
 }
 
 const fallbackTheme: CategoryTheme = {
   icon: 'package',
-  background: '#edf8f1',
-  foreground: '#1e714f',
+  background: 'var(--ocop-mint-soft)',
+  foreground: 'var(--ocop-primary-700)',
 }
 
 const categories = ref<Category[]>([])
@@ -96,14 +96,14 @@ onMounted(loadCategories)
 
 <style scoped>
 .category-section {
-  padding-top: 48px;
+  padding-top: var(--ocop-space-12);
 }
 
 .section-heading {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 16px;
+  gap: var(--ocop-space-4);
 }
 
 .section-heading h2 {
@@ -118,7 +118,7 @@ onMounted(loadCategories)
 .section-heading p {
   margin: 0;
   color: var(--ocop-slate);
-  font-size: 13px;
+  font-size: var(--ocop-font-size-small);
   font-weight: 500;
   line-height: 16px;
 }
@@ -126,23 +126,23 @@ onMounted(loadCategories)
 .section-heading a {
   flex: 0 0 auto;
   color: var(--ocop-primary-700);
-  font-size: 12px;
+  font-size: var(--ocop-font-size-caption);
   font-weight: 700;
   text-decoration: none;
 }
 
 .category-grid {
   display: grid;
-  margin-top: 16px;
+  margin-top: var(--ocop-space-4);
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 12px;
+  gap: var(--ocop-space-3);
 }
 
 .category-card,
 .category-skeleton {
   min-height: 107px;
-  padding: 16px;
-  border: 1px solid rgb(226 232 240 / 80%);
+  padding: var(--ocop-space-4);
+  border: 1px solid color-mix(in srgb, var(--ocop-neutral-200) 80%, transparent);
   border-radius: var(--ocop-radius-lg);
 }
 
@@ -157,7 +157,7 @@ onMounted(loadCategories)
 
 .category-card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 12px 22px rgb(15 23 43 / 9%);
+  box-shadow: 0 12px 22px color-mix(in srgb, var(--ocop-neutral-900) 9%, transparent);
 }
 
 .category-icon {
@@ -166,20 +166,20 @@ onMounted(loadCategories)
   height: 38px;
   place-items: center;
   border-radius: 10px;
-  background: rgb(255 255 255 / 62%);
+  background: color-mix(in srgb, var(--ocop-white) 62%, transparent);
   color: var(--category-color);
 }
 
 .category-card strong {
-  margin-top: 8px;
-  font-size: 12px;
+  margin-top: var(--ocop-space-2);
+  font-size: var(--ocop-font-size-caption);
   line-height: 16px;
 }
 
 .category-card small {
   margin-top: 2px;
   color: var(--ocop-slate);
-  font-size: 10px;
+  font-size: var(--ocop-font-size-2xs);
   font-weight: 500;
   line-height: 15px;
 }
@@ -190,14 +190,14 @@ onMounted(loadCategories)
 
 .category-empty {
   display: flex;
-  margin-top: 16px;
+  margin-top: var(--ocop-space-4);
   align-items: center;
   justify-content: space-between;
-  padding: 16px;
+  padding: var(--ocop-space-4);
   border: 1px dashed var(--ocop-border);
   border-radius: var(--ocop-radius-md);
   color: var(--ocop-slate);
-  font-size: 12px;
+  font-size: var(--ocop-font-size-caption);
 }
 
 .category-empty button {
@@ -221,7 +221,7 @@ onMounted(loadCategories)
   .category-grid {
     display: flex;
     margin-inline: -16px;
-    padding-inline: 16px;
+    padding-inline: var(--ocop-space-4);
     overflow-x: auto;
     scroll-snap-type: x mandatory;
   }

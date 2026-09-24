@@ -229,14 +229,14 @@ async function submit(): Promise<void> {
   margin-top: 7px;
   grid-template-columns: minmax(72px, 1fr) auto;
   align-items: center;
-  gap: 8px;
+  gap: var(--ocop-space-2);
   color: var(--ocop-text-secondary);
 }
 
 .password-strength > span {
   height: 5px;
   overflow: hidden;
-  border-radius: 999px;
+  border-radius: var(--ocop-radius-pill);
   background: var(--ocop-surface-muted);
 }
 
@@ -245,7 +245,7 @@ async function submit(): Promise<void> {
   height: 100%;
   border-radius: inherit;
   background: var(--ocop-text-tertiary);
-  transition: width 180ms ease, background-color 180ms ease;
+  transition: width var(--ocop-transition), background-color var(--ocop-transition);
 }
 
 .password-strength[data-tone='danger'] i { background: var(--ocop-danger); }
@@ -254,7 +254,7 @@ async function submit(): Promise<void> {
 
 .password-strength small {
   min-width: 88px;
-  font-size: 12px;
+  font-size: var(--ocop-font-size-caption);
   text-align: right;
 }
 </style>

@@ -12,18 +12,18 @@ interface LocationTypeStyle {
 const defaultStyle: LocationTypeStyle = {
   icon: 'map-pin',
   markerIcon: 'geo-alt-fill',
-  color: '#2878a5',
+  color: 'var(--ocop-location-other)',
   illustration: '/assets/images/tourism-farm.svg',
 }
 
 const typeStyles: Record<LocationType, LocationTypeStyle> = {
-  tea_coffee_farm: { icon: 'coffee', markerIcon: 'cup-hot-fill', color: '#1e714f', illustration: '/assets/images/tourism-tea.svg' },
-  fruit_garden: { icon: 'sprout', markerIcon: 'basket-fill', color: '#c2414b', illustration: '/assets/images/tourism-strawberry.svg' },
-  flower_garden: { icon: 'flower', markerIcon: 'flower1', color: '#8e4fb3', illustration: '/assets/images/tourism-farm.svg' },
-  dairy_farm: { icon: 'building', markerIcon: 'house-heart-fill', color: '#2878a5', illustration: '/assets/images/tourism-farm.svg' },
-  vegetable_farm: { icon: 'wheat', markerIcon: 'flower3', color: '#5b8c2a', illustration: '/assets/images/tourism-farm.svg' },
-  craft_village: { icon: 'palette', markerIcon: 'palette-fill', color: '#7a5137', illustration: '/assets/images/tourism-farm.svg' },
-  farmstay: { icon: 'home', markerIcon: 'house-fill', color: '#a96f16', illustration: '/assets/images/tourism-farm.svg' },
+  tea_coffee_farm: { icon: 'coffee', markerIcon: 'cup-hot-fill', color: 'var(--ocop-location-tea-coffee)', illustration: '/assets/images/tourism-tea.svg' },
+  fruit_garden: { icon: 'sprout', markerIcon: 'basket-fill', color: 'var(--ocop-location-fruit)', illustration: '/assets/images/tourism-strawberry.svg' },
+  flower_garden: { icon: 'flower', markerIcon: 'flower1', color: 'var(--ocop-location-flower)', illustration: '/assets/images/tourism-farm.svg' },
+  dairy_farm: { icon: 'building', markerIcon: 'house-heart-fill', color: 'var(--ocop-location-dairy)', illustration: '/assets/images/tourism-farm.svg' },
+  vegetable_farm: { icon: 'wheat', markerIcon: 'flower3', color: 'var(--ocop-location-vegetable)', illustration: '/assets/images/tourism-farm.svg' },
+  craft_village: { icon: 'palette', markerIcon: 'palette-fill', color: 'var(--ocop-location-craft)', illustration: '/assets/images/tourism-farm.svg' },
+  farmstay: { icon: 'home', markerIcon: 'house-fill', color: 'var(--ocop-location-farmstay)', illustration: '/assets/images/tourism-farm.svg' },
   other: defaultStyle,
 }
 

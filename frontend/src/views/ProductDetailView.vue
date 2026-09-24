@@ -314,7 +314,7 @@ onUnmounted(() => {
   overflow: hidden;
   aspect-ratio: 1 / 0.78;
   border-radius: 1.4rem;
-  background: #e6efdf;
+  background: var(--ocop-sage-50);
 }
 
 .main-image img,
@@ -331,8 +331,8 @@ onUnmounted(() => {
   display: grid;
   place-items: center;
   background:
-    radial-gradient(circle at 68% 25%, rgb(222 236 186 / 90%), transparent 12rem),
-    linear-gradient(145deg, #edf4e5, #cbdcbc);
+    radial-gradient(circle at 68% 25%, color-mix(in srgb, var(--ocop-lime-100) 90%, transparent), transparent 12rem),
+    linear-gradient(145deg, var(--ocop-sage-50), var(--ocop-sage-200));
   color: var(--ocop-primary-700);
   font-size: 1.6rem;
   font-weight: 800;
@@ -378,20 +378,20 @@ onUnmounted(() => {
 .category-badge,
 .ocop-badge {
   padding: 0.4rem 0.7rem;
-  border-radius: 999px;
+  border-radius: var(--ocop-radius-pill);
   font-size: 0.76rem;
   font-weight: 750;
   text-decoration: none;
 }
 
 .category-badge {
-  background: #e6f1de;
+  background: var(--ocop-sage-50);
   color: var(--ocop-primary-700);
 }
 
 .ocop-badge {
-  background: #fff2c0;
-  color: #835f05;
+  background: var(--ocop-warning-surface);
+  color: var(--ocop-warning-strong);
 }
 
 .product-info h1 {
@@ -408,7 +408,7 @@ onUnmounted(() => {
 }
 
 .rating-row span:first-child {
-  color: #936e0b;
+  color: var(--ocop-gold-700);
   font-weight: 750;
 }
 
@@ -425,7 +425,7 @@ onUnmounted(() => {
   gap: 0.5rem;
   padding: 1rem 1.2rem;
   border-radius: 0.9rem;
-  background: #edf4e5;
+  background: var(--ocop-sage-50);
 }
 
 .price-box strong {
@@ -446,7 +446,7 @@ onUnmounted(() => {
 
 .certification-list div {
   padding: 0.75rem;
-  border: 1px solid #e0e7dd;
+  border: 1px solid var(--ocop-border);
   border-radius: 0.75rem;
   background: var(--ocop-card);
 }
@@ -508,7 +508,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  border: 1px solid #e0e7dd;
+  border: 1px solid var(--ocop-border);
   border-radius: 0.8rem;
   background: var(--ocop-surface-subtle);
 }
@@ -528,7 +528,7 @@ onUnmounted(() => {
 
 .content-block {
   padding: clamp(1.4rem, 4vw, 2.25rem);
-  border: 1px solid rgb(29 72 39 / 10%);
+  border: 1px solid color-mix(in srgb, var(--ocop-primary-950) 10%, transparent);
   border-radius: 1.1rem;
   background: var(--ocop-card);
 }
@@ -553,7 +553,7 @@ onUnmounted(() => {
 
 .section-eyebrow {
   color: var(--ocop-primary-700);
-  font-size: 0.75rem;
+  font-size: var(--ocop-font-size-caption);
   font-weight: 750;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -586,8 +586,8 @@ onUnmounted(() => {
   margin: 0 auto 1rem;
   place-items: center;
   border-radius: 50%;
-  background: #fbe3df;
-  color: #a63e31;
+  background: var(--ocop-danger-soft);
+  color: var(--ocop-danger-strong);
   font-size: 1.4rem;
   font-weight: 800;
 }

@@ -64,13 +64,13 @@ function formatDate(value: string | null): string {
   border: 1px solid var(--ocop-border);
   border-radius: var(--ocop-radius-lg);
   background: var(--ocop-card);
-  box-shadow: 0 5px 18px rgb(24 37 31 / 6%);
-  transition: transform 180ms ease, box-shadow 180ms ease;
+  box-shadow: 0 5px 18px color-mix(in srgb, var(--ocop-navy) 6%, transparent);
+  transition: transform var(--ocop-transition), box-shadow var(--ocop-transition);
 }
 
 .news-card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 12px 28px rgb(24 37 31 / 11%);
+  box-shadow: 0 12px 28px color-mix(in srgb, var(--ocop-navy) 11%, transparent);
 }
 
 .news-media {
@@ -95,7 +95,7 @@ function formatDate(value: string | null): string {
   width: 100%;
   height: 100%;
   place-items: center;
-  background: linear-gradient(145deg, var(--ocop-mint-soft), #dceee4);
+  background: linear-gradient(145deg, var(--ocop-mint-soft), var(--ocop-text-on-dark));
   color: var(--ocop-primary-700);
 }
 
@@ -106,13 +106,13 @@ function formatDate(value: string | null): string {
   place-items: center;
   border: 1px solid var(--ocop-mint-border);
   border-radius: 50%;
-  background: rgb(255 255 255 / 66%);
+  background: color-mix(in srgb, var(--ocop-white) 66%, transparent);
 }
 
 .news-body {
   display: flex;
   min-height: 220px;
-  padding: 20px;
+  padding: var(--ocop-space-5);
   flex: 1;
   flex-direction: column;
 }
@@ -123,12 +123,12 @@ function formatDate(value: string | null): string {
   justify-content: space-between;
   gap: 10px;
   color: var(--ocop-slate);
-  font-size: 12px;
+  font-size: var(--ocop-font-size-caption);
 }
 
 .news-meta span {
-  padding: 4px 8px;
-  border-radius: 999px;
+  padding: var(--ocop-space-1) var(--ocop-space-2);
+  border-radius: var(--ocop-radius-pill);
   background: var(--ocop-mint-soft);
   color: var(--ocop-primary-900);
   font-weight: 700;
@@ -137,9 +137,9 @@ function formatDate(value: string | null): string {
 .news-body h2 {
   display: -webkit-box;
   overflow: hidden;
-  margin: 14px 0 8px;
+  margin: 14px 0 var(--ocop-space-2);
   color: var(--ocop-navy);
-  font-size: 18px;
+  font-size: var(--ocop-font-size-title-sm);
   font-weight: 750;
   line-height: 1.4;
   -webkit-box-orient: vertical;
@@ -164,7 +164,7 @@ function formatDate(value: string | null): string {
   align-items: center;
   gap: 5px;
   color: var(--ocop-primary-700);
-  font-size: 13px;
+  font-size: var(--ocop-font-size-small);
   font-weight: 750;
   text-decoration: none;
 }
@@ -191,11 +191,11 @@ function formatDate(value: string | null): string {
 }
 
 .news-card.compact .news-body h2 {
-  font-size: 16px;
+  font-size: var(--ocop-font-size-body-lg);
 }
 
 .news-card.compact .news-body p {
-  font-size: 12px;
+  font-size: var(--ocop-font-size-caption);
   line-height: 1.55;
 }
 

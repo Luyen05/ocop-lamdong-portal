@@ -77,7 +77,7 @@ async function submitSearch(): Promise<void> {
   overflow: hidden;
   border-radius: var(--ocop-radius-xl);
   background: var(--ocop-navy);
-  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 25%);
+  box-shadow: 0 25px 50px -12px color-mix(in srgb, var(--ocop-black) 25%, transparent);
 }
 
 .hero-image,
@@ -95,7 +95,7 @@ async function submitSearch(): Promise<void> {
 }
 
 .hero-overlay {
-  background: linear-gradient(0deg, #020618 0%, rgb(7 12 31 / 80%) 25%, rgb(15 23 43 / 60%) 50%, transparent 100%);
+  background: linear-gradient(0deg, var(--ocop-neutral-950) 0%, color-mix(in srgb, var(--ocop-neutral-950) 80%, transparent) 25%, color-mix(in srgb, var(--ocop-neutral-900) 60%, transparent) 50%, transparent 100%);
 }
 
 .hero-content {
@@ -105,24 +105,24 @@ async function submitSearch(): Promise<void> {
   width: min(100%, 1024px);
   min-height: 550px;
   margin-inline: auto;
-  padding: 72px 24px;
+  padding: 72px var(--ocop-space-6);
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: var(--ocop-white);
   text-align: center;
 }
 
 .hero-badge {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 16px;
-  border: 1px solid rgb(0 188 125 / 30%);
-  border-radius: 999px;
-  background: rgb(0 188 125 / 20%);
-  color: #5ee9b5;
-  font-size: 12px;
+  gap: var(--ocop-space-2);
+  padding: 6px var(--ocop-space-4);
+  border: 1px solid color-mix(in srgb, var(--ocop-emerald-500) 30%, transparent);
+  border-radius: var(--ocop-radius-pill);
+  background: color-mix(in srgb, var(--ocop-emerald-500) 20%, transparent);
+  color: var(--ocop-mint-400);
+  font-size: var(--ocop-font-size-caption);
   font-weight: 650;
   line-height: 16px;
   text-transform: uppercase;
@@ -130,7 +130,7 @@ async function submitSearch(): Promise<void> {
 
 h1 {
   max-width: 896px;
-  margin: 24px 0 0;
+  margin: var(--ocop-space-6) 0 0;
   font-size: clamp(34px, 3.7vw, 46px);
   font-weight: 800;
   letter-spacing: -1.2px;
@@ -139,8 +139,8 @@ h1 {
 
 .hero-content > p {
   max-width: 672px;
-  margin: 24px 0 0;
-  color: #cad5e2;
+  margin: var(--ocop-space-6) 0 0;
+  color: var(--ocop-neutral-300);
   font-size: 14px;
   line-height: 1.625;
 }
@@ -148,14 +148,14 @@ h1 {
 .hero-search {
   display: grid;
   width: min(100%, 768px);
-  margin-top: 24px;
-  padding: 16px;
+  margin-top: var(--ocop-space-6);
+  padding: var(--ocop-space-4);
   grid-template-columns: minmax(0, 2fr) minmax(190px, 1fr);
-  gap: 8px;
-  border: 1px solid rgb(255 255 255 / 40%);
+  gap: var(--ocop-space-2);
+  border: 1px solid color-mix(in srgb, var(--ocop-white) 40%, transparent);
   border-radius: var(--ocop-radius-lg);
-  background: rgb(255 255 255 / 95%);
-  box-shadow: 0 20px 25px rgb(0 0 0 / 10%);
+  background: color-mix(in srgb, var(--ocop-white) 95%, transparent);
+  box-shadow: 0 20px 25px color-mix(in srgb, var(--ocop-black) 10%, transparent);
 }
 
 .search-field {
@@ -174,18 +174,18 @@ h1 {
 .search-field input {
   width: 100%;
   height: 40px;
-  padding: 10px 12px 10px 36px;
+  padding: 10px var(--ocop-space-3) 10px 36px;
   border: 1px solid transparent;
   border-radius: var(--ocop-radius-md);
   outline: 0;
   background: var(--ocop-surface-muted);
   color: var(--ocop-navy);
-  font-size: 12px;
+  font-size: var(--ocop-font-size-caption);
 }
 
 .search-field input:focus {
   border-color: var(--ocop-primary-500);
-  box-shadow: 0 0 0 3px rgb(0 122 85 / 12%);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ocop-success) 12%, transparent);
 }
 
 .hero-search button,
@@ -194,10 +194,10 @@ h1 {
   min-height: 40px;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: var(--ocop-space-2);
   border-radius: var(--ocop-radius-md);
-  color: #fff;
-  font-size: 12px;
+  color: var(--ocop-white);
+  font-size: var(--ocop-font-size-caption);
   font-weight: 700;
   text-decoration: none;
 }
@@ -205,7 +205,7 @@ h1 {
 .hero-search button {
   border: 0;
   background: var(--ocop-primary-700);
-  box-shadow: 0 4px 5px rgb(0 122 85 / 30%);
+  box-shadow: 0 4px 5px color-mix(in srgb, var(--ocop-success) 30%, transparent);
 }
 
 .hero-search button:hover {
@@ -214,15 +214,15 @@ h1 {
 
 .hero-actions {
   display: flex;
-  margin-top: 24px;
+  margin-top: var(--ocop-space-6);
   flex-wrap: wrap;
   justify-content: center;
-  gap: 12px;
+  gap: var(--ocop-space-3);
 }
 
 .hero-actions a {
-  padding: 10px 20px;
-  box-shadow: 0 10px 12px rgb(0 0 0 / 10%);
+  padding: 10px var(--ocop-space-5);
+  box-shadow: 0 10px 12px color-mix(in srgb, var(--ocop-black) 10%, transparent);
 }
 
 .map-action {
@@ -231,8 +231,8 @@ h1 {
 }
 
 .tourism-action {
-  border: 1px solid rgb(255 255 255 / 30%);
-  background: rgb(255 255 255 / 10%);
+  border: 1px solid color-mix(in srgb, var(--ocop-white) 30%, transparent);
+  background: color-mix(in srgb, var(--ocop-white) 10%, transparent);
 }
 
 .hero-actions a:hover {
@@ -254,18 +254,18 @@ h1 {
   }
 
   .hero-badge {
-    font-size: 10px;
+    font-size: var(--ocop-font-size-2xs);
   }
 
   h1 {
-    margin-top: 20px;
+    margin-top: var(--ocop-space-5);
     font-size: clamp(28px, 8vw, 36px);
     letter-spacing: -0.8px;
   }
 
   .hero-content > p {
     margin-top: 18px;
-    font-size: 13px;
+    font-size: var(--ocop-font-size-small);
   }
 
   .hero-search {
