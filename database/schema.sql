@@ -183,6 +183,8 @@ CREATE TABLE tourism_locations (
   ticket_price NUMERIC(12,2) CHECK (ticket_price >= 0),
   services TEXT[] NOT NULL DEFAULT '{}',
   description TEXT,
+  website VARCHAR(500),
+  source_url TEXT,
   rating_avg NUMERIC(3,2) NOT NULL DEFAULT 0 CHECK (rating_avg BETWEEN 0 AND 5),
   views INTEGER NOT NULL DEFAULT 0 CHECK (views >= 0),
   status VARCHAR(20) NOT NULL DEFAULT 'pending'
@@ -255,6 +257,8 @@ CREATE UNIQUE INDEX uq_products_certificate_storage_path
   ON ocop_products (certificate_storage_path)
   WHERE certificate_storage_path IS NOT NULL;
 CREATE INDEX idx_locations_public_filters ON tourism_locations (status, district, type);
+CREATE INDEX idx_tourism_locations_subject ON tourism_locations (subject_id);
+CREATE INDEX idx_location_ocop_products_product ON location_ocop_products (product_id);
 CREATE INDEX idx_reviews_product_status ON reviews (product_id, status);
 CREATE INDEX idx_reviews_location_status ON reviews (location_id, status);
 CREATE INDEX idx_product_sources_source ON product_sources (source_id);

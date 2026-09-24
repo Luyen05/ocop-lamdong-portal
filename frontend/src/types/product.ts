@@ -27,6 +27,14 @@ export interface ProductPublicSource {
   verification_level: 'A' | 'B1'
 }
 
+export interface ProductRelatedLocation {
+  id: number
+  name: string
+  slug: string
+  type_label: string
+  district: string
+}
+
 export interface ProductFilterOptions {
   districts: string[]
 }
@@ -59,6 +67,7 @@ export interface ProductDetail extends ProductListItem {
   views: number
   images: ProductImage[]
   recognition_sources: ProductPublicSource[]
+  related_locations?: ProductRelatedLocation[]
   updated_at: string
 }
 
