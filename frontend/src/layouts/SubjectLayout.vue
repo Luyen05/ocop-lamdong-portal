@@ -61,25 +61,25 @@ async function logout(): Promise<void> {
 
 <style scoped>
 .subject-shell { display: grid; min-height: 100vh; grid-template-columns: 250px minmax(0, 1fr); background: var(--ocop-surface); }
-.subject-sidebar { position: sticky; top: 0; display: flex; height: 100vh; padding: 20px 16px; flex-direction: column; background: var(--ocop-sidebar); color: #d9e9e4; }
-.subject-brand { display: flex; padding: 0 8px 20px; align-items: center; gap: 10px; border-bottom: 1px solid rgb(255 255 255 / 12%); color: #fff; text-decoration: none; }
+.subject-sidebar { position: sticky; top: 0; display: flex; height: 100vh; padding: var(--ocop-space-5) var(--ocop-space-4); flex-direction: column; background: var(--ocop-sidebar); color: var(--ocop-text-on-dark); }
+.subject-brand { display: flex; padding: 0 var(--ocop-space-2) var(--ocop-space-5); align-items: center; gap: 10px; border-bottom: 1px solid color-mix(in srgb, var(--ocop-white) 12%, transparent); color: var(--ocop-white); text-decoration: none; }
 .subject-brand > span { display: grid; width: 38px; height: 38px; place-items: center; border-radius: 10px; background: var(--ocop-primary-700); }
 .subject-brand img { width: 22px; }
 .subject-brand div, .subject-page-heading, .subject-account div { display: grid; }
-.subject-brand strong { font-size: 13px; }
-.subject-brand small, .subject-topbar small, .subject-account small { color: var(--ocop-sidebar-muted); font-size: 11px; }
-.subject-sidebar nav { display: grid; margin-top: 24px; gap: 6px; }
-.subject-sidebar nav a { display: flex; padding: 11px 12px; align-items: center; gap: 10px; border: 1px solid transparent; border-radius: 9px; color: var(--ocop-sidebar-muted); font-size: 13px; font-weight: 700; text-decoration: none; }
-.subject-sidebar nav a :deep(.app-icon) { color: #83d7ad; }
-.subject-sidebar nav a:hover, .subject-sidebar nav a.router-link-active { border-color: rgb(102 201 150 / 24%); background: rgb(53 164 117 / 22%); color: #fff; }
-.subject-sidebar-footer { display: grid; margin-top: auto; gap: 8px; }
-.subject-sidebar-footer a, .subject-sidebar-footer button { display: flex; padding: 9px; align-items: center; justify-content: center; gap: 7px; border: 1px solid rgb(255 255 255 / 14%); border-radius: 8px; background: transparent; color: var(--ocop-text-on-dark); font-size: 12px; text-align: center; text-decoration: none; }
+.subject-brand strong { font-size: var(--ocop-font-size-small); }
+.subject-brand small, .subject-topbar small, .subject-account small { color: var(--ocop-sidebar-muted); font-size: var(--ocop-font-size-xs); }
+.subject-sidebar nav { display: grid; margin-top: var(--ocop-space-6); gap: 6px; }
+.subject-sidebar nav a { display: flex; padding: 11px var(--ocop-space-3); align-items: center; gap: 10px; border: 1px solid transparent; border-radius: 9px; color: var(--ocop-sidebar-muted); font-size: var(--ocop-font-size-small); font-weight: 700; text-decoration: none; }
+.subject-sidebar nav a :deep(.app-icon) { color: var(--ocop-mint-300); }
+.subject-sidebar nav a:hover, .subject-sidebar nav a.router-link-active { border-color: color-mix(in srgb, var(--ocop-mint) 24%, transparent); background: color-mix(in srgb, var(--ocop-primary-500) 22%, transparent); color: var(--ocop-white); }
+.subject-sidebar-footer { display: grid; margin-top: auto; gap: var(--ocop-space-2); }
+.subject-sidebar-footer a, .subject-sidebar-footer button { display: flex; padding: 9px; align-items: center; justify-content: center; gap: 7px; border: 1px solid color-mix(in srgb, var(--ocop-white) 14%, transparent); border-radius: var(--ocop-radius-sm); background: transparent; color: var(--ocop-text-on-dark); font-size: var(--ocop-font-size-caption); text-align: center; text-decoration: none; }
 .subject-main { min-width: 0; }
-.subject-topbar { display: flex; min-height: 72px; padding: 12px 28px; align-items: center; border-bottom: 1px solid var(--ocop-border); background: #fff; }
-.subject-topbar > div strong { color: var(--ocop-navy); font-size: 16px; }
-.subject-account { display: flex; margin-left: auto; align-items: center; gap: 8px; color: var(--ocop-navy); text-decoration: none; }
-.subject-account > span { display: grid; width: 36px; height: 36px; place-items: center; border-radius: 50%; background: var(--ocop-primary-700); color: #fff; font-size: 12px; font-weight: 800; }
-.subject-account div strong { font-size: 12px; }
+.subject-topbar { display: flex; min-height: 72px; padding: var(--ocop-space-3) 28px; align-items: center; border-bottom: 1px solid var(--ocop-border); background: var(--ocop-card); }
+.subject-topbar > div strong { color: var(--ocop-navy); font-size: var(--ocop-font-size-body-lg); }
+.subject-account { display: flex; margin-left: auto; align-items: center; gap: var(--ocop-space-2); color: var(--ocop-navy); text-decoration: none; }
+.subject-account > span { display: grid; width: 36px; height: 36px; place-items: center; border-radius: 50%; background: var(--ocop-primary-700); color: var(--ocop-white); font-size: var(--ocop-font-size-caption); font-weight: 800; }
+.subject-account div strong { font-size: var(--ocop-font-size-caption); }
 .subject-mobile-actions { display: none; }
 .subject-content { width: min(100%, 1280px); margin-inline: auto; padding: 28px; }
 @media (max-width: 767.98px) {
@@ -87,10 +87,10 @@ async function logout(): Promise<void> {
   .subject-sidebar { position: static; width: 100%; height: auto; }
   .subject-sidebar nav { grid-template-columns: 1fr 1fr; margin-top: 14px; }
   .subject-sidebar-footer { display: none; }
-  .subject-topbar { padding-inline: 16px; }
+  .subject-topbar { padding-inline: var(--ocop-space-4); }
   .subject-account { display: none; }
   .subject-mobile-actions { display: flex; margin-left: auto; align-items: center; gap: 6px; }
-  .subject-mobile-actions a, .subject-mobile-actions button { display: grid; width: 34px; height: 34px; padding: 0; place-items: center; border: 1px solid var(--ocop-border); border-radius: 8px; background: #fff; color: var(--ocop-primary-900); text-decoration: none; }
-  .subject-content { padding: 20px 16px; }
+  .subject-mobile-actions a, .subject-mobile-actions button { display: grid; width: 34px; height: 34px; padding: 0; place-items: center; border: 1px solid var(--ocop-border); border-radius: var(--ocop-radius-sm); background: var(--ocop-card); color: var(--ocop-primary-900); text-decoration: none; }
+  .subject-content { padding: var(--ocop-space-5) var(--ocop-space-4); }
 }
 </style>

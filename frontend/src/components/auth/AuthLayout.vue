@@ -52,7 +52,7 @@ defineProps<{
 .auth-page {
   min-height: 100vh;
   background:
-    radial-gradient(circle at 8% 8%, rgb(232 244 222 / 85%), transparent 32rem),
+    radial-gradient(circle at 8% 8%, color-mix(in srgb, var(--ocop-sage-50) 85%, transparent), transparent 32rem),
     var(--ocop-surface);
 }
 
@@ -86,7 +86,7 @@ defineProps<{
   place-items: center;
   border-radius: 50%;
   background: var(--ocop-primary-700);
-  color: #fff;
+  color: var(--ocop-white);
   font-size: 1.55rem;
 }
 
@@ -96,10 +96,10 @@ defineProps<{
   min-height: 620px;
   margin-inline: auto;
   overflow: hidden;
-  border: 1px solid rgb(33 73 42 / 10%);
+  border: 1px solid color-mix(in srgb, var(--ocop-primary-950) 10%, transparent);
   border-radius: 1.5rem;
-  background: #fff;
-  box-shadow: 0 1.5rem 4rem rgb(35 59 40 / 12%);
+  background: var(--ocop-card);
+  box-shadow: 0 1.5rem 4rem color-mix(in srgb, var(--ocop-primary-950) 12%, transparent);
 }
 
 .auth-intro {
@@ -107,9 +107,9 @@ defineProps<{
   justify-content: space-between;
   padding: 4rem;
   background:
-    linear-gradient(160deg, rgb(18 55 42 / 97%), rgb(30 113 79 / 91%)),
+    linear-gradient(160deg, color-mix(in srgb, var(--ocop-primary-950) 97%, transparent), color-mix(in srgb, var(--ocop-primary-700) 91%, transparent)),
     var(--ocop-primary-900);
-  color: #fff;
+  color: var(--ocop-white);
 }
 
 .auth-intro h1 {
@@ -123,7 +123,7 @@ defineProps<{
 .auth-intro p {
   max-width: 30rem;
   margin: 0;
-  color: rgb(255 255 255 / 78%);
+  color: color-mix(in srgb, var(--ocop-white) 78%, transparent);
   line-height: 1.7;
 }
 
@@ -149,7 +149,7 @@ defineProps<{
 }
 
 .feature-list .app-icon {
-  color: #d6eaaa;
+  color: var(--ocop-lime-200);
 }
 
 .auth-form-panel {
@@ -159,7 +159,7 @@ defineProps<{
 
 .auth-form-copy h2 {
   margin: 0.65rem 0 0.5rem;
-  color: #17261b;
+  color: var(--ocop-navy);
   font-size: clamp(1.8rem, 3vw, 2.35rem);
   font-weight: 750;
 }

@@ -102,26 +102,26 @@ onMounted(async () => {
 
 <style scoped>
 .map-section {
-  padding-top: 48px;
+  padding-top: var(--ocop-space-12);
 }
 
 .section-heading {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 16px;
+  gap: var(--ocop-space-4);
 }
 
 .eyebrow {
   color: var(--ocop-blue);
-  font-size: 11px;
+  font-size: var(--ocop-font-size-xs);
   font-weight: 800;
   line-height: 16px;
   text-transform: uppercase;
 }
 
 h2 {
-  margin: 4px 0 0;
+  margin: var(--ocop-space-1) 0 0;
   color: var(--ocop-navy);
   font-size: 22px;
   font-weight: 800;
@@ -132,32 +132,32 @@ h2 {
 .section-heading p {
   margin: 2px 0 0;
   color: var(--ocop-slate);
-  font-size: 13px;
+  font-size: var(--ocop-font-size-small);
 }
 
 .demo-label {
   flex: 0 0 auto;
   padding: 5px 9px;
-  border: 1px solid #bfdbfe;
-  border-radius: 999px;
-  background: #eff6ff;
-  color: #1d4ed8;
-  font-size: 10px;
+  border: 1px solid var(--ocop-info-border);
+  border-radius: var(--ocop-radius-pill);
+  background: var(--ocop-info-soft);
+  color: var(--ocop-blue-700);
+  font-size: var(--ocop-font-size-2xs);
   font-weight: 700;
 }
 
 .map-preview {
   position: relative;
   min-height: 430px;
-  margin-top: 16px;
+  margin-top: var(--ocop-space-4);
   overflow: hidden;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--ocop-neutral-300);
   border-radius: var(--ocop-radius-lg);
   background:
-    radial-gradient(circle at 70% 18%, rgb(153 215 190 / 65%), transparent 20%),
-    radial-gradient(circle at 27% 68%, rgb(186 216 154 / 70%), transparent 28%),
-    #e9f2e7;
-  box-shadow: inset 0 0 50px rgb(71 101 77 / 8%);
+    radial-gradient(circle at 70% 18%, color-mix(in srgb, var(--ocop-mint-300) 65%, transparent), transparent 20%),
+    radial-gradient(circle at 27% 68%, color-mix(in srgb, var(--ocop-lime-300) 70%, transparent), transparent 28%),
+    var(--ocop-tone-leaf-soft);
+  box-shadow: inset 0 0 50px color-mix(in srgb, var(--ocop-primary-950) 8%, transparent);
 }
 
 .map-grid {
@@ -165,10 +165,10 @@ h2 {
   inset: -40px;
   opacity: 0.55;
   background-image:
-    linear-gradient(28deg, transparent 45%, #fff 46%, #fff 49%, transparent 50%),
-    linear-gradient(105deg, transparent 47%, #c7d9ee 48%, #c7d9ee 51%, transparent 52%),
-    linear-gradient(0deg, rgb(100 116 139 / 12%) 1px, transparent 1px),
-    linear-gradient(90deg, rgb(100 116 139 / 12%) 1px, transparent 1px);
+    linear-gradient(28deg, transparent 45%, var(--ocop-card) 46%, var(--ocop-card) 49%, transparent 50%),
+    linear-gradient(105deg, transparent 47%, var(--ocop-info-border) 48%, var(--ocop-info-border) 51%, transparent 52%),
+    linear-gradient(0deg, color-mix(in srgb, var(--ocop-neutral-500) 12%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--ocop-neutral-500) 12%, transparent) 1px, transparent 1px);
   background-size: 210px 160px, 240px 190px, 42px 42px, 42px 42px;
   transform: rotate(-4deg) scale(1.08);
 }
@@ -183,10 +183,10 @@ h2 {
   width: 34px;
   height: 34px;
   place-items: center;
-  border: 3px solid #fff;
-  border-radius: 50% 50% 50% 8px;
-  box-shadow: 0 5px 10px rgb(15 23 43 / 24%);
-  color: #fff;
+  border: 3px solid var(--ocop-white);
+  border-radius: 50% 50% 50% var(--ocop-radius-sm);
+  box-shadow: 0 5px 10px color-mix(in srgb, var(--ocop-neutral-900) 24%, transparent);
+  color: var(--ocop-white);
   transform: translate(-50%, -50%) rotate(-45deg);
 }
 
@@ -200,11 +200,11 @@ h2 {
   display: none;
   width: max-content;
   max-width: 160px;
-  padding: 5px 8px;
+  padding: 5px var(--ocop-space-2);
   border-radius: 6px;
-  background: rgb(15 23 43 / 88%);
-  color: #fff;
-  font-size: 10px;
+  background: color-mix(in srgb, var(--ocop-neutral-900) 88%, transparent);
+  color: var(--ocop-white);
+  font-size: var(--ocop-font-size-2xs);
   transform: rotate(45deg);
 }
 
@@ -214,7 +214,7 @@ h2 {
 }
 
 .map-marker:not(:hover) {
-  font-size: 13px;
+  font-size: var(--ocop-font-size-small);
 }
 
 .map-legend {
@@ -223,16 +223,16 @@ h2 {
   right: 16px;
   bottom: 16px;
   display: flex;
-  padding: 10px 12px;
+  padding: 10px var(--ocop-space-3);
   align-items: center;
   flex-wrap: wrap;
   gap: 10px;
-  border: 1px solid rgb(226 232 240 / 90%);
+  border: 1px solid color-mix(in srgb, var(--ocop-neutral-200) 90%, transparent);
   border-radius: var(--ocop-radius-sm);
-  background: rgb(255 255 255 / 92%);
-  box-shadow: 0 5px 12px rgb(15 23 43 / 10%);
-  color: #45556c;
-  font-size: 10px;
+  background: color-mix(in srgb, var(--ocop-white) 92%, transparent);
+  box-shadow: 0 5px 12px color-mix(in srgb, var(--ocop-neutral-900) 10%, transparent);
+  color: var(--ocop-text-muted);
+  font-size: var(--ocop-font-size-2xs);
 }
 
 .map-legend strong {
@@ -242,21 +242,21 @@ h2 {
 .map-legend span {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--ocop-space-1);
 }
 
 .map-button {
   display: flex;
   width: max-content;
-  margin: 12px 0 0 auto;
+  margin: var(--ocop-space-3) 0 0 auto;
   padding: 9px 14px;
   align-items: center;
   gap: 5px;
   border: 1px solid var(--ocop-primary-700);
   border-radius: var(--ocop-radius-md);
   background: var(--ocop-primary-700);
-  color: #fff;
-  font-size: 12px;
+  color: var(--ocop-white);
+  font-size: var(--ocop-font-size-caption);
   font-weight: 700;
   text-decoration: none;
   transition: background var(--ocop-transition);
@@ -264,7 +264,7 @@ h2 {
 
 .map-button:hover {
   background: var(--ocop-primary-900);
-  color: #fff;
+  color: var(--ocop-white);
 }
 
 .map-empty {
@@ -275,7 +275,7 @@ h2 {
   margin: 0;
   place-items: center;
   color: var(--ocop-slate);
-  font-size: 13px;
+  font-size: var(--ocop-font-size-small);
 }
 
 @media (max-width: 767.98px) {

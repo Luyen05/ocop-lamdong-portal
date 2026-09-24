@@ -132,7 +132,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   top: 0;
   display: flex;
   height: 100vh;
-  padding: 20px 16px;
+  padding: var(--ocop-space-5) var(--ocop-space-4);
   flex-direction: column;
   background: var(--ocop-sidebar);
   color: var(--ocop-sidebar-muted);
@@ -140,10 +140,10 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 
 .admin-brand {
   display: flex;
-  padding: 0 8px 20px;
+  padding: 0 var(--ocop-space-2) var(--ocop-space-5);
   align-items: center;
   gap: 10px;
-  border-bottom: 1px solid rgb(148 163 184 / 14%);
+  border-bottom: 1px solid color-mix(in srgb, var(--ocop-neutral-400) 14%, transparent);
   color: var(--ocop-white);
   text-decoration: none;
 }
@@ -174,7 +174,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 .admin-brand small {
   margin-top: 2px;
   color: var(--ocop-sidebar-muted);
-  font-size: 11px;
+  font-size: var(--ocop-font-size-xs);
 }
 
 .admin-nav {
@@ -187,14 +187,14 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 .admin-nav button {
   display: flex;
   min-height: 42px;
-  padding: 10px 12px;
+  padding: 10px var(--ocop-space-3);
   align-items: center;
   gap: 10px;
   border: 1px solid transparent;
   border-radius: 10px;
   background: transparent;
   color: var(--ocop-sidebar-muted);
-  font-size: 13px;
+  font-size: var(--ocop-font-size-small);
   font-weight: 650;
   text-align: left;
   text-decoration: none;
@@ -205,14 +205,14 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   display: grid;
   width: 22px;
   place-items: center;
-  color: #83d7ad;
-  font-size: 16px;
+  color: var(--ocop-mint-300);
+  font-size: var(--ocop-font-size-body-lg);
 }
 
 .admin-nav a:hover,
 .admin-nav a.router-link-exact-active {
-  border-color: rgb(102 201 150 / 24%);
-  background: rgb(53 164 117 / 22%);
+  border-color: color-mix(in srgb, var(--ocop-mint) 24%, transparent);
+  background: color-mix(in srgb, var(--ocop-primary-500) 22%, transparent);
   color: var(--ocop-white);
 }
 
@@ -223,7 +223,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 
 .admin-nav button small {
   margin-left: auto;
-  color: #64748b;
+  color: var(--ocop-neutral-500);
   font-size: 8px;
   text-transform: uppercase;
 }
@@ -231,9 +231,9 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 .sidebar-footer {
   display: grid;
   margin-top: auto;
-  padding-top: 16px;
-  gap: 8px;
-  border-top: 1px solid rgb(148 163 184 / 14%);
+  padding-top: var(--ocop-space-4);
+  gap: var(--ocop-space-2);
+  border-top: 1px solid color-mix(in srgb, var(--ocop-neutral-400) 14%, transparent);
 }
 
 .sidebar-footer a,
@@ -243,11 +243,11 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   align-items: center;
   justify-content: center;
   gap: 7px;
-  border: 1px solid rgb(148 163 184 / 18%);
+  border: 1px solid color-mix(in srgb, var(--ocop-neutral-400) 18%, transparent);
   border-radius: 9px;
   background: transparent;
-  color: #d9e9e3;
-  font-size: 12px;
+  color: var(--ocop-text-on-dark);
+  font-size: var(--ocop-font-size-caption);
   font-weight: 650;
   text-align: center;
   text-decoration: none;
@@ -263,11 +263,11 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   top: 0;
   display: flex;
   min-height: 72px;
-  padding: 12px 28px;
+  padding: var(--ocop-space-3) 28px;
   align-items: center;
   gap: 14px;
   border-bottom: 1px solid var(--ocop-border);
-  background: rgb(255 255 255 / 94%);
+  background: color-mix(in srgb, var(--ocop-white) 94%, transparent);
   backdrop-filter: blur(12px);
 }
 
@@ -277,13 +277,13 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 
 .topbar-label {
   color: var(--ocop-slate);
-  font-size: 11px;
+  font-size: var(--ocop-font-size-xs);
   text-transform: uppercase;
 }
 
 .admin-topbar > div strong {
   color: var(--ocop-navy);
-  font-size: 16px;
+  font-size: var(--ocop-font-size-body-lg);
 }
 
 .sidebar-toggle {
@@ -292,7 +292,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   height: 38px;
   border: 1px solid var(--ocop-border);
   border-radius: 9px;
-  background: #fff;
+  background: var(--ocop-card);
   color: var(--ocop-primary-900);
   place-items: center;
 }
@@ -301,7 +301,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   display: flex;
   margin-left: auto;
   align-items: center;
-  gap: 8px;
+  gap: var(--ocop-space-2);
   color: var(--ocop-navy);
   text-decoration: none;
 }
@@ -313,8 +313,8 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   place-items: center;
   border-radius: 50%;
   background: var(--ocop-primary-700);
-  color: #fff;
-  font-size: 13px;
+  color: var(--ocop-white);
+  font-size: var(--ocop-font-size-small);
   font-weight: 800;
 }
 
@@ -325,14 +325,14 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 .admin-account strong {
   max-width: 180px;
   overflow: hidden;
-  font-size: 12px;
+  font-size: var(--ocop-font-size-caption);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .admin-account small {
   color: var(--ocop-slate);
-  font-size: 10px;
+  font-size: var(--ocop-font-size-2xs);
 }
 
 .admin-content {
@@ -355,7 +355,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
     left: 0;
     width: min(280px, 86vw);
     transform: translateX(-105%);
-    transition: transform 180ms ease;
+    transition: transform var(--ocop-transition);
   }
 
   .admin-sidebar.open {
@@ -372,13 +372,13 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
     inset: 0;
     display: block;
     border: 0;
-    background: rgb(15 23 43 / 52%);
+    background: color-mix(in srgb, var(--ocop-neutral-900) 52%, transparent);
   }
 }
 
 @media (max-width: 575.98px) {
   .admin-topbar {
-    padding-inline: 16px;
+    padding-inline: var(--ocop-space-4);
   }
 
   .topbar-label,
@@ -387,7 +387,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   }
 
   .admin-content {
-    padding: 20px 16px;
+    padding: var(--ocop-space-5) var(--ocop-space-4);
   }
 }
 </style>

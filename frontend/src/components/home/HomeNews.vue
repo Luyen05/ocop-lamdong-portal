@@ -75,21 +75,21 @@ onMounted(() => void loadNews())
 </template>
 
 <style scoped>
-.news-section { padding: 48px 0; }
-.section-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
-.eyebrow { color: var(--ocop-primary-700); font-size: 11px; font-weight: 800; line-height: 16px; text-transform: uppercase; }
-h2 { max-width: 680px; margin: 4px 0 0; color: var(--ocop-navy); font-size: 22px; font-weight: 800; letter-spacing: -.5px; line-height: 28px; }
-.section-copy { margin: 2px 0 0; color: var(--ocop-slate); font-size: 13px; }
-.view-all { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 4px; color: var(--ocop-primary-700); font-size: 12px; font-weight: 750; text-decoration: none; }
+.news-section { padding: var(--ocop-space-12) 0; }
+.section-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--ocop-space-4); }
+.eyebrow { color: var(--ocop-primary-700); font-size: var(--ocop-font-size-xs); font-weight: 800; line-height: 16px; text-transform: uppercase; }
+h2 { max-width: 680px; margin: var(--ocop-space-1) 0 0; color: var(--ocop-navy); font-size: 22px; font-weight: 800; letter-spacing: -.5px; line-height: 28px; }
+.section-copy { margin: 2px 0 0; color: var(--ocop-slate); font-size: var(--ocop-font-size-small); }
+.view-all { display: inline-flex; flex: 0 0 auto; align-items: center; gap: var(--ocop-space-1); color: var(--ocop-primary-700); font-size: var(--ocop-font-size-caption); font-weight: 750; text-decoration: none; }
 .view-all:hover { color: var(--ocop-primary-950); text-decoration: underline; }
-.news-grid { display: grid; margin-top: 16px; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
-.news-skeleton { display: grid; min-height: 230px; overflow: hidden; grid-template-columns: minmax(150px, 36%) minmax(0, 1fr); border: 1px solid var(--ocop-border); border-radius: var(--ocop-radius-lg); background: #fff; }
+.news-grid { display: grid; margin-top: var(--ocop-space-4); grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.news-skeleton { display: grid; min-height: 230px; overflow: hidden; grid-template-columns: minmax(150px, 36%) minmax(0, 1fr); border: 1px solid var(--ocop-border); border-radius: var(--ocop-radius-lg); background: var(--ocop-card); }
 .visual-placeholder { width: 100%; height: 100%; border-radius: 0; }
-.skeleton-copy { display: grid; padding: 24px 18px; align-content: start; gap: 15px; }
-.state-card { display: flex; min-height: 130px; margin-top: 16px; padding: 24px; align-items: center; justify-content: center; gap: 13px; border: 1px solid var(--ocop-border); border-radius: var(--ocop-radius-lg); background: #fff; color: var(--ocop-primary-700); text-align: left; }
+.skeleton-copy { display: grid; padding: var(--ocop-space-6) 18px; align-content: start; gap: 15px; }
+.state-card { display: flex; min-height: 130px; margin-top: var(--ocop-space-4); padding: var(--ocop-space-6); align-items: center; justify-content: center; gap: 13px; border: 1px solid var(--ocop-border); border-radius: var(--ocop-radius-lg); background: var(--ocop-card); color: var(--ocop-primary-700); text-align: left; }
 .state-card strong { color: var(--ocop-navy); }
-.state-card p { margin: 2px 0 0; color: var(--ocop-slate); font-size: 13px; }
-.state-card button { margin-left: 12px; padding: 8px 13px; border: 1px solid var(--ocop-primary-700); border-radius: 8px; background: #fff; color: var(--ocop-primary-700); font-size: 12px; font-weight: 700; }
+.state-card p { margin: 2px 0 0; color: var(--ocop-slate); font-size: var(--ocop-font-size-small); }
+.state-card button { margin-left: var(--ocop-space-3); padding: var(--ocop-space-2) 13px; border: 1px solid var(--ocop-primary-700); border-radius: var(--ocop-radius-sm); background: var(--ocop-card); color: var(--ocop-primary-700); font-size: var(--ocop-font-size-caption); font-weight: 700; }
 @media (max-width: 991.98px) { .news-grid { grid-template-columns: 1fr; } }
 @media (max-width: 575.98px) {
   .section-heading { align-items: flex-start; flex-direction: column; }

@@ -131,30 +131,30 @@ onMounted(loadDashboard)
 <style scoped>
 .dashboard-page {
   display: grid;
-  gap: 24px;
+  gap: var(--ocop-space-6);
 }
 
 .welcome-card {
   display: flex;
   min-height: 190px;
-  padding: clamp(24px, 4vw, 40px);
+  padding: clamp(var(--ocop-space-6), 4vw, 40px);
   align-items: flex-end;
   justify-content: space-between;
-  gap: 24px;
+  gap: var(--ocop-space-6);
   overflow: hidden;
   border-radius: 20px;
   background:
-    radial-gradient(circle at 86% 15%, rgb(102 201 150 / 26%), transparent 18rem),
+    radial-gradient(circle at 86% 15%, color-mix(in srgb, var(--ocop-mint) 26%, transparent), transparent 18rem),
     linear-gradient(135deg, var(--ocop-primary-950), var(--ocop-primary-900) 60%, var(--ocop-sidebar));
-  color: #fff;
-  box-shadow: 0 18px 35px rgb(15 23 43 / 12%);
+  color: var(--ocop-white);
+  box-shadow: 0 18px 35px color-mix(in srgb, var(--ocop-neutral-900) 12%, transparent);
 }
 
 .welcome-card span,
 .section-title span,
 .panel-heading span {
-  color: #6ee7b7;
-  font-size: 11px;
+  color: var(--ocop-mint-400);
+  font-size: var(--ocop-font-size-xs);
   font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -170,7 +170,7 @@ onMounted(loadDashboard)
 .welcome-card p {
   max-width: 650px;
   margin: 0;
-  color: #d6e4df;
+  color: var(--ocop-text-on-dark);
   line-height: 1.6;
 }
 
@@ -180,11 +180,11 @@ onMounted(loadDashboard)
   padding: 10px 15px;
   align-items: center;
   gap: 5px;
-  border: 1px solid rgb(255 255 255 / 25%);
+  border: 1px solid color-mix(in srgb, var(--ocop-white) 25%, transparent);
   border-radius: 10px;
-  background: rgb(255 255 255 / 10%);
-  color: #fff;
-  font-size: 12px;
+  background: color-mix(in srgb, var(--ocop-white) 10%, transparent);
+  color: var(--ocop-white);
+  font-size: var(--ocop-font-size-caption);
   font-weight: 700;
   text-decoration: none;
 }
@@ -194,8 +194,8 @@ onMounted(loadDashboard)
 .security-panel {
   padding: 22px;
   border: 1px solid var(--ocop-border);
-  border-radius: 16px;
-  background: #fff;
+  border-radius: var(--ocop-radius-lg);
+  background: var(--ocop-card);
 }
 
 .section-title,
@@ -203,7 +203,7 @@ onMounted(loadDashboard)
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 12px;
+  gap: var(--ocop-space-3);
 }
 
 .section-title span,
@@ -222,14 +222,14 @@ onMounted(loadDashboard)
 
 .section-title small {
   color: var(--ocop-slate);
-  font-size: 10px;
+  font-size: var(--ocop-font-size-2xs);
 }
 
 .system-grid {
   display: grid;
-  margin-top: 16px;
+  margin-top: var(--ocop-space-4);
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
+  gap: var(--ocop-space-3);
 }
 
 .system-grid article {
@@ -244,7 +244,7 @@ onMounted(loadDashboard)
   align-items: center;
   gap: 7px;
   color: var(--ocop-slate);
-  font-size: 10px;
+  font-size: var(--ocop-font-size-2xs);
   font-weight: 700;
   text-transform: uppercase;
 }
@@ -257,20 +257,20 @@ onMounted(loadDashboard)
 }
 
 .system-grid p {
-  margin: 4px 0 0;
+  margin: var(--ocop-space-1) 0 0;
   color: var(--ocop-slate);
-  font-size: 11px;
+  font-size: var(--ocop-font-size-xs);
   line-height: 16px;
 }
 
 .tone-blue { --card-color: var(--ocop-blue); }
-.tone-purple { --card-color: #806098; }
+.tone-purple { --card-color: var(--ocop-tone-purple); }
 .tone-gold { --card-color: var(--ocop-warning); }
 
 .dashboard-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.55fr) minmax(260px, 0.75fr);
-  gap: 24px;
+  gap: var(--ocop-space-6);
 }
 
 .priority-list {
@@ -283,42 +283,42 @@ onMounted(loadDashboard)
   padding: 14px 0;
   align-items: center;
   grid-template-columns: 32px minmax(0, 1fr) auto;
-  gap: 12px;
-  border-top: 1px solid #edf1f4;
+  gap: var(--ocop-space-3);
+  border-top: 1px solid var(--ocop-border-soft);
   color: inherit;
   text-decoration: none;
 }
 
-.priority-list a:hover { background: #f8fafc; }
+.priority-list a:hover { background: var(--ocop-surface-subtle); }
 
 .priority-index {
   display: grid;
   width: 28px;
   height: 28px;
   place-items: center;
-  border-radius: 8px;
+  border-radius: var(--ocop-radius-sm);
   background: var(--ocop-mint-soft);
   color: var(--ocop-primary-700);
-  font-size: 11px;
+  font-size: var(--ocop-font-size-xs);
   font-weight: 800;
 }
 
 .priority-list strong {
   color: var(--ocop-navy);
-  font-size: 13px;
+  font-size: var(--ocop-font-size-small);
 }
 
 .priority-list p {
   margin: 2px 0 0;
   color: var(--ocop-slate);
-  font-size: 11px;
+  font-size: var(--ocop-font-size-xs);
 }
 
 .priority-list small {
-  padding: 4px 8px;
-  border-radius: 999px;
-  background: #f1f5f9;
-  color: #64748b;
+  padding: var(--ocop-space-1) var(--ocop-space-2);
+  border-radius: var(--ocop-radius-pill);
+  background: var(--ocop-neutral-100);
+  color: var(--ocop-neutral-500);
   font-size: 9px;
   font-weight: 700;
 }
@@ -333,15 +333,15 @@ onMounted(loadDashboard)
   width: 44px;
   height: 44px;
   place-items: center;
-  border-radius: 12px;
-  background: #fff;
+  border-radius: var(--ocop-radius-md);
+  background: var(--ocop-card);
   color: var(--ocop-primary-700);
 }
 
 .security-panel p,
 .security-panel li {
-  color: #52665a;
-  font-size: 12px;
+  color: var(--ocop-sage-800);
+  font-size: var(--ocop-font-size-caption);
   line-height: 1.6;
 }
 

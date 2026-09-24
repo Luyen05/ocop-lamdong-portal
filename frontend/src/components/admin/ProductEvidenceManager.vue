@@ -359,37 +359,37 @@ async function removeLink(link: ProductEvidenceSource): Promise<void> {
 
 <style scoped>
 .evidence-manager { display: grid; margin-top: 22px; padding-top: 18px; gap: 11px; border-top: 1px solid var(--ocop-border); }
-.evidence-manager > header, .header-actions, .form-heading, .card-meta, .card-actions { display: flex; align-items: center; gap: 8px; }
+.evidence-manager > header, .header-actions, .form-heading, .card-meta, .card-actions { display: flex; align-items: center; gap: var(--ocop-space-2); }
 .evidence-manager > header, .form-heading { justify-content: space-between; }
-.evidence-manager header small { color: var(--ocop-primary-700); font-size: 10px; font-weight: 800; text-transform: uppercase; }
+.evidence-manager header small { color: var(--ocop-primary-700); font-size: var(--ocop-font-size-2xs); font-weight: 800; text-transform: uppercase; }
 .evidence-manager h3 { margin: 3px 0 0; font-size: 17px; }
-.evidence-manager button { padding: 7px 9px; border: 1px solid var(--ocop-border); border-radius: 7px; background: #fff; font-size: 10px; font-weight: 700; }
-.evidence-manager .primary-action, .evidence-manager .save-button { border-color: var(--ocop-primary-700); background: var(--ocop-primary-700); color: #fff; }
-.count-chip { padding: 5px 8px; border-radius: 999px; background: var(--ocop-mint-soft); color: var(--ocop-primary-700); font-size: 9px; font-weight: 800; white-space: nowrap; }
-.action-message { padding: 9px 11px; border-radius: 8px; font-size: 10px; }
-.action-message.error { background: #fef2f2; color: #b42323; }
-.action-message.success { background: #ecfdf5; color: #08745a; }
-.evidence-overview { display: grid; padding: 13px; grid-template-columns: 1fr 2fr; gap: 12px; border-radius: 10px; background: #f7f9fa; }
+.evidence-manager button { padding: 7px 9px; border: 1px solid var(--ocop-border); border-radius: 7px; background: var(--ocop-card); font-size: var(--ocop-font-size-2xs); font-weight: 700; }
+.evidence-manager .primary-action, .evidence-manager .save-button { border-color: var(--ocop-primary-700); background: var(--ocop-primary-700); color: var(--ocop-white); }
+.count-chip { padding: 5px var(--ocop-space-2); border-radius: var(--ocop-radius-pill); background: var(--ocop-mint-soft); color: var(--ocop-primary-700); font-size: 9px; font-weight: 800; white-space: nowrap; }
+.action-message { padding: 9px 11px; border-radius: var(--ocop-radius-sm); font-size: var(--ocop-font-size-2xs); }
+.action-message.error { background: var(--ocop-danger-soft); color: var(--ocop-danger-strong); }
+.action-message.success { background: var(--ocop-success-soft); color: var(--ocop-primary-700); }
+.evidence-overview { display: grid; padding: 13px; grid-template-columns: 1fr 2fr; gap: var(--ocop-space-3); border-radius: 10px; background: var(--ocop-surface-subtle); }
 .evidence-overview div { display: grid; gap: 3px; }
 .evidence-overview small { color: var(--ocop-slate); font-size: 9px; font-weight: 700; text-transform: uppercase; }
-.evidence-overview strong { font-size: 12px; }
+.evidence-overview strong { font-size: var(--ocop-font-size-caption); }
 .issue-list { display: flex; flex-wrap: wrap; gap: 6px; }
-.issue-list span { padding: 6px 8px; border-radius: 7px; background: #fff7ed; color: #9a4d12; font-size: 10px; font-weight: 700; }
-.manager-form { display: grid; padding: 14px; gap: 12px; border: 1px solid #9ed8c6; border-radius: 11px; background: #f6fffb; }
+.issue-list span { padding: 6px var(--ocop-space-2); border-radius: 7px; background: var(--ocop-notice-soft); color: var(--ocop-notice); font-size: var(--ocop-font-size-2xs); font-weight: 700; }
+.manager-form { display: grid; padding: 14px; gap: var(--ocop-space-3); border: 1px solid var(--ocop-mint-border); border-radius: 11px; background: var(--ocop-mint-soft); }
 .manager-form .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-.manager-form label { display: grid; gap: 4px; color: #526277; font-size: 10px; font-weight: 700; }
+.manager-form label { display: grid; gap: var(--ocop-space-1); color: var(--ocop-neutral-600); font-size: var(--ocop-font-size-2xs); font-weight: 700; }
 .manager-form .wide { grid-column: 1 / -1; }
-.manager-form input, .manager-form select, .manager-form textarea { width: 100%; padding: 8px; border: 1px solid var(--ocop-border); border-radius: 7px; background: #fff; font-size: 11px; }
+.manager-form input, .manager-form select, .manager-form textarea { width: 100%; padding: var(--ocop-space-2); border: 1px solid var(--ocop-border); border-radius: 7px; background: var(--ocop-card); font-size: var(--ocop-font-size-xs); }
 .manager-form textarea { resize: vertical; }
 .manager-form footer { display: flex; justify-content: flex-end; }
-.empty-message { padding: 14px; border-radius: 8px; background: #f8fafc; color: var(--ocop-slate); font-size: 11px; text-align: center; }
-.evidence-card { padding: 12px; border: 1px solid var(--ocop-border); border-radius: 10px; }
-.evidence-card h4 { margin: 9px 0 4px; font-size: 13px; }
-.evidence-card p { margin: 3px 0; color: var(--ocop-slate); font-size: 10px; }
-.evidence-card .source-note { color: #7c4a11; }
+.empty-message { padding: 14px; border-radius: var(--ocop-radius-sm); background: var(--ocop-surface-subtle); color: var(--ocop-slate); font-size: var(--ocop-font-size-xs); text-align: center; }
+.evidence-card { padding: var(--ocop-space-3); border: 1px solid var(--ocop-border); border-radius: 10px; }
+.evidence-card h4 { margin: 9px 0 var(--ocop-space-1); font-size: var(--ocop-font-size-small); }
+.evidence-card p { margin: 3px 0; color: var(--ocop-slate); font-size: var(--ocop-font-size-2xs); }
+.evidence-card .source-note { color: var(--ocop-notice-deep); }
 .card-actions { margin-top: 10px; flex-wrap: wrap; }
-.card-actions a { margin-right: auto; color: #1d4f91; font-size: 10px; font-weight: 700; text-decoration: none; }
-.card-actions .danger { border-color: #fecaca; color: #b42323; }
+.card-actions a { margin-right: auto; color: var(--ocop-info-strong); font-size: var(--ocop-font-size-2xs); font-weight: 700; text-decoration: none; }
+.card-actions .danger { border-color: var(--ocop-danger-border); color: var(--ocop-danger-strong); }
 @media (max-width: 640px) {
   .evidence-manager > header { align-items: flex-start; flex-direction: column; }
   .header-actions { width: 100%; flex-wrap: wrap; }

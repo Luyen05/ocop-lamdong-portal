@@ -239,13 +239,13 @@ onMounted(loadApplication)
 <style scoped>
 .application-page {
   min-height: 70vh;
-  padding: 48px 0 64px;
+  padding: var(--ocop-space-12) 0 var(--ocop-space-16);
   background: var(--ocop-surface);
 }
 
 .application-content {
   display: grid;
-  gap: 20px;
+  gap: var(--ocop-space-5);
 }
 
 .page-heading,
@@ -254,13 +254,13 @@ onMounted(loadApplication)
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
+  gap: var(--ocop-space-5);
 }
 
 .page-heading span,
 .form-intro > span {
   color: var(--ocop-primary-700);
-  font-size: 12px;
+  font-size: var(--ocop-font-size-caption);
   font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -291,8 +291,8 @@ onMounted(loadApplication)
   padding: clamp(22px, 4vw, 36px);
   border: 1px solid var(--ocop-border);
   border-radius: var(--ocop-radius-lg);
-  background: #fff;
-  box-shadow: 0 16px 35px rgb(15 23 43 / 6%);
+  background: var(--ocop-card);
+  box-shadow: 0 16px 35px color-mix(in srgb, var(--ocop-neutral-900) 6%, transparent);
 }
 
 .state-card {
@@ -303,38 +303,38 @@ onMounted(loadApplication)
 
 .summary-heading h2,
 .form-intro h2 {
-  margin: 10px 0 4px;
-  font-size: 24px;
+  margin: 10px 0 var(--ocop-space-1);
+  font-size: var(--ocop-font-size-title-md);
   font-weight: 800;
 }
 
 .status-badge {
   display: inline-flex;
   padding: 5px 10px;
-  border-radius: 999px;
-  font-size: 11px;
+  border-radius: var(--ocop-radius-pill);
+  font-size: var(--ocop-font-size-xs);
   font-weight: 800;
 }
 
-.status-pending { background: #fff7d6; color: #8a5900; }
+.status-pending { background: var(--ocop-warning-surface); color: var(--ocop-warning-strong); }
 .status-approved { background: var(--ocop-mint-soft); color: var(--ocop-primary-900); }
-.status-rejected { background: #fff0f1; color: #b4232c; }
+.status-rejected { background: var(--ocop-danger-soft); color: var(--ocop-danger-strong); }
 
 .moderation-note {
   margin-top: 22px;
-  padding: 16px;
+  padding: var(--ocop-space-4);
   border-left: 4px solid var(--ocop-gold);
-  border-radius: 8px;
-  background: #fffbeb;
+  border-radius: var(--ocop-radius-sm);
+  background: var(--ocop-accent-soft);
 }
 
-.moderation-note p { margin: 4px 0 0; }
+.moderation-note p { margin: var(--ocop-space-1) 0 0; }
 
 .application-details,
 .application-form {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px 24px;
+  gap: 18px var(--ocop-space-6);
 }
 
 .application-details {
@@ -350,7 +350,7 @@ onMounted(loadApplication)
 .application-details dt,
 .application-form label > span {
   color: var(--ocop-slate);
-  font-size: 12px;
+  font-size: var(--ocop-font-size-caption);
   font-weight: 700;
 }
 
