@@ -29,6 +29,11 @@ Mật khẩu chung: **DemoOCOP@2026**
 |---|---|---|
 | Quản trị viên | admin.ocop.demo@example.com | /quan-tri/san-pham |
 | Chủ thể đã duyệt | chuthe.ocop.demo@example.com | /chu-the/san-pham |
+| Người dùng đang đăng ký chủ thể | ungvien.ocop.demo@example.com | /dang-ky-chu-the |
+
+Tài khoản người dùng thứ ba có sẵn hồ sơ **Cơ sở đặc sản Cao Nguyên Demo** ở
+trạng thái `pending`. Admin có thể dùng hồ sơ này để trình diễn thao tác duyệt
+chủ thể và việc hệ thống cấp vai trò `subject`.
 
 ## Sản phẩm mẫu
 
@@ -53,9 +58,28 @@ Ngoài các trạng thái trên, seed tạo sẵn:
 - Chủ thể nhìn thấy 6 sản phẩm thuộc đơn vị của mình.
 - Admin nhìn thấy 1 sản phẩm mới ở hàng đợi kiểm duyệt.
 - Admin nhìn thấy 2 yêu cầu sửa/ngừng hiển thị.
+- Admin nhìn thấy 1 hồ sơ đăng ký chủ thể đang chờ duyệt.
 - Cả sáu sản phẩm đều được đánh dấu `is_demo` và không xuất hiện trên API công
   khai, kể cả khi trạng thái là `approved`.
 - Việc duyệt mứt dâu vẫn đổi trạng thái và cho phép kiểm tra đầy đủ quy trình
   chủ thể - quản trị viên trong khu vực nội bộ.
 - Sau khi admin duyệt ngừng hiển thị mật ong, sản phẩm chuyển thành archived và
   API công khai trả 404.
+
+## Kịch bản demo báo cáo đề xuất
+
+1. Mở trang công khai và giới thiệu danh sách sản phẩm OCOP đã được duyệt.
+2. Đăng nhập tài khoản chủ thể, mở danh sách sáu hồ sơ để minh họa các trạng
+   thái bản nháp, chờ duyệt, cần bổ sung, đã duyệt và bị từ chối.
+3. Mở hồ sơ **Mứt dâu Đà Lạt - Chờ duyệt** để cho thấy thông tin sản phẩm,
+   ảnh đại diện và chứng nhận do chủ thể cung cấp.
+4. Đăng nhập tài khoản admin, kiểm tra hồ sơ mứt dâu và chọn duyệt hiển thị hoặc
+   yêu cầu bổ sung.
+5. Mở tab **Sửa / ngừng hiển thị** để trình diễn yêu cầu cập nhật hồng treo gió
+   và yêu cầu ngừng hiển thị mật ong.
+6. Mở **Chủ thể / HTX** để trình diễn hồ sơ **Cơ sở đặc sản Cao Nguyên Demo**
+   đang chờ duyệt.
+
+Nếu đã thao tác làm thay đổi trạng thái trong lúc luyện demo, chạy lại
+`seed_product_workflow.sql` để đưa toàn bộ dữ liệu minh họa về trạng thái ban
+đầu. Dữ liệu sản phẩm OCOP tham khảo không bị thay đổi.
