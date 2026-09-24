@@ -228,6 +228,22 @@ onUnmounted(() => {
             </article>
           </div>
 
+          <article v-if="product.related_locations?.length" class="content-block location-block">
+            <span class="section-eyebrow">Trải nghiệm tại điểm đến</span>
+            <h2>Điểm du lịch giới thiệu sản phẩm</h2>
+            <ul>
+              <li v-for="location in product.related_locations" :key="location.id">
+                <div>
+                  <strong>{{ location.name }}</strong>
+                  <span>{{ location.type_label }} · {{ location.district }}</span>
+                </div>
+                <RouterLink :to="{ name: 'location-detail', params: { slug: location.slug } }">
+                  Xem điểm đến
+                </RouterLink>
+              </li>
+            </ul>
+          </article>
+
           <article v-if="product.recognition_sources.length" class="content-block source-block">
             <span class="section-eyebrow">Nguồn đối chiếu công khai</span>
             <h2>Văn bản và nguồn công nhận</h2>
@@ -476,7 +492,8 @@ onUnmounted(() => {
   margin-top: 3rem;
 }
 
-.source-block ul {
+.source-block ul,
+.location-block ul {
   display: grid;
   margin: 1.25rem 0 0;
   padding: 0;
@@ -484,7 +501,8 @@ onUnmounted(() => {
   list-style: none;
 }
 
-.source-block li {
+.source-block li,
+.location-block li {
   display: flex;
   padding: 0.9rem 1rem;
   align-items: center;
@@ -495,9 +513,12 @@ onUnmounted(() => {
   background: var(--ocop-surface-subtle);
 }
 
-.source-block li div { display: grid; gap: 0.25rem; }
-.source-block li span { color: var(--ocop-text-secondary); font-size: 0.78rem; }
-.source-block li a { flex: 0 0 auto; color: var(--ocop-primary-700); font-size: 0.82rem; font-weight: 750; }
+.source-block li div,
+.location-block li div { display: grid; gap: 0.25rem; }
+.source-block li span,
+.location-block li span { color: var(--ocop-text-secondary); font-size: 0.78rem; }
+.source-block li a,
+.location-block li a { flex: 0 0 auto; color: var(--ocop-primary-700); font-size: 0.82rem; font-weight: 750; }
 
 .related-section { margin-top: 3.5rem; }
 .related-heading { display: flex; margin-bottom: 1.25rem; align-items: end; justify-content: space-between; gap: 1rem; }
@@ -582,7 +603,8 @@ onUnmounted(() => {
 }
 
 @media (max-width: 767.98px) {
-  .source-block li { align-items: flex-start; flex-direction: column; }
+  .source-block li,
+  .location-block li { align-items: flex-start; flex-direction: column; }
   .related-grid { grid-template-columns: 1fr; }
 }
 

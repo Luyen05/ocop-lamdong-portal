@@ -40,8 +40,8 @@ const stats = [
           <h2 id="footer-system-title">Danh Mục Hệ Thống</h2>
           <RouterLink to="/">Trang chủ</RouterLink>
           <RouterLink to="/san-pham">Tra cứu sản phẩm OCOP 3-5 sao</RouterLink>
-          <a href="/#diem-du-lich">Khám phá điểm du lịch nông nghiệp</a>
-          <a href="/#ban-do">Bản đồ số GIS &amp; Chỉ đường</a>
+          <RouterLink to="/diem-du-lich">Khám phá điểm du lịch nông nghiệp</RouterLink>
+          <RouterLink to="/ban-do">Bản đồ số GIS &amp; Chỉ đường</RouterLink>
           <RouterLink to="/tin-tuc">Tin tức &amp; Sự kiện OCOP</RouterLink>
         </nav>
 

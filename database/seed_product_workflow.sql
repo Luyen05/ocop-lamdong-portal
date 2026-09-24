@@ -1,6 +1,10 @@
 -- Optional development data for testing the product moderation workflow.
 -- DO NOT run this file in production.
 -- Shared demo password: DemoOCOP@2026
+-- Demo accounts:
+--   admin.ocop.demo@example.com   (admin)
+--   chuthe.ocop.demo@example.com  (subject)
+--   ungvien.ocop.demo@example.com (user with a pending subject application)
 BEGIN;
 
 INSERT INTO users (role_id, email, hashed_password, full_name, phone, is_active)
@@ -13,6 +17,23 @@ SELECT
   TRUE
 FROM roles
 WHERE roles.name = 'admin'
+ON CONFLICT (email) DO UPDATE SET
+  role_id = EXCLUDED.role_id,
+  hashed_password = EXCLUDED.hashed_password,
+  full_name = EXCLUDED.full_name,
+  phone = EXCLUDED.phone,
+  is_active = TRUE;
+
+INSERT INTO users (role_id, email, hashed_password, full_name, phone, is_active)
+SELECT
+  roles.id,
+  'ungvien.ocop.demo@example.com',
+  '$argon2id$v=19$m=65536,t=3,p=4$omxliNzu83V7YdXSSKpF6Q$rMrCOodYH8KBvkAuekdkfyF0aMtd542DKqbDBlsdzag',
+  'Người dùng đăng ký chủ thể',
+  '0901000003',
+  TRUE
+FROM roles
+WHERE roles.name = 'user'
 ON CONFLICT (email) DO UPDATE SET
   role_id = EXCLUDED.role_id,
   hashed_password = EXCLUDED.hashed_password,
@@ -82,6 +103,51 @@ ON CONFLICT (user_id) DO UPDATE SET
   status = 'approved',
   reviewed_by = EXCLUDED.reviewed_by,
   reviewed_at = EXCLUDED.reviewed_at,
+  rejection_reason = NULL;
+
+INSERT INTO subjects (
+  user_id,
+  name,
+  type,
+  tax_code,
+  representative,
+  phone,
+  email,
+  address,
+  district,
+  status,
+  reviewed_by,
+  reviewed_at,
+  rejection_reason
+)
+SELECT
+  applicant.id,
+  'Cơ sở đặc sản Cao Nguyên Demo',
+  'household',
+  'DEMO-APPLICANT-2026',
+  'Trần Minh Demo',
+  '0901000003',
+  'ungvien.ocop.demo@example.com',
+  'Phường Xuân Hương - Đà Lạt, tỉnh Lâm Đồng',
+  'Đà Lạt',
+  'pending',
+  NULL,
+  NULL,
+  NULL
+FROM users AS applicant
+WHERE applicant.email = 'ungvien.ocop.demo@example.com'
+ON CONFLICT (user_id) DO UPDATE SET
+  name = EXCLUDED.name,
+  type = EXCLUDED.type,
+  tax_code = EXCLUDED.tax_code,
+  representative = EXCLUDED.representative,
+  phone = EXCLUDED.phone,
+  email = EXCLUDED.email,
+  address = EXCLUDED.address,
+  district = EXCLUDED.district,
+  status = 'pending',
+  reviewed_by = NULL,
+  reviewed_at = NULL,
   rejection_reason = NULL;
 
 WITH demo_products (

@@ -10,6 +10,6 @@
   <path d="M0 380 Q150 300 300 340 Q450 280 600 320 Q700 290 800 330 L800 500 L0 500Z" fill="#3d8854" opacity="0.8"/>
   <g opacity="0.4"><path d="M50 410 Q200 390 400 400 Q600 390 750 410" stroke="#1e5e3a" stroke-width="2" fill="none"/><path d="M50 430 Q200 410 400 420 Q600 410 750 430" stroke="#1e5e3a" stroke-width="2" fill="none"/><path d="M50 450 Q200 430 400 440 Q600 430 750 450" stroke="#1e5e3a" stroke-width="2" fill="none"/></g>
   <circle cx="650" cy="120" r="45" fill="#fde68a" opacity="0.6"/>
-  <text x="400" y="240" text-anchor="middle" font-family="system-ui,sans-serif" font-size="22" font-weight="700" fill="white" opacity="0.9">Đồi chè Cầu Đất — Đà Lạt</text>
+  <text x="400" y="240" text-anchor="middle" font-family="system-ui,sans-serif" font-size="22" font-weight="700" fill="white" opacity="0.9">Đồi chè &amp; cà phê</text>
   <text x="400" y="270" text-anchor="middle" font-family="system-ui,sans-serif" font-size="13" fill="white" opacity="0.7">Ảnh minh họa</text>
 </svg>
