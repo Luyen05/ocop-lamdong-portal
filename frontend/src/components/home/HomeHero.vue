@@ -254,7 +254,7 @@ h1 {
   }
 
   .hero-badge {
-    font-size: var(--ocop-font-size-2xs);
+    font-size: var(--ocop-font-size-caption);
   }
 
   h1 {

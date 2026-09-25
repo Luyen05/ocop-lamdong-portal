@@ -77,7 +77,7 @@ onMounted(() => void loadNews())
 <style scoped>
 .news-section { padding: var(--ocop-space-12) 0; }
 .section-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--ocop-space-4); }
-.eyebrow { color: var(--ocop-primary-700); font-size: var(--ocop-font-size-xs); font-weight: 800; line-height: 16px; text-transform: uppercase; }
+.eyebrow { color: var(--ocop-primary-700); font-size: var(--ocop-font-size-caption); font-weight: 800; line-height: 16px; text-transform: uppercase; }
 h2 { max-width: 680px; margin: var(--ocop-space-1) 0 0; color: var(--ocop-navy); font-size: 22px; font-weight: 800; letter-spacing: -.5px; line-height: 28px; }
 .section-copy { margin: 2px 0 0; color: var(--ocop-slate); font-size: var(--ocop-font-size-small); }
 .view-all { display: inline-flex; flex: 0 0 auto; align-items: center; gap: var(--ocop-space-1); color: var(--ocop-primary-700); font-size: var(--ocop-font-size-caption); font-weight: 750; text-decoration: none; }

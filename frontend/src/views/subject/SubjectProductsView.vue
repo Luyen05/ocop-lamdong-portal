@@ -334,13 +334,13 @@ onMounted(loadData)
 <style scoped>
 .subject-products-page { display: grid; gap: var(--ocop-space-5); }
 .page-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--ocop-space-5); }
-.page-heading span { color: var(--ocop-primary-700); font-size: var(--ocop-font-size-xs); font-weight: 800; text-transform: uppercase; }
+.page-heading span { color: var(--ocop-primary-700); font-size: var(--ocop-font-size-caption); font-weight: 800; text-transform: uppercase; }
 .page-heading h1 { margin: var(--ocop-space-1) 0; color: var(--ocop-navy); font-size: 30px; }
 .page-heading p { margin: 0; color: var(--ocop-slate); font-size: var(--ocop-font-size-small); }
 .primary-button, .product-actions a { padding: 10px 14px; border-radius: 9px; background: var(--ocop-primary-700); color: var(--ocop-white); font-size: var(--ocop-font-size-caption); font-weight: 700; text-align: center; text-decoration: none; }
 .filter-bar { display: flex; padding: var(--ocop-space-2); flex-wrap: wrap; gap: 7px; border: 1px solid var(--ocop-border); border-radius: var(--ocop-radius-md); background: var(--ocop-card); }
 .filter-bar button { padding: var(--ocop-space-2) 11px; border: 1px solid transparent; border-radius: var(--ocop-radius-sm); background: transparent; color: var(--ocop-neutral-600); font-size: var(--ocop-font-size-caption); font-weight: 700; }
-.filter-bar button span { margin-left: var(--ocop-space-1); padding: 2px 6px; border-radius: var(--ocop-radius-pill); background: var(--ocop-border-soft); font-size: var(--ocop-font-size-xs); }
+.filter-bar button span { margin-left: var(--ocop-space-1); padding: 2px 6px; border-radius: var(--ocop-radius-pill); background: var(--ocop-border-soft); font-size: var(--ocop-font-size-caption); }
 .filter-bar button.active { border-color: var(--ocop-mint-border); background: var(--ocop-mint-soft); color: var(--ocop-primary-700); }
 .dialog-card label { display: grid; gap: 5px; color: var(--ocop-neutral-600); font-size: var(--ocop-font-size-caption); font-weight: 700; }
 .product-panel { overflow: hidden; border: 1px solid var(--ocop-border); border-radius: 14px; background: var(--ocop-card); }
@@ -351,7 +351,7 @@ onMounted(loadData)
 .product-copy h2 { margin: 7px 0 3px; font-size: var(--ocop-font-size-body-lg); }
 .product-copy p, .product-copy small { margin: 0; color: var(--ocop-slate); font-size: var(--ocop-font-size-caption); }
 .product-copy > div { display: flex; gap: 7px; }
-.status, .stars { padding: 3px 7px; border-radius: var(--ocop-radius-pill); background: var(--ocop-border-soft); color: var(--ocop-neutral-600); font-size: var(--ocop-font-size-xs); font-weight: 800; }
+.status, .stars { padding: 3px 7px; border-radius: var(--ocop-radius-pill); background: var(--ocop-border-soft); color: var(--ocop-neutral-600); font-size: var(--ocop-font-size-caption); font-weight: 800; }
 .status-approved { background: var(--ocop-success-soft); color: var(--ocop-success); }
 .status-pending { background: var(--ocop-warning-soft); color: var(--ocop-warning); }
 .status-needs_revision, .status-rejected { background: var(--ocop-danger-soft); color: var(--ocop-danger); }

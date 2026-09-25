@@ -67,7 +67,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
           <button v-else type="button" disabled :title="`${item.label} sẽ được triển khai ở commit sau`">
             <span aria-hidden="true"><AppIcon :name="item.icon" :size="18" /></span>
             {{ item.label }}
-            <small>Sắp phát triển</small>
+            <small>Sắp có</small>
           </button>
         </template>
       </nav>
@@ -174,7 +174,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 .admin-brand small {
   margin-top: 2px;
   color: var(--ocop-sidebar-muted);
-  font-size: var(--ocop-font-size-xs);
+  font-size: var(--ocop-font-size-caption);
 }
 
 .admin-nav {
@@ -224,8 +224,9 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 .admin-nav button small {
   margin-left: auto;
   color: var(--ocop-neutral-500);
-  font-size: 8px;
+  font-size: var(--ocop-font-size-caption);
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .sidebar-footer {
@@ -277,7 +278,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 
 .topbar-label {
   color: var(--ocop-slate);
-  font-size: var(--ocop-font-size-xs);
+  font-size: var(--ocop-font-size-caption);
   text-transform: uppercase;
 }
 
@@ -332,7 +333,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 
 .admin-account small {
   color: var(--ocop-slate);
-  font-size: var(--ocop-font-size-2xs);
+  font-size: var(--ocop-font-size-caption);
 }
 
 .admin-content {

@@ -99,6 +99,18 @@ img {
   --bs-btn-hover-border-color: var(--ocop-primary-900);
 }
 
+/* Vùng bấm tối thiểu 44px trên thiết bị cảm ứng (WCAG 2.5.8 và khuyến nghị cho điện thoại). */
+@media (pointer: coarse) {
+  .btn {
+    --bs-btn-padding-y: max(0.375rem, calc((var(--ocop-control-md) - 1.5em - 2px) / 2));
+  }
+
+  .form-control,
+  .form-select {
+    min-height: var(--ocop-control-md);
+  }
+}
+
 .form-control:focus,
 .form-check-input:focus {
   border-color: var(--ocop-primary-500);

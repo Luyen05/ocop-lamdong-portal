@@ -154,7 +154,7 @@ onMounted(loadDashboard)
 .section-title span,
 .panel-heading span {
   color: var(--ocop-mint-400);
-  font-size: var(--ocop-font-size-xs);
+  font-size: var(--ocop-font-size-caption);
   font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -222,7 +222,7 @@ onMounted(loadDashboard)
 
 .section-title small {
   color: var(--ocop-slate);
-  font-size: var(--ocop-font-size-2xs);
+  font-size: var(--ocop-font-size-caption);
 }
 
 .system-grid {
@@ -244,7 +244,7 @@ onMounted(loadDashboard)
   align-items: center;
   gap: 7px;
   color: var(--ocop-slate);
-  font-size: var(--ocop-font-size-2xs);
+  font-size: var(--ocop-font-size-caption);
   font-weight: 700;
   text-transform: uppercase;
 }
@@ -259,7 +259,7 @@ onMounted(loadDashboard)
 .system-grid p {
   margin: var(--ocop-space-1) 0 0;
   color: var(--ocop-slate);
-  font-size: var(--ocop-font-size-xs);
+  font-size: var(--ocop-font-size-caption);
   line-height: 16px;
 }
 
@@ -299,7 +299,7 @@ onMounted(loadDashboard)
   border-radius: var(--ocop-radius-sm);
   background: var(--ocop-mint-soft);
   color: var(--ocop-primary-700);
-  font-size: var(--ocop-font-size-xs);
+  font-size: var(--ocop-font-size-caption);
   font-weight: 800;
 }
 
@@ -311,7 +311,7 @@ onMounted(loadDashboard)
 .priority-list p {
   margin: 2px 0 0;
   color: var(--ocop-slate);
-  font-size: var(--ocop-font-size-xs);
+  font-size: var(--ocop-font-size-caption);
 }
 
 .priority-list small {
@@ -319,7 +319,7 @@ onMounted(loadDashboard)
   border-radius: var(--ocop-radius-pill);
   background: var(--ocop-neutral-100);
   color: var(--ocop-neutral-500);
-  font-size: 9px;
+  font-size: var(--ocop-font-size-caption);
   font-weight: 700;
 }
 

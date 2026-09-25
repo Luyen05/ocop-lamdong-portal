@@ -308,6 +308,10 @@ onBeforeUnmount(() => {
   stroke: var(--ocop-location-route);
 }
 
+.leaflet-tooltip small {
+  font-size: var(--ocop-font-size-caption);
+}
+
 .ocop-marker-anchor {
   border: 0;
   background: transparent;

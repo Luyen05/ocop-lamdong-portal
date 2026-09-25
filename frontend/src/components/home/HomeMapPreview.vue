@@ -114,7 +114,7 @@ onMounted(async () => {
 
 .eyebrow {
   color: var(--ocop-blue);
-  font-size: var(--ocop-font-size-xs);
+  font-size: var(--ocop-font-size-caption);
   font-weight: 800;
   line-height: 16px;
   text-transform: uppercase;
@@ -142,7 +142,7 @@ h2 {
   border-radius: var(--ocop-radius-pill);
   background: var(--ocop-info-soft);
   color: var(--ocop-blue-700);
-  font-size: var(--ocop-font-size-2xs);
+  font-size: var(--ocop-font-size-caption);
   font-weight: 700;
 }
 
@@ -204,7 +204,7 @@ h2 {
   border-radius: 6px;
   background: color-mix(in srgb, var(--ocop-neutral-900) 88%, transparent);
   color: var(--ocop-white);
-  font-size: var(--ocop-font-size-2xs);
+  font-size: var(--ocop-font-size-caption);
   transform: rotate(45deg);
 }
 
@@ -232,7 +232,7 @@ h2 {
   background: color-mix(in srgb, var(--ocop-white) 92%, transparent);
   box-shadow: 0 5px 12px color-mix(in srgb, var(--ocop-neutral-900) 10%, transparent);
   color: var(--ocop-text-muted);
-  font-size: var(--ocop-font-size-2xs);
+  font-size: var(--ocop-font-size-caption);
 }
 
 .map-legend strong {

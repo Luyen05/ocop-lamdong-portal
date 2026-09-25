@@ -124,7 +124,7 @@ const stats = [
 .stat-card small {
   margin-top: 2px;
   color: var(--ocop-text-on-dark-muted);
-  font-size: var(--ocop-font-size-xs);
+  font-size: var(--ocop-font-size-caption);
 }
 
 .footer-grid {
@@ -168,7 +168,7 @@ const stats = [
 .footer-grid address {
   margin: 0;
   color: var(--ocop-text-on-dark-muted);
-  font-size: var(--ocop-font-size-xs);
+  font-size: var(--ocop-font-size-caption);
   font-style: normal;
   line-height: 18px;
   text-decoration: none;
@@ -178,6 +178,18 @@ const stats = [
 .footer-grid section {
   display: flex;
   flex-direction: column;
+}
+
+.footer-grid nav a {
+  display: flex;
+  min-height: 24px;
+  align-items: center;
+}
+
+@media (pointer: coarse) {
+  .footer-grid nav a {
+    min-height: var(--ocop-control-md);
+  }
 }
 
 .footer-grid a:hover {
@@ -217,7 +229,7 @@ const stats = [
   align-items: center;
   gap: 6px;
   color: var(--ocop-mint-400);
-  font-size: var(--ocop-font-size-xs);
+  font-size: var(--ocop-font-size-caption);
 }
 
 .info-card p {
@@ -230,7 +242,7 @@ const stats = [
   border-radius: 6px;
   background: var(--ocop-primary-700);
   color: var(--ocop-white);
-  font-size: var(--ocop-font-size-xs);
+  font-size: var(--ocop-font-size-caption);
   font-weight: 700;
   text-align: center;
 }
@@ -240,8 +252,8 @@ const stats = [
   padding-top: var(--ocop-space-6);
   justify-content: space-between;
   gap: var(--ocop-space-5);
-  color: var(--ocop-neutral-500);
-  font-size: var(--ocop-font-size-xs);
+  color: var(--ocop-text-on-dark-muted);
+  font-size: var(--ocop-font-size-caption);
 }
 
 @media (max-width: 991.98px) {

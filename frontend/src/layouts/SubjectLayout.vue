@@ -67,7 +67,8 @@ async function logout(): Promise<void> {
 .subject-brand img { width: 22px; }
 .subject-brand div, .subject-page-heading, .subject-account div { display: grid; }
 .subject-brand strong { font-size: var(--ocop-font-size-small); }
-.subject-brand small, .subject-topbar small, .subject-account small { color: var(--ocop-sidebar-muted); font-size: var(--ocop-font-size-xs); }
+.subject-brand small { color: var(--ocop-sidebar-muted); font-size: var(--ocop-font-size-caption); }
+.subject-topbar small, .subject-account small { color: var(--ocop-text-secondary); font-size: var(--ocop-font-size-caption); }
 .subject-sidebar nav { display: grid; margin-top: var(--ocop-space-6); gap: 6px; }
 .subject-sidebar nav a { display: flex; padding: 11px var(--ocop-space-3); align-items: center; gap: 10px; border: 1px solid transparent; border-radius: 9px; color: var(--ocop-sidebar-muted); font-size: var(--ocop-font-size-small); font-weight: 700; text-decoration: none; }
 .subject-sidebar nav a :deep(.app-icon) { color: var(--ocop-mint-300); }

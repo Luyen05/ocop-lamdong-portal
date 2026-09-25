@@ -134,7 +134,7 @@ const formattedPrice = computed(() => {
 
 .product-placeholder span {
   color: color-mix(in srgb, var(--ocop-primary-900) 70%, transparent);
-  font-size: var(--ocop-font-size-xs);
+  font-size: var(--ocop-font-size-caption);
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -153,7 +153,7 @@ const formattedPrice = computed(() => {
   padding: 5px 10px;
   border-radius: var(--ocop-radius-sm);
   color: var(--ocop-white);
-  font-size: var(--ocop-font-size-xs);
+  font-size: var(--ocop-font-size-caption);
   font-weight: 700;
   line-height: 14px;
 }
@@ -220,7 +220,7 @@ const formattedPrice = computed(() => {
   padding-top: var(--ocop-space-3);
   gap: 2px;
   color: var(--ocop-text-tertiary);
-  font-size: var(--ocop-font-size-xs);
+  font-size: var(--ocop-font-size-caption);
 }
 
 .product-subject strong {
@@ -258,7 +258,7 @@ const formattedPrice = computed(() => {
 .product-price small {
   overflow: hidden;
   color: var(--ocop-text-tertiary);
-  font-size: var(--ocop-font-size-xs);
+  font-size: var(--ocop-font-size-caption);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
