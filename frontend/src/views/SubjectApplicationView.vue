@@ -312,7 +312,7 @@ onMounted(loadApplication)
   display: inline-flex;
   padding: 5px 10px;
   border-radius: var(--ocop-radius-pill);
-  font-size: var(--ocop-font-size-xs);
+  font-size: var(--ocop-font-size-caption);
   font-weight: 800;
 }
 

@@ -179,7 +179,7 @@ onMounted(loadCategories)
 .category-card small {
   margin-top: 2px;
   color: var(--ocop-slate);
-  font-size: var(--ocop-font-size-2xs);
+  font-size: var(--ocop-font-size-caption);
   font-weight: 500;
   line-height: 15px;
 }

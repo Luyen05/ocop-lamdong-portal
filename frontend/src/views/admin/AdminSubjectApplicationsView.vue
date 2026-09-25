@@ -317,19 +317,19 @@ onMounted(loadApplications)
 <style scoped>
 .applications-page { display: grid; gap: var(--ocop-space-5); }
 .page-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--ocop-space-5); }
-.page-heading > div > span { color: var(--ocop-primary-700); font-size: var(--ocop-font-size-xs); font-weight: 800; text-transform: uppercase; }
+.page-heading > div > span { color: var(--ocop-primary-700); font-size: var(--ocop-font-size-caption); font-weight: 800; text-transform: uppercase; }
 .page-heading h1 { margin: var(--ocop-space-1) 0; font-size: clamp(25px, 3vw, 34px); font-weight: 800; }
 .page-heading p { margin: 0; color: var(--ocop-slate); }
 .page-heading > strong { padding: var(--ocop-space-2) var(--ocop-space-3); border-radius: var(--ocop-radius-pill); background: var(--ocop-mint-soft); color: var(--ocop-primary-900); font-size: var(--ocop-font-size-caption); }
 .filter-bar { display: grid; grid-template-columns: minmax(220px, 1fr) minmax(170px, 220px) auto; gap: 10px; padding: var(--ocop-space-4); border: 1px solid var(--ocop-border); border-radius: 14px; background: var(--ocop-card); }
 .filter-bar label { margin: 0; }
 .table-card { overflow: hidden; border: 1px solid var(--ocop-border); border-radius: 14px; background: var(--ocop-card); }
-.table th { padding: 13px var(--ocop-space-4); background: var(--ocop-surface-muted); color: var(--ocop-slate); font-size: var(--ocop-font-size-xs); text-transform: uppercase; white-space: nowrap; }
+.table th { padding: 13px var(--ocop-space-4); background: var(--ocop-surface-muted); color: var(--ocop-slate); font-size: var(--ocop-font-size-caption); text-transform: uppercase; white-space: nowrap; }
 .table td { padding: 15px var(--ocop-space-4); font-size: var(--ocop-font-size-small); }
 .table td strong,
 .table td small { display: block; }
-.table td small { margin-top: 3px; color: var(--ocop-slate); font-size: var(--ocop-font-size-xs); }
-.status-badge { display: inline-flex; padding: 5px 9px; border-radius: var(--ocop-radius-pill); font-size: var(--ocop-font-size-2xs); font-weight: 800; white-space: nowrap; }
+.table td small { margin-top: 3px; color: var(--ocop-slate); font-size: var(--ocop-font-size-caption); }
+.status-badge { display: inline-flex; padding: 5px 9px; border-radius: var(--ocop-radius-pill); font-size: var(--ocop-font-size-caption); font-weight: 800; white-space: nowrap; }
 .status-pending { background: var(--ocop-warning-soft); color: var(--ocop-warning); }
 .status-approved { background: var(--ocop-success-soft); color: var(--ocop-success); }
 .status-rejected { background: var(--ocop-danger-soft); color: var(--ocop-danger); }
@@ -339,13 +339,13 @@ onMounted(loadApplications)
 .modal-layer { position: fixed; z-index: 200; inset: 0; display: grid; padding: var(--ocop-space-5); place-items: center; overflow-y: auto; background: color-mix(in srgb, var(--ocop-neutral-900) 58%, transparent); }
 .moderation-dialog { width: min(100%, 720px); max-height: calc(100vh - 40px); padding: var(--ocop-space-6); overflow-y: auto; border-radius: 18px; background: var(--ocop-card); box-shadow: 0 28px 70px color-mix(in srgb, var(--ocop-neutral-900) 30%, transparent); }
 .moderation-dialog header { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--ocop-space-5); }
-.moderation-dialog header span { color: var(--ocop-primary-700); font-size: var(--ocop-font-size-xs); font-weight: 800; }
+.moderation-dialog header span { color: var(--ocop-primary-700); font-size: var(--ocop-font-size-caption); font-weight: 800; }
 .moderation-dialog h2 { margin: 3px 0 0; font-size: 23px; }
 .moderation-dialog header button { border: 0; background: transparent; color: var(--ocop-slate); font-size: 28px; line-height: 1; }
 .detail-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 22px; margin: var(--ocop-space-6) 0; padding: 18px; border-radius: var(--ocop-radius-md); background: var(--ocop-surface); }
 .detail-grid div { display: grid; gap: 3px; }
 .detail-grid dt,
-.moderation-dialog form label span { color: var(--ocop-slate); font-size: var(--ocop-font-size-xs); font-weight: 700; }
+.moderation-dialog form label span { color: var(--ocop-slate); font-size: var(--ocop-font-size-caption); font-weight: 700; }
 .detail-grid dd { margin: 0; font-size: var(--ocop-font-size-small); font-weight: 650; }
 .full-row { grid-column: 1 / -1; }
 .moderation-dialog form label { display: grid; gap: 7px; }

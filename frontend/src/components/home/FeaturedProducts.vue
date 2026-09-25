@@ -82,7 +82,7 @@ onMounted(loadProducts)
   display: block;
   margin-bottom: var(--ocop-space-1);
   color: var(--ocop-notice-strong);
-  font-size: var(--ocop-font-size-xs);
+  font-size: var(--ocop-font-size-caption);
   font-weight: 800;
   line-height: 16px;
   text-transform: uppercase;

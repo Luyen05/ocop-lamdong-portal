@@ -76,7 +76,7 @@ defineProps<{
 .brand-link small {
   margin-top: 0.25rem;
   color: var(--ocop-slate);
-  font-size: 0.72rem;
+  font-size: var(--ocop-font-size-caption);
 }
 
 .brand-mark {

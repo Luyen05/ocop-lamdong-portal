@@ -2,6 +2,9 @@
  * Design token dùng chung của Cổng thông tin OCOP Lâm Đồng.
  * Mọi màu, khoảng cách, bo góc, cỡ chữ, đổ bóng trong component phải lấy từ đây.
  * Màu có độ trong suốt: color-mix(in srgb, var(--ocop-...) 20%, transparent).
+ * Màu chữ đạt tương phản tối thiểu 4.5:1 (WCAG AA) trên nền mà nó được thiết kế:
+ * --ocop-text-* / --ocop-slate / trạng thái dùng trên nền sáng, --ocop-text-on-dark* và
+ * --ocop-sidebar-muted chỉ dùng trên nền tối.
  */
 :root {
   /* Kiểu chữ */
@@ -22,7 +25,7 @@
   --ocop-emerald-500: #00bc7d;
 
   /* Màu phụ: vàng OCOP, nâu đất, xanh dương */
-  --ocop-blue: #2878a5;
+  --ocop-blue: #2475a2;
   --ocop-gold: #d99b24;
   --ocop-accent: var(--ocop-gold);
   --ocop-accent-soft: #fff7e6;
@@ -37,8 +40,8 @@
   /* Màu trạng thái */
   --ocop-danger: #c2414b;
   --ocop-success: #247a4f;
-  --ocop-warning: #a96f16;
-  --ocop-info: #2878a5;
+  --ocop-warning: #9c6300;
+  --ocop-info: #2475a2;
   --ocop-success-soft: #eaf7ef;
   --ocop-warning-soft: #fff7e6;
   --ocop-danger-soft: #fff0f1;
@@ -58,13 +61,13 @@
 
   /* Chữ */
   --ocop-navy: #18251f;
-  --ocop-slate: #66756d;
+  --ocop-slate: #617068;
   --ocop-text-primary: var(--ocop-navy);
   --ocop-text-secondary: var(--ocop-slate);
   --ocop-text-muted: #45556c;
-  --ocop-text-tertiary: #90a1b9;
+  --ocop-text-tertiary: #627289;
   --ocop-text-on-dark: #d9e9e3;
-  --ocop-text-on-dark-muted: #8290a6;
+  --ocop-text-on-dark-muted: #9faec4;
 
   /* Nền, viền, thanh bên */
   --ocop-surface: #f7f9f7;
@@ -85,7 +88,7 @@
   --ocop-neutral-200: #e2e8f0;
   --ocop-neutral-300: #cbd5e1;
   --ocop-neutral-400: #94a3b8;
-  --ocop-neutral-500: #64748b;
+  --ocop-neutral-500: #607087;
   --ocop-neutral-600: #526277;
   --ocop-neutral-700: #334155;
   --ocop-neutral-900: #0f172b;
@@ -147,9 +150,7 @@
   --ocop-space-12: 48px;
   --ocop-space-16: 64px;
 
-  /* Cỡ chữ (2xs, xs là cỡ cũ còn dùng, cần nâng lên khi thiết kế lại) */
-  --ocop-font-size-2xs: 0.625rem;
-  --ocop-font-size-xs: 0.6875rem;
+  /* Cỡ chữ: caption (12px) là cỡ nhỏ nhất được phép dùng */
   --ocop-font-size-caption: 0.75rem;
   --ocop-font-size-small: 0.8125rem;
   --ocop-font-size-body: 0.9375rem;

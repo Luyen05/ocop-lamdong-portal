@@ -323,7 +323,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   border-radius: var(--ocop-radius-xs);
   background: var(--ocop-warning-soft);
   color: var(--ocop-warning);
-  font-size: var(--ocop-font-size-2xs);
+  font-size: var(--ocop-font-size-caption);
   font-weight: 700;
   line-height: 12px;
 }
@@ -497,7 +497,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 
 .user-copy small {
   color: var(--ocop-text-tertiary);
-  font-size: var(--ocop-font-size-xs);
+  font-size: var(--ocop-font-size-caption);
   text-transform: uppercase;
 }
 
@@ -621,7 +621,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 
   .announcement-inner p {
     max-width: 100%;
-    font-size: var(--ocop-font-size-2xs);
+    font-size: var(--ocop-font-size-caption);
   }
 
   .announcement-actions {

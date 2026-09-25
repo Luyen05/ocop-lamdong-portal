@@ -59,10 +59,10 @@ Trạng thái: **Chưa xử lý**, **Đang xử lý**, **Đã xử lý**.
 
 | ID | Khía cạnh | Vấn đề | Bằng chứng | Ưu tiên | Đề xuất hướng sửa | Trạng thái |
 |---|---|---|---|---|---|---|
-| G-01 | Khả năng truy cập | Chữ quá nhỏ: 30–50% phần tử chữ mỗi trang dưới 12px, nhiều nhất là 11px, có cả 8–9px ở trang quản trị và chủ thể | Đo cỡ chữ đã tính; token `--ocop-font-size-xs` (11px), `-2xs` (10px) | Cao | Nâng `-xs`, `-2xs` lên tối thiểu 12px ngay trong `tokens.css`; mô tả, giá, địa chỉ trên điện thoại dùng tối thiểu 14px; bỏ hẳn 8–9px | Chưa xử lý |
-| G-02 | Tương phản | Một số cặp token không đạt 4.5:1, lặp lại trên hầu hết các trang | `--ocop-warning` trên `--ocop-warning-soft` 3.96 (chip "Chờ duyệt", nhãn "Cổng thông tin", ghi chú kiểm duyệt); `--ocop-text-tertiary` trên nền trắng 2.63 (nhãn "Chủ thể" ở thẻ sản phẩm); `--ocop-neutral-500` trên nền footer 3.10; `--ocop-text-on-dark-muted` 3.23; `--ocop-sidebar-muted` trên nền trắng 1.91 (khu chủ thể); `--ocop-slate` trên `--ocop-surface-muted` 4.32 (tiêu đề bảng); `--ocop-blue` trên `--ocop-info-soft` 4.44 | Cao | Chỉnh token, áp dụng toàn cục: warning chữ `#9c6300` (4.69), tertiary `#65758c` (4.69), footer phụ `#8192aa` (4.65), chữ phụ trên nền tối `#9fadc4` (4.60); với `--ocop-sidebar-muted` trên nền trắng thì đổi sang dùng `--ocop-text-secondary`; tiêu đề bảng dùng `--ocop-text-muted` | Chưa xử lý |
+| G-01 | Khả năng truy cập | Chữ quá nhỏ: 30–50% phần tử chữ mỗi trang dưới 12px, nhiều nhất là 11px, có cả 8–9px ở trang quản trị và chủ thể | Đo cỡ chữ đã tính; token `--ocop-font-size-xs` (11px), `-2xs` (10px) | Cao | Nâng `-xs`, `-2xs` lên tối thiểu 12px ngay trong `tokens.css`; mô tả, giá, địa chỉ trên điện thoại dùng tối thiểu 14px; bỏ hẳn 8–9px | Đã xử lý (bước 0) |
+| G-02 | Tương phản | Một số cặp token không đạt 4.5:1, lặp lại trên hầu hết các trang | `--ocop-warning` trên `--ocop-warning-soft` 3.96 (chip "Chờ duyệt", nhãn "Cổng thông tin", ghi chú kiểm duyệt); `--ocop-text-tertiary` trên nền trắng 2.63 (nhãn "Chủ thể" ở thẻ sản phẩm); `--ocop-neutral-500` trên nền footer 3.10; `--ocop-text-on-dark-muted` 3.23; `--ocop-sidebar-muted` trên nền trắng 1.91 (khu chủ thể); `--ocop-slate` trên `--ocop-surface-muted` 4.32 (tiêu đề bảng); `--ocop-blue` trên `--ocop-info-soft` 4.44 | Cao | Chỉnh token, áp dụng toàn cục: warning chữ `#9c6300` (4.69), tertiary `#65758c` (4.69), footer phụ `#8192aa` (4.65), chữ phụ trên nền tối `#9fadc4` (4.60); với `--ocop-sidebar-muted` trên nền trắng thì đổi sang dùng `--ocop-text-secondary`; tiêu đề bảng dùng `--ocop-text-muted` | Đã xử lý (bước 0) |
 | G-03 | Huy hiệu sao OCOP | Huy hiệu sao, tín hiệu quan trọng nhất của sản phẩm, có chữ trắng trên nền cam `#ff9500`, tỉ lệ 2.20. Có hai cách ghi: "OCOP 3 sao" (thẻ) và "3 sao OCOP" (chi tiết). Cùng một icon ngôi sao được dùng cho điểm đánh giá của người dùng | `ProductCard.vue` `.star-badge`, `ProductDetailView.vue` `.ocop-badge`, axe color-contrast | Cao | Tạo một component huy hiệu sao OCOP dùng chung: hiện số sao bằng icon lặp (3–5 sao) kèm chữ "OCOP 3 sao"; màu đạt chuẩn (nền `#b45309` chữ trắng 5.02, hoặc nền cam chữ nâu đậm 4.66); điểm đánh giá của người dùng dùng nhãn và kiểu khác | Chưa xử lý |
-| G-04 | Vùng bấm | 5 liên kết footer chỉ cao 18px trên mọi trang; nút "Thử lại", "Xóa lọc", liên kết "Xem tất cả" nhỏ; đa số control dưới 44px trên điện thoại (trang sản phẩm: 24/36) | axe target-size; đo kích thước vùng bấm | Cao | Nút và liên kết điều hướng trên điện thoại cao tối thiểu 44px (dùng token `--ocop-control-md` hiện có nhưng chưa được dùng); tăng khoảng cách dòng liên kết footer | Chưa xử lý |
+| G-04 | Vùng bấm | 5 liên kết footer chỉ cao 18px trên mọi trang; nút "Thử lại", "Xóa lọc", liên kết "Xem tất cả" nhỏ; đa số control dưới 44px trên điện thoại (trang sản phẩm: 24/36) | axe target-size; đo kích thước vùng bấm | Cao | Nút và liên kết điều hướng trên điện thoại cao tối thiểu 44px (dùng token `--ocop-control-md` hiện có nhưng chưa được dùng); tăng khoảng cách dòng liên kết footer | Đang xử lý: phần toàn cục xong ở bước 0; nút tự viết của từng trang xử lý khi thiết kế lại trang |
 | G-05 | Thuật ngữ | Một khái niệm nhiều tên: menu "Khám phá Lâm Đồng", trang "Điểm đến trải nghiệm", breadcrumb "Điểm du lịch", trang chủ "Điểm đến canh nông tiêu biểu", nút "Điểm du lịch canh nông". Bản đồ: "Bản đồ" / "Bản đồ số GIS & Chỉ đường" / "Bản đồ số Lâm Đồng". Tin tức: "Tin tức" / "Tin tức & Sự kiện OCOP" / "Hoạt động OCOP Lâm Đồng" | Đọc template: "điểm đến" 13 lần, "điểm du lịch" 24 lần | Trung bình | Chốt bảng thuật ngữ và dùng giống nhau ở menu, tiêu đề trang, breadcrumb, footer: "Sản phẩm OCOP", "Điểm du lịch", "Bản đồ số", "Tin tức" | Chưa xử lý |
 | G-06 | Câu chữ nút, tiêu đề | Trang chủ và footer viết hoa mọi chữ ("Tra Cứu Ngay", "Khám Phá Bản Đồ Số GIS", "Mở Bản Đồ Số Toàn Màn Hình", "Danh Mục Hệ Thống"), các trang khác viết hoa chữ đầu câu | `HomeHero.vue`, `HomeMapPreview.vue`, `TourismSection.vue`, `FeaturedProducts.vue`, `SiteFooter.vue` | Trung bình | Thống nhất viết hoa chữ đầu câu; nhãn nút bắt đầu bằng động từ ngắn ("Tìm sản phẩm", "Mở bản đồ") | Chưa xử lý |
 | G-07 | Nội dung | Thuật ngữ kỹ thuật hiện với du khách: "GIS", "Bản đồ số PostGIS & Leaflet", "Phát triển với Vue 3 / FastAPI / PostGIS", "OSRM (OpenStreetMap)", "Số liệu trực tiếp từ database" | Footer, `HomeMapPreview.vue`, `MapView.vue`, `AdminDashboardView.vue` | Trung bình | Đổi sang lời người dùng hiểu được; thông tin công nghệ chuyển về README hoặc trang giới thiệu | Chưa xử lý |
@@ -155,7 +155,25 @@ Trạng thái: **Chưa xử lý**, **Đang xử lý**, **Đã xử lý**.
 | 6 | Khu chủ thể | Người dùng phụ, form dài | CT-01 đến CT-03 |
 | 7 | Tin tức; đăng nhập, đăng ký, tài khoản; trang lỗi | Ít vấn đề, chủ yếu mức Thấp | TT-01, TK-01, TK-02 |
 
-## 5. Ngoài phạm vi giao diện (ghi nhận, không sửa trong nhánh này)
+## 5. Nhật ký xử lý
+
+### Bước 0: tương phản, cỡ chữ, vùng bấm (25/09/2026)
+
+- Token màu chữ chỉnh vừa đủ đạt 4.5:1 trên nền được thiết kế: `--ocop-slate` `#617068`, `--ocop-text-tertiary` `#627289`, `--ocop-warning` `#9c6300`, `--ocop-blue` và `--ocop-info` `#2475a2`, `--ocop-neutral-500` `#607087`; `--ocop-text-on-dark-muted` sáng lên `#9faec4` (chỉ dùng trên nền tối).
+- Sửa 4 chỗ dùng token sai nền: dòng cuối footer, nhãn phụ ở thanh tiêu đề khu chủ thể, danh sách tiến độ hồ sơ sản phẩm.
+- Bỏ token cỡ chữ `xs` (11px), `2xs` (10px) và các giá trị 8px, 9px, 0.72rem; cỡ nhỏ nhất là `--ocop-font-size-caption` (12px), kể cả chú thích trong tooltip bản đồ.
+- Vùng bấm: liên kết footer tối thiểu 24px, trên thiết bị cảm ứng 44px; trên thiết bị cảm ứng `.btn`, `.form-control`, `.form-select` cao tối thiểu 44px (`--ocop-control-md`).
+- Nhãn mục chưa có ở sidebar quản trị đổi "Sắp phát triển" thành "Sắp có" để không bị xuống dòng khi tăng cỡ chữ.
+
+| Chỉ số (19 trang x 2 kích thước) | Trước | Sau |
+|---|---|---|
+| Lỗi tương phản (axe) | 224 | 46: 38 là huy hiệu sao (G-03), 8 là màu mặc định Bootstrap (G-12) |
+| Lỗi vùng bấm (axe) | 113 | 3: marker bản đồ xem trước ở trang chủ (TC-04) |
+| Phần tử chữ dưới 12px | 906 | 0 |
+| Control dưới 44px trên điện thoại cảm ứng | 283/366 | 190/366 (còn lại là nút tự viết trong từng trang) |
+| Trang bị tràn ngang ở 375px | 0 | 0 |
+
+## 6. Ngoài phạm vi giao diện (ghi nhận, không sửa trong nhánh này)
 
 - Quản trị chưa có module quản lý điểm du lịch (mục "Sắp phát triển" ở sidebar).
 - Tìm điểm gần đang cố định bán kính 50 km; nếu muốn cho người dùng mở rộng bán kính thì cần kiểm tra API có nhận tham số bán kính hay không.

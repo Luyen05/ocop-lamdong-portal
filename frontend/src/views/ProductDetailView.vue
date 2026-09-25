@@ -457,7 +457,7 @@ onUnmounted(() => {
 
 .certification-list dt {
   color: var(--ocop-text-secondary);
-  font-size: 0.72rem;
+  font-size: var(--ocop-font-size-caption);
   font-weight: 600;
 }
 
