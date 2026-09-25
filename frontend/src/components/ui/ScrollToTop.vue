@@ -39,8 +39,8 @@ onBeforeUnmount(() => window.removeEventListener('scroll', updateVisibility))
 .scroll-to-top {
   position: fixed;
   z-index: 90;
-  right: 20px;
-  bottom: 20px;
+  right: var(--ocop-space-5);
+  bottom: calc(var(--ocop-space-5) + var(--ocop-tabbar-offset, 0px));
   display: grid;
   width: 44px;
   height: 44px;

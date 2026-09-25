@@ -5,34 +5,69 @@
  * Màu chữ đạt tương phản tối thiểu 4.5:1 (WCAG AA) trên nền mà nó được thiết kế:
  * --ocop-text-* / --ocop-slate / trạng thái dùng trên nền sáng, --ocop-text-on-dark* và
  * --ocop-sidebar-muted chỉ dùng trên nền tối.
+ *
+ * Bảng màu "Sương sớm & dã quỳ" (từ bước 1, trang chủ):
+ * - Sương sớm (--ocop-mist-*): xanh lam xám sương mù Đà Lạt, là màu thương hiệu, chữ, nền, viền.
+ * - Dã quỳ (--ocop-daquy-*): vàng hoa dã quỳ, là màu nhấn (nút hành động chính, sao OCOP, tiêu đề nhỏ).
+ *   Dã quỳ 300/400 chỉ làm nền kèm chữ mist-950, hoặc làm chữ/biểu tượng trên nền tối.
+ *   Chữ vàng trên nền sáng dùng --ocop-daquy-700 (5.5:1 trên trắng).
+ * - Xanh lá chỉ còn mang ý nghĩa: thành công, loại hình chè/cà phê, nhóm thảo dược.
+ * Tên token cũ (primary, mint, sage, lime...) được giữ và trỏ sang bảng màu mới để không phải đổi component.
  */
 :root {
   /* Kiểu chữ */
-  --ocop-font-family-sans: "Segoe UI", Arial, sans-serif;
+  /* Be Vietnam Pro (Google Fonts, nạp trong index.html); thiếu mạng thì dùng font hệ thống. */
+  --ocop-font-family-sans: "Be Vietnam Pro", "Segoe UI", Arial, sans-serif;
 
-  /* Màu thương hiệu: xanh lá cao nguyên */
-  --ocop-primary-950: #12372a;
-  --ocop-primary-900: #18543f;
-  --ocop-primary-700: #1e714f;
-  --ocop-primary-500: #35a475;
-  --ocop-mint: #66c996;
-  --ocop-mint-soft: #edf8f1;
-  --ocop-mint-border: #b8dfc8;
-  --ocop-mint-100: #d0fae5;
-  --ocop-mint-200: #a4f4cf;
-  --ocop-mint-300: #83d7ad;
-  --ocop-mint-400: #6ee7b7;
-  --ocop-emerald-500: #00bc7d;
+  /* Sương sớm: thang xanh lam xám */
+  --ocop-mist-50: #f4f7fa;
+  --ocop-mist-100: #e8eef5;
+  --ocop-mist-200: #d3dde9;
+  --ocop-mist-300: #aebfd3;
+  --ocop-mist-400: #8499b3;
+  --ocop-mist-500: #5f7693;
+  --ocop-mist-600: #486080;
+  --ocop-mist-700: #36506f;
+  --ocop-mist-800: #283f5b;
+  --ocop-mist-900: #1c2e44;
+  --ocop-mist-950: #121f30;
+
+  /* Dã quỳ: thang vàng */
+  --ocop-daquy-50: #fff9e5;
+  --ocop-daquy-100: #fff0bf;
+  --ocop-daquy-200: #ffe38a;
+  --ocop-daquy-300: #ffd24d;
+  --ocop-daquy-400: #fcc21b;
+  --ocop-daquy-500: #eaa900;
+  --ocop-daquy-600: #c28400;
+  --ocop-daquy-700: #8f5f00;
+  --ocop-daquy-800: #6e4800;
+
+  /* Màu thương hiệu (tên cũ, trỏ sang Sương sớm) */
+  --ocop-primary-950: var(--ocop-mist-950);
+  --ocop-primary-900: var(--ocop-mist-900);
+  --ocop-primary-800: var(--ocop-mist-800);
+  --ocop-primary-700: var(--ocop-mist-700);
+  --ocop-primary-500: var(--ocop-mist-500);
+  --ocop-mint: var(--ocop-mist-400);
+  --ocop-mint-soft: var(--ocop-mist-100);
+  --ocop-mint-border: var(--ocop-mist-200);
+  --ocop-mint-100: var(--ocop-mist-100);
+  --ocop-mint-200: var(--ocop-mist-200);
+  /* mint-300/400 dùng làm chữ, biểu tượng trên nền tối: chuyển sang dã quỳ */
+  --ocop-mint-300: var(--ocop-daquy-300);
+  --ocop-mint-400: var(--ocop-daquy-300);
+  --ocop-emerald-500: var(--ocop-daquy-400);
 
   /* Màu phụ: vàng OCOP, nâu đất, xanh dương */
   --ocop-blue: #2475a2;
-  --ocop-gold: #d99b24;
+  --ocop-gold: var(--ocop-daquy-400);
   --ocop-accent: var(--ocop-gold);
-  --ocop-accent-soft: #fff7e6;
+  --ocop-accent-soft: var(--ocop-daquy-50);
   --ocop-secondary-700: #7a5137;
   --ocop-secondary-100: #f4ebe4;
-  --ocop-gold-300: #e9b958;
-  --ocop-gold-700: #936e0b;
+  --ocop-gold-300: var(--ocop-daquy-300);
+  --ocop-gold-700: var(--ocop-daquy-700);
   --ocop-blue-300: #75b5d6;
   --ocop-blue-600: #2563eb;
   --ocop-blue-700: #1d4ed8;
@@ -60,27 +95,27 @@
   --ocop-info-border: #c7d9ee;
 
   /* Chữ */
-  --ocop-navy: #18251f;
-  --ocop-slate: #617068;
+  --ocop-navy: var(--ocop-mist-950);
+  --ocop-slate: var(--ocop-mist-600);
   --ocop-text-primary: var(--ocop-navy);
   --ocop-text-secondary: var(--ocop-slate);
   --ocop-text-muted: #45556c;
   --ocop-text-tertiary: #627289;
-  --ocop-text-on-dark: #d9e9e3;
-  --ocop-text-on-dark-muted: #9faec4;
+  --ocop-text-on-dark: var(--ocop-mist-100);
+  --ocop-text-on-dark-muted: var(--ocop-mist-300);
 
   /* Nền, viền, thanh bên */
-  --ocop-surface: #f7f9f7;
-  --ocop-surface-muted: #eef3ef;
+  --ocop-surface: var(--ocop-mist-50);
+  --ocop-surface-muted: var(--ocop-mist-100);
   --ocop-surface-subtle: #f8fafc;
   --ocop-card: #ffffff;
-  --ocop-border: #dce5df;
-  --ocop-border-soft: #edf1f4;
+  --ocop-border: var(--ocop-mist-200);
+  --ocop-border-soft: var(--ocop-mist-100);
   --ocop-white: #ffffff;
-  --ocop-sidebar: #102d25;
-  --ocop-sidebar-card: #1a263c;
-  --ocop-sidebar-muted: #a9c1b8;
-  --ocop-border-strong: #becbbb;
+  --ocop-sidebar: var(--ocop-mist-950);
+  --ocop-sidebar-card: var(--ocop-mist-900);
+  --ocop-sidebar-muted: var(--ocop-mist-300);
+  --ocop-border-strong: var(--ocop-mist-300);
   --ocop-black: #000000;
 
   /* Trung tính lạnh (khu quản trị, chủ thể) */
@@ -94,14 +129,14 @@
   --ocop-neutral-900: #0f172b;
   --ocop-neutral-950: #020618;
 
-  /* Xanh lá trung tính và xanh chanh (trang công khai, trang trí) */
-  --ocop-sage-50: #edf4e5;
-  --ocop-sage-200: #cbdcbc;
-  --ocop-sage-300: #a9c6a4;
-  --ocop-sage-800: #4f5d52;
-  --ocop-lime-100: #deecba;
-  --ocop-lime-200: #d6eaaa;
-  --ocop-lime-300: #b8d691;
+  /* Nền trang trí trang công khai (tên cũ sage/lime, trỏ sang sương và nắng dã quỳ) */
+  --ocop-sage-50: var(--ocop-mist-50);
+  --ocop-sage-200: var(--ocop-mist-200);
+  --ocop-sage-300: var(--ocop-mist-300);
+  --ocop-sage-800: var(--ocop-mist-700);
+  --ocop-lime-100: var(--ocop-daquy-100);
+  --ocop-lime-200: var(--ocop-daquy-200);
+  --ocop-lime-300: var(--ocop-daquy-200);
 
   /* Bảng màu phân loại: danh mục sản phẩm, loại hình điểm du lịch, thống kê */
   --ocop-tone-leaf: #527a36;
@@ -116,7 +151,7 @@
   --ocop-tone-lime: #5b8c2a;
 
   /* Loại hình điểm du lịch (marker bản đồ, huy hiệu loại hình) */
-  --ocop-location-tea-coffee: var(--ocop-primary-700);
+  --ocop-location-tea-coffee: var(--ocop-tone-leaf);
   --ocop-location-fruit: var(--ocop-danger);
   --ocop-location-flower: var(--ocop-tone-violet);
   --ocop-location-dairy: var(--ocop-blue);
@@ -128,8 +163,8 @@
   --ocop-location-route: var(--ocop-primary-700);
 
   /* Huy hiệu sao OCOP */
-  --ocop-star: #f59e0b;
-  --ocop-star-strong: #ff9500;
+  --ocop-star: var(--ocop-daquy-400);
+  --ocop-star-strong: var(--ocop-daquy-500);
 
   /* Bo góc */
   --ocop-radius-xs: 4px;
@@ -163,10 +198,19 @@
   --ocop-control-sm: 40px;
   --ocop-control-md: 44px;
   --ocop-control-lg: 48px;
-  --ocop-shadow-sm: 0 2px 8px rgb(18 55 42 / 8%);
-  --ocop-shadow-card: 0 10px 28px rgb(18 55 42 / 10%);
-  --ocop-shadow-overlay: 0 30px 70px rgb(15 23 43 / 28%);
+  --ocop-shadow-sm: 0 2px 8px color-mix(in srgb, var(--ocop-mist-950) 8%, transparent);
+  --ocop-shadow-card: 0 12px 32px color-mix(in srgb, var(--ocop-mist-950) 12%, transparent);
+  --ocop-shadow-overlay: 0 30px 70px color-mix(in srgb, var(--ocop-mist-950) 24%, transparent);
   --ocop-transition: 180ms ease;
+
+  /* Kính mờ (glassmorphism): chỉ dùng trên nền ảnh/minh họa nhiều màu, luôn có phương án nền đặc */
+  --ocop-glass-bg: color-mix(in srgb, var(--ocop-white) 74%, transparent);
+  --ocop-glass-bg-solid: color-mix(in srgb, var(--ocop-white) 96%, transparent);
+  --ocop-glass-border: color-mix(in srgb, var(--ocop-white) 60%, transparent);
+  --ocop-glass-blur: 18px;
+
+  /* Thanh điều hướng dưới trên điện thoại (bottom navigation) */
+  --ocop-tabbar-height: 64px;
 
   /* Bố cục và điểm ngắt (điểm ngắt chỉ để tham chiếu: CSS không cho dùng biến trong @media) */
   --ocop-container: 1280px;

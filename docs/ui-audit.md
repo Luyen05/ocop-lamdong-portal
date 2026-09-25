@@ -61,25 +61,25 @@ Trạng thái: **Chưa xử lý**, **Đang xử lý**, **Đã xử lý**.
 |---|---|---|---|---|---|---|
 | G-01 | Khả năng truy cập | Chữ quá nhỏ: 30–50% phần tử chữ mỗi trang dưới 12px, nhiều nhất là 11px, có cả 8–9px ở trang quản trị và chủ thể | Đo cỡ chữ đã tính; token `--ocop-font-size-xs` (11px), `-2xs` (10px) | Cao | Nâng `-xs`, `-2xs` lên tối thiểu 12px ngay trong `tokens.css`; mô tả, giá, địa chỉ trên điện thoại dùng tối thiểu 14px; bỏ hẳn 8–9px | Đã xử lý (bước 0) |
 | G-02 | Tương phản | Một số cặp token không đạt 4.5:1, lặp lại trên hầu hết các trang | `--ocop-warning` trên `--ocop-warning-soft` 3.96 (chip "Chờ duyệt", nhãn "Cổng thông tin", ghi chú kiểm duyệt); `--ocop-text-tertiary` trên nền trắng 2.63 (nhãn "Chủ thể" ở thẻ sản phẩm); `--ocop-neutral-500` trên nền footer 3.10; `--ocop-text-on-dark-muted` 3.23; `--ocop-sidebar-muted` trên nền trắng 1.91 (khu chủ thể); `--ocop-slate` trên `--ocop-surface-muted` 4.32 (tiêu đề bảng); `--ocop-blue` trên `--ocop-info-soft` 4.44 | Cao | Chỉnh token, áp dụng toàn cục: warning chữ `#9c6300` (4.69), tertiary `#65758c` (4.69), footer phụ `#8192aa` (4.65), chữ phụ trên nền tối `#9fadc4` (4.60); với `--ocop-sidebar-muted` trên nền trắng thì đổi sang dùng `--ocop-text-secondary`; tiêu đề bảng dùng `--ocop-text-muted` | Đã xử lý (bước 0) |
-| G-03 | Huy hiệu sao OCOP | Huy hiệu sao, tín hiệu quan trọng nhất của sản phẩm, có chữ trắng trên nền cam `#ff9500`, tỉ lệ 2.20. Có hai cách ghi: "OCOP 3 sao" (thẻ) và "3 sao OCOP" (chi tiết). Cùng một icon ngôi sao được dùng cho điểm đánh giá của người dùng | `ProductCard.vue` `.star-badge`, `ProductDetailView.vue` `.ocop-badge`, axe color-contrast | Cao | Tạo một component huy hiệu sao OCOP dùng chung: hiện số sao bằng icon lặp (3–5 sao) kèm chữ "OCOP 3 sao"; màu đạt chuẩn (nền `#b45309` chữ trắng 5.02, hoặc nền cam chữ nâu đậm 4.66); điểm đánh giá của người dùng dùng nhãn và kiểu khác | Chưa xử lý |
+| G-03 | Huy hiệu sao OCOP | Huy hiệu sao, tín hiệu quan trọng nhất của sản phẩm, có chữ trắng trên nền cam `#ff9500`, tỉ lệ 2.20. Có hai cách ghi: "OCOP 3 sao" (thẻ) và "3 sao OCOP" (chi tiết). Cùng một icon ngôi sao được dùng cho điểm đánh giá của người dùng | `ProductCard.vue` `.star-badge`, `ProductDetailView.vue` `.ocop-badge`, axe color-contrast | Cao | Tạo một component huy hiệu sao OCOP dùng chung: hiện số sao bằng icon lặp (3–5 sao) kèm chữ "OCOP 3 sao"; màu đạt chuẩn (nền `#b45309` chữ trắng 5.02, hoặc nền cam chữ nâu đậm 4.66); điểm đánh giá của người dùng dùng nhãn và kiểu khác | Đang xử lý (bước 1: thẻ sản phẩm dùng huy hiệu mới; còn trang chi tiết sản phẩm) |
 | G-04 | Vùng bấm | 5 liên kết footer chỉ cao 18px trên mọi trang; nút "Thử lại", "Xóa lọc", liên kết "Xem tất cả" nhỏ; đa số control dưới 44px trên điện thoại (trang sản phẩm: 24/36) | axe target-size; đo kích thước vùng bấm | Cao | Nút và liên kết điều hướng trên điện thoại cao tối thiểu 44px (dùng token `--ocop-control-md` hiện có nhưng chưa được dùng); tăng khoảng cách dòng liên kết footer | Đang xử lý: phần toàn cục xong ở bước 0; nút tự viết của từng trang xử lý khi thiết kế lại trang |
-| G-05 | Thuật ngữ | Một khái niệm nhiều tên: menu "Khám phá Lâm Đồng", trang "Điểm đến trải nghiệm", breadcrumb "Điểm du lịch", trang chủ "Điểm đến canh nông tiêu biểu", nút "Điểm du lịch canh nông". Bản đồ: "Bản đồ" / "Bản đồ số GIS & Chỉ đường" / "Bản đồ số Lâm Đồng". Tin tức: "Tin tức" / "Tin tức & Sự kiện OCOP" / "Hoạt động OCOP Lâm Đồng" | Đọc template: "điểm đến" 13 lần, "điểm du lịch" 24 lần | Trung bình | Chốt bảng thuật ngữ và dùng giống nhau ở menu, tiêu đề trang, breadcrumb, footer: "Sản phẩm OCOP", "Điểm du lịch", "Bản đồ số", "Tin tức" | Chưa xử lý |
-| G-06 | Câu chữ nút, tiêu đề | Trang chủ và footer viết hoa mọi chữ ("Tra Cứu Ngay", "Khám Phá Bản Đồ Số GIS", "Mở Bản Đồ Số Toàn Màn Hình", "Danh Mục Hệ Thống"), các trang khác viết hoa chữ đầu câu | `HomeHero.vue`, `HomeMapPreview.vue`, `TourismSection.vue`, `FeaturedProducts.vue`, `SiteFooter.vue` | Trung bình | Thống nhất viết hoa chữ đầu câu; nhãn nút bắt đầu bằng động từ ngắn ("Tìm sản phẩm", "Mở bản đồ") | Chưa xử lý |
-| G-07 | Nội dung | Thuật ngữ kỹ thuật hiện với du khách: "GIS", "Bản đồ số PostGIS & Leaflet", "Phát triển với Vue 3 / FastAPI / PostGIS", "OSRM (OpenStreetMap)", "Số liệu trực tiếp từ database" | Footer, `HomeMapPreview.vue`, `MapView.vue`, `AdminDashboardView.vue` | Trung bình | Đổi sang lời người dùng hiểu được; thông tin công nghệ chuyển về README hoặc trang giới thiệu | Chưa xử lý |
-| G-08 | Footer trên điện thoại | Footer cao khoảng 1.230px ở 375px (4 thẻ thống kê, 2 nhóm liên kết, khối minh bạch), lặp ở mọi trang, kể cả trang bản đồ | Đo phần tử `footer` ở 375px | Trung bình | Rút gọn footer trên điện thoại: bỏ thẻ thống kê, gom nhóm liên kết dạng thu gọn; trang bản đồ dùng footer tối giản | Chưa xử lý |
+| G-05 | Thuật ngữ | Một khái niệm nhiều tên: menu "Khám phá Lâm Đồng", trang "Điểm đến trải nghiệm", breadcrumb "Điểm du lịch", trang chủ "Điểm đến canh nông tiêu biểu", nút "Điểm du lịch canh nông". Bản đồ: "Bản đồ" / "Bản đồ số GIS & Chỉ đường" / "Bản đồ số Lâm Đồng". Tin tức: "Tin tức" / "Tin tức & Sự kiện OCOP" / "Hoạt động OCOP Lâm Đồng" | Đọc template: "điểm đến" 13 lần, "điểm du lịch" 24 lần | Trung bình | Chốt bảng thuật ngữ và dùng giống nhau ở menu, tiêu đề trang, breadcrumb, footer: "Sản phẩm OCOP", "Điểm du lịch", "Bản đồ số", "Tin tức" | Đang xử lý (bước 1: trang chủ dùng "Điểm du lịch", "Bản đồ số"; còn menu và các trang khác) |
+| G-06 | Câu chữ nút, tiêu đề | Trang chủ và footer viết hoa mọi chữ ("Tra Cứu Ngay", "Khám Phá Bản Đồ Số GIS", "Mở Bản Đồ Số Toàn Màn Hình", "Danh Mục Hệ Thống"), các trang khác viết hoa chữ đầu câu | `HomeHero.vue`, `HomeMapPreview.vue`, `TourismSection.vue`, `FeaturedProducts.vue`, `SiteFooter.vue` | Trung bình | Thống nhất viết hoa chữ đầu câu; nhãn nút bắt đầu bằng động từ ngắn ("Tìm sản phẩm", "Mở bản đồ") | Đã xử lý ở trang chủ và footer (bước 1) |
+| G-07 | Nội dung | Thuật ngữ kỹ thuật hiện với du khách: "GIS", "Bản đồ số PostGIS & Leaflet", "Phát triển với Vue 3 / FastAPI / PostGIS", "OSRM (OpenStreetMap)", "Số liệu trực tiếp từ database" | Footer, `HomeMapPreview.vue`, `MapView.vue`, `AdminDashboardView.vue` | Trung bình | Đổi sang lời người dùng hiểu được; thông tin công nghệ chuyển về README hoặc trang giới thiệu | Đang xử lý (bước 1: trang chủ, footer xong; còn bản đồ, quản trị) |
+| G-08 | Footer trên điện thoại | Footer cao khoảng 1.230px ở 375px (4 thẻ thống kê, 2 nhóm liên kết, khối minh bạch), lặp ở mọi trang, kể cả trang bản đồ | Đo phần tử `footer` ở 375px | Trung bình | Rút gọn footer trên điện thoại: bỏ thẻ thống kê, gom nhóm liên kết dạng thu gọn; trang bản đồ dùng footer tối giản | Đã xử lý (bước 1) |
 | G-09 | Trạng thái đang tải | Không nhất quán: chỉ trang chủ và tin tức có skeleton. Trang sản phẩm chỉ đổi chữ nút thành "Đang tải...". Danh sách điểm du lịch và bản đồ hiện "0 điểm đến đang hiển thị" trong lúc tải | Dựng lại tình huống API chậm 4–5 giây | Trung bình | Skeleton dùng chung cho lưới thẻ và danh sách; không hiện số 0 khi chưa có dữ liệu | Chưa xử lý |
 | G-10 | Thành phần dùng chung | Nút, chip trạng thái, hộp lỗi và hộp rỗng được viết riêng ở từng trang, ví dụ 4 kiểu chip trạng thái với tên class khác nhau (`status-chip`, `status-badge`, `status`, `issue-chip`) | Đọc mã nguồn | Trung bình | Tách component trình bày: chip trạng thái, hộp trạng thái rỗng, hộp lỗi có nút thử lại, tiêu đề trang | Chưa xử lý |
-| G-11 | Bố cục | Nút "về đầu trang" nổi đè lên nội dung cuối danh sách trên điện thoại, đè cả nút đóng thẻ điểm đã chọn ở bản đồ | Ảnh chụp bản đồ 375px | Trung bình | Chừa khoảng trống cuối trang, ẩn nút ở trang bản đồ hoặc dời vị trí khi có thanh nổi | Chưa xử lý |
-| G-12 | Nhất quán màu | Một số thành phần còn màu mặc định của Bootstrap, lệch token: `.btn-outline-success` `#198754` (4.28), liên kết `#0d6efd` (4.25), `.text-secondary` `#6c757d` (4.17) | axe, trang chi tiết điểm du lịch và tài khoản | Thấp | Ánh xạ đủ biến `--bs-*` sang token, hoặc thay bằng class của dự án | Chưa xử lý |
+| G-11 | Bố cục | Nút "về đầu trang" nổi đè lên nội dung cuối danh sách trên điện thoại, đè cả nút đóng thẻ điểm đã chọn ở bản đồ | Ảnh chụp bản đồ 375px | Trung bình | Chừa khoảng trống cuối trang, ẩn nút ở trang bản đồ hoặc dời vị trí khi có thanh nổi | Đang xử lý (bước 1: nút về đầu trang nằm trên thanh điều hướng dưới; còn trang bản đồ) |
+| G-12 | Nhất quán màu | Một số thành phần còn màu mặc định của Bootstrap, lệch token: `.btn-outline-success` `#198754` (4.28), liên kết `#0d6efd` (4.25), `.text-secondary` `#6c757d` (4.17) | axe, trang chi tiết điểm du lịch và tài khoản | Thấp | Ánh xạ đủ biến `--bs-*` sang token, hoặc thay bằng class của dự án | Đã xử lý (bước 1) |
 
 ### 3.2. Trang chủ `/`
 
 | ID | Khía cạnh | Vấn đề | Bằng chứng | Ưu tiên | Đề xuất hướng sửa | Trạng thái |
 |---|---|---|---|---|---|---|
-| TC-01 | Phân cấp thông tin | Hero có ô tìm kiếm cùng 3 nút có trọng số ngang nhau; trên điện thoại hero cao 635px trên màn hình 740px | Đo phần tử ở 375px | Trung bình | Một hành động chính (tìm sản phẩm hoặc điểm du lịch) và 2 lối tắt dạng chip; giảm chiều cao hero trên điện thoại | Chưa xử lý |
-| TC-02 | Điều hướng | Danh mục sản phẩm trượt ngang trên điện thoại, thẻ bị cắt, không có dấu hiệu còn nội dung để cuộn | Ảnh chụp 375px | Trung bình | Lưới 2–3 cột gọn, hoặc giữ trượt ngang nhưng thêm chỉ dấu và nút "Xem tất cả" rõ ràng | Chưa xử lý |
-| TC-03 | Mật độ nội dung | Sản phẩm nổi bật và điểm du lịch tiêu biểu hiện 1 cột trên điện thoại, mỗi thẻ cao 440–480px, phần lớn là ảnh minh họa "DỮ LIỆU THAM KHẢO"; trang chủ cao 6.867px | Ảnh chụp toàn trang 375px | Trung bình | Thẻ gọn 2 cột trên điện thoại; ảnh tỉ lệ thấp hơn; tên, huy hiệu sao, địa bàn lên trước | Chưa xử lý |
-| TC-04 | Vùng bấm | Marker trên bản đồ xem trước bị che một phần, vùng bấm còn 12px | axe target-size | Thấp | Tăng vùng bấm của marker, hoặc cả khung bản đồ xem trước là một liên kết | Chưa xử lý |
+| TC-01 | Phân cấp thông tin | Hero có ô tìm kiếm cùng 3 nút có trọng số ngang nhau; trên điện thoại hero cao 635px trên màn hình 740px | Đo phần tử ở 375px | Trung bình | Một hành động chính (tìm sản phẩm hoặc điểm du lịch) và 2 lối tắt dạng chip; giảm chiều cao hero trên điện thoại | Đã xử lý (bước 1) |
+| TC-02 | Điều hướng | Danh mục sản phẩm trượt ngang trên điện thoại, thẻ bị cắt, không có dấu hiệu còn nội dung để cuộn | Ảnh chụp 375px | Trung bình | Lưới 2–3 cột gọn, hoặc giữ trượt ngang nhưng thêm chỉ dấu và nút "Xem tất cả" rõ ràng | Đã xử lý (bước 1) |
+| TC-03 | Mật độ nội dung | Sản phẩm nổi bật và điểm du lịch tiêu biểu hiện 1 cột trên điện thoại, mỗi thẻ cao 440–480px, phần lớn là ảnh minh họa "DỮ LIỆU THAM KHẢO"; trang chủ cao 6.867px | Ảnh chụp toàn trang 375px | Trung bình | Thẻ gọn 2 cột trên điện thoại; ảnh tỉ lệ thấp hơn; tên, huy hiệu sao, địa bàn lên trước | Đã xử lý (bước 1: sản phẩm 2 cột, điểm du lịch dạng carousel trên điện thoại) |
+| TC-04 | Vùng bấm | Marker trên bản đồ xem trước bị che một phần, vùng bấm còn 12px | axe target-size | Thấp | Tăng vùng bấm của marker, hoặc cả khung bản đồ xem trước là một liên kết | Đã xử lý (bước 1: gom marker gần nhau) |
 
 ### 3.3. Bản đồ số `/ban-do`
 
@@ -172,6 +172,45 @@ Trạng thái: **Chưa xử lý**, **Đang xử lý**, **Đã xử lý**.
 | Phần tử chữ dưới 12px | 906 | 0 |
 | Control dưới 44px trên điện thoại cảm ứng | 283/366 | 190/366 (còn lại là nút tự viết trong từng trang) |
 | Trang bị tràn ngang ở 375px | 0 | 0 |
+
+### Bước 1: trang chủ, header, footer, bảng màu (25/09/2026)
+
+Lần 1 (phương án C trên canvas Claude Design) chủ yếu đổi màu và vị trí hero nên người dùng thấy chưa khác rõ. Lần 2 (phương án D) dựng lại bố cục theo các mẫu có tên trong NameThatUI (namethatui.com), người dùng chọn mẫu và cho phép các thay đổi logic nhỏ đi kèm.
+
+- Bảng màu "Sương sớm & dã quỳ": thang `--ocop-mist-50…950` và `--ocop-daquy-50…800` trong `tokens.css`; token cũ (`primary`, `mint`, `sage`, `lime`, `navy`, `slate`, `surface`, `border`, `sidebar`, `gold`, `star`) trỏ sang bảng màu mới nên mọi trang đổi màu đồng bộ. Xanh lá chỉ còn cho ý nghĩa. Biến Bootstrap còn lệch đã ánh xạ sang token (G-12).
+- Font Be Vietnam Pro (Google Fonts, nạp trong `index.html`, có font hệ thống dự phòng).
+- **Glassmorphism**: hero là phong cảnh minh họa bằng SVG (núi sương, rừng thông, đồi chè, hoa dã quỳ); khung tìm kiếm kính mờ nổi phía trên, có nền đặc khi trình duyệt không hỗ trợ `backdrop-filter` hoặc người dùng bật giảm trong suốt. Ảnh `hero-agriculture.jpg` cũ là ảnh chân dung không liên quan nên không dùng nữa.
+- **Toggle Group** (segmented control, `role="radiogroup"`, phím mũi tên): ô tìm có 2 chế độ Sản phẩm / Điểm du lịch; chế độ Điểm du lịch chuyển sang `/diem-du-lich?search=`.
+- **Bento Grid** (`HomeBento.vue`): ô bản đồ xem trước 2×2, ô "3–5 sao", ô du lịch có minh họa, ô 2×1 kêu gọi chủ thể đăng ký.
+- **Chip**: danh mục thành hàng chip (6 nhóm và "Tất cả"), trượt ngang có mép mờ trên màn hình hẹp.
+- Sản phẩm nổi bật hiện 8 thẻ (trước 4); thẻ có huy hiệu sao mới (G-03) và tự thu gọn khi hẹp.
+- **Carousel**: điểm du lịch cuộn ngang có điểm dừng, chấm vị trí và nút trước/sau (ẩn khi không cần cuộn); điện thoại hiện 86% thẻ để lộ thẻ sau.
+- **Marquee**: dải tiêu đề tin mới chạy ngang, dừng khi rê chuột/focus/bấm "Tạm dừng", tắt khi giảm chuyển động.
+- **Sticky header thu gọn khi cuộn** (hai ngưỡng để không nháy) và **Bottom Navigation** 5 mục trên điện thoại (`MobileTabBar.vue`), chừa chỗ cuối trang và dời nút về đầu trang lên trên thanh (một phần G-11).
+- Không đổi API: tham số gọi API giữ nguyên; thay đổi logic được phép: chế độ tìm, số danh mục (6), số sản phẩm (8), theo dõi cuộn cho header, đếm điểm theo loại hình ở chú giải bản đồ.
+
+Lần 3: đánh giá lại dưới góc nhìn người dùng (du khách tìm đặc sản, du khách tìm nơi tham quan, chủ thể muốn đăng sản phẩm), bấm thử toàn bộ 35 liên kết của trang chủ ở máy tính và điện thoại (không có liên kết hỏng, không lỗi console), rồi sửa:
+
+| Vấn đề người dùng gặp | Mẫu thiết kế áp dụng | Cách sửa |
+|---|---|---|
+| Câu "Cổng thông tin quảng bá OCOP..." lặp 3 lần ở màn hình đầu (thanh thông báo, logo, huy hiệu hero); thanh thông báo bị cắt chữ trên điện thoại | Giảm dư thừa, thứ bậc thị giác | Thanh thông báo chỉ còn thông điệp kiểm duyệt và hotline bấm gọi được; bỏ huy hiệu "Cổng thông tin" và huy hiệu hero |
+| Cùng một nơi có 4 tên: "Khám phá Lâm Đồng", "Điểm đến trải nghiệm", "Du lịch", "Điểm du lịch"; "Bản đồ" / "Bản đồ số GIS" | Nhất quán (Nielsen #4) | Header, thanh dưới, footer, trang chủ cùng dùng "Điểm du lịch", "Bản đồ số" (trang /diem-du-lich đổi ở bước 4) |
+| Du khách lần đầu không biết OCOP, "3–5 sao" là gì | Progressive disclosure | Mục "OCOP là gì?" thu gọn ngay dưới ô tìm |
+| Tiêu đề ghi "nổi bật 4–5 sao" nhưng mọi thẻ đều 3 sao | Nhãn trung thực | Tiêu đề đổi theo dữ liệu: chỉ ghi "4–5 sao" khi mọi thẻ đạt từ 4 sao |
+| 8 thẻ sản phẩm cùng một ảnh "DỮ LIỆU THAM KHẢO", nhìn như nhau | Placeholder có chủ đích | Khung giữ chỗ theo từng sản phẩm (chữ cái đầu, màu theo nhóm) ghi "Ảnh sản phẩm đang cập nhật"; nhãn "Chủ thể" thay bằng biểu tượng; giá chưa có ghi "Giá: Liên hệ" màu nhạt, không giống liên kết |
+| Ba nút vàng tranh nhau (tìm, mở bản đồ, đăng ký chủ thể) | Một hành động chính mỗi màn hình (Von Restorff) | Chỉ nút tìm kiếm màu vàng; nút bản đồ màu chính, ô chủ thể nền vàng nhạt |
+| Marker bản đồ xem trước chồng lên nhau, bấm nhầm (TC-04) | Marker clustering | Điểm gần nhau gom thành vòng có số lượng, bấm mở bản đồ đầy đủ |
+| Tin mới hiện hai lần (dải chạy ngang và thẻ) | Giảm dư thừa | Bỏ dải chạy ngang |
+| Danh mục chỉ hiện 6 nhóm, nhóm còn lại không tìm thấy | Recognition over recall | Hiện đủ các nhóm dưới dạng chip |
+| Điện thoại có cả menu 3 gạch và thanh dưới cùng liệt kê một danh sách | Tab bar + menu tài khoản | Menu ở header trên điện thoại chỉ còn tài khoản và mục theo vai trò, biểu tượng người dùng |
+| Footer có chữ kỹ thuật ("GIS", "HTX", "Phát triển với Vue 3 / FastAPI / PostGIS"), viết hoa lộn xộn, rất dài trên điện thoại | Ngôn ngữ người dùng, rút gọn (G-06, G-07, G-08) | Đổi chữ, bỏ dòng công nghệ, số điện thoại và email bấm được; điện thoại ẩn thẻ số liệu và danh sách nhóm |
+
+| Chỉ số (19 trang x 2 kích thước) | Sau bước 0 | Sau bước 1 |
+|---|---|---|
+| Lỗi tương phản (axe) | 46 | 0 |
+| Lỗi vùng bấm (axe) | 3 | 0 |
+| Phần tử chữ dưới 12px | 0 | 0 |
+| Trang bị tràn ngang ở 375px, 768px, 1280px | 0 | 0 |
 
 ## 6. Ngoài phạm vi giao diện (ghi nhận, không sửa trong nhánh này)
 

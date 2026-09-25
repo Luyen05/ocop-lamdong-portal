@@ -2,6 +2,7 @@
 import { useRoute } from 'vue-router'
 
 import AppHeader from '@/components/AppHeader.vue'
+import MobileTabBar from '@/components/MobileTabBar.vue'
 import SiteFooter from '@/components/SiteFooter.vue'
 import ScrollToTop from '@/components/ui/ScrollToTop.vue'
 
@@ -21,6 +22,9 @@ const route = useRoute()
     v-if="route.meta.layout !== 'auth' && route.meta.layout !== 'admin' && route.meta.layout !== 'subject'"
   />
   <ScrollToTop
+    v-if="route.meta.layout !== 'auth' && route.meta.layout !== 'admin' && route.meta.layout !== 'subject'"
+  />
+  <MobileTabBar
     v-if="route.meta.layout !== 'auth' && route.meta.layout !== 'admin' && route.meta.layout !== 'subject'"
   />
 </template>

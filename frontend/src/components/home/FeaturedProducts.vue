@@ -13,8 +13,13 @@ const errorMessage = ref('')
 
 const featuredProducts = computed(() => {
   const certified = products.value.filter((product) => product.star >= 4)
-  return (certified.length ? certified : products.value).slice(0, 4)
+  return (certified.length ? certified : products.value).slice(0, 8)
 })
+
+// Tiêu đề trung thực: chỉ ghi "4–5 sao" khi mọi thẻ đang hiện đều đạt 4 sao trở lên.
+const isAllCertified = computed(() =>
+  featuredProducts.value.length > 0 && featuredProducts.value.every((product) => product.star >= 4),
+)
 
 async function loadProducts(): Promise<void> {
   isLoading.value = true
@@ -35,22 +40,27 @@ onMounted(loadProducts)
 
 <template>
   <section id="san-pham-noi-bat" class="featured-section" aria-labelledby="featured-title">
-    <div class="section-heading">
+    <div class="ocop-section-head">
       <div>
-        <span class="eyebrow"><AppIcon name="star" :size="13" /> Chất Lượng Xuất Sắc</span>
-        <h2 id="featured-title">Sản Phẩm OCOP Nổi Bật 4 - 5 Sao</h2>
+        <p class="ocop-eyebrow"><AppIcon name="star" :size="13" /> {{ isAllCertified ? 'Được đánh giá cao' : 'Đã được công nhận' }}</p>
+        <h2 id="featured-title" class="ocop-section-title">
+          {{ isAllCertified ? 'Sản phẩm OCOP nổi bật 4–5 sao' : 'Sản phẩm OCOP tiêu biểu' }}
+        </h2>
       </div>
-      <RouterLink :to="{ name: 'products', query: { sort: 'rating' } }">
-        Tất cả sản phẩm <AppIcon name="chevronRight" :size="14" />
+      <RouterLink class="ocop-link-more" :to="{ name: 'products', query: { sort: 'rating' } }">
+        Tất cả sản phẩm <AppIcon name="chevronRight" :size="16" />
       </RouterLink>
     </div>
 
-    <div v-if="isLoading" class="product-grid" aria-label="Đang tải sản phẩm">
-      <div v-for="index in 4" :key="index" class="product-skeleton placeholder-glow">
+    <div v-if="isLoading" class="product-grid" aria-busy="true" aria-label="Đang tải sản phẩm">
+      <div v-for="index in 8" :key="index" class="product-skeleton placeholder-glow">
         <span class="placeholder media-placeholder" />
-        <span class="placeholder col-7 mt-3" />
-        <span class="placeholder col-10 mt-3" />
-        <span class="placeholder col-5 mt-3" />
+        <span class="skeleton-copy">
+          <span class="placeholder col-6" />
+          <span class="placeholder col-10" />
+          <span class="placeholder col-8" />
+          <span class="placeholder col-5" />
+        </span>
       </div>
     </div>
 
@@ -58,10 +68,15 @@ onMounted(loadProducts)
       <ProductCard v-for="product in featuredProducts" :key="product.id" :product="product" />
     </div>
 
-    <div v-else class="featured-empty" role="status">
-      <strong>{{ errorMessage || 'Chưa có sản phẩm nổi bật.' }}</strong>
-      <p>Sản phẩm 4–5 sao đã được duyệt sẽ xuất hiện tại đây.</p>
-      <button v-if="errorMessage" type="button" @click="loadProducts">Thử lại</button>
+    <div v-else class="featured-empty" :class="{ 'is-error': errorMessage }" :role="errorMessage ? 'alert' : 'status'">
+      <span class="state-icon" aria-hidden="true"><AppIcon :name="errorMessage ? 'refresh' : 'star'" :size="22" /></span>
+      <div class="state-copy">
+        <strong>{{ errorMessage || 'Chưa có sản phẩm nổi bật.' }}</strong>
+        <p>Sản phẩm 4–5 sao đã được duyệt sẽ xuất hiện tại đây.</p>
+      </div>
+      <button v-if="errorMessage" class="ocop-btn-main" type="button" @click="loadProducts">
+        <AppIcon name="refresh" :size="16" /> Thử lại
+      </button>
     </div>
   </section>
 </template>
@@ -71,50 +86,15 @@ onMounted(loadProducts)
   padding-top: var(--ocop-space-12);
 }
 
-.section-heading {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: var(--ocop-space-4);
-}
-
-.eyebrow {
-  display: block;
-  margin-bottom: var(--ocop-space-1);
-  color: var(--ocop-notice-strong);
-  font-size: var(--ocop-font-size-caption);
-  font-weight: 800;
-  line-height: 16px;
-  text-transform: uppercase;
-}
-
-.section-heading h2 {
-  margin: 0;
-  color: var(--ocop-navy);
-  font-size: 22px;
-  font-weight: 800;
-  letter-spacing: -0.5px;
-  line-height: 28px;
-}
-
-.section-heading > a {
-  flex: 0 0 auto;
-  color: var(--ocop-primary-700);
-  font-size: var(--ocop-font-size-caption);
-  font-weight: 700;
-  text-decoration: none;
-}
-
 .product-grid {
   display: grid;
-  margin-top: var(--ocop-space-4);
+  margin-top: var(--ocop-space-5);
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--ocop-space-3);
+  gap: var(--ocop-space-6);
 }
 
 .product-skeleton {
-  min-height: 410px;
-  padding: var(--ocop-space-3);
+  overflow: hidden;
   border: 1px solid var(--ocop-border);
   border-radius: var(--ocop-radius-lg);
   background: var(--ocop-card);
@@ -126,54 +106,88 @@ onMounted(loadProducts)
 
 .media-placeholder {
   width: 100%;
-  height: 196px;
-  border-radius: var(--ocop-radius-md);
+  aspect-ratio: 1.4 / 1;
+}
+
+.skeleton-copy {
+  display: grid;
+  padding: var(--ocop-space-4);
+  gap: var(--ocop-space-3);
 }
 
 .featured-empty {
-  margin-top: var(--ocop-space-4);
-  padding: 44px var(--ocop-space-5);
-  border: 1px dashed var(--ocop-border);
-  border-radius: var(--ocop-radius-lg);
+  display: flex;
+  margin-top: var(--ocop-space-5);
+  padding: var(--ocop-space-6);
+  align-items: center;
+  gap: var(--ocop-space-5);
+  border: 1px dashed var(--ocop-border-strong);
+  border-radius: var(--ocop-radius-md);
   background: var(--ocop-card);
   color: var(--ocop-slate);
-  text-align: center;
+}
+
+.featured-empty.is-error {
+  border: 1px solid var(--ocop-danger-border);
+  background: var(--ocop-danger-soft);
+}
+
+.state-icon {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--ocop-mist-100);
+  color: var(--ocop-primary-700);
+}
+
+.is-error .state-icon {
+  background: var(--ocop-card);
+  color: var(--ocop-danger-strong);
+}
+
+.state-copy {
+  flex: 1;
 }
 
 .featured-empty strong {
   display: block;
   color: var(--ocop-navy);
+  font-size: var(--ocop-font-size-body-lg);
+}
+
+.is-error strong {
+  color: var(--ocop-danger-strong);
 }
 
 .featured-empty p {
-  margin: 6px 0 0;
-  font-size: var(--ocop-font-size-caption);
-}
-
-.featured-empty button {
-  margin-top: var(--ocop-space-3);
-  padding: 7px 14px;
-  border: 1px solid var(--ocop-primary-700);
-  border-radius: var(--ocop-radius-sm);
-  background: var(--ocop-card);
-  color: var(--ocop-primary-700);
-  font-size: var(--ocop-font-size-caption);
-  font-weight: 700;
+  margin: var(--ocop-space-1) 0 0;
+  font-size: var(--ocop-font-size-body);
 }
 
 @media (max-width: 991.98px) {
   .product-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--ocop-space-4);
   }
 }
 
 @media (max-width: 575.98px) {
-  .section-heading {
-    align-items: flex-start;
+  .featured-section {
+    padding-top: var(--ocop-space-8);
   }
 
   .product-grid {
-    grid-template-columns: 1fr;
+    margin-top: var(--ocop-space-4);
+    gap: var(--ocop-space-3);
+  }
+
+  .featured-empty {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: left;
   }
 }
 </style>

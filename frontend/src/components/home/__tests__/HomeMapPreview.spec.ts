@@ -61,4 +61,25 @@ describe('HomeMapPreview', () => {
 
     expect(wrapper.text()).toContain('Chưa có điểm đến được công bố.')
   })
+
+  it('gom cac diem qua gan thanh mot vong co so luong', async () => {
+    vi.mocked(getMapLocations).mockResolvedValue({
+      type: 'FeatureCollection',
+      features: [
+        feature('tay-bac', 'tea_coffee_farm', [107.7, 12.1]),
+        feature('dong-nam', 'fruit_garden', [108.6, 11.6]),
+        feature('sat-dong-nam', 'fruit_garden', [108.59, 11.61]),
+      ],
+    })
+    const wrapper = mount(HomeMapPreview, {
+      global: { stubs: { RouterLink: { props: ['to'], template: '<a class="router-link" :data-to="JSON.stringify(to)"><slot /></a>' } } },
+    })
+    await flushPromises()
+
+    expect(wrapper.findAll('.map-marker')).toHaveLength(1)
+    const cluster = wrapper.get('.map-cluster')
+    expect(cluster.text()).toBe('2')
+    expect(cluster.attributes('aria-label')).toContain('dong-nam')
+    expect(wrapper.text()).toContain('3 điểm đến')
+  })
 })

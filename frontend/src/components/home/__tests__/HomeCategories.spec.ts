@@ -10,9 +10,9 @@ vi.mock('@/services/categories', () => ({
 }))
 
 describe('HomeCategories', () => {
-  it('hien thi toi da nam danh muc tu API', async () => {
+  it('hien thi day du danh muc tu API dang chip', async () => {
     vi.mocked(getCategories).mockResolvedValue({
-      items: Array.from({ length: 6 }, (_, index) => ({
+      items: Array.from({ length: 7 }, (_, index) => ({
         id: index + 1,
         name: `Danh mục ${index + 1}`,
         slug: `danh-muc-${index + 1}`,
@@ -21,7 +21,7 @@ describe('HomeCategories', () => {
       })),
       page: 1,
       page_size: 100,
-      total: 6,
+      total: 7,
     })
 
     const wrapper = mount(HomeCategories, {
@@ -33,9 +33,9 @@ describe('HomeCategories', () => {
     })
     await flushPromises()
 
-    expect(wrapper.findAll('.category-card')).toHaveLength(5)
+    expect(wrapper.findAll('.category-card:not(.is-all)')).toHaveLength(7)
     expect(wrapper.text()).toContain('Danh mục 1')
-    expect(wrapper.text()).not.toContain('Danh mục 6')
+    expect(wrapper.text()).toContain('Danh mục 7')
   })
 
   it('hien thi trang thai thu lai khi API loi', async () => {
