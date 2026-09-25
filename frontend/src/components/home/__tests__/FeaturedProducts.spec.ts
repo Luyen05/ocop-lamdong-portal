@@ -29,8 +29,8 @@ function product(id: number, star: number): ProductListItem {
 }
 
 describe('FeaturedProducts', () => {
-  it('uu tien san pham bon den nam sao va gioi han bon the', async () => {
-    const items = [product(1, 3), product(2, 5), product(3, 4), product(4, 5), product(5, 4), product(6, 5)]
+  it('uu tien san pham bon den nam sao va gioi han tam the', async () => {
+    const items = [product(1, 3), ...Array.from({ length: 9 }, (_, index) => product(index + 2, index % 2 ? 4 : 5))]
     vi.mocked(getProducts).mockResolvedValue({ items, page: 1, page_size: 8, total: items.length })
 
     const wrapper = mount(FeaturedProducts, {
@@ -44,7 +44,7 @@ describe('FeaturedProducts', () => {
     await flushPromises()
 
     const cards = wrapper.findAll('.stub-card')
-    expect(cards).toHaveLength(4)
+    expect(cards).toHaveLength(8)
     expect(cards.every((card) => !card.text().endsWith('-3'))).toBe(true)
     expect(getProducts).toHaveBeenCalledWith({ page: 1, page_size: 8, sort: 'rating' })
   })

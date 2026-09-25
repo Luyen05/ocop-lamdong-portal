@@ -17,6 +17,23 @@ watch(
   },
 )
 
+// Ảnh "dữ liệu tham khảo" dùng chung cho mọi sản phẩm chưa có ảnh thật: thay bằng khung giữ chỗ
+// riêng cho từng sản phẩm để các thẻ không giống hệt nhau, vẫn ghi rõ là chưa có ảnh.
+const isReferenceImage = computed(() => props.product.primary_image_url?.includes('/public-reference') ?? false)
+const showImage = computed(() => Boolean(props.product.primary_image_url) && !imageFailed.value && !isReferenceImage.value)
+const placeholderTones = [
+  ['var(--ocop-tone-leaf-soft)', 'var(--ocop-tone-leaf)'],
+  ['var(--ocop-daquy-50)', 'var(--ocop-daquy-700)'],
+  ['var(--ocop-mist-100)', 'var(--ocop-mist-700)'],
+  ['var(--ocop-tone-rose-soft)', 'var(--ocop-tone-rose)'],
+  ['var(--ocop-tone-clay-soft)', 'var(--ocop-tone-clay)'],
+]
+const placeholderStyle = computed(() => {
+  const [background, foreground] = placeholderTones[props.product.category.id % placeholderTones.length]
+  return { '--placeholder-bg': background, '--placeholder-fg': foreground }
+})
+const hasPrice = computed(() => props.product.price !== null && props.product.price > 0)
+
 const formattedPrice = computed(() => {
   if (props.product.price === null || props.product.price <= 0) return 'Liên hệ'
   return new Intl.NumberFormat('vi-VN', {
@@ -33,17 +50,22 @@ const formattedPrice = computed(() => {
     <RouterLink class="product-card-link" :to="`/san-pham/${product.slug}`">
       <div class="product-media">
         <img
-          v-if="product.primary_image_url && !imageFailed"
-          :src="product.primary_image_url"
+          v-if="showImage"
+          :src="product.primary_image_url ?? undefined"
           :alt="product.name"
           loading="lazy"
           @error="imageFailed = true"
         />
-        <div v-else class="product-placeholder" aria-hidden="true">
-          <span class="placeholder-mark">OCOP</span>
-          <span>Lâm Đồng</span>
+        <div v-else class="product-placeholder" :style="placeholderStyle">
+          <span class="placeholder-mark" aria-hidden="true">{{ product.name.trim().charAt(0).toUpperCase() }}</span>
+          <span class="placeholder-note">Ảnh sản phẩm đang cập nhật</span>
         </div>
-        <span class="star-badge"><AppIcon name="star" :size="12" /> OCOP {{ product.star }} sao</span>
+        <span class="star-badge">
+          <span class="stars" aria-hidden="true">
+            <AppIcon v-for="index in product.star" :key="index" name="star" :size="11" />
+          </span>
+          OCOP {{ product.star }} sao
+        </span>
       </div>
 
       <div class="product-body">
@@ -54,14 +76,14 @@ const formattedPrice = computed(() => {
           <span v-if="product.vietgap_code"><AppIcon name="checkCircle" :size="12" /> VietGAP</span>
         </p>
 
-        <div class="product-subject">
-          <span>Chủ thể</span>
-          <strong :title="product.subject.name">{{ product.subject.name }}</strong>
-        </div>
+        <p class="product-subject" :title="product.subject.name">
+          <AppIcon name="building" :size="13" />
+          <span>{{ product.subject.name }}</span>
+        </p>
 
         <div class="product-price-row">
-          <div class="product-price">
-            <strong>{{ formattedPrice }}</strong>
+          <div class="product-price" :class="{ 'is-contact': !hasPrice }">
+            <strong>{{ hasPrice ? formattedPrice : 'Giá: Liên hệ' }}</strong>
             <small v-if="product.price !== null && product.price > 0 && product.unit">/ {{ product.unit }}</small>
           </div>
           <span v-if="product.rating_avg > 0" class="product-rating"><AppIcon name="star" :size="12" /> {{ product.rating_avg.toFixed(1) }}</span>
@@ -74,6 +96,7 @@ const formattedPrice = computed(() => {
 <style scoped>
 .product-card {
   display: flex;
+  container-type: inline-size;
   height: 100%;
   min-width: 0;
   overflow: hidden;
@@ -103,7 +126,7 @@ const formattedPrice = computed(() => {
   position: relative;
   display: block;
   overflow: hidden;
-  aspect-ratio: 1.4 / 1;
+  aspect-ratio: 16 / 10;
   background: var(--ocop-border-soft);
 }
 
@@ -123,46 +146,61 @@ const formattedPrice = computed(() => {
 }
 
 .product-placeholder {
-  display: grid;
-  place-content: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ocop-space-2);
   background:
-    radial-gradient(circle at 20% 15%, color-mix(in srgb, var(--ocop-white) 75%, transparent), transparent 7rem),
-    linear-gradient(145deg, var(--ocop-sage-50), var(--ocop-sage-300));
-  color: var(--ocop-primary-900);
+    radial-gradient(circle at 80% 20%, color-mix(in srgb, var(--ocop-white) 70%, transparent), transparent 45%),
+    var(--placeholder-bg, var(--ocop-mist-100));
   text-align: center;
 }
 
-.product-placeholder span {
-  color: color-mix(in srgb, var(--ocop-primary-900) 70%, transparent);
-  font-size: var(--ocop-font-size-caption);
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-
 .product-placeholder .placeholder-mark {
-  color: var(--ocop-primary-900);
-  font-size: 25px;
+  display: grid;
+  width: 56px;
+  height: 56px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--ocop-card);
+  box-shadow: var(--ocop-shadow-sm);
+  color: var(--placeholder-fg, var(--ocop-mist-800));
+  font-size: var(--ocop-font-size-title-md);
   font-weight: 800;
-  letter-spacing: 0.1em;
 }
 
+.product-placeholder .placeholder-note {
+  color: var(--ocop-mist-700);
+  font-size: var(--ocop-font-size-caption);
+  font-weight: 600;
+}
+
+/* Huy hiệu sao OCOP (audit G-03): nền xanh đêm, sao vàng dã quỳ, chữ trắng. Chữ 16:1, sao 10:1. */
 .star-badge {
   position: absolute;
   z-index: 1;
-  padding: 5px 10px;
-  border-radius: var(--ocop-radius-sm);
+  top: var(--ocop-space-3);
+  left: var(--ocop-space-3);
+  display: inline-flex;
+  min-height: 28px;
+  align-items: center;
+  gap: var(--ocop-space-1);
+  padding: 0 var(--ocop-space-3);
+  border-radius: var(--ocop-radius-pill);
+  background: var(--ocop-mist-950);
+  box-shadow: 0 3px 8px color-mix(in srgb, var(--ocop-mist-950) 24%, transparent);
   color: var(--ocop-white);
   font-size: var(--ocop-font-size-caption);
   font-weight: 700;
-  line-height: 14px;
+  line-height: 1;
+  white-space: nowrap;
 }
 
-.star-badge {
-  top: 12px;
-  left: 12px;
-  background: var(--ocop-star-strong);
-  box-shadow: 0 3px 8px color-mix(in srgb, var(--ocop-notice) 20%, transparent);
+.stars {
+  display: inline-flex;
+  gap: 1px;
+  color: var(--ocop-daquy-400);
 }
 
 .product-body {
@@ -214,19 +252,19 @@ const formattedPrice = computed(() => {
 }
 
 .product-subject {
-  display: grid;
+  display: flex;
   min-width: 0;
-  margin-top: auto;
+  margin: auto 0 0;
   padding-top: var(--ocop-space-3);
-  gap: 2px;
-  color: var(--ocop-text-tertiary);
-  font-size: var(--ocop-font-size-caption);
-}
-
-.product-subject strong {
-  overflow: hidden;
+  align-items: center;
+  gap: var(--ocop-space-1);
   color: var(--ocop-text-muted);
   font-size: var(--ocop-font-size-caption);
+  font-weight: 600;
+}
+
+.product-subject span {
+  overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -255,6 +293,12 @@ const formattedPrice = computed(() => {
   white-space: nowrap;
 }
 
+.product-price.is-contact strong {
+  color: var(--ocop-text-muted);
+  font-size: var(--ocop-font-size-body);
+  font-weight: 600;
+}
+
 .product-price small {
   overflow: hidden;
   color: var(--ocop-text-tertiary);
@@ -264,10 +308,44 @@ const formattedPrice = computed(() => {
 }
 
 .product-rating {
+  display: inline-flex;
   flex: 0 0 auto;
-  color: var(--ocop-star);
+  align-items: center;
+  gap: 2px;
+  color: var(--ocop-daquy-700);
   font-size: var(--ocop-font-size-caption);
   font-weight: 700;
+}
+
+.product-rating :deep(.app-icon) {
+  color: var(--ocop-daquy-500);
+}
+
+/* Thẻ hẹp (lưới 2 cột trên điện thoại): thu gọn chữ và khoảng cách. */
+@container (max-width: 220px) {
+  .product-body {
+    min-height: 0;
+    padding: var(--ocop-space-3);
+  }
+
+  .product-body h2 {
+    min-height: 0;
+    font-size: var(--ocop-font-size-body);
+  }
+
+  .star-badge {
+    top: var(--ocop-space-2);
+    left: var(--ocop-space-2);
+    padding: 0 var(--ocop-space-2);
+  }
+
+  .stars {
+    display: none;
+  }
+
+  .product-price strong {
+    font-size: var(--ocop-font-size-body);
+  }
 }
 
 .product-card-link:focus-visible {

@@ -12,6 +12,7 @@ const isAuthenticated = authStore.isAuthenticated
 const isMenuOpen = ref(false)
 const isSearchOpen = ref(false)
 const headerSearch = ref('')
+const isCondensed = ref(false)
 
 const roleLabel = computed(() => {
   const labels = {
@@ -27,13 +28,13 @@ const userInitial = computed(() => currentUser.value?.full_name.trim().charAt(0)
 const publicNavigation = [
   { label: 'Trang chủ', to: '/', icon: 'home' },
   { label: 'Sản phẩm OCOP', to: '/san-pham', icon: 'package' },
-  { label: 'Khám phá Lâm Đồng', to: '/diem-du-lich', icon: 'map-pin' },
-  { label: 'Bản đồ', to: '/ban-do', icon: 'map' },
+  { label: 'Điểm du lịch', to: '/diem-du-lich', icon: 'map-pin' },
+  { label: 'Bản đồ số', to: '/ban-do', icon: 'map' },
   { label: 'Tin tức', to: '/tin-tuc', icon: 'newspaper' },
 ]
 
 const navigation = computed(() => [
-  ...publicNavigation,
+  ...publicNavigation.map((item) => ({ ...item, isPublic: true })),
   ...(currentUser.value?.role === 'user' || currentUser.value?.role === 'subject'
     ? [{
         label: currentUser.value.role === 'subject' ? 'Quản lý sản phẩm' : 'Đăng ký chủ thể',
@@ -58,6 +59,13 @@ function closeSearch(): void {
   isSearchOpen.value = false
 }
 
+// Header thu gọn khi cuộn: ẩn thanh thông báo, hạ chiều cao. Hai ngưỡng khác nhau để không bị nháy.
+function onScroll(): void {
+  const y = window.scrollY
+  if (!isCondensed.value && y > 96) isCondensed.value = true
+  else if (isCondensed.value && y < 24) isCondensed.value = false
+}
+
 function onKeydown(event: KeyboardEvent): void {
   if (event.key === 'Escape') closeMenu()
 }
@@ -79,25 +87,29 @@ watch(() => route.fullPath, () => {
   closeMenu()
   closeSearch()
 })
-onMounted(() => document.addEventListener('keydown', onKeydown))
-onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
+onMounted(() => {
+  document.addEventListener('keydown', onKeydown)
+  window.addEventListener('scroll', onScroll, { passive: true })
+  onScroll()
+})
+onBeforeUnmount(() => {
+  document.removeEventListener('keydown', onKeydown)
+  window.removeEventListener('scroll', onScroll)
+})
 </script>
 
 <template>
-  <header class="site-header">
+  <header class="site-header" :class="{ 'is-condensed': isCondensed }">
     <div class="announcement-bar">
       <div class="site-container announcement-inner">
         <p>
-          <span class="online-dot" aria-hidden="true" />
-          Cổng thông tin quảng bá nông sản OCOP &amp; bản đồ số du lịch nông nghiệp tỉnh Lâm Đồng
+          <AppIcon name="shieldCheck" :size="14" />
+          Sản phẩm, chủ thể và điểm đến được kiểm duyệt trước khi công khai
         </p>
-        <div class="announcement-actions">
-          <span class="capstone-label">
-            <AppIcon name="shieldCheck" :size="14" />
-            Dữ liệu OCOP được kiểm duyệt
-          </span>
-          <span>Hotline: 0263.3822000</span>
-        </div>
+        <a class="announcement-hotline" href="tel:02633822000">
+          <AppIcon name="phone" :size="14" />
+          Hotline 0263.3822000
+        </a>
       </div>
     </div>
 
@@ -110,9 +122,8 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
           <span class="brand-copy">
             <span class="brand-title">
               <strong>LÂM ĐỒNG OCOP</strong>
-              <small>Cổng thông tin</small>
             </span>
-            <span>Nông sản OCOP &amp; Du lịch Nông nghiệp</span>
+            <span>Nông sản OCOP và du lịch nông nghiệp</span>
           </span>
         </RouterLink>
 
@@ -145,12 +156,19 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
           aria-label="Mở hoặc đóng menu"
           @click="isMenuOpen = !isMenuOpen"
         >
-          <AppIcon name="menu" :size="22" />
+          <AppIcon class="menu-icon" name="menu" :size="22" />
+          <AppIcon class="account-icon" name="user" :size="20" />
         </button>
 
         <div id="main-navigation" class="navigation-panel" :class="{ open: isMenuOpen }">
           <nav class="main-nav" aria-label="Điều hướng chính">
-            <RouterLink v-for="item in navigation" :key="item.label" :to="item.to" @click="closeMenu">
+            <RouterLink
+              v-for="item in navigation"
+              :key="item.label"
+              :to="item.to"
+              :class="{ 'is-public': 'isPublic' in item }"
+              @click="closeMenu"
+            >
               <AppIcon :name="item.icon" :size="15" />
               <span>{{ item.label }}</span>
             </RouterLink>
@@ -208,17 +226,22 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 }
 
 .announcement-bar {
-  min-height: 28px;
+  min-height: 32px;
+  max-height: 64px;
+  overflow: hidden;
   padding: 6px 0;
-  background: var(--ocop-primary-950);
-  color: var(--ocop-mint-100);
+  transition: max-height var(--ocop-transition), padding var(--ocop-transition), min-height var(--ocop-transition);
+  background: var(--ocop-mist-950);
+  color: var(--ocop-text-on-dark);
   font-size: var(--ocop-font-size-caption);
 }
 
+.announcement-bar :deep(.app-icon) {
+  color: var(--ocop-daquy-300);
+}
+
 .announcement-inner,
-.announcement-inner p,
-.announcement-actions,
-.capstone-label {
+.announcement-inner p {
   display: flex;
   align-items: center;
 }
@@ -228,42 +251,67 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   gap: var(--ocop-space-4);
 }
 
+.announcement-hotline {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+  color: var(--ocop-text-on-dark);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.announcement-hotline:hover {
+  color: var(--ocop-white);
+  text-decoration: underline;
+}
+
 .announcement-inner p {
   gap: var(--ocop-space-2);
   margin: 0;
-  color: var(--ocop-success-soft);
+  color: var(--ocop-text-on-dark);
   font-weight: 500;
 }
 
-.online-dot {
-  width: 8px;
-  height: 8px;
-  flex: 0 0 auto;
-  border-radius: 50%;
-  background: var(--ocop-mint);
-}
 
-.announcement-actions {
-  flex: 0 0 auto;
-  gap: var(--ocop-space-4);
-}
 
-.capstone-label {
-  gap: 5px;
-  padding: 2px 10px;
-  border: 1px solid color-mix(in srgb, var(--ocop-mint) 42%, transparent);
-  border-radius: var(--ocop-radius-xs);
-  background: color-mix(in srgb, var(--ocop-primary-950) 72%, transparent);
-}
 
 .main-header {
   background: var(--ocop-card);
+}
+
+.site-header.is-condensed {
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--ocop-mist-950) 10%, transparent);
+}
+
+.site-header.is-condensed .announcement-bar {
+  min-height: 0;
+  max-height: 0;
+  padding-block: 0;
+}
+
+.site-header.is-condensed .header-inner {
+  min-height: 60px;
+}
+
+.site-header.is-condensed .brand-symbol {
+  width: 34px;
+  height: 34px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .announcement-bar,
+  .header-inner,
+  .brand-symbol {
+    transition: none;
+  }
 }
 
 .header-inner {
   position: relative;
   display: flex;
   min-height: 72px;
+  transition: min-height var(--ocop-transition);
   align-items: center;
   gap: var(--ocop-space-4);
 }
@@ -288,8 +336,8 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   flex: 0 0 auto;
   place-items: center;
   border-radius: var(--ocop-radius-md);
-  background: var(--ocop-primary-700);
-  box-shadow: 0 4px 8px color-mix(in srgb, var(--ocop-primary-700) 22%, transparent);
+  background: var(--ocop-mist-800);
+  box-shadow: inset 0 -4px 0 var(--ocop-daquy-400), 0 4px 8px color-mix(in srgb, var(--ocop-mist-800) 22%, transparent);
 }
 
 .brand-symbol img {
@@ -317,16 +365,6 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   letter-spacing: -0.4px;
 }
 
-.brand-title small {
-  padding: 2px 6px;
-  border: 1px solid var(--ocop-gold-300);
-  border-radius: var(--ocop-radius-xs);
-  background: var(--ocop-warning-soft);
-  color: var(--ocop-warning);
-  font-size: var(--ocop-font-size-caption);
-  font-weight: 700;
-  line-height: 12px;
-}
 
 .header-search {
   position: relative;
@@ -438,7 +476,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   padding: 7px var(--ocop-space-2);
   border: 1px solid transparent;
   border-radius: var(--ocop-radius-sm);
-  color: var(--ocop-slate);
+  color: var(--ocop-navy);
   font-size: var(--ocop-font-size-small);
   font-weight: 650;
   line-height: 14px;
@@ -446,16 +484,35 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   text-decoration: none;
 }
 
-.main-nav a:hover,
-.main-nav a.router-link-active {
-  border-color: var(--ocop-mint-border);
-  background: var(--ocop-mint-soft);
+.main-nav a:hover {
+  background: var(--ocop-mist-50);
   color: var(--ocop-primary-900);
+}
+
+.main-nav a.router-link-exact-active,
+.main-nav a.router-link-active:not([href="/"]) {
+  background: var(--ocop-mist-100);
+  box-shadow: inset 0 -3px 0 var(--ocop-daquy-400);
+  color: var(--ocop-mist-800);
+  font-weight: 750;
 }
 
 .account-actions {
   flex: 0 0 auto;
   gap: 6px;
+}
+
+/* Tách nhóm tài khoản khỏi menu chính bằng vạch ngăn. */
+@media (min-width: 1200px) {
+  .account-actions {
+    margin-left: var(--ocop-space-2);
+    padding-left: var(--ocop-space-3);
+    border-left: 1px solid var(--ocop-border);
+  }
+}
+
+.menu-toggle .account-icon {
+  display: none;
 }
 
 .user-link {
@@ -544,6 +601,13 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   color: var(--ocop-primary-950);
 }
 
+/* Màn hình rộng: menu chỉ có chữ như thiết kế; icon giữ lại trong menu thu gọn. */
+@media (min-width: 1200px) {
+  .main-nav :deep(.app-icon) {
+    display: none;
+  }
+}
+
 @media (min-width: 1320px) {
   .header-search {
     display: block;
@@ -624,9 +688,6 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
     font-size: var(--ocop-font-size-caption);
   }
 
-  .announcement-actions {
-    display: none;
-  }
 
   .header-inner {
     min-height: 62px;
@@ -645,8 +706,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
     font-size: 14px;
   }
 
-  .brand-copy > span:last-child,
-  .brand-title small {
+  .brand-copy > span:last-child {
     display: none;
   }
 
@@ -657,6 +717,27 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 
   .responsive-search button {
     grid-column: 1 / -1;
+  }
+
+  /* Điện thoại: điều hướng chính đã có ở thanh dưới, menu ở header chỉ còn tài khoản và mục theo vai trò. */
+  .main-nav a.is-public {
+    display: none;
+  }
+
+  .main-nav {
+    grid-template-columns: 1fr;
+  }
+
+  .menu-toggle .menu-icon {
+    display: none;
+  }
+
+  .menu-toggle .account-icon {
+    display: inline-flex;
+  }
+
+  .announcement-inner p {
+    display: none;
   }
 }
 </style>

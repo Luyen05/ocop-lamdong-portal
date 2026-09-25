@@ -4,13 +4,17 @@
   --bs-font-sans-serif: var(--ocop-font-family-sans);
   --bs-body-font-family: var(--ocop-font-family-sans);
   --bs-primary: var(--ocop-primary-700);
-  --bs-primary-rgb: 30, 113, 79;
+  --bs-primary-rgb: 54, 80, 111; /* = --ocop-mist-700 */
   --bs-success: var(--ocop-success);
   --bs-success-rgb: 36, 122, 79;
   --bs-danger: var(--ocop-danger);
   --bs-danger-rgb: 194, 65, 75;
   --bs-link-color: var(--ocop-primary-700);
   --bs-link-hover-color: var(--ocop-primary-900);
+  --bs-link-color-rgb: 54, 80, 111; /* = --ocop-mist-700 */
+  --bs-link-hover-color-rgb: 28, 46, 68; /* = --ocop-mist-900 */
+  --bs-secondary-color: var(--ocop-slate);
+  --bs-secondary-rgb: 72, 96, 128; /* = --ocop-mist-600, đạt 4.5:1 trên nền sương */
   font-family: var(--ocop-font-family-sans);
   color: var(--ocop-navy);
   background: var(--ocop-surface);
@@ -99,6 +103,18 @@ img {
   --bs-btn-hover-border-color: var(--ocop-primary-900);
 }
 
+.btn-outline-success {
+  --bs-btn-color: var(--ocop-primary-700);
+  --bs-btn-border-color: var(--ocop-primary-700);
+  --bs-btn-hover-bg: var(--ocop-primary-700);
+  --bs-btn-hover-border-color: var(--ocop-primary-700);
+  --bs-btn-hover-color: var(--ocop-white);
+  --bs-btn-active-bg: var(--ocop-primary-900);
+  --bs-btn-active-border-color: var(--ocop-primary-900);
+  --bs-btn-disabled-color: var(--ocop-primary-700);
+  --bs-btn-disabled-border-color: var(--ocop-primary-700);
+}
+
 /* Vùng bấm tối thiểu 44px trên thiết bị cảm ứng (WCAG 2.5.8 và khuyến nghị cho điện thoại). */
 @media (pointer: coarse) {
   .btn {
@@ -125,5 +141,126 @@ img {
 
   .site-content {
     width: min(calc(100% - 3rem), var(--ocop-content));
+  }
+}
+
+/* Tiêu đề khu vực và nút dùng chung ở các trang công khai (phương án C, bảng màu Sương sớm & dã quỳ). */
+.ocop-section-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--ocop-space-4);
+}
+
+.ocop-eyebrow {
+  display: inline-flex;
+  margin: 0;
+  align-items: center;
+  gap: 6px;
+  color: var(--ocop-daquy-700);
+  font-size: var(--ocop-font-size-caption);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 16px;
+  text-transform: uppercase;
+}
+
+.ocop-section-title {
+  margin: var(--ocop-space-1) 0 0;
+  color: var(--ocop-navy);
+  font-size: var(--ocop-font-size-title-md);
+  font-weight: 750;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+}
+
+.ocop-section-copy {
+  margin: var(--ocop-space-1) 0 0;
+  color: var(--ocop-slate);
+  font-size: var(--ocop-font-size-body);
+}
+
+.ocop-link-more {
+  display: inline-flex;
+  min-height: var(--ocop-control-md);
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--ocop-space-1);
+  color: var(--ocop-primary-700);
+  font-size: var(--ocop-font-size-body);
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.ocop-link-more:hover {
+  color: var(--ocop-primary-900);
+  text-decoration: underline;
+}
+
+.ocop-btn-accent,
+.ocop-btn-main,
+.ocop-btn-ghost {
+  display: inline-flex;
+  min-height: var(--ocop-control-md);
+  align-items: center;
+  justify-content: center;
+  gap: var(--ocop-space-2);
+  padding: 0 var(--ocop-space-5);
+  border: 1px solid transparent;
+  border-radius: var(--ocop-radius-sm);
+  font-size: var(--ocop-font-size-body);
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background var(--ocop-transition), border-color var(--ocop-transition), color var(--ocop-transition);
+}
+
+.ocop-btn-accent {
+  border-color: var(--ocop-daquy-500);
+  background: var(--ocop-daquy-400);
+  color: var(--ocop-mist-950);
+}
+
+.ocop-btn-accent:hover {
+  background: var(--ocop-daquy-300);
+  color: var(--ocop-mist-950);
+}
+
+.ocop-btn-main {
+  border-color: var(--ocop-primary-700);
+  background: var(--ocop-primary-700);
+  color: var(--ocop-white);
+}
+
+.ocop-btn-main:hover {
+  border-color: var(--ocop-primary-900);
+  background: var(--ocop-primary-900);
+  color: var(--ocop-white);
+}
+
+.ocop-btn-ghost {
+  border-color: var(--ocop-border);
+  background: var(--ocop-card);
+  color: var(--ocop-primary-700);
+}
+
+.ocop-btn-ghost:hover {
+  border-color: var(--ocop-border-strong);
+  color: var(--ocop-primary-900);
+}
+
+@media (max-width: 575.98px) {
+  .ocop-section-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0;
+  }
+}
+
+/* Chừa chỗ cho thanh điều hướng dưới trên điện thoại (MobileTabBar thêm class has-tabbar). */
+@media (max-width: 767.98px) {
+  body.has-tabbar {
+    --ocop-tabbar-offset: calc(var(--ocop-tabbar-height) + env(safe-area-inset-bottom));
+    padding-bottom: var(--ocop-tabbar-offset);
   }
 }

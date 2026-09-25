@@ -12,9 +12,9 @@ interface CategoryTheme {
 }
 
 const themes: Record<string, CategoryTheme> = {
-  'nong-san-tuoi': { icon: 'sprout', background: 'var(--ocop-mint-soft)', foreground: 'var(--ocop-primary-700)' },
-  'thuc-pham': { icon: 'food', background: 'var(--ocop-accent-soft)', foreground: 'var(--ocop-warning)' },
-  'do-uong': { icon: 'coffee', background: 'var(--ocop-info-soft)', foreground: 'var(--ocop-blue)' },
+  'nong-san-tuoi': { icon: 'sprout', background: 'var(--ocop-tone-leaf-soft)', foreground: 'var(--ocop-tone-leaf)' },
+  'thuc-pham': { icon: 'food', background: 'var(--ocop-daquy-50)', foreground: 'var(--ocop-daquy-700)' },
+  'do-uong': { icon: 'coffee', background: 'var(--ocop-mist-100)', foreground: 'var(--ocop-mist-700)' },
   'thao-duoc': { icon: 'leaf', background: 'var(--ocop-tone-leaf-soft)', foreground: 'var(--ocop-tone-leaf)' },
   'thu-cong-my-nghe': { icon: 'palette', background: 'var(--ocop-tone-clay-soft)', foreground: 'var(--ocop-tone-clay)' },
   'sinh-vat-canh': { icon: 'flower', background: 'var(--ocop-tone-rose-soft)', foreground: 'var(--ocop-tone-rose)' },
@@ -30,7 +30,7 @@ const fallbackTheme: CategoryTheme = {
 const categories = ref<Category[]>([])
 const isLoading = ref(true)
 const failed = ref(false)
-const visibleCategories = computed(() => categories.value.slice(0, 5))
+const visibleCategories = computed(() => categories.value)
 
 function themeFor(slug: string): CategoryTheme {
   return themes[slug] ?? fallbackTheme
@@ -54,181 +54,168 @@ onMounted(loadCategories)
 
 <template>
   <section class="category-section" aria-labelledby="category-title">
-    <div class="section-heading">
-      <div>
-        <h2 id="category-title">Danh Mục Sản Phẩm OCOP</h2>
-        <p>Phân loại sản phẩm đạt chuẩn sao OCOP theo ngành hàng</p>
+    <div class="category-bar">
+      <h2 id="category-title" class="category-title">
+        <AppIcon name="package" :size="18" />
+        Tìm theo nhóm sản phẩm
+      </h2>
+
+      <div v-if="isLoading" class="chip-row" aria-busy="true" aria-label="Đang tải danh mục">
+        <span v-for="index in 7" :key="index" class="chip-skeleton placeholder-glow"><span class="placeholder col-12" /></span>
       </div>
-      <RouterLink to="/san-pham">Xem tất cả <AppIcon name="chevronRight" :size="14" /></RouterLink>
-    </div>
 
-    <div v-if="isLoading" class="category-grid" aria-label="Đang tải danh mục">
-      <div v-for="index in 5" :key="index" class="category-skeleton placeholder-glow">
-        <span class="placeholder col-3" />
-        <span class="placeholder col-8 mt-3" />
-        <span class="placeholder col-5 mt-2" />
+      <ul v-else-if="visibleCategories.length" class="chip-row" aria-label="Nhóm sản phẩm OCOP">
+        <li v-for="category in visibleCategories" :key="category.id">
+          <RouterLink
+            class="category-card"
+            :to="{ name: 'products', query: { category: category.slug } }"
+            :style="{
+              '--category-bg': themeFor(category.slug).background,
+              '--category-color': themeFor(category.slug).foreground,
+            }"
+          >
+            <span class="category-icon" aria-hidden="true"><AppIcon :name="themeFor(category.slug).icon" :size="16" /></span>
+            {{ category.name }}
+          </RouterLink>
+        </li>
+        <li>
+          <RouterLink class="category-card is-all" to="/san-pham">
+            Tất cả <AppIcon name="chevronRight" :size="16" />
+          </RouterLink>
+        </li>
+      </ul>
+
+      <div v-else class="category-empty" role="status">
+        <span>{{ failed ? 'Chưa thể tải danh mục.' : 'Chưa có danh mục sản phẩm.' }}</span>
+        <button v-if="failed" class="ocop-btn-ghost" type="button" @click="loadCategories">
+          <AppIcon name="refresh" :size="16" /> Thử lại
+        </button>
       </div>
-    </div>
-
-    <div v-else-if="visibleCategories.length" class="category-grid">
-      <RouterLink
-        v-for="category in visibleCategories"
-        :key="category.id"
-        class="category-card"
-        :to="{ name: 'products', query: { category: category.slug } }"
-        :style="{
-          '--category-bg': themeFor(category.slug).background,
-          '--category-color': themeFor(category.slug).foreground,
-        }"
-      >
-        <span class="category-icon" aria-hidden="true"><AppIcon :name="themeFor(category.slug).icon" :size="23" /></span>
-        <strong>{{ category.name }}</strong>
-        <small>Xem sản phẩm</small>
-      </RouterLink>
-    </div>
-
-    <div v-else class="category-empty" role="status">
-      <span>{{ failed ? 'Chưa thể tải danh mục.' : 'Chưa có danh mục sản phẩm.' }}</span>
-      <button v-if="failed" type="button" @click="loadCategories">Thử lại</button>
     </div>
   </section>
 </template>
 
 <style scoped>
 .category-section {
-  padding-top: var(--ocop-space-12);
+  padding-top: var(--ocop-space-8);
 }
 
-.section-heading {
+.category-bar {
   display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: var(--ocop-space-4);
-}
-
-.section-heading h2 {
-  margin: 0;
-  color: var(--ocop-navy);
-  font-size: 22px;
-  font-weight: 800;
-  letter-spacing: -0.5px;
-  line-height: 28px;
-}
-
-.section-heading p {
-  margin: 0;
-  color: var(--ocop-slate);
-  font-size: var(--ocop-font-size-small);
-  font-weight: 500;
-  line-height: 16px;
-}
-
-.section-heading a {
-  flex: 0 0 auto;
-  color: var(--ocop-primary-700);
-  font-size: var(--ocop-font-size-caption);
-  font-weight: 700;
-  text-decoration: none;
-}
-
-.category-grid {
-  display: grid;
-  margin-top: var(--ocop-space-4);
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  flex-direction: column;
   gap: var(--ocop-space-3);
 }
 
-.category-card,
-.category-skeleton {
-  min-height: 107px;
-  padding: var(--ocop-space-4);
-  border: 1px solid color-mix(in srgb, var(--ocop-neutral-200) 80%, transparent);
-  border-radius: var(--ocop-radius-lg);
+.category-title {
+  display: inline-flex;
+  margin: 0;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--ocop-space-2);
+  color: var(--ocop-navy);
+  font-size: var(--ocop-font-size-body-lg);
+  font-weight: 750;
 }
 
-.category-card {
+.category-title :deep(.app-icon) {
+  color: var(--ocop-daquy-600);
+}
+
+.chip-row {
   display: flex;
-  flex-direction: column;
-  background: var(--category-bg);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  flex: 1;
+  flex-wrap: wrap;
+  gap: var(--ocop-space-2);
+  list-style: none;
+}
+
+/* Chip: nhãn bo tròn bấm được, dẫn tới danh sách sản phẩm đã lọc. */
+.category-card {
+  display: inline-flex;
+  min-height: var(--ocop-control-md);
+  align-items: center;
+  gap: var(--ocop-space-2);
+  padding: 0 var(--ocop-space-4) 0 6px;
+  border: 1px solid var(--ocop-border);
+  border-radius: var(--ocop-radius-pill);
+  background: var(--ocop-card);
   color: var(--ocop-navy);
+  font-size: var(--ocop-font-size-body);
+  font-weight: 600;
   text-decoration: none;
-  transition: transform 160ms ease, box-shadow 160ms ease;
+  white-space: nowrap;
+  transition: border-color var(--ocop-transition), background var(--ocop-transition), transform var(--ocop-transition);
 }
 
 .category-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 22px color-mix(in srgb, var(--ocop-neutral-900) 9%, transparent);
+  border-color: var(--category-color, var(--ocop-border-strong));
+  background: var(--category-bg, var(--ocop-mist-50));
+  transform: translateY(-1px);
 }
 
-.category-icon {
-  display: grid;
-  width: 38px;
-  height: 38px;
-  place-items: center;
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--ocop-white) 62%, transparent);
-  color: var(--category-color);
-}
-
-.category-card strong {
-  margin-top: var(--ocop-space-2);
-  font-size: var(--ocop-font-size-caption);
-  line-height: 16px;
-}
-
-.category-card small {
-  margin-top: 2px;
-  color: var(--ocop-slate);
-  font-size: var(--ocop-font-size-caption);
-  font-weight: 500;
-  line-height: 15px;
-}
-
-.category-skeleton {
-  background: var(--ocop-surface-muted);
-}
-
-.category-empty {
-  display: flex;
-  margin-top: var(--ocop-space-4);
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--ocop-space-4);
-  border: 1px dashed var(--ocop-border);
-  border-radius: var(--ocop-radius-md);
-  color: var(--ocop-slate);
-  font-size: var(--ocop-font-size-caption);
-}
-
-.category-empty button {
-  border: 0;
+.category-card.is-all {
+  padding-left: var(--ocop-space-4);
+  border-color: transparent;
   background: transparent;
   color: var(--ocop-primary-700);
   font-weight: 700;
 }
 
-@media (max-width: 991.98px) {
-  .category-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+.category-icon {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--category-bg);
+  color: var(--category-color);
 }
 
-@media (max-width: 575.98px) {
-  .section-heading {
-    align-items: flex-start;
-  }
+.chip-skeleton {
+  width: 150px;
+  height: var(--ocop-control-md);
+  overflow: hidden;
+  border-radius: var(--ocop-radius-pill);
+}
 
-  .category-grid {
-    display: flex;
+.chip-skeleton .placeholder {
+  display: block;
+  height: 100%;
+}
+
+.category-empty {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ocop-space-3);
+  padding: var(--ocop-space-3) var(--ocop-space-4);
+  border: 1px dashed var(--ocop-border-strong);
+  border-radius: var(--ocop-radius-md);
+  background: var(--ocop-card);
+  color: var(--ocop-slate);
+}
+
+@media (max-width: 991.98px) {
+  /* Trượt ngang, mép phải mờ dần để báo còn nội dung. */
+  .chip-row {
     margin-inline: -16px;
     padding-inline: var(--ocop-space-4);
+    flex-wrap: nowrap;
     overflow-x: auto;
-    scroll-snap-type: x mandatory;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+    mask-image: linear-gradient(90deg, transparent 0, var(--ocop-black) 16px, var(--ocop-black) calc(100% - 40px), transparent);
   }
 
-  .category-card,
-  .category-skeleton {
-    min-width: 190px;
+  .chip-row::-webkit-scrollbar {
+    display: none;
+  }
+
+  .chip-row > * {
     scroll-snap-align: start;
   }
 }
