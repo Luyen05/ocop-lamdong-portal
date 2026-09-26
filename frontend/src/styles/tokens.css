@@ -7,7 +7,8 @@
  * --ocop-sidebar-muted chỉ dùng trên nền tối.
  *
  * Bảng màu "Sương sớm & dã quỳ" (từ bước 1, trang chủ):
- * - Sương sớm (--ocop-mist-*): xanh lam xám sương mù Đà Lạt, là màu thương hiệu, chữ, nền, viền.
+ * - Sương sớm (--ocop-mist-*): xám xanh thông và nền sương ấm, trích từ ảnh thật của trang (đồi thông, đồi chè,
+ *   trại hoa), là màu thương hiệu, chữ, nền, viền. Nhờ vậy khung, thẻ và ảnh cùng một tông.
  * - Dã quỳ (--ocop-daquy-*): vàng hoa dã quỳ, là màu nhấn (nút hành động chính, sao OCOP, tiêu đề nhỏ).
  *   Dã quỳ 300/400 chỉ làm nền kèm chữ mist-950, hoặc làm chữ/biểu tượng trên nền tối.
  *   Chữ vàng trên nền sáng dùng --ocop-daquy-700 (5.5:1 trên trắng).
@@ -19,18 +20,18 @@
   /* Be Vietnam Pro (Google Fonts, nạp trong index.html); thiếu mạng thì dùng font hệ thống. */
   --ocop-font-family-sans: "Be Vietnam Pro", "Segoe UI", Arial, sans-serif;
 
-  /* Sương sớm: thang xanh lam xám */
-  --ocop-mist-50: #f4f7fa;
-  --ocop-mist-100: #e8eef5;
-  --ocop-mist-200: #d3dde9;
-  --ocop-mist-300: #aebfd3;
-  --ocop-mist-400: #8499b3;
-  --ocop-mist-500: #5f7693;
-  --ocop-mist-600: #486080;
-  --ocop-mist-700: #36506f;
-  --ocop-mist-800: #283f5b;
-  --ocop-mist-900: #1c2e44;
-  --ocop-mist-950: #121f30;
+  /* Sương sớm trên rừng thông: thang xám xanh thông ấm, trích từ màu ảnh thật (thông #273328, sương #f4eee4) */
+  --ocop-mist-50: #f7f6f1;
+  --ocop-mist-100: #ecebe1;
+  --ocop-mist-200: #dcdccd;
+  --ocop-mist-300: #bcc0ab;
+  --ocop-mist-400: #929a84;
+  --ocop-mist-500: #677160;
+  --ocop-mist-600: #535e4d;
+  --ocop-mist-700: #3e4c3d;
+  --ocop-mist-800: #2e3b30;
+  --ocop-mist-900: #212b23;
+  --ocop-mist-950: #161d18;
 
   /* Dã quỳ: thang vàng */
   --ocop-daquy-50: #fff9e5;
@@ -74,7 +75,7 @@
 
   /* Màu trạng thái */
   --ocop-danger: #c2414b;
-  --ocop-success: #247a4f;
+  --ocop-success: #1e6a44;
   --ocop-warning: #9c6300;
   --ocop-info: #2475a2;
   --ocop-success-soft: #eaf7ef;
@@ -99,15 +100,15 @@
   --ocop-slate: var(--ocop-mist-600);
   --ocop-text-primary: var(--ocop-navy);
   --ocop-text-secondary: var(--ocop-slate);
-  --ocop-text-muted: #45556c;
-  --ocop-text-tertiary: #627289;
+  --ocop-text-muted: var(--ocop-mist-700);
+  --ocop-text-tertiary: var(--ocop-mist-600);
   --ocop-text-on-dark: var(--ocop-mist-100);
   --ocop-text-on-dark-muted: var(--ocop-mist-300);
 
   /* Nền, viền, thanh bên */
   --ocop-surface: var(--ocop-mist-50);
   --ocop-surface-muted: var(--ocop-mist-100);
-  --ocop-surface-subtle: #f8fafc;
+  --ocop-surface-subtle: var(--ocop-mist-50);
   --ocop-card: #ffffff;
   --ocop-border: var(--ocop-mist-200);
   --ocop-border-soft: var(--ocop-mist-100);
@@ -118,16 +119,16 @@
   --ocop-border-strong: var(--ocop-mist-300);
   --ocop-black: #000000;
 
-  /* Trung tính lạnh (khu quản trị, chủ thể) */
-  --ocop-neutral-100: #f1f5f9;
-  --ocop-neutral-200: #e2e8f0;
-  --ocop-neutral-300: #cbd5e1;
-  --ocop-neutral-400: #94a3b8;
-  --ocop-neutral-500: #607087;
-  --ocop-neutral-600: #526277;
-  --ocop-neutral-700: #334155;
-  --ocop-neutral-900: #0f172b;
-  --ocop-neutral-950: #020618;
+  /* Trung tính (khu quản trị, chủ thể): trỏ về thang sương để mọi khu cùng tông */
+  --ocop-neutral-100: var(--ocop-mist-100);
+  --ocop-neutral-200: var(--ocop-mist-200);
+  --ocop-neutral-300: var(--ocop-mist-300);
+  --ocop-neutral-400: var(--ocop-mist-400);
+  --ocop-neutral-500: var(--ocop-mist-600);
+  --ocop-neutral-600: var(--ocop-mist-600);
+  --ocop-neutral-700: var(--ocop-mist-700);
+  --ocop-neutral-900: var(--ocop-mist-900);
+  --ocop-neutral-950: var(--ocop-mist-950);
 
   /* Nền trang trí trang công khai (tên cũ sage/lime, trỏ sang sương và nắng dã quỳ) */
   --ocop-sage-50: var(--ocop-mist-50);
@@ -141,7 +142,7 @@
   /* Bảng màu phân loại: danh mục sản phẩm, loại hình điểm du lịch, thống kê */
   --ocop-tone-leaf: #527a36;
   --ocop-tone-leaf-soft: #f0f7ed;
-  --ocop-tone-clay: #b85c38;
+  --ocop-tone-clay: #9e4b2b;
   --ocop-tone-clay-soft: #fff2ed;
   --ocop-tone-rose: #a84b6a;
   --ocop-tone-rose-soft: #fdf1f5;
@@ -149,12 +150,19 @@
   --ocop-tone-purple: #806098;
   --ocop-tone-purple-light: #c09bd0;
   --ocop-tone-lime: #5b8c2a;
+  /* Màu lấy từ ảnh thật: dâu tây, cẩm tú cầu, trời Đà Lạt. Chữ trắng trên các màu này đạt từ 5.5:1. */
+  --ocop-tone-berry: #a8402a;
+  --ocop-tone-berry-soft: #f8ece7;
+  --ocop-tone-hydrangea: #6d56a0;
+  --ocop-tone-hydrangea-soft: #f1eef8;
+  --ocop-tone-sky: #1d6f98;
+  --ocop-tone-sky-soft: #e8f2f7;
 
   /* Loại hình điểm du lịch (marker bản đồ, huy hiệu loại hình) */
   --ocop-location-tea-coffee: var(--ocop-tone-leaf);
-  --ocop-location-fruit: var(--ocop-danger);
-  --ocop-location-flower: var(--ocop-tone-violet);
-  --ocop-location-dairy: var(--ocop-blue);
+  --ocop-location-fruit: var(--ocop-tone-berry);
+  --ocop-location-flower: var(--ocop-tone-hydrangea);
+  --ocop-location-dairy: var(--ocop-tone-sky);
   --ocop-location-vegetable: var(--ocop-tone-lime);
   --ocop-location-craft: var(--ocop-secondary-700);
   --ocop-location-farmstay: var(--ocop-warning);

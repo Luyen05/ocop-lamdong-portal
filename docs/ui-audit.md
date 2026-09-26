@@ -212,9 +212,18 @@ Lần 3: đánh giá lại dưới góc nhìn người dùng (du khách tìm đ�
 | Phần tử chữ dưới 12px | 0 | 0 |
 | Trang bị tràn ngang ở 375px, 768px, 1280px | 0 | 0 |
 
+### Đồng bộ màu với ảnh thật, trang sản phẩm, tổng quan quản trị (26/09/2026)
+
+- Người dùng nhận xét màu thẻ không hợp với ảnh. Lấy mẫu màu 5 ảnh thật (thông #273328, sương #f4eee4, lá chè, dâu tây, cẩm tú cầu, trời) để chỉnh thang `--ocop-mist-*` sang xám xanh thông ấm, nền kem; màu loại hình điểm du lịch lấy từ ảnh (`--ocop-tone-berry`, `--ocop-tone-hydrangea`, `--ocop-tone-sky`); `--ocop-tone-clay` và `--ocop-success` sẫm hơn để chữ đạt 4.5:1 trên nền nhạt.
+- `utils/category.ts`: mỗi nhóm sản phẩm có một màu và biểu tượng, dùng chung ở chip trang chủ, chip trang sản phẩm, khung ảnh chờ và nhãn nhóm trên thẻ, nên cùng một nhóm luôn cùng màu.
+- Trang sản phẩm (faceted search): banner ảnh đồi chè có ô tìm, hàng chip nhóm sản phẩm, bộ lọc hạng sao dạng nút bật, thẻ bộ lọc đang áp dụng có nút bỏ, bộ lọc trên điện thoại là ngăn kéo (bottom sheet), trạng thái lỗi/rỗng có hành động. Bỏ ô chọn "Nhóm sản phẩm" trùng với hàng chip. Sửa tràn ngang ở 375px.
+- Tổng quan quản trị: hàng đợi "Việc cần xử lý" (sản phẩm chờ duyệt, yêu cầu sửa, hồ sơ chủ thể) lên đầu, số liệu tổng quan và tỉ lệ công khai xếp sau, bỏ khối ghi chú kỹ thuật.
+- axe 19 trang x 2 kích thước: 0 lỗi; không trang nào tràn ngang.
+
 ## 6. Ngoài phạm vi giao diện (ghi nhận, không sửa trong nhánh này)
 
 - Quản trị chưa có module quản lý điểm du lịch (mục "Sắp phát triển" ở sidebar).
 - Tìm điểm gần đang cố định bán kính 50 km; nếu muốn cho người dùng mở rộng bán kính thì cần kiểm tra API có nhận tham số bán kính hay không.
+- Ảnh sản phẩm: giữ lưu ở backend (`backend/uploads/products/<chủ thể>/`, bảng `product_images` chỉ lưu đường dẫn). Nên: chặn phát ảnh của sản phẩm chưa duyệt (hiện `/uploads/products` phát mọi file), tạo ảnh thu nhỏ khi tải lên, và khi triển khai thật chuyển sang dịch vụ lưu trữ (Firebase Storage, S3/MinIO hoặc Cloudinary) qua một lớp lưu trữ chung; database lưu đường dẫn trong bucket, không lưu link có token.
 - Trang chi tiết sản phẩm chưa có số điện thoại hay kênh liên hệ của chủ thể trong dữ liệu trả về.
 - Biểu đồ dashboard cần thư viện Chart.js, hiện chưa có trong `package.json`.
