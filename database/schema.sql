@@ -187,8 +187,23 @@ CREATE TABLE tourism_locations (
   source_url TEXT,
   rating_avg NUMERIC(3,2) NOT NULL DEFAULT 0 CHECK (rating_avg BETWEEN 0 AND 5),
   views INTEGER NOT NULL DEFAULT 0 CHECK (views >= 0),
-  status VARCHAR(20) NOT NULL DEFAULT 'pending'
-    CHECK (status IN ('pending', 'approved', 'rejected')),
+  status VARCHAR(20) NOT NULL DEFAULT 'draft'
+    CONSTRAINT tourism_locations_status_check
+    CHECK (status IN ('draft', 'pending', 'needs_revision', 'approved', 'rejected')),
+  -- Cách lấy vị trí: admin_import (nhóm nhập từ nguồn công khai), map_pin, device_gps,
+  -- coordinates, google_maps_link (chủ thể khai báo). Độ chính xác chỉ có khi dùng GPS.
+  location_source VARCHAR(20) NOT NULL DEFAULT 'admin_import'
+    CONSTRAINT tourism_locations_location_source_check
+    CHECK (location_source IN ('admin_import', 'map_pin', 'device_gps', 'coordinates', 'google_maps_link')),
+  location_accuracy_m NUMERIC(8,2)
+    CONSTRAINT tourism_locations_location_accuracy_check
+    CHECK (location_accuracy_m IS NULL OR location_accuracy_m >= 0),
+  submitted_at TIMESTAMPTZ,
+  reviewed_by BIGINT REFERENCES users(id) ON DELETE RESTRICT,
+  reviewed_at TIMESTAMPTZ,
+  review_note TEXT,
+  version INTEGER NOT NULL DEFAULT 1
+    CONSTRAINT tourism_locations_version_check CHECK (version >= 1),
   created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -198,7 +213,32 @@ CREATE TABLE location_images (
   location_id BIGINT NOT NULL REFERENCES tourism_locations(id) ON DELETE CASCADE,
   image_url VARCHAR(500) NOT NULL,
   is_primary BOOLEAN NOT NULL DEFAULT FALSE,
-  sort_order INTEGER NOT NULL DEFAULT 0 CHECK (sort_order >= 0)
+  sort_order INTEGER NOT NULL DEFAULT 0 CHECK (sort_order >= 0),
+  storage_path VARCHAR(500),
+  alt_text VARCHAR(255),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE tourism_location_change_requests (
+  id BIGSERIAL PRIMARY KEY,
+  location_id BIGINT NOT NULL REFERENCES tourism_locations(id) ON DELETE CASCADE,
+  subject_id BIGINT NOT NULL REFERENCES subjects(id) ON DELETE RESTRICT,
+  request_type VARCHAR(20) NOT NULL CHECK (request_type IN ('update', 'delete')),
+  proposed_data JSONB,
+  reason TEXT,
+  status VARCHAR(20) NOT NULL DEFAULT 'pending'
+    CHECK (status IN ('pending', 'needs_revision', 'approved', 'rejected', 'cancelled')),
+  base_version INTEGER NOT NULL CHECK (base_version >= 1),
+  submitted_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  reviewed_by BIGINT REFERENCES users(id) ON DELETE RESTRICT,
+  reviewed_at TIMESTAMPTZ,
+  review_note TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT location_change_payload CHECK (
+    (request_type = 'update' AND proposed_data IS NOT NULL)
+    OR (request_type = 'delete' AND proposed_data IS NULL)
+  )
 );
 
 CREATE TABLE location_ocop_products (
@@ -259,6 +299,14 @@ CREATE UNIQUE INDEX uq_products_certificate_storage_path
 CREATE INDEX idx_locations_public_filters ON tourism_locations (status, district, type);
 CREATE INDEX idx_tourism_locations_subject ON tourism_locations (subject_id);
 CREATE INDEX idx_location_ocop_products_product ON location_ocop_products (product_id);
+CREATE INDEX idx_tourism_locations_review_queue ON tourism_locations (status, submitted_at);
+CREATE UNIQUE INDEX uq_location_images_storage_path ON location_images (storage_path)
+  WHERE storage_path IS NOT NULL;
+CREATE UNIQUE INDEX uq_location_active_change_request
+  ON tourism_location_change_requests (location_id)
+  WHERE status IN ('pending', 'needs_revision');
+CREATE INDEX idx_location_change_requests_subject
+  ON tourism_location_change_requests (subject_id, status);
 CREATE INDEX idx_reviews_product_status ON reviews (product_id, status);
 CREATE INDEX idx_reviews_location_status ON reviews (location_id, status);
 CREATE INDEX idx_product_sources_source ON product_sources (source_id);
@@ -280,6 +328,8 @@ FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 CREATE TRIGGER trg_product_change_requests_updated_at BEFORE UPDATE ON product_change_requests
 FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 CREATE TRIGGER trg_locations_updated_at BEFORE UPDATE ON tourism_locations
+FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE TRIGGER trg_location_change_requests_updated_at BEFORE UPDATE ON tourism_location_change_requests
 FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 CREATE TRIGGER trg_reviews_updated_at BEFORE UPDATE ON reviews
 FOR EACH ROW EXECUTE FUNCTION set_updated_at();
