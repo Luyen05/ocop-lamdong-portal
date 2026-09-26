@@ -40,20 +40,22 @@ interface TileProvider {
   subdomains: string
 }
 
-// Nguồn ảnh nền theo thứ tự ưu tiên. Một số mạng chặn tile.openstreetmap.org nên
-// mặc định dùng CARTO (dữ liệu OpenStreetMap) và tự chuyển nguồn khi không tải được.
+// Nguồn ảnh nền theo thứ tự ưu tiên, đều là dữ liệu OpenStreetMap và không cần API key.
+// CARTO đã bị bỏ: từ 2026 CARTO trả ảnh có chữ "API KEY REQUIRED" (vẫn là mã 200 nên không
+// tự chuyển nguồn được). Nếu mạng chặn tile.openstreetmap.org thì tự chuyển sang bản
+// OSM Humanitarian; cần nguồn khác (có key) thì khai báo VITE_MAP_TILE_URL trong frontend/.env.
 const TILE_PROVIDERS: TileProvider[] = [
   ...(import.meta.env.VITE_MAP_TILE_URL
     ? [{ url: import.meta.env.VITE_MAP_TILE_URL, attribution: OSM_ATTRIBUTION, subdomains: 'abc' }]
     : []),
   {
-    url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-    attribution: `${OSM_ATTRIBUTION} &copy; <a href="https://carto.com/attributions">CARTO</a>`,
-    subdomains: 'abcd',
-  },
-  {
     url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
     attribution: OSM_ATTRIBUTION,
+    subdomains: 'abc',
+  },
+  {
+    url: 'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',
+    attribution: `${OSM_ATTRIBUTION}, bản đồ nền <a href="https://www.hotosm.org/">Humanitarian OpenStreetMap Team</a>`,
     subdomains: 'abc',
   },
 ]
