@@ -4,37 +4,14 @@ import { computed, onMounted, ref } from 'vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
 import { getCategories } from '@/services/categories'
 import type { Category } from '@/types/category'
-
-interface CategoryTheme {
-  icon: string
-  background: string
-  foreground: string
-}
-
-const themes: Record<string, CategoryTheme> = {
-  'nong-san-tuoi': { icon: 'sprout', background: 'var(--ocop-tone-leaf-soft)', foreground: 'var(--ocop-tone-leaf)' },
-  'thuc-pham': { icon: 'food', background: 'var(--ocop-daquy-50)', foreground: 'var(--ocop-daquy-700)' },
-  'do-uong': { icon: 'coffee', background: 'var(--ocop-mist-100)', foreground: 'var(--ocop-mist-700)' },
-  'thao-duoc': { icon: 'leaf', background: 'var(--ocop-tone-leaf-soft)', foreground: 'var(--ocop-tone-leaf)' },
-  'thu-cong-my-nghe': { icon: 'palette', background: 'var(--ocop-tone-clay-soft)', foreground: 'var(--ocop-tone-clay)' },
-  'sinh-vat-canh': { icon: 'flower', background: 'var(--ocop-tone-rose-soft)', foreground: 'var(--ocop-tone-rose)' },
-  'dich-vu-du-lich-cong-dong': { icon: 'compass', background: 'var(--ocop-info-soft)', foreground: 'var(--ocop-blue)' },
-}
-
-const fallbackTheme: CategoryTheme = {
-  icon: 'package',
-  background: 'var(--ocop-mint-soft)',
-  foreground: 'var(--ocop-primary-700)',
-}
+import { categoryTheme } from '@/utils/category'
 
 const categories = ref<Category[]>([])
 const isLoading = ref(true)
 const failed = ref(false)
 const visibleCategories = computed(() => categories.value)
 
-function themeFor(slug: string): CategoryTheme {
-  return themes[slug] ?? fallbackTheme
-}
+const themeFor = categoryTheme
 
 async function loadCategories(): Promise<void> {
   isLoading.value = true

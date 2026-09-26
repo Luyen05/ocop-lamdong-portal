@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue'
 
 import AppIcon from '@/components/ui/AppIcon.vue'
 import type { ProductListItem } from '@/types/product'
+import { categoryTheme } from '@/utils/category'
 
 const props = defineProps<{
   product: ProductListItem
@@ -21,17 +22,12 @@ watch(
 // riêng cho từng sản phẩm để các thẻ không giống hệt nhau, vẫn ghi rõ là chưa có ảnh.
 const isReferenceImage = computed(() => props.product.primary_image_url?.includes('/public-reference') ?? false)
 const showImage = computed(() => Boolean(props.product.primary_image_url) && !imageFailed.value && !isReferenceImage.value)
-const placeholderTones = [
-  ['var(--ocop-tone-leaf-soft)', 'var(--ocop-tone-leaf)'],
-  ['var(--ocop-daquy-50)', 'var(--ocop-daquy-700)'],
-  ['var(--ocop-mist-100)', 'var(--ocop-mist-700)'],
-  ['var(--ocop-tone-rose-soft)', 'var(--ocop-tone-rose)'],
-  ['var(--ocop-tone-clay-soft)', 'var(--ocop-tone-clay)'],
-]
-const placeholderStyle = computed(() => {
-  const [background, foreground] = placeholderTones[props.product.category.id % placeholderTones.length]
-  return { '--placeholder-bg': background, '--placeholder-fg': foreground }
-})
+// Khung ảnh chờ và nhãn nhóm dùng cùng màu với chip danh mục (utils/category.ts).
+const theme = computed(() => categoryTheme(props.product.category.slug))
+const themeStyle = computed(() => ({
+  '--placeholder-bg': theme.value.background,
+  '--placeholder-fg': theme.value.foreground,
+}))
 const hasPrice = computed(() => props.product.price !== null && props.product.price > 0)
 
 const formattedPrice = computed(() => {
@@ -46,7 +42,7 @@ const formattedPrice = computed(() => {
 </script>
 
 <template>
-  <article class="product-card">
+  <article class="product-card" :style="themeStyle">
     <RouterLink class="product-card-link" :to="`/san-pham/${product.slug}`">
       <div class="product-media">
         <img
@@ -56,8 +52,8 @@ const formattedPrice = computed(() => {
           loading="lazy"
           @error="imageFailed = true"
         />
-        <div v-else class="product-placeholder" :style="placeholderStyle">
-          <span class="placeholder-mark" aria-hidden="true">{{ product.name.trim().charAt(0).toUpperCase() }}</span>
+        <div v-else class="product-placeholder">
+          <span class="placeholder-mark" aria-hidden="true"><AppIcon :name="theme.icon" :size="26" /></span>
           <span class="placeholder-note">Ảnh sản phẩm đang cập nhật</span>
         </div>
         <span class="star-badge">
@@ -72,8 +68,8 @@ const formattedPrice = computed(() => {
         <span class="product-location"><AppIcon name="map-pin" :size="14" /> {{ product.subject.district }}</span>
         <h2>{{ product.name }}</h2>
         <p class="product-meta">
-          {{ product.category.name }}
-          <span v-if="product.vietgap_code"><AppIcon name="checkCircle" :size="12" /> VietGAP</span>
+          <span class="category-tag">{{ product.category.name }}</span>
+          <span v-if="product.vietgap_code" class="vietgap"><AppIcon name="checkCircle" :size="12" /> VietGAP</span>
         </p>
 
         <p class="product-subject" :title="product.subject.name">
@@ -243,7 +239,17 @@ const formattedPrice = computed(() => {
   font-size: var(--ocop-font-size-caption);
 }
 
-.product-meta span {
+/* Nhãn nhóm cùng màu với chip danh mục. */
+.category-tag {
+  display: inline-flex;
+  padding: 2px var(--ocop-space-2);
+  border-radius: var(--ocop-radius-pill);
+  background: var(--placeholder-bg, var(--ocop-mist-100));
+  color: var(--placeholder-fg, var(--ocop-mist-700));
+  font-weight: 700;
+}
+
+.product-meta .vietgap {
   display: inline-flex;
   align-items: center;
   gap: var(--ocop-space-1);
@@ -340,6 +346,19 @@ const formattedPrice = computed(() => {
   }
 
   .stars {
+    display: none;
+  }
+
+  .product-placeholder {
+    padding-top: var(--ocop-space-8);
+  }
+
+  .product-placeholder .placeholder-mark {
+    width: 40px;
+    height: 40px;
+  }
+
+  .product-placeholder .placeholder-note {
     display: none;
   }
 
