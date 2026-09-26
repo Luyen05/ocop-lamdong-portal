@@ -1,6 +1,11 @@
 from app.models.category import Category
 from app.models.data_source import DataSource, ProductSource
-from app.models.location import LocationImage, TourismLocation, location_ocop_products
+from app.models.location import (
+    LocationImage,
+    TourismLocation,
+    TourismLocationChangeRequest,
+    location_ocop_products,
+)
 from app.models.product import Product, ProductChangeRequest, ProductImage
 from app.models.role import Role
 from app.models.subject import Subject
@@ -17,6 +22,7 @@ __all__ = [
     "Role",
     "Subject",
     "TourismLocation",
+    "TourismLocationChangeRequest",
     "User",
     "location_ocop_products",
 ]
