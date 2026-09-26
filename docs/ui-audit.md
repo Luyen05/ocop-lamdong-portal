@@ -138,7 +138,7 @@ Trạng thái: **Chưa xử lý**, **Đang xử lý**, **Đã xử lý**.
 | ID | Khía cạnh | Vấn đề | Bằng chứng | Ưu tiên | Đề xuất hướng sửa | Trạng thái |
 |---|---|---|---|---|---|---|
 | QT-01 | Responsive | Bảng hồ sơ chủ thể ở 375px: cột bị ép, tên đơn vị xuống dòng từng chữ, cột thứ ba bị cắt | Ảnh chụp 375px | Cao | Trên điện thoại chuyển mỗi hàng thành thẻ; giữ bảng trên máy tính | Chưa xử lý |
-| QT-02 | Nội dung dashboard | Dashboard chỉ có 4 thẻ số liệu và không có biểu đồ; còn các khối nội dung dành cho người phát triển ("Kế hoạch tiếp theo", "Module quản trị ưu tiên", "Nền tảng hiện có", "Số liệu trực tiếp từ database") | Ảnh chụp, `AdminDashboardView.vue` | Trung bình | Thay bằng hàng việc cần xử lý (hồ sơ và sản phẩm chờ duyệt). Nếu muốn có biểu đồ (sản phẩm theo hạng sao, theo địa bàn) thì phải thêm Chart.js, là thư viện mới nên cần xin ý kiến trước | Chưa xử lý |
+| QT-02 | Nội dung dashboard | Dashboard chỉ có 4 thẻ số liệu và không có biểu đồ; còn các khối nội dung dành cho người phát triển ("Kế hoạch tiếp theo", "Module quản trị ưu tiên", "Nền tảng hiện có", "Số liệu trực tiếp từ database") | Ảnh chụp, `AdminDashboardView.vue` | Trung bình | Thay bằng hàng việc cần xử lý (hồ sơ và sản phẩm chờ duyệt). Nếu muốn có biểu đồ (sản phẩm theo hạng sao, theo địa bàn) thì phải thêm Chart.js, là thư viện mới nên cần xin ý kiến trước | Đã xử lý (26/09: hàng đợi việc cần xử lý, thống kê bằng Chart.js) |
 | QT-03 | Điều hướng | Sidebar có 5 mục bị vô hiệu kèm nhãn "Sắp phát triển" chữ 8px (Điểm du lịch, Chủ thể/HTX, Người dùng, Đánh giá, Bài viết) | `AdminLayout.vue` | Trung bình | Ẩn các mục chưa có hoặc gom vào một nhóm "Sắp có" | Chưa xử lý |
 | QT-04 | Cỡ chữ, tương phản | Trang duyệt sản phẩm dùng nhiều chữ 9–11px; chip trạng thái "Chờ duyệt", "Thiếu quyết định" tương phản 3.96 | Đo cỡ chữ, axe | Trung bình | Theo G-01, G-02, G-10 | Chưa xử lý |
 
@@ -219,6 +219,14 @@ Lần 3: đánh giá lại dưới góc nhìn người dùng (du khách tìm đ�
 - Trang sản phẩm (faceted search): banner ảnh đồi chè có ô tìm, hàng chip nhóm sản phẩm, bộ lọc hạng sao dạng nút bật, thẻ bộ lọc đang áp dụng có nút bỏ, bộ lọc trên điện thoại là ngăn kéo (bottom sheet), trạng thái lỗi/rỗng có hành động. Bỏ ô chọn "Nhóm sản phẩm" trùng với hàng chip. Sửa tràn ngang ở 375px.
 - Tổng quan quản trị: hàng đợi "Việc cần xử lý" (sản phẩm chờ duyệt, yêu cầu sửa, hồ sơ chủ thể) lên đầu, số liệu tổng quan và tỉ lệ công khai xếp sau, bỏ khối ghi chú kỹ thuật.
 - axe 19 trang x 2 kích thước: 0 lỗi; không trang nào tràn ngang.
+
+### Thống kê trên trang tổng quan quản trị (26/09/2026)
+
+- Người dùng chọn phương án A trên canvas "Quản trị OCOP – Thống kê": thống kê nằm ngay trong trang Tổng quan `/quan-tri`, không thêm route. Cho phép làm backend (commit riêng) và dùng thư viện Chart.js.
+- Backend: `GET /api/v1/admin/statistics` (chỉ admin, chỉ đọc), test trong `backend/tests/test_admin_statistics.py`.
+- Frontend: `components/admin/StatChart.vue` bọc Chart.js (chỉ đăng ký BarController, BarElement, CategoryScale, LinearScale, Tooltip). Màu đọc từ token CSS lúc vẽ; mỗi biểu đồ có `aria-label` tóm tắt số liệu và nút "Bảng số liệu" chuyển sang bảng; tắt hiệu ứng khi người dùng bật giảm chuyển động. Chart.js chỉ nằm trong gói của trang quản trị (khoảng 56 kB gzip), trang công khai không phải tải.
+- Trạng thái riêng cho phần thống kê: đang tải (khung chờ), lỗi (có "Thử lại", hàng đợi việc vẫn hiện), rỗng (lượt xem chưa có, không vẽ biểu đồ toàn số 0).
+- Kiểm tra: axe 0 lỗi ở 1440px và 390px, cả chế độ biểu đồ lẫn bảng; không tràn ngang ở 390, 1024, 1440px.
 
 ## 6. Ngoài phạm vi giao diện (ghi nhận, không sửa trong nhánh này)
 
