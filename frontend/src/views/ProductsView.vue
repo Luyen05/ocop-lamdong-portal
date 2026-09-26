@@ -4,6 +4,8 @@ import { useRoute, useRouter } from 'vue-router'
 
 import ProductCard from '@/components/products/ProductCard.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
+import { teaPhoto } from '@/constants/photos'
+import { categoryTheme } from '@/utils/category'
 import { getApiErrorMessage } from '@/services/api-error'
 import { getCategories } from '@/services/categories'
 import { getProductFilterOptions, getProducts } from '@/services/products'
@@ -27,6 +29,16 @@ const isLoading = ref(false)
 const errorMessage = ref('')
 const validationMessage = ref('')
 let latestRequestId = 0
+
+// Trình bày: ngăn kéo bộ lọc trên điện thoại (bottom sheet) và lựa chọn nhanh danh mục, hạng sao.
+const isFilterOpen = ref(false)
+const bannerPhotoFailed = ref(false)
+const starOptions = [
+  { value: '', label: 'Tất cả' },
+  { value: '3', label: '3 sao' },
+  { value: '4', label: '4 sao' },
+  { value: '5', label: '5 sao' },
+]
 
 const form = reactive({
   search: '',
@@ -200,6 +212,21 @@ async function removeFilter(key: keyof typeof form): Promise<void> {
   await applyFilters()
 }
 
+async function selectCategory(slug: string): Promise<void> {
+  form.category = slug
+  await applyFilters()
+}
+
+async function selectStar(value: string): Promise<void> {
+  form.star = value
+  await applyFilters()
+}
+
+async function submitFromDrawer(): Promise<void> {
+  await applyFilters()
+  if (!validationMessage.value) isFilterOpen.value = false
+}
+
 async function goToPage(page: number): Promise<void> {
   if (page < 1 || page > totalPages.value || page === currentPage.value) return
   await router.push({ name: 'products', query: filterQuery(page) })
@@ -228,124 +255,180 @@ onUnmounted(() => {
 
 <template>
   <main class="products-page">
-    <section class="page-banner">
-      <div class="container py-5">
-        <span class="page-eyebrow">Tinh hoa sản phẩm địa phương</span>
+    <section class="page-banner" :class="{ 'has-photo': !bannerPhotoFailed }">
+      <img
+        v-if="!bannerPhotoFailed"
+        class="banner-photo"
+        :src="teaPhoto.src"
+        alt=""
+        @error="bannerPhotoFailed = true"
+      />
+      <div class="site-content banner-inner">
+        <nav class="breadcrumb-trail" aria-label="Đường dẫn">
+          <RouterLink to="/">Trang chủ</RouterLink>
+          <AppIcon name="chevronRight" :size="14" />
+          <span aria-current="page">Sản phẩm OCOP</span>
+        </nav>
         <h1>Sản phẩm OCOP Lâm Đồng</h1>
-        <p>Tìm kiếm sản phẩm theo danh mục, hạng sao, địa phương và mức giá.</p>
+        <p>Đặc sản đã được công nhận 3–5 sao, tìm theo nhóm sản phẩm, hạng sao, địa phương và mức giá.</p>
+
+        <form class="banner-search" role="search" @submit.prevent="applyFilters">
+          <label class="banner-search-field">
+            <span class="visually-hidden">Tìm theo tên sản phẩm hoặc chủ thể</span>
+            <AppIcon name="search" :size="18" />
+            <input
+              id="product-search"
+              v-model.trim="form.search"
+              type="search"
+              placeholder="Tên sản phẩm, chủ thể: atiso, cà phê, mắc ca..."
+            />
+          </label>
+          <button class="ocop-btn-accent" type="submit" :disabled="isLoading">Tìm</button>
+        </form>
       </div>
     </section>
 
-    <div class="container py-5">
+    <div class="site-content category-strip">
+      <ul class="category-chips" aria-label="Lọc theo nhóm sản phẩm">
+        <li>
+          <button type="button" class="chip" :aria-pressed="!form.category" @click="selectCategory('')">
+            Tất cả nhóm
+          </button>
+        </li>
+        <li v-for="category in categories" :key="category.id">
+          <button
+            type="button"
+            class="chip"
+            :aria-pressed="form.category === category.slug"
+            :style="{
+              '--chip-bg': categoryTheme(category.slug).background,
+              '--chip-fg': categoryTheme(category.slug).foreground,
+            }"
+            @click="selectCategory(category.slug)"
+          >
+            <span class="chip-icon" aria-hidden="true"><AppIcon :name="categoryTheme(category.slug).icon" :size="14" /></span>
+            {{ category.name }}
+          </button>
+        </li>
+      </ul>
+    </div>
+
+    <div class="site-content products-body">
       <div class="products-layout">
-        <aside>
-          <form class="filter-panel" @submit.prevent="applyFilters">
+        <div v-if="isFilterOpen" class="filter-scrim" aria-hidden="true" @click="isFilterOpen = false" />
+        <aside
+          id="product-filters"
+          class="filter-aside"
+          :class="{ open: isFilterOpen }"
+          aria-label="Bộ lọc sản phẩm"
+          @keydown.esc="isFilterOpen = false"
+        >
+          <form class="filter-panel" @submit.prevent="submitFromDrawer">
             <div class="filter-heading">
               <h2>Bộ lọc</h2>
-              <button class="btn-reset" type="button" @click="clearFilters">Xóa lọc</button>
+              <button class="btn-reset" type="button" @click="clearFilters">Xóa tất cả</button>
+              <button class="filter-close" type="button" aria-label="Đóng bộ lọc" @click="isFilterOpen = false">
+                <AppIcon name="close" :size="18" />
+              </button>
             </div>
 
-            <div>
-              <label class="form-label" for="product-search">Từ khóa</label>
+            <fieldset class="filter-group">
+              <legend>Hạng sao OCOP</legend>
+              <div class="star-segment" role="group" aria-label="Chọn hạng sao">
+                <button
+                  v-for="option in starOptions"
+                  :key="option.value"
+                  type="button"
+                  :aria-pressed="form.star === option.value"
+                  @click="selectStar(option.value)"
+                >
+                  <AppIcon v-if="option.value" name="star" :size="13" />
+                  {{ option.label }}
+                </button>
+              </div>
+            </fieldset>
+
+            <div class="filter-group">
+              <label class="form-label" for="product-district">Địa bàn</label>
               <input
-                id="product-search"
-                v-model.trim="form.search"
+                id="product-district"
+                v-model.trim="form.district"
                 class="form-control"
-                type="search"
-                placeholder="Tên sản phẩm, chủ thể..."
+                list="product-district-options"
+                type="text"
+                placeholder="Xã, phường..."
               />
+              <datalist id="product-district-options">
+                <option v-for="district in districts" :key="district" :value="district" />
+              </datalist>
             </div>
 
-            <div>
-              <label class="form-label" for="product-category">Danh mục</label>
-              <select id="product-category" v-model="form.category" class="form-select">
-                <option value="">Tất cả danh mục</option>
-                <option v-for="category in categories" :key="category.id" :value="category.slug">
-                  {{ category.name }}
-                </option>
-              </select>
-            </div>
-
-            <div class="row g-2">
-              <div class="col-6">
-                <label class="form-label" for="product-star">Hạng sao</label>
-                <select id="product-star" v-model="form.star" class="form-select">
-                  <option value="">Tất cả</option>
-                  <option value="3">3 sao</option>
-                  <option value="4">4 sao</option>
-                  <option value="5">5 sao</option>
-                </select>
-              </div>
-              <div class="col-6">
-                <label class="form-label" for="product-district">Địa bàn</label>
+            <fieldset class="filter-group">
+              <legend>Khoảng giá (đồng)</legend>
+              <div class="price-row">
                 <input
-                  id="product-district"
-                  v-model.trim="form.district"
+                  v-model="form.minPrice"
                   class="form-control"
-                  list="product-district-options"
-                  type="text"
-                  placeholder="Chọn hoặc nhập địa bàn"
+                  type="number"
+                  min="0"
+                  step="1000"
+                  aria-label="Giá tối thiểu"
+                  placeholder="Từ"
                 />
-                <datalist id="product-district-options">
-                  <option v-for="district in districts" :key="district" :value="district" />
-                </datalist>
+                <span aria-hidden="true">–</span>
+                <input
+                  v-model="form.maxPrice"
+                  class="form-control"
+                  type="number"
+                  min="0"
+                  step="1000"
+                  aria-label="Giá tối đa"
+                  placeholder="Đến"
+                />
               </div>
-            </div>
-
-            <div>
-              <label class="form-label">Khoảng giá</label>
-              <div class="row g-2">
-                <div class="col-6">
-                  <input
-                    v-model="form.minPrice"
-                    class="form-control"
-                    type="number"
-                    min="0"
-                    step="1000"
-                    aria-label="Giá tối thiểu"
-                    placeholder="Từ"
-                  />
-                </div>
-                <div class="col-6">
-                  <input
-                    v-model="form.maxPrice"
-                    class="form-control"
-                    type="number"
-                    min="0"
-                    step="1000"
-                    aria-label="Giá tối đa"
-                    placeholder="Đến"
-                  />
-                </div>
-              </div>
-            </div>
+            </fieldset>
 
             <p v-if="validationMessage" class="filter-error" role="alert">
               {{ validationMessage }}
             </p>
-            <button class="btn btn-success w-100" type="submit" :disabled="isLoading">
+            <button class="ocop-btn-main filter-submit" type="submit" :disabled="isLoading">
               {{ isLoading ? 'Đang tải...' : 'Áp dụng bộ lọc' }}
             </button>
           </form>
         </aside>
 
-        <section :aria-busy="isLoading" aria-live="polite">
+        <section class="results" :aria-busy="isLoading" aria-live="polite">
           <div class="result-toolbar">
-            <p class="mb-0 fw-semibold">{{ resultText }}</p>
-            <select
-              v-model="form.sort"
-              class="form-select sort-select"
-              aria-label="Sắp xếp sản phẩm"
-              @change="applyFilters"
-            >
-              <option v-for="option in sortOptions" :key="option.value" :value="option.value">
-                {{ option.label }}
-              </option>
-            </select>
+            <p class="result-count">{{ resultText }}</p>
+            <div class="toolbar-actions">
+              <button
+                class="filter-toggle"
+                type="button"
+                aria-controls="product-filters"
+                :aria-expanded="isFilterOpen"
+                @click="isFilterOpen = true"
+              >
+                <AppIcon name="menu" :size="16" />
+                Bộ lọc
+                <span v-if="activeFilters.length" class="filter-count">{{ activeFilters.length }}</span>
+              </button>
+              <label class="sort-field">
+                <span>Sắp xếp</span>
+                <select
+                  v-model="form.sort"
+                  class="form-select sort-select"
+                  aria-label="Sắp xếp sản phẩm"
+                  @change="applyFilters"
+                >
+                  <option v-for="option in sortOptions" :key="option.value" :value="option.value">
+                    {{ option.label }}
+                  </option>
+                </select>
+              </label>
+            </div>
           </div>
 
           <div v-if="activeFilters.length" class="active-filters" aria-label="Bộ lọc đang áp dụng">
-            <span>Bộ lọc:</span>
             <button
               v-for="filter in activeFilters"
               :key="filter.key"
@@ -353,23 +436,28 @@ onUnmounted(() => {
               :aria-label="`Bỏ ${filter.label}`"
               @click="removeFilter(filter.key)"
             >
-              {{ filter.label }} <AppIcon name="close" :size="11" />
+              {{ filter.label }} <AppIcon name="close" :size="12" />
             </button>
+            <button class="clear-all" type="button" @click="clearFilters">Xóa tất cả</button>
           </div>
 
-          <div v-if="errorMessage" class="alert alert-danger" role="alert">
-            {{ errorMessage }}
-            <button class="btn btn-sm btn-outline-danger ms-2" type="button" @click="loadProducts">
-              Thử lại
-            </button>
+          <div v-if="errorMessage" class="state-box is-error" role="alert">
+            <span class="state-icon" aria-hidden="true"><AppIcon name="refresh" :size="22" /></span>
+            <div>
+              <strong>Không tải được sản phẩm</strong>
+              <p>{{ errorMessage }}</p>
+            </div>
+            <button class="ocop-btn-main" type="button" @click="loadProducts">Thử lại</button>
           </div>
 
           <div v-else-if="isLoading" class="product-grid" aria-label="Đang tải sản phẩm">
             <div v-for="index in 6" :key="index" class="loading-card placeholder-glow">
-              <span class="placeholder col-12 media-placeholder" />
-              <span class="placeholder col-7 mt-4" />
-              <span class="placeholder col-10 mt-3" />
-              <span class="placeholder col-5 mt-3" />
+              <span class="placeholder media-placeholder" />
+              <span class="skeleton-copy">
+                <span class="placeholder col-6" />
+                <span class="placeholder col-10" />
+                <span class="placeholder col-8" />
+              </span>
             </div>
           </div>
 
@@ -377,22 +465,23 @@ onUnmounted(() => {
             <ProductCard v-for="product in products" :key="product.id" :product="product" />
           </div>
 
-          <div v-else class="empty-state">
-            <strong>Chưa tìm thấy sản phẩm phù hợp</strong>
-            <p>Hãy thử thay đổi từ khóa hoặc xóa bớt bộ lọc.</p>
-            <button class="btn btn-outline-success" type="button" @click="clearFilters">
-              Xóa bộ lọc
-            </button>
+          <div v-else class="state-box is-empty" role="status">
+            <span class="state-icon" aria-hidden="true"><AppIcon name="search" :size="22" /></span>
+            <div>
+              <strong>Chưa tìm thấy sản phẩm phù hợp</strong>
+              <p>Thử từ khóa khác, chọn nhóm "Tất cả" hoặc bỏ bớt bộ lọc.</p>
+            </div>
+            <button class="ocop-btn-ghost" type="button" @click="clearFilters">Xóa bộ lọc</button>
           </div>
 
           <nav v-if="!isLoading && totalPages > 1" class="pagination-wrap" aria-label="Phân trang">
             <button
-              class="btn btn-outline-success"
+              class="page-step"
               type="button"
               :disabled="currentPage === 1"
               @click="goToPage(currentPage - 1)"
             >
-              Trang trước
+              <AppIcon name="chevronLeft" :size="16" /> Trang trước
             </button>
             <div class="page-number-list">
               <button
@@ -409,12 +498,12 @@ onUnmounted(() => {
               </button>
             </div>
             <button
-              class="btn btn-outline-success"
+              class="page-step"
               type="button"
               :disabled="currentPage === totalPages"
               @click="goToPage(currentPage + 1)"
             >
-              Trang sau
+              Trang sau <AppIcon name="chevronRight" :size="16" />
             </button>
           </nav>
         </section>
@@ -429,199 +518,635 @@ onUnmounted(() => {
   background: var(--ocop-surface);
 }
 
+/* Đầu trang: ảnh đồi chè thật, lớp tối để chữ trắng đọc rõ, ô tìm nổi bật (search-first). */
 .page-banner {
-  background:
-    radial-gradient(circle at 82% 25%, color-mix(in srgb, var(--ocop-lime-300) 52%, transparent), transparent 22rem),
-    var(--ocop-mint-soft);
+  position: relative;
+  overflow: hidden;
+  background: var(--ocop-mist-800);
+  color: var(--ocop-white);
 }
 
-.page-eyebrow {
-  color: var(--ocop-primary-700);
-  font-size: 0.76rem;
-  font-weight: 750;
-  letter-spacing: 0.11em;
-  text-transform: uppercase;
+.banner-photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 65%;
+}
+
+.page-banner::after {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--ocop-mist-950) 88%, transparent), color-mix(in srgb, var(--ocop-mist-950) 55%, transparent) 55%, color-mix(in srgb, var(--ocop-mist-950) 25%, transparent));
+  content: '';
+}
+
+.banner-inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  padding: var(--ocop-space-8) 0 var(--ocop-space-12);
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--ocop-space-3);
+}
+
+.breadcrumb-trail {
+  display: flex;
+  align-items: center;
+  gap: var(--ocop-space-1);
+  color: var(--ocop-mist-200);
+  font-size: var(--ocop-font-size-small);
+}
+
+.breadcrumb-trail a {
+  color: var(--ocop-mist-100);
+  text-decoration: none;
+}
+
+.breadcrumb-trail a:hover {
+  text-decoration: underline;
 }
 
 .page-banner h1 {
-  margin: 0.7rem 0;
-  color: var(--ocop-primary-950);
-  font-size: clamp(2.2rem, 5vw, 3.7rem);
+  margin: 0;
+  font-size: clamp(1.875rem, 4vw, 2.75rem);
   font-weight: 800;
+  letter-spacing: -0.02em;
 }
 
 .page-banner p {
-  max-width: 42rem;
+  max-width: 40rem;
   margin: 0;
-  color: var(--ocop-slate);
+  color: var(--ocop-mist-100);
+  font-size: var(--ocop-font-size-body-lg);
+}
+
+.banner-search {
+  display: flex;
+  width: min(100%, 640px);
+  margin-top: var(--ocop-space-3);
+  padding: var(--ocop-space-2);
+  gap: var(--ocop-space-2);
+  border-radius: var(--ocop-radius-lg);
+  background: var(--ocop-card);
+  box-shadow: var(--ocop-shadow-overlay);
+}
+
+.banner-search-field {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  color: var(--ocop-mist-600);
+}
+
+.banner-search-field .app-icon {
+  position: absolute;
+  left: var(--ocop-space-3);
+  pointer-events: none;
+}
+
+.banner-search-field input {
+  width: 100%;
+  height: var(--ocop-control-lg);
+  padding: 0 var(--ocop-space-3) 0 calc(var(--ocop-space-8) + var(--ocop-space-2));
+  border: 1px solid transparent;
+  border-radius: var(--ocop-radius-md);
+  outline: 0;
+  color: var(--ocop-navy);
+  font-size: var(--ocop-font-size-body-lg);
+}
+
+.banner-search-field input:focus {
+  border-color: var(--ocop-primary-500);
+}
+
+.banner-search button {
+  min-width: 96px;
+  min-height: var(--ocop-control-lg);
+}
+
+/* Chip nhóm sản phẩm nằm sát dưới đầu trang: lọc bằng một chạm. */
+.category-strip {
+  position: relative;
+  z-index: 2;
+  margin-top: calc(var(--ocop-space-6) * -1);
+}
+
+.category-chips {
+  display: flex;
+  margin: 0;
+  padding: var(--ocop-space-2);
+  gap: var(--ocop-space-2);
+  overflow-x: auto;
+  border: 1px solid var(--ocop-border);
+  border-radius: var(--ocop-radius-lg);
+  background: var(--ocop-card);
+  box-shadow: var(--ocop-shadow-card);
+  list-style: none;
+  scrollbar-width: none;
+}
+
+.category-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.chip {
+  display: inline-flex;
+  min-height: var(--ocop-control-md);
+  align-items: center;
+  gap: var(--ocop-space-2);
+  padding: 0 var(--ocop-space-4);
+  border: 1px solid transparent;
+  border-radius: var(--ocop-radius-pill);
+  background: transparent;
+  color: var(--ocop-mist-800);
+  font-size: var(--ocop-font-size-body);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.chip:hover {
+  background: var(--ocop-mist-50);
+}
+
+.chip:has(.chip-icon) {
+  padding-left: 6px;
+}
+
+.chip-icon {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--chip-bg, var(--ocop-mist-100));
+  color: var(--chip-fg, var(--ocop-mist-700));
+}
+
+/* Nhóm đang chọn: nền theo màu của nhóm (cùng màu nhãn trên thẻ sản phẩm). */
+.chip[aria-pressed='true'] {
+  border-color: var(--chip-fg, var(--ocop-mist-800));
+  background: var(--chip-fg, var(--ocop-mist-800));
+  color: var(--ocop-white);
+}
+
+.chip[aria-pressed='true'] .chip-icon {
+  background: var(--ocop-white);
+}
+
+.results {
+  min-width: 0;
+}
+
+.products-body {
+  padding: var(--ocop-space-8) 0 var(--ocop-space-12);
 }
 
 .products-layout {
   display: grid;
-  gap: 2rem;
+  grid-template-columns: 280px minmax(0, 1fr);
+  align-items: start;
+  gap: var(--ocop-space-8);
+}
+
+.filter-aside {
+  position: sticky;
+  top: calc(var(--ocop-control-lg) + var(--ocop-space-6));
 }
 
 .filter-panel {
   display: grid;
-  gap: 1.15rem;
-  padding: 1.25rem;
-  border: 1px solid color-mix(in srgb, var(--ocop-primary-950) 10%, transparent);
-  border-radius: 1rem;
+  gap: var(--ocop-space-5);
+  padding: var(--ocop-space-5);
+  border: 1px solid var(--ocop-border);
+  border-radius: var(--ocop-radius-lg);
   background: var(--ocop-card);
 }
 
-.filter-heading,
-.result-toolbar,
-.pagination-wrap {
+.filter-heading {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
+  gap: var(--ocop-space-3);
 }
 
 .filter-heading h2 {
   margin: 0;
-  font-size: 1.15rem;
-}
-
-.filter-panel .form-label {
-  color: var(--ocop-sage-800);
-  font-size: 0.84rem;
-  font-weight: 700;
+  color: var(--ocop-navy);
+  font-size: var(--ocop-font-size-title-sm);
+  font-weight: 750;
 }
 
 .btn-reset {
+  min-height: var(--ocop-control-sm);
+  padding: 0 var(--ocop-space-2);
   border: 0;
   background: transparent;
   color: var(--ocop-primary-700);
-  font-size: 0.82rem;
+  font-size: var(--ocop-font-size-small);
   font-weight: 700;
 }
 
-.result-toolbar {
-  margin-bottom: 1.25rem;
+.filter-close {
+  display: none;
 }
 
-.active-filters {
-  display: flex;
-  margin: -0.45rem 0 1.25rem;
-  flex-wrap: wrap;
+.filter-group {
+  display: grid;
+  gap: var(--ocop-space-2);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.filter-group legend,
+.filter-group .form-label {
+  margin: 0;
+  color: var(--ocop-navy);
+  font-size: var(--ocop-font-size-small);
+  font-weight: 700;
+}
+
+.star-segment {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--ocop-space-2);
+}
+
+.star-segment button {
+  display: inline-flex;
+  min-height: var(--ocop-control-sm);
   align-items: center;
-  gap: 0.45rem;
-  color: var(--ocop-slate);
-  font-size: 0.78rem;
+  justify-content: center;
+  gap: var(--ocop-space-1);
+  border: 1px solid var(--ocop-border);
+  border-radius: var(--ocop-radius-sm);
+  background: var(--ocop-card);
+  color: var(--ocop-mist-800);
+  font-size: var(--ocop-font-size-small);
+  font-weight: 600;
 }
 
-.active-filters button {
-  padding: 0.35rem 0.6rem;
-  border: 1px solid var(--ocop-border-strong);
-  border-radius: var(--ocop-radius-pill);
-  background: var(--ocop-card);
-  color: var(--ocop-primary-900);
-  font-size: 0.76rem;
+.star-segment button :deep(.app-icon) {
+  color: var(--ocop-daquy-500);
+}
+
+.star-segment button[aria-pressed='true'] {
+  border-color: var(--ocop-mist-800);
+  background: var(--ocop-mist-800);
+  color: var(--ocop-white);
+}
+
+.star-segment button[aria-pressed='true'] :deep(.app-icon) {
+  color: var(--ocop-daquy-300);
+}
+
+.price-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--ocop-space-2);
+  color: var(--ocop-slate);
 }
 
 .filter-error {
   margin: 0;
+  padding: var(--ocop-space-2) var(--ocop-space-3);
+  border-radius: var(--ocop-radius-sm);
+  background: var(--ocop-danger-soft);
   color: var(--ocop-danger-strong);
-  font-size: 0.8rem;
-  line-height: 1.45;
+  font-size: var(--ocop-font-size-small);
+}
+
+.filter-submit {
+  width: 100%;
+}
+
+.result-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ocop-space-3);
+}
+
+.result-count {
+  margin: 0;
+  color: var(--ocop-navy);
+  font-size: var(--ocop-font-size-body-lg);
+  font-weight: 700;
+}
+
+.toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--ocop-space-2);
+}
+
+.filter-toggle {
+  display: none;
+  min-height: var(--ocop-control-md);
+  align-items: center;
+  gap: var(--ocop-space-2);
+  padding: 0 var(--ocop-space-4);
+  border: 1px solid var(--ocop-border);
+  border-radius: var(--ocop-radius-sm);
+  background: var(--ocop-card);
+  color: var(--ocop-navy);
+  font-weight: 700;
+}
+
+.filter-count {
+  display: grid;
+  min-width: 22px;
+  height: 22px;
+  place-items: center;
+  border-radius: var(--ocop-radius-pill);
+  background: var(--ocop-daquy-400);
+  color: var(--ocop-mist-950);
+  font-size: var(--ocop-font-size-caption);
+}
+
+.sort-field {
+  display: flex;
+  align-items: center;
+  gap: var(--ocop-space-2);
+  color: var(--ocop-slate);
+  font-size: var(--ocop-font-size-small);
+  white-space: nowrap;
 }
 
 .sort-select {
-  width: min(12rem, 48%);
+  width: auto;
+  min-height: var(--ocop-control-md);
+}
+
+.active-filters {
+  display: flex;
+  margin-top: var(--ocop-space-3);
+  flex-wrap: wrap;
+  gap: var(--ocop-space-2);
+}
+
+.active-filters button {
+  display: inline-flex;
+  min-height: 36px;
+  align-items: center;
+  gap: var(--ocop-space-2);
+  padding: 0 var(--ocop-space-3);
+  border: 1px solid var(--ocop-mist-300);
+  border-radius: var(--ocop-radius-pill);
+  background: var(--ocop-mist-100);
+  color: var(--ocop-mist-900);
+  font-size: var(--ocop-font-size-small);
+  font-weight: 600;
+}
+
+.active-filters .clear-all {
+  border-color: transparent;
+  background: transparent;
+  color: var(--ocop-primary-700);
+  text-decoration: underline;
 }
 
 .product-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr));
-  gap: 1.25rem;
+  margin-top: var(--ocop-space-5);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--ocop-space-5);
 }
 
 .loading-card {
-  min-height: 27rem;
-  padding: 1rem;
-  border-radius: 1rem;
+  overflow: hidden;
+  border: 1px solid var(--ocop-border);
+  border-radius: var(--ocop-radius-lg);
   background: var(--ocop-card);
+}
+
+.loading-card .placeholder {
+  display: block;
 }
 
 .media-placeholder {
-  display: block;
-  height: 14rem;
-  border-radius: 0.75rem;
+  width: 100%;
+  aspect-ratio: 16 / 10;
 }
 
-.empty-state {
-  padding: 5rem 1.5rem;
+.skeleton-copy {
+  display: grid;
+  padding: var(--ocop-space-4);
+  gap: var(--ocop-space-3);
+}
+
+.state-box {
+  display: flex;
+  margin-top: var(--ocop-space-5);
+  padding: var(--ocop-space-6);
+  align-items: center;
+  gap: var(--ocop-space-5);
   border: 1px dashed var(--ocop-border-strong);
-  border-radius: 1rem;
+  border-radius: var(--ocop-radius-lg);
   background: var(--ocop-card);
-  text-align: center;
 }
 
-.empty-state strong {
-  display: block;
-  color: var(--ocop-primary-950);
-  font-size: 1.15rem;
+.state-box > div {
+  flex: 1;
 }
 
-.empty-state p {
-  margin: 0.5rem 0 1.25rem;
+.state-box strong {
+  color: var(--ocop-navy);
+  font-size: var(--ocop-font-size-body-lg);
+}
+
+.state-box p {
+  margin: var(--ocop-space-1) 0 0;
   color: var(--ocop-slate);
+}
+
+.state-box.is-error {
+  border: 1px solid var(--ocop-danger-border);
+  background: var(--ocop-danger-soft);
+}
+
+.state-box.is-error strong {
+  color: var(--ocop-danger-strong);
+}
+
+.state-icon {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--ocop-mist-100);
+  color: var(--ocop-primary-700);
+}
+
+.is-error .state-icon {
+  background: var(--ocop-card);
+  color: var(--ocop-danger-strong);
 }
 
 .pagination-wrap {
+  display: flex;
+  margin-top: var(--ocop-space-8);
+  align-items: center;
   justify-content: center;
-  margin-top: 2rem;
+  gap: var(--ocop-space-3);
 }
 
-.pagination-wrap span {
-  color: var(--ocop-slate);
-  font-size: 0.9rem;
-  font-weight: 650;
+.page-step,
+.page-number {
+  display: inline-flex;
+  min-width: var(--ocop-control-md);
+  min-height: var(--ocop-control-md);
+  align-items: center;
+  justify-content: center;
+  gap: var(--ocop-space-1);
+  padding: 0 var(--ocop-space-3);
+  border: 1px solid var(--ocop-border);
+  border-radius: var(--ocop-radius-sm);
+  background: var(--ocop-card);
+  color: var(--ocop-navy);
+  font-weight: 600;
+}
+
+.page-step:disabled {
+  opacity: 0.45;
 }
 
 .page-number-list {
   display: flex;
-  gap: 0.35rem;
-}
-
-.page-number {
-  display: grid;
-  width: 2.35rem;
-  height: 2.35rem;
-  place-items: center;
-  border: 1px solid var(--ocop-border-strong);
-  border-radius: 0.55rem;
-  background: var(--ocop-card);
-  color: var(--ocop-primary-700);
-  font-size: 0.85rem;
-  font-weight: 700;
+  gap: var(--ocop-space-1);
 }
 
 .page-number.active {
-  border-color: var(--ocop-primary-700);
-  background: var(--ocop-primary-700);
+  border-color: var(--ocop-mist-800);
+  background: var(--ocop-mist-800);
   color: var(--ocop-white);
 }
 
-@media (max-width: 575.98px) {
-  .result-toolbar { align-items: flex-start; }
-  .result-toolbar p { padding-top: 0.45rem; }
-  .pagination-wrap { flex-wrap: wrap; }
-  .pagination-wrap > .btn { flex: 1; }
-  .page-number-list { order: -1; width: 100%; justify-content: center; }
+.filter-scrim {
+  display: none;
 }
 
-@media (min-width: 992px) {
+@media (max-width: 991.98px) {
   .products-layout {
-    grid-template-columns: 17rem minmax(0, 1fr);
-    align-items: start;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .filter-toggle {
+    display: inline-flex;
+  }
+
+  /* Điện thoại, máy tính bảng: bộ lọc thành bottom sheet, mở bằng nút "Bộ lọc". */
+  .filter-aside {
+    position: fixed;
+    z-index: 120;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    top: auto;
+    display: none;
+    max-height: 85vh;
+    overflow-y: auto;
+    border-radius: var(--ocop-radius-xl) var(--ocop-radius-xl) 0 0;
+    background: var(--ocop-card);
+    box-shadow: var(--ocop-shadow-overlay);
+  }
+
+  .filter-aside.open {
+    display: block;
   }
 
   .filter-panel {
-    position: sticky;
-    top: 5.5rem;
+    border: 0;
+    padding-bottom: calc(var(--ocop-space-5) + env(safe-area-inset-bottom));
+  }
+
+  .filter-close {
+    display: grid;
+    width: var(--ocop-control-md);
+    height: var(--ocop-control-md);
+    padding: 0;
+    place-items: center;
+    border: 1px solid var(--ocop-border);
+    border-radius: 50%;
+    background: var(--ocop-card);
+    color: var(--ocop-navy);
+  }
+
+  .btn-reset {
+    margin-left: auto;
+  }
+
+  .star-segment {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .filter-scrim {
+    position: fixed;
+    z-index: 110;
+    inset: 0;
+    display: block;
+    background: color-mix(in srgb, var(--ocop-mist-950) 45%, transparent);
+  }
+
+  .product-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 575.98px) {
+  .banner-inner {
+    padding: var(--ocop-space-6) 0 var(--ocop-space-12);
+  }
+
+  .banner-search button {
+    min-width: 72px;
+  }
+
+  .result-toolbar {
+    flex-wrap: wrap;
+  }
+
+  .toolbar-actions {
+    width: 100%;
+  }
+
+  .sort-field {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .sort-field span {
+    display: none;
+  }
+
+  .sort-select {
+    width: 100%;
+  }
+
+  .product-grid {
+    gap: var(--ocop-space-3);
+  }
+
+  .state-box {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .pagination-wrap {
+    gap: var(--ocop-space-2);
+  }
+
+  .page-step {
+    padding: 0 var(--ocop-space-2);
+    font-size: var(--ocop-font-size-small);
   }
 }
 </style>
