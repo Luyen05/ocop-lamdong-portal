@@ -12,39 +12,39 @@ const stats = ref<AdminDashboardStats | null>(null)
 const loading = ref(true)
 const errorMessage = ref('')
 
-const systemCards = computed(() => [
-  { label: 'Tổng sản phẩm', value: stats.value?.total_products ?? 0, note: 'Tất cả trạng thái', tone: 'green', icon: 'package' },
-  { label: 'Đang công khai', value: stats.value?.approved_products ?? 0, note: 'Đã được quản trị viên duyệt', tone: 'blue', icon: 'checkCircle' },
-  { label: 'Sản phẩm chờ duyệt', value: stats.value?.pending_products ?? 0, note: 'Cần kiểm tra hồ sơ', tone: 'gold', icon: 'award' },
-  { label: 'Hồ sơ chủ thể chờ duyệt', value: stats.value?.pending_subject_applications ?? 0, note: 'Cần xác minh đơn vị', tone: 'purple', icon: 'building' },
-])
-
-const priorities = computed(() => [
+// Hàng đợi việc cần làm (pattern: task queue / inbox) đặt lên đầu, số liệu tổng quan xếp sau.
+const tasks = computed(() => [
   {
     title: 'Sản phẩm mới chờ duyệt',
-    description: 'Kiểm tra chứng nhận và quyết định trước khi công khai.',
-    status: stats.value?.pending_products ?? 0,
+    description: 'Đối chiếu chứng nhận rồi quyết định công khai hay trả lại.',
+    count: stats.value?.pending_products ?? 0,
+    icon: 'package',
     to: '/quan-tri/san-pham',
   },
   {
     title: 'Yêu cầu sửa hoặc ngừng hiển thị',
-    description: 'So sánh dữ liệu cũ–mới và xử lý đề nghị của chủ thể.',
-    status: stats.value?.pending_change_requests ?? 0,
+    description: 'So sánh dữ liệu cũ và mới theo đề nghị của chủ thể.',
+    count: stats.value?.pending_change_requests ?? 0,
+    icon: 'refresh',
     to: '/quan-tri/san-pham',
   },
   {
-    title: 'Hồ sơ chủ thể chờ duyệt',
-    description: 'Xác minh đơn vị trước khi cấp quyền chủ thể.',
-    status: stats.value?.pending_subject_applications ?? 0,
+    title: 'Hồ sơ chủ thể chờ xác minh',
+    description: 'Xác minh HTX, doanh nghiệp trước khi cấp quyền đăng sản phẩm.',
+    count: stats.value?.pending_subject_applications ?? 0,
+    icon: 'building',
     to: '/quan-tri/ho-so-chu-the',
   },
-  {
-    title: 'Sản phẩm thiếu số quyết định',
-    description: 'Bổ sung hoặc liên kết nguồn chứng cứ còn thiếu.',
-    status: stats.value?.products_missing_decision ?? 0,
-    to: '/quan-tri/san-pham',
-  },
 ])
+
+const openTaskCount = computed(() => tasks.value.reduce((sum, task) => sum + task.count, 0))
+
+const approvedShare = computed(() => {
+  const total = stats.value?.total_products ?? 0
+  return total ? Math.round(((stats.value?.approved_products ?? 0) / total) * 100) : 0
+})
+
+const todayLabel = new Intl.DateTimeFormat('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date())
 
 async function loadDashboard(): Promise<void> {
   loading.value = true
@@ -63,329 +63,290 @@ onMounted(loadDashboard)
 
 <template>
   <main class="dashboard-page">
-    <section class="welcome-card">
+    <header class="dash-head">
       <div>
-        <span>Khu vực dành riêng cho quản trị viên</span>
+        <p class="dash-date">{{ todayLabel }}</p>
         <h1>Xin chào, {{ greetingName }}</h1>
-        <p>Theo dõi tiến độ xây dựng hệ thống và truy cập các module quản lý từ một giao diện thống nhất.</p>
+        <p class="dash-summary" role="status">
+          <template v-if="loading">Đang tải việc cần xử lý...</template>
+          <template v-else-if="openTaskCount">Có <strong>{{ openTaskCount }}</strong> việc đang chờ bạn xử lý.</template>
+          <template v-else>Không còn việc nào chờ xử lý. Mọi hồ sơ đã được duyệt.</template>
+        </p>
       </div>
-      <RouterLink to="/">Xem trang công khai <AppIcon name="chevronRight" :size="17" /></RouterLink>
-    </section>
+      <RouterLink class="ocop-btn-ghost" to="/">Xem trang công khai <AppIcon name="chevronRight" :size="16" /></RouterLink>
+    </header>
 
-    <div v-if="errorMessage" class="alert alert-danger" role="alert">
-      {{ errorMessage }}
-      <button class="retry-button" type="button" @click="loadDashboard">Thử lại</button>
+    <div v-if="errorMessage" class="state-box is-error" role="alert">
+      <span>{{ errorMessage }}</span>
+      <button class="ocop-btn-main" type="button" @click="loadDashboard">Thử lại</button>
     </div>
 
-    <section class="system-section" aria-labelledby="system-title">
-      <div class="section-title">
-        <div>
-          <span>Nền tảng hiện có</span>
-          <h2 id="system-title">Tổng quan hệ thống</h2>
-        </div>
-        <small>{{ loading ? 'Đang tải số liệu...' : 'Số liệu trực tiếp từ database' }}</small>
+    <section aria-labelledby="task-title">
+      <h2 id="task-title" class="block-title">Việc cần xử lý</h2>
+      <div class="task-grid">
+        <RouterLink
+          v-for="task in tasks"
+          :key="task.title"
+          class="task-card"
+          :class="{ 'is-open': task.count > 0 }"
+          :to="task.to"
+        >
+          <span class="task-icon" aria-hidden="true"><AppIcon :name="task.icon" :size="20" /></span>
+          <span class="task-count">{{ loading ? '–' : task.count }}</span>
+          <strong>{{ task.title }}</strong>
+          <span class="task-desc">{{ task.description }}</span>
+          <span class="task-cta">
+            {{ task.count > 0 ? 'Xử lý ngay' : 'Xem danh sách' }} <AppIcon name="chevronRight" :size="16" />
+          </span>
+        </RouterLink>
       </div>
-      <div class="system-grid">
-        <article v-for="card in systemCards" :key="card.label" :class="`tone-${card.tone}`">
-          <span class="card-label"><AppIcon :name="card.icon" :size="17" /> {{ card.label }}</span>
-          <strong>{{ card.value }}</strong>
-          <p>{{ card.note }}</p>
+    </section>
+
+    <section aria-labelledby="overview-title" class="overview">
+      <h2 id="overview-title" class="block-title">Tổng quan dữ liệu</h2>
+      <div class="overview-grid">
+        <article class="stat">
+          <span class="stat-label">Tổng sản phẩm</span>
+          <strong>{{ loading ? '–' : stats?.total_products ?? 0 }}</strong>
+          <span class="stat-note">Mọi trạng thái, kể cả bản nháp</span>
+        </article>
+        <article class="stat">
+          <span class="stat-label">Đang công khai</span>
+          <strong>{{ loading ? '–' : stats?.approved_products ?? 0 }}</strong>
+          <span class="meter" role="img" :aria-label="`${approvedShare}% sản phẩm đang công khai`">
+            <span :style="{ width: `${approvedShare}%` }" />
+          </span>
+          <span class="stat-note">{{ approvedShare }}% tổng số sản phẩm</span>
+        </article>
+        <article class="stat" :class="{ 'is-warning': (stats?.products_missing_decision ?? 0) > 0 }">
+          <span class="stat-label">Thiếu số quyết định công nhận</span>
+          <strong>{{ loading ? '–' : stats?.products_missing_decision ?? 0 }}</strong>
+          <RouterLink class="stat-link" to="/quan-tri/san-pham">Bổ sung nguồn chứng cứ <AppIcon name="chevronRight" :size="14" /></RouterLink>
         </article>
       </div>
     </section>
-
-    <div class="dashboard-grid">
-      <section class="priority-panel" aria-labelledby="priority-title">
-        <div class="panel-heading">
-          <div>
-            <span>Kế hoạch tiếp theo</span>
-            <h2 id="priority-title">Module quản trị ưu tiên</h2>
-          </div>
-        </div>
-        <div class="priority-list">
-          <RouterLink v-for="(item, index) in priorities" :key="item.title" :to="item.to">
-            <span class="priority-index">{{ index + 1 }}</span>
-            <div>
-              <strong>{{ item.title }}</strong>
-              <p>{{ item.description }}</p>
-            </div>
-            <small>{{ item.status }} hồ sơ</small>
-          </RouterLink>
-        </div>
-      </section>
-
-      <aside class="security-panel">
-        <span class="security-icon" aria-hidden="true"><AppIcon name="shieldCheck" :size="25" /></span>
-        <h2>Phân quyền hai lớp</h2>
-        <p>Vue Router ngăn truy cập sai vai trò trên giao diện. FastAPI vẫn phải xác minh JWT và role ở mọi API quản trị.</p>
-        <ul>
-          <li>Không tin dữ liệu role từ frontend</li>
-          <li>User và subject nhận phản hồi 403</li>
-          <li>Nội dung pending không xuất hiện công khai</li>
-        </ul>
-      </aside>
-    </div>
   </main>
 </template>
 
 <style scoped>
 .dashboard-page {
   display: grid;
-  gap: var(--ocop-space-6);
+  gap: var(--ocop-space-8);
 }
 
-.welcome-card {
+.dash-head {
   display: flex;
-  min-height: 190px;
-  padding: clamp(var(--ocop-space-6), 4vw, 40px);
   align-items: flex-end;
   justify-content: space-between;
-  gap: var(--ocop-space-6);
-  overflow: hidden;
-  border-radius: 20px;
-  background:
-    radial-gradient(circle at 86% 15%, color-mix(in srgb, var(--ocop-mint) 26%, transparent), transparent 18rem),
-    linear-gradient(135deg, var(--ocop-primary-950), var(--ocop-primary-900) 60%, var(--ocop-sidebar));
-  color: var(--ocop-white);
-  box-shadow: 0 18px 35px color-mix(in srgb, var(--ocop-neutral-900) 12%, transparent);
+  gap: var(--ocop-space-4);
 }
 
-.welcome-card span,
-.section-title span,
-.panel-heading span {
-  color: var(--ocop-mint-400);
-  font-size: var(--ocop-font-size-caption);
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.welcome-card h1 {
-  margin: 6px 0;
-  font-size: clamp(28px, 4vw, 40px);
-  font-weight: 800;
-  letter-spacing: -0.8px;
-}
-
-.welcome-card p {
-  max-width: 650px;
+.dash-date {
   margin: 0;
-  color: var(--ocop-text-on-dark);
-  line-height: 1.6;
+  color: var(--ocop-slate);
+  font-size: var(--ocop-font-size-small);
+  text-transform: capitalize;
 }
 
-.welcome-card a {
-  display: flex;
-  flex: 0 0 auto;
-  padding: 10px 15px;
+.dash-head h1 {
+  margin: var(--ocop-space-1) 0;
+  color: var(--ocop-navy);
+  font-size: var(--ocop-font-size-title-md);
+  font-weight: 800;
+}
+
+.dash-summary {
+  margin: 0;
+  color: var(--ocop-mist-700);
+  font-size: var(--ocop-font-size-body-lg);
+}
+
+.dash-summary strong {
+  padding: 0 var(--ocop-space-2);
+  border-radius: var(--ocop-radius-pill);
+  background: var(--ocop-daquy-400);
+  color: var(--ocop-mist-950);
+}
+
+.block-title {
+  margin: 0 0 var(--ocop-space-3);
+  color: var(--ocop-navy);
+  font-size: var(--ocop-font-size-title-sm);
+  font-weight: 750;
+}
+
+.task-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--ocop-space-4);
+}
+
+.task-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-areas:
+    'icon count'
+    'title title'
+    'desc desc'
+    'cta cta';
   align-items: center;
-  gap: 5px;
-  border: 1px solid color-mix(in srgb, var(--ocop-white) 25%, transparent);
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--ocop-white) 10%, transparent);
-  color: var(--ocop-white);
-  font-size: var(--ocop-font-size-caption);
-  font-weight: 700;
+  gap: var(--ocop-space-2) var(--ocop-space-3);
+  padding: var(--ocop-space-5);
+  border: 1px solid var(--ocop-border);
+  border-radius: var(--ocop-radius-lg);
+  background: var(--ocop-card);
+  color: var(--ocop-navy);
   text-decoration: none;
+  transition: box-shadow var(--ocop-transition), transform var(--ocop-transition);
 }
 
-.system-section,
-.priority-panel,
-.security-panel {
-  padding: 22px;
+.task-card:hover {
+  box-shadow: var(--ocop-shadow-card);
+  transform: translateY(-2px);
+}
+
+/* Việc còn tồn: viền trái vàng và số lớn màu đậm để nổi lên trước (không chỉ dựa vào màu). */
+.task-card.is-open {
+  border-color: var(--ocop-daquy-400);
+  box-shadow: inset 4px 0 0 var(--ocop-daquy-400);
+}
+
+.task-icon {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  grid-area: icon;
+  place-items: center;
+  border-radius: var(--ocop-radius-md);
+  background: var(--ocop-mist-100);
+  color: var(--ocop-mist-800);
+}
+
+.is-open .task-icon {
+  background: var(--ocop-daquy-50);
+  color: var(--ocop-daquy-700);
+}
+
+.task-count {
+  grid-area: count;
+  justify-self: end;
+  color: var(--ocop-mist-400);
+  font-size: var(--ocop-font-size-title-lg);
+  font-weight: 800;
+  line-height: 1;
+}
+
+.is-open .task-count {
+  color: var(--ocop-mist-950);
+}
+
+.task-card strong {
+  grid-area: title;
+  margin-top: var(--ocop-space-2);
+  font-size: var(--ocop-font-size-body-lg);
+}
+
+.task-desc {
+  grid-area: desc;
+  color: var(--ocop-slate);
+  font-size: var(--ocop-font-size-small);
+  line-height: 1.5;
+}
+
+.task-cta {
+  display: inline-flex;
+  margin-top: var(--ocop-space-2);
+  grid-area: cta;
+  align-items: center;
+  gap: var(--ocop-space-1);
+  color: var(--ocop-primary-700);
+  font-weight: 700;
+}
+
+.overview-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--ocop-space-4);
+}
+
+.stat {
+  display: grid;
+  align-content: start;
+  gap: var(--ocop-space-2);
+  padding: var(--ocop-space-5);
   border: 1px solid var(--ocop-border);
   border-radius: var(--ocop-radius-lg);
   background: var(--ocop-card);
 }
 
-.section-title,
-.panel-heading {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: var(--ocop-space-3);
+.stat-label {
+  color: var(--ocop-slate);
+  font-size: var(--ocop-font-size-small);
+  font-weight: 600;
 }
 
-.section-title span,
-.panel-heading span {
-  color: var(--ocop-primary-700);
-}
-
-.section-title h2,
-.panel-heading h2,
-.security-panel h2 {
-  margin: 3px 0 0;
+.stat strong {
   color: var(--ocop-navy);
-  font-size: 19px;
+  font-size: var(--ocop-font-size-title-lg);
   font-weight: 800;
+  line-height: 1.1;
 }
 
-.section-title small {
+.stat-note {
   color: var(--ocop-slate);
-  font-size: var(--ocop-font-size-caption);
-}
-
-.system-grid {
-  display: grid;
-  margin-top: var(--ocop-space-4);
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--ocop-space-3);
-}
-
-.system-grid article {
-  padding: 18px;
-  border: 1px solid var(--ocop-border);
-  border-radius: 13px;
-  background: var(--ocop-surface);
-}
-
-.system-grid article > .card-label {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  color: var(--ocop-slate);
-  font-size: var(--ocop-font-size-caption);
-  font-weight: 700;
-  text-transform: uppercase;
-}
-
-.system-grid strong {
-  display: block;
-  margin-top: 10px;
-  color: var(--card-color, var(--ocop-primary-700));
-  font-size: 23px;
-}
-
-.system-grid p {
-  margin: var(--ocop-space-1) 0 0;
-  color: var(--ocop-slate);
-  font-size: var(--ocop-font-size-caption);
-  line-height: 16px;
-}
-
-.tone-blue { --card-color: var(--ocop-blue); }
-.tone-purple { --card-color: var(--ocop-tone-purple); }
-.tone-gold { --card-color: var(--ocop-warning); }
-
-.dashboard-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.55fr) minmax(260px, 0.75fr);
-  gap: var(--ocop-space-6);
-}
-
-.priority-list {
-  display: grid;
-  margin-top: 14px;
-}
-
-.priority-list a {
-  display: grid;
-  padding: 14px 0;
-  align-items: center;
-  grid-template-columns: 32px minmax(0, 1fr) auto;
-  gap: var(--ocop-space-3);
-  border-top: 1px solid var(--ocop-border-soft);
-  color: inherit;
-  text-decoration: none;
-}
-
-.priority-list a:hover { background: var(--ocop-surface-subtle); }
-
-.priority-index {
-  display: grid;
-  width: 28px;
-  height: 28px;
-  place-items: center;
-  border-radius: var(--ocop-radius-sm);
-  background: var(--ocop-mint-soft);
-  color: var(--ocop-primary-700);
-  font-size: var(--ocop-font-size-caption);
-  font-weight: 800;
-}
-
-.priority-list strong {
-  color: var(--ocop-navy);
   font-size: var(--ocop-font-size-small);
 }
 
-.priority-list p {
-  margin: 2px 0 0;
-  color: var(--ocop-slate);
-  font-size: var(--ocop-font-size-caption);
+.stat.is-warning strong {
+  color: var(--ocop-warning-strong);
 }
 
-.priority-list small {
-  padding: var(--ocop-space-1) var(--ocop-space-2);
-  border-radius: var(--ocop-radius-pill);
-  background: var(--ocop-neutral-100);
-  color: var(--ocop-neutral-500);
-  font-size: var(--ocop-font-size-caption);
+.stat-link {
+  display: inline-flex;
+  min-height: 32px;
+  align-items: center;
+  gap: var(--ocop-space-1);
+  color: var(--ocop-primary-700);
+  font-size: var(--ocop-font-size-small);
   font-weight: 700;
 }
 
-.security-panel {
-  border-color: var(--ocop-mint-border);
-  background: var(--ocop-success-soft);
+.meter {
+  display: block;
+  height: 8px;
+  overflow: hidden;
+  border-radius: var(--ocop-radius-pill);
+  background: var(--ocop-mist-100);
 }
 
-.security-icon {
-  display: grid;
-  width: 44px;
-  height: 44px;
-  place-items: center;
+.meter > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--ocop-tone-leaf);
+}
+
+.state-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ocop-space-3);
+  padding: var(--ocop-space-4);
+  border: 1px solid var(--ocop-danger-border);
   border-radius: var(--ocop-radius-md);
-  background: var(--ocop-card);
-  color: var(--ocop-primary-700);
+  background: var(--ocop-danger-soft);
+  color: var(--ocop-danger-strong);
 }
-
-.security-panel p,
-.security-panel li {
-  color: var(--ocop-sage-800);
-  font-size: var(--ocop-font-size-caption);
-  line-height: 1.6;
-}
-
-.security-panel p {
-  margin: 10px 0;
-}
-
-.security-panel ul {
-  display: grid;
-  margin: 0;
-  padding-left: 18px;
-  gap: 5px;
-}
-
-.retry-button { margin-left: 10px; border: 0; background: transparent; color: inherit; font-weight: 800; text-decoration: underline; }
 
 @media (max-width: 991.98px) {
-  .system-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .dashboard-grid {
+  .task-grid,
+  .overview-grid {
     grid-template-columns: 1fr;
   }
-}
 
-@media (max-width: 575.98px) {
-  .welcome-card {
-    align-items: flex-start;
+  .dash-head {
     flex-direction: column;
-  }
-
-  .system-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .priority-list a {
-    align-items: start;
-    grid-template-columns: 28px minmax(0, 1fr);
-  }
-
-  .priority-list small {
-    grid-column: 2;
-    justify-self: start;
+    align-items: flex-start;
   }
 }
 </style>

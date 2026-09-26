@@ -25,8 +25,11 @@ describe('AdminDashboardView', () => {
 
     expect(wrapper.text()).toContain('60')
     expect(wrapper.text()).toContain('45')
-    expect(wrapper.text()).toContain('5 hồ sơ')
-    expect(wrapper.text()).toContain('8 hồ sơ')
-    expect(wrapper.text()).toContain('Số liệu trực tiếp từ database')
+    // Hàng đợi việc cần làm: 5 sản phẩm + 2 yêu cầu sửa + 3 hồ sơ chủ thể.
+    expect(wrapper.text()).toContain('Có 10 việc đang chờ bạn xử lý')
+    expect(wrapper.text()).toContain('Sản phẩm mới chờ duyệt')
+    expect(wrapper.text()).toContain('75% tổng số sản phẩm')
+    // Sản phẩm thiếu số quyết định vẫn được hiển thị.
+    expect(wrapper.text()).toContain('Thiếu số quyết định công nhận8')
   })
 })
