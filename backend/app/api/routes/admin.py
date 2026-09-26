@@ -14,6 +14,7 @@ from app.api.routes import (
     admin_data_sources,
     admin_product_changes,
     admin_products,
+    admin_statistics,
     admin_subject_applications,
 )
 
@@ -78,3 +79,4 @@ router.include_router(
 router.include_router(admin_products.router)
 router.include_router(admin_product_changes.router)
 router.include_router(admin_data_sources.router)
+router.include_router(admin_statistics.router)
