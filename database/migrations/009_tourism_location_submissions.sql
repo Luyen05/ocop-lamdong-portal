@@ -8,6 +8,38 @@
 -- Áp dụng cho database tạo trước migration này. Chạy lặp lại an toàn.
 BEGIN;
 
+-- 0. Một số database cũ tạo bảng tourism_locations/location_images thiếu các cột nền đã có trong
+--    schema.sql (ví dụ rating_avg), làm API bản đồ báo lỗi. Bổ sung nếu thiếu, không đổi dữ liệu đang có.
+ALTER TABLE tourism_locations
+  ADD COLUMN IF NOT EXISTS services TEXT[] NOT NULL DEFAULT '{}',
+  ADD COLUMN IF NOT EXISTS description TEXT,
+  ADD COLUMN IF NOT EXISTS contact_phone VARCHAR(20),
+  ADD COLUMN IF NOT EXISTS opening_hours VARCHAR(100),
+  ADD COLUMN IF NOT EXISTS ticket_price NUMERIC(12,2) CHECK (ticket_price >= 0),
+  ADD COLUMN IF NOT EXISTS website VARCHAR(500),
+  ADD COLUMN IF NOT EXISTS source_url TEXT,
+  ADD COLUMN IF NOT EXISTS rating_avg NUMERIC(3,2) NOT NULL DEFAULT 0 CHECK (rating_avg BETWEEN 0 AND 5),
+  ADD COLUMN IF NOT EXISTS views INTEGER NOT NULL DEFAULT 0 CHECK (views >= 0),
+  ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP;
+
+ALTER TABLE location_images
+  ADD COLUMN IF NOT EXISTS is_primary BOOLEAN NOT NULL DEFAULT FALSE,
+  ADD COLUMN IF NOT EXISTS sort_order INTEGER NOT NULL DEFAULT 0 CHECK (sort_order >= 0);
+
+-- Hàm dùng chung của schema.sql; tạo lại (giống hệt) để trigger bên dưới luôn chạy được.
+CREATE OR REPLACE FUNCTION set_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = CURRENT_TIMESTAMP;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_locations_updated_at ON tourism_locations;
+CREATE TRIGGER trg_locations_updated_at BEFORE UPDATE ON tourism_locations
+FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
 -- 1. Điểm du lịch: trạng thái kiểm duyệt, nguồn vị trí, phiên bản.
 ALTER TABLE tourism_locations
   ADD COLUMN IF NOT EXISTS location_source VARCHAR(20) NOT NULL DEFAULT 'admin_import',
