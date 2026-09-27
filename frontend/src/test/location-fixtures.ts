@@ -1,0 +1,117 @@
+import type {
+  LocationChangeRequest,
+  LocationPositionCheck,
+  ManagedLocation,
+} from '@/types/location-management'
+
+/** Dữ liệu mẫu dùng chung cho test khu chủ thể và quản trị (điểm demo trong thiết kế). */
+export const positionCheck: LocationPositionCheck = {
+  latitude: 12.047,
+  longitude: 108.441,
+  inside_lam_dong: true,
+  nearest: { id: 6, name: 'Vườn dâu tây Cô Liên', slug: 'vuon-dau-tay-co-lien', distance_m: 9939.5 },
+  duplicate_warning: false,
+  duplicate_radius_m: 200,
+}
+
+export function makeLocation(overrides: Partial<ManagedLocation> = {}): ManagedLocation {
+  return {
+    id: 10,
+    subject_id: 2,
+    name: 'Vườn dâu Langbiang Demo',
+    slug: 'vuon-dau-langbiang-demo',
+    type: 'fruit_garden',
+    type_label: 'Vườn trái cây',
+    description: 'Vườn dâu tây trồng trong nhà kính, du khách được tự tay hái dâu và thưởng thức tại vườn.',
+    latitude: 12.047,
+    longitude: 108.441,
+    location_source: 'map_pin',
+    location_accuracy_m: null,
+    district: 'Phường Lang Biang - Đà Lạt',
+    address: 'Thôn Đan Kia, Phường Lang Biang - Đà Lạt',
+    contact_phone: '0901000002',
+    opening_hours: '07:00 - 17:00',
+    ticket_price: '50000.00',
+    services: ['Tham quan vườn', 'Tự tay thu hoạch'],
+    website: null,
+    status: 'draft',
+    submitted_at: null,
+    reviewed_at: null,
+    reviewed_by_name: null,
+    review_note: null,
+    version: 1,
+    images: [
+      {
+        id: 1,
+        image_url: 'http://localhost:8000/uploads/locations/2/a.png',
+        storage_path: 'locations/2/0123456789abcdef0123456789abcdef.png',
+        is_primary: true,
+        sort_order: 0,
+        alt_text: 'Vườn dâu Langbiang Demo',
+      },
+    ],
+    products: [],
+    subject: {
+      id: 2,
+      name: 'Hợp tác xã Nông sản Langbiang Demo',
+      representative: 'Nguyễn Văn Kiểm Thử',
+      phone: '0901000002',
+      status: 'approved',
+      is_active: true,
+    },
+    open_change_request_id: null,
+    position_check: positionCheck,
+    created_at: '2026-09-27T01:00:00Z',
+    updated_at: '2026-09-27T02:00:00Z',
+    ...overrides,
+  }
+}
+
+export function makeChangeRequest(overrides: Partial<LocationChangeRequest> = {}): LocationChangeRequest {
+  const location = makeLocation({ status: 'approved' })
+  return {
+    id: 5,
+    location_id: location.id,
+    subject_id: 2,
+    request_type: 'update',
+    current_data: {
+      name: location.name,
+      type: location.type,
+      description: location.description,
+      latitude: location.latitude,
+      longitude: location.longitude,
+      location_source: location.location_source,
+      location_accuracy_m: null,
+      district: location.district,
+      address: location.address,
+      contact_phone: location.contact_phone,
+      opening_hours: location.opening_hours,
+      ticket_price: location.ticket_price,
+      services: location.services,
+      website: null,
+      images: location.images,
+      product_ids: [],
+    },
+    proposed_data: {
+      name: location.name,
+      type: 'fruit_garden',
+      opening_hours: '06:30 - 18:00',
+      latitude: 12.047,
+      longitude: 108.441,
+    },
+    reason: 'Đổi giờ mở cửa mùa cao điểm.',
+    status: 'pending',
+    base_version: 2,
+    submitted_at: '2026-09-27T03:00:00Z',
+    reviewed_at: null,
+    reviewed_by_name: null,
+    review_note: null,
+    location_name: location.name,
+    location_slug: location.slug,
+    subject_name: 'Hợp tác xã Nông sản Langbiang Demo',
+    proposed_position_check: positionCheck,
+    created_at: '2026-09-27T03:00:00Z',
+    updated_at: '2026-09-27T03:00:00Z',
+    ...overrides,
+  }
+}

@@ -28,6 +28,7 @@ async function logout(): Promise<void> {
       </RouterLink>
       <nav aria-label="Điều hướng chủ thể">
         <RouterLink to="/chu-the/san-pham"><AppIcon name="package" :size="18" /> Sản phẩm của tôi</RouterLink>
+        <RouterLink to="/chu-the/diem-du-lich"><AppIcon name="map-pin" :size="18" /> Điểm du lịch của tôi</RouterLink>
         <RouterLink to="/chu-the/ho-so"><AppIcon name="building" :size="18" /> Hồ sơ chủ thể</RouterLink>
       </nav>
       <div class="subject-sidebar-footer">
@@ -86,7 +87,7 @@ async function logout(): Promise<void> {
 @media (max-width: 767.98px) {
   .subject-shell { grid-template-columns: 1fr; }
   .subject-sidebar { position: static; width: 100%; height: auto; }
-  .subject-sidebar nav { grid-template-columns: 1fr 1fr; margin-top: 14px; }
+  .subject-sidebar nav { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); margin-top: 14px; }
   .subject-sidebar-footer { display: none; }
   .subject-topbar { padding-inline: var(--ocop-space-4); }
   .subject-account { display: none; }
