@@ -3,6 +3,8 @@
 Đồ án: **Cổng thông tin quảng bá nông sản OCOP và bản đồ số du lịch nông nghiệp tỉnh Lâm Đồng**.
 Người giao việc: Liêng Hót Ha Luyến (MSSV 2312682). Trao đổi và báo cáo bằng **tiếng Việt**, ngắn gọn.
 
+**Trước khi làm việc: đọc `docs/KE_HOACH_HOAN_THANH_DO_AN.md`** (kế hoạch tới khi hoàn thành đồ án, tự đánh giá tiến độ, quyết định đang chờ). Làm tiếp theo đúng việc của tuần hiện tại; xong việc nào thì cập nhật trạng thái và nhật ký trong file đó, cùng commit với phần việc.
+
 File này là quy tắc chung cho mọi lần phát triển tiếp theo. Khi quy tắc ở đây mâu thuẫn với yêu cầu mới trong chat, làm theo yêu cầu mới và đề xuất cập nhật file này.
 
 ## 1. Git và branch
