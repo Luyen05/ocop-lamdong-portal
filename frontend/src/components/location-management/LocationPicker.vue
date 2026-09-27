@@ -177,7 +177,7 @@ onBeforeUnmount(() => {
 .picker-zoom { position: absolute; z-index: 500; top: var(--ocop-space-3); right: var(--ocop-space-3); display: grid; gap: var(--ocop-space-2); }
 .picker-zoom button { width: var(--ocop-control-md); height: var(--ocop-control-md); border: 1px solid var(--ocop-mist-300); border-radius: var(--ocop-radius-sm); background: var(--ocop-white); color: var(--ocop-mist-950); font-size: var(--ocop-font-size-title-sm); font-weight: 700; }
 .picker-zoom button:focus-visible { outline: 3px solid var(--ocop-daquy-400); outline-offset: 2px; }
-.picker-error { position: absolute; z-index: 500; inset: var(--ocop-space-3) calc(var(--ocop-control-md) + var(--ocop-space-5)) auto var(--ocop-space-3); margin: 0; padding: var(--ocop-space-2) var(--ocop-space-3); border-radius: var(--ocop-radius-sm); background: var(--ocop-danger-soft); color: var(--ocop-danger-strong); font-size: var(--ocop-font-size-small); }
+.picker-error { position: absolute; z-index: 500; inset: auto var(--ocop-space-3) var(--ocop-space-6); margin: 0; padding: var(--ocop-space-2) var(--ocop-space-3); border-radius: var(--ocop-radius-sm); background: var(--ocop-danger-soft); color: var(--ocop-danger-strong); font-size: var(--ocop-font-size-small); }
 </style>
 
 <style>

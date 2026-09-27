@@ -95,6 +95,12 @@ const router = createRouter({
           component: () => import('@/views/admin/AdminProductsView.vue'),
           meta: { title: 'Duyệt sản phẩm' },
         },
+        {
+          path: 'diem-du-lich',
+          name: 'admin-locations',
+          component: () => import('@/views/admin/AdminLocationsView.vue'),
+          meta: { title: 'Duyệt điểm du lịch' },
+        },
       ],
     },
     {

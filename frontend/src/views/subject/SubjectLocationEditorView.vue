@@ -995,7 +995,7 @@ onBeforeUnmount(() => {
           <h2>{{ isRequestMode ? 'Trước khi gửi yêu cầu' : 'Trước khi gửi duyệt' }}</h2>
           <ul class="checklist">
             <li v-for="item in checklist" :key="item.key" :class="{ done: item.done }">
-              <span class="mark" aria-hidden="true">{{ item.done ? '✓' : '!' }}</span>
+              <span class="check-mark" aria-hidden="true">{{ item.done ? '✓' : '!' }}</span>
               <span>{{ item.label }}<span class="visually-hidden">{{ item.done ? ': đã có' : ': còn thiếu' }}</span></span>
             </li>
           </ul>
@@ -1129,7 +1129,7 @@ button:disabled { cursor: not-allowed; opacity: 0.65; }
 .field-error { width: 100%; margin: 0; color: var(--ocop-danger-strong); font-size: var(--ocop-font-size-small); }
 
 .map-box { position: relative; height: 340px; overflow: hidden; border: 1px solid var(--ocop-mist-200); border-radius: var(--ocop-radius-md); }
-.map-hint { position: absolute; z-index: 500; left: var(--ocop-space-3); bottom: var(--ocop-space-5); max-width: calc(100% - 80px); margin: 0; padding: var(--ocop-space-2) var(--ocop-space-3); border-radius: var(--ocop-radius-sm); background: var(--ocop-white); box-shadow: var(--ocop-shadow-sm); color: var(--ocop-mist-800); font-size: var(--ocop-font-size-small); }
+.map-hint { position: absolute; z-index: 500; top: var(--ocop-space-3); left: var(--ocop-space-3); max-width: calc(100% - 80px); margin: 0; padding: var(--ocop-space-2) var(--ocop-space-3); border-radius: var(--ocop-radius-sm); background: var(--ocop-white); box-shadow: var(--ocop-shadow-sm); color: var(--ocop-mist-800); font-size: var(--ocop-font-size-small); }
 .facts { display: grid; margin: 0; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--ocop-space-3); }
 .facts div { display: grid; gap: 2px; padding: var(--ocop-space-3); border-radius: var(--ocop-radius-sm); background: var(--ocop-mist-50); }
 .facts dt { color: var(--ocop-mist-600); font-size: var(--ocop-font-size-caption); font-weight: 400; }
@@ -1167,8 +1167,8 @@ button:disabled { cursor: not-allowed; opacity: 0.65; }
 .checklist { display: grid; margin: 0; padding: 0; gap: 10px; list-style: none; }
 .checklist li { display: flex; align-items: center; gap: 10px; color: var(--ocop-mist-950); font-size: var(--ocop-font-size-small); font-weight: 600; }
 .checklist li.done { color: var(--ocop-mist-800); font-weight: 400; }
-.mark { display: grid; width: 24px; height: 24px; flex-shrink: 0; place-items: center; border-radius: var(--ocop-radius-pill); background: var(--ocop-warning-soft); color: var(--ocop-warning); font-size: var(--ocop-font-size-small); font-weight: 800; }
-.done .mark { background: var(--ocop-success-soft); color: var(--ocop-success); }
+.check-mark { display: grid; width: 24px; height: 24px; flex-shrink: 0; place-items: center; border-radius: var(--ocop-radius-pill); background: var(--ocop-warning-soft); color: var(--ocop-warning); font-size: var(--ocop-font-size-small); font-weight: 800; }
+.done .check-mark { background: var(--ocop-success-soft); color: var(--ocop-success); }
 .summary { margin: 0; padding: var(--ocop-space-3); border-radius: var(--ocop-radius-sm); background: var(--ocop-warning-soft); color: var(--ocop-mist-900); font-size: var(--ocop-font-size-small); line-height: 1.5; }
 .summary.is-ok { background: var(--ocop-success-soft); color: var(--ocop-success); }
 .after { display: grid; gap: 6px; padding-top: var(--ocop-space-3); border-top: 1px solid var(--ocop-mist-100); color: var(--ocop-mist-700); font-size: var(--ocop-font-size-small); line-height: 1.5; }
