@@ -24,7 +24,7 @@ Kế hoạch chi tiết và tự đánh giá tiến độ: [`docs/KE_HOACH_HOAN_
 **Chủ thể OCOP (hợp tác xã, doanh nghiệp, hộ sản xuất)**
 
 - ✅ Quản lý sản phẩm: bản nháp, gửi duyệt, yêu cầu sửa hoặc ngừng hiển thị sau khi duyệt, ảnh, giấy chứng nhận.
-- 🟡 Khai báo điểm du lịch: đã có API (bản nháp, ghim bản đồ / GPS / tọa độ / link Google Maps, ảnh, gửi duyệt, yêu cầu cập nhật hoặc ngừng hiển thị); đang làm giao diện.
+- ✅ Khai báo điểm du lịch: bản nháp, lấy vị trí bằng ghim bản đồ / GPS / tọa độ / link Google Maps, ảnh, gắn sản phẩm OCOP, gửi duyệt, yêu cầu cập nhật hoặc ngừng hiển thị.
 - 🟡 Cập nhật thông tin đơn vị: hiện sửa bằng cách gửi lại hồ sơ.
 
 **Quản trị viên**
@@ -32,7 +32,7 @@ Kế hoạch chi tiết và tự đánh giá tiến độ: [`docs/KE_HOACH_HOAN_
 - ✅ Tổng quan: hàng đợi việc cần xử lý, số liệu chính, thống kê và biểu đồ (Chart.js).
 - ✅ Kiểm duyệt sản phẩm, yêu cầu sửa sản phẩm, nguồn chứng cứ công nhận OCOP.
 - ✅ Duyệt hồ sơ đăng ký chủ thể.
-- 🟡 Duyệt điểm du lịch: đã có API (kiểm tra vị trí trong tỉnh, cảnh báo trùng điểm trong 200 m, chỉnh ghim khi duyệt, duyệt yêu cầu cập nhật); đang làm giao diện.
+- ✅ Duyệt điểm du lịch: kiểm tra vị trí trong tỉnh, cảnh báo trùng điểm trong 200 m, chỉnh ghim khi duyệt, so sánh và duyệt yêu cầu cập nhật.
 - ⬜ Quản lý danh mục, quản lý người dùng, kiểm duyệt đánh giá.
 
 Giao diện dùng bộ design token chung (bảng màu "Sương sớm & dã quỳ", font Be Vietnam Pro) và đạt WCAG 2.2 AA trên các trang đã làm mới.
@@ -144,7 +144,7 @@ Kết quả rỗng là khớp; dòng `thieu_so_voi_repo` là migration chưa ch�
 
 ```powershell
 docker compose exec backend python -m pytest -q      # backend: 138 test
-docker compose exec frontend npm test                # frontend: 92 test
+docker compose exec frontend npm test                # frontend: 111 test
 docker compose exec frontend npm run type-check
 docker compose exec frontend npm run build
 .\scripts\verify-mvp.ps1                             # kiểm tra nhanh toàn hệ thống, chỉ đọc dữ liệu
