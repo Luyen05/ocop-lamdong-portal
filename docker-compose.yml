@@ -32,9 +32,16 @@ services:
     environment:
       PGADMIN_DEFAULT_EMAIL: "${PGADMIN_DEFAULT_EMAIL:?Set PGADMIN_DEFAULT_EMAIL in .env}"
       PGADMIN_DEFAULT_PASSWORD: "${PGADMIN_DEFAULT_PASSWORD:?Set PGADMIN_DEFAULT_PASSWORD in .env}"
+      # Tự thêm server "LamDong PostgreSQL" (host postgres) ở lần chạy đầu tiên.
+      PGADMIN_SERVER_JSON_FILE: /pgadmin4/servers.json
 
     ports:
       - "5050:80"
+
+    # Giữ tài khoản, kết nối đã lưu và lịch sử truy vấn khi container bị tạo lại.
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+      - ./database/pgadmin/servers.json:/pgadmin4/servers.json:ro
 
     depends_on:
       postgres:
@@ -135,5 +142,6 @@ services:
 
 volumes:
   postgres_data:
+  pgadmin_data:
   frontend_node_modules:
   backend_uploads:

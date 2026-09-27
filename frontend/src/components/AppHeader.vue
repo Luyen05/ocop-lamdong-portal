@@ -12,6 +12,7 @@ const isAuthenticated = authStore.isAuthenticated
 const isMenuOpen = ref(false)
 const isSearchOpen = ref(false)
 const headerSearch = ref('')
+const isCondensed = ref(false)
 
 const roleLabel = computed(() => {
   const labels = {
@@ -27,13 +28,13 @@ const userInitial = computed(() => currentUser.value?.full_name.trim().charAt(0)
 const publicNavigation = [
   { label: 'Trang chủ', to: '/', icon: 'home' },
   { label: 'Sản phẩm OCOP', to: '/san-pham', icon: 'package' },
-  { label: 'Khám phá Lâm Đồng', to: '/diem-du-lich', icon: 'map-pin' },
-  { label: 'Bản đồ', to: '/ban-do', icon: 'map' },
+  { label: 'Điểm du lịch', to: '/diem-du-lich', icon: 'map-pin' },
+  { label: 'Bản đồ số', to: '/ban-do', icon: 'map' },
   { label: 'Tin tức', to: '/tin-tuc', icon: 'newspaper' },
 ]
 
 const navigation = computed(() => [
-  ...publicNavigation,
+  ...publicNavigation.map((item) => ({ ...item, isPublic: true })),
   ...(currentUser.value?.role === 'user' || currentUser.value?.role === 'subject'
     ? [{
         label: currentUser.value.role === 'subject' ? 'Quản lý sản phẩm' : 'Đăng ký chủ thể',
@@ -58,6 +59,13 @@ function closeSearch(): void {
   isSearchOpen.value = false
 }
 
+// Header thu gọn khi cuộn: ẩn thanh thông báo, hạ chiều cao. Hai ngưỡng khác nhau để không bị nháy.
+function onScroll(): void {
+  const y = window.scrollY
+  if (!isCondensed.value && y > 96) isCondensed.value = true
+  else if (isCondensed.value && y < 24) isCondensed.value = false
+}
+
 function onKeydown(event: KeyboardEvent): void {
   if (event.key === 'Escape') closeMenu()
 }
@@ -79,25 +87,29 @@ watch(() => route.fullPath, () => {
   closeMenu()
   closeSearch()
 })
-onMounted(() => document.addEventListener('keydown', onKeydown))
-onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
+onMounted(() => {
+  document.addEventListener('keydown', onKeydown)
+  window.addEventListener('scroll', onScroll, { passive: true })
+  onScroll()
+})
+onBeforeUnmount(() => {
+  document.removeEventListener('keydown', onKeydown)
+  window.removeEventListener('scroll', onScroll)
+})
 </script>
 
 <template>
-  <header class="site-header">
+  <header class="site-header" :class="{ 'is-condensed': isCondensed }">
     <div class="announcement-bar">
       <div class="site-container announcement-inner">
         <p>
-          <span class="online-dot" aria-hidden="true" />
-          Cổng thông tin quảng bá nông sản OCOP &amp; bản đồ số du lịch nông nghiệp tỉnh Lâm Đồng
+          <AppIcon name="shieldCheck" :size="14" />
+          Sản phẩm, chủ thể và điểm đến được kiểm duyệt trước khi công khai
         </p>
-        <div class="announcement-actions">
-          <span class="capstone-label">
-            <AppIcon name="shieldCheck" :size="14" />
-            Dữ liệu OCOP được kiểm duyệt
-          </span>
-          <span>Hotline: 0263.3822000</span>
-        </div>
+        <a class="announcement-hotline" href="tel:02633822000">
+          <AppIcon name="phone" :size="14" />
+          Hotline 0263.3822000
+        </a>
       </div>
     </div>
 
@@ -110,9 +122,8 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
           <span class="brand-copy">
             <span class="brand-title">
               <strong>LÂM ĐỒNG OCOP</strong>
-              <small>Cổng thông tin</small>
             </span>
-            <span>Nông sản OCOP &amp; Du lịch Nông nghiệp</span>
+            <span>Nông sản OCOP và du lịch nông nghiệp</span>
           </span>
         </RouterLink>
 
@@ -145,12 +156,19 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
           aria-label="Mở hoặc đóng menu"
           @click="isMenuOpen = !isMenuOpen"
         >
-          <AppIcon name="menu" :size="22" />
+          <AppIcon class="menu-icon" name="menu" :size="22" />
+          <AppIcon class="account-icon" name="user" :size="20" />
         </button>
 
         <div id="main-navigation" class="navigation-panel" :class="{ open: isMenuOpen }">
           <nav class="main-nav" aria-label="Điều hướng chính">
-            <RouterLink v-for="item in navigation" :key="item.label" :to="item.to" @click="closeMenu">
+            <RouterLink
+              v-for="item in navigation"
+              :key="item.label"
+              :to="item.to"
+              :class="{ 'is-public': 'isPublic' in item }"
+              @click="closeMenu"
+            >
               <AppIcon :name="item.icon" :size="15" />
               <span>{{ item.label }}</span>
             </RouterLink>
@@ -202,70 +220,100 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   z-index: 100;
   top: 0;
   border-bottom: 1px solid var(--ocop-border);
-  background: rgb(255 255 255 / 96%);
-  box-shadow: 0 1px 1px rgb(0 0 0 / 5%);
+  background: color-mix(in srgb, var(--ocop-white) 96%, transparent);
+  box-shadow: 0 1px 1px color-mix(in srgb, var(--ocop-black) 5%, transparent);
   backdrop-filter: blur(14px);
 }
 
 .announcement-bar {
-  min-height: 28px;
+  min-height: 32px;
+  max-height: 64px;
+  overflow: hidden;
   padding: 6px 0;
-  background: var(--ocop-primary-950);
-  color: #cdebd9;
-  font-size: 12px;
+  transition: max-height var(--ocop-transition), padding var(--ocop-transition), min-height var(--ocop-transition);
+  background: var(--ocop-mist-950);
+  color: var(--ocop-text-on-dark);
+  font-size: var(--ocop-font-size-caption);
+}
+
+.announcement-bar :deep(.app-icon) {
+  color: var(--ocop-daquy-300);
 }
 
 .announcement-inner,
-.announcement-inner p,
-.announcement-actions,
-.capstone-label {
+.announcement-inner p {
   display: flex;
   align-items: center;
 }
 
 .announcement-inner {
   justify-content: space-between;
-  gap: 16px;
+  gap: var(--ocop-space-4);
+}
+
+.announcement-hotline {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+  color: var(--ocop-text-on-dark);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.announcement-hotline:hover {
+  color: var(--ocop-white);
+  text-decoration: underline;
 }
 
 .announcement-inner p {
-  gap: 8px;
+  gap: var(--ocop-space-2);
   margin: 0;
-  color: #e3f4ea;
+  color: var(--ocop-text-on-dark);
   font-weight: 500;
 }
 
-.online-dot {
-  width: 8px;
-  height: 8px;
-  flex: 0 0 auto;
-  border-radius: 50%;
-  background: var(--ocop-mint);
-}
 
-.announcement-actions {
-  flex: 0 0 auto;
-  gap: 16px;
-}
 
-.capstone-label {
-  gap: 5px;
-  padding: 2px 10px;
-  border: 1px solid rgb(102 201 150 / 42%);
-  border-radius: var(--ocop-radius-xs);
-  background: rgb(18 55 42 / 72%);
-}
 
 .main-header {
   background: var(--ocop-card);
+}
+
+.site-header.is-condensed {
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--ocop-mist-950) 10%, transparent);
+}
+
+.site-header.is-condensed .announcement-bar {
+  min-height: 0;
+  max-height: 0;
+  padding-block: 0;
+}
+
+.site-header.is-condensed .header-inner {
+  min-height: 60px;
+}
+
+.site-header.is-condensed .brand-symbol {
+  width: 34px;
+  height: 34px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .announcement-bar,
+  .header-inner,
+  .brand-symbol {
+    transition: none;
+  }
 }
 
 .header-inner {
   position: relative;
   display: flex;
   min-height: 72px;
+  transition: min-height var(--ocop-transition);
   align-items: center;
-  gap: 16px;
+  gap: var(--ocop-space-4);
 }
 
 .site-brand,
@@ -278,7 +326,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 
 .site-brand {
   min-width: 248px;
-  gap: 12px;
+  gap: var(--ocop-space-3);
 }
 
 .brand-symbol {
@@ -288,8 +336,8 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   flex: 0 0 auto;
   place-items: center;
   border-radius: var(--ocop-radius-md);
-  background: var(--ocop-primary-700);
-  box-shadow: 0 4px 8px rgb(30 113 79 / 22%);
+  background: var(--ocop-mist-800);
+  box-shadow: inset 0 -4px 0 var(--ocop-daquy-400), 0 4px 8px color-mix(in srgb, var(--ocop-mist-800) 22%, transparent);
 }
 
 .brand-symbol img {
@@ -300,7 +348,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 .brand-copy {
   display: grid;
   color: var(--ocop-slate);
-  font-size: 13px;
+  font-size: var(--ocop-font-size-small);
   font-weight: 500;
   line-height: 16px;
 }
@@ -313,20 +361,10 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 
 .brand-title strong {
   color: var(--ocop-navy);
-  font-size: 16px;
+  font-size: var(--ocop-font-size-body-lg);
   letter-spacing: -0.4px;
 }
 
-.brand-title small {
-  padding: 2px 6px;
-  border: 1px solid #e9c36d;
-  border-radius: var(--ocop-radius-xs);
-  background: var(--ocop-warning-soft);
-  color: var(--ocop-warning);
-  font-size: 10px;
-  font-weight: 700;
-  line-height: 12px;
-}
 
 .header-search {
   position: relative;
@@ -362,7 +400,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 .responsive-search input {
   min-width: 0;
   height: 40px;
-  padding: 8px 12px;
+  padding: var(--ocop-space-2) var(--ocop-space-3);
   border: 1px solid var(--ocop-border);
   border-radius: var(--ocop-radius-sm);
   outline: 0;
@@ -370,17 +408,17 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 
 .responsive-search input:focus {
   border-color: var(--ocop-primary-500);
-  box-shadow: 0 0 0 3px rgb(30 113 79 / 12%);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ocop-primary-700) 12%, transparent);
 }
 
 .responsive-search button {
   min-height: 40px;
-  padding: 8px 14px;
+  padding: var(--ocop-space-2) 14px;
   border: 0;
   border-radius: var(--ocop-radius-sm);
   background: var(--ocop-primary-700);
   color: var(--ocop-white);
-  font-size: 12px;
+  font-size: var(--ocop-font-size-caption);
   font-weight: 700;
 }
 
@@ -395,18 +433,18 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 .header-search input {
   width: 100%;
   height: 36px;
-  padding: 6px 12px 6px 36px;
+  padding: 6px var(--ocop-space-3) 6px 36px;
   border: 1px solid var(--ocop-border);
   border-radius: var(--ocop-radius-sm);
   outline: 0;
-  background: rgb(238 243 239 / 82%);
+  background: color-mix(in srgb, var(--ocop-surface-muted) 82%, transparent);
   color: var(--ocop-navy);
-  font-size: 12px;
+  font-size: var(--ocop-font-size-caption);
 }
 
 .header-search input:focus {
   border-color: var(--ocop-primary-500);
-  box-shadow: 0 0 0 3px rgb(30 113 79 / 12%);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ocop-primary-700) 12%, transparent);
 }
 
 .navigation-panel,
@@ -421,7 +459,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   min-width: 0;
   flex: 1;
   justify-content: flex-end;
-  gap: 8px;
+  gap: var(--ocop-space-2);
 }
 
 .main-nav {
@@ -435,22 +473,28 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   align-items: center;
   justify-content: center;
   gap: 5px;
-  padding: 7px 8px;
+  padding: 7px var(--ocop-space-2);
   border: 1px solid transparent;
   border-radius: var(--ocop-radius-sm);
-  color: var(--ocop-slate);
-  font-size: 13px;
+  color: var(--ocop-navy);
+  font-size: var(--ocop-font-size-small);
   font-weight: 650;
   line-height: 14px;
   text-align: center;
   text-decoration: none;
 }
 
-.main-nav a:hover,
-.main-nav a.router-link-active {
-  border-color: var(--ocop-mint-border);
-  background: var(--ocop-mint-soft);
+.main-nav a:hover {
+  background: var(--ocop-mist-50);
   color: var(--ocop-primary-900);
+}
+
+.main-nav a.router-link-exact-active,
+.main-nav a.router-link-active:not([href="/"]) {
+  background: var(--ocop-mist-100);
+  box-shadow: inset 0 -3px 0 var(--ocop-daquy-400);
+  color: var(--ocop-mist-800);
+  font-weight: 750;
 }
 
 .account-actions {
@@ -458,10 +502,23 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   gap: 6px;
 }
 
+/* Tách nhóm tài khoản khỏi menu chính bằng vạch ngăn. */
+@media (min-width: 1200px) {
+  .account-actions {
+    margin-left: var(--ocop-space-2);
+    padding-left: var(--ocop-space-3);
+    border-left: 1px solid var(--ocop-border);
+  }
+}
+
+.menu-toggle .account-icon {
+  display: none;
+}
+
 .user-link {
   max-width: 160px;
-  gap: 8px;
-  padding: 5px 8px;
+  gap: var(--ocop-space-2);
+  padding: 5px var(--ocop-space-2);
   border: 1px solid var(--ocop-border);
   border-radius: var(--ocop-radius-sm);
   background: var(--ocop-surface);
@@ -475,8 +532,8 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   place-items: center;
   border-radius: 50%;
   background: var(--ocop-primary-700);
-  color: #fff;
-  font-size: 12px;
+  color: var(--ocop-white);
+  font-size: var(--ocop-font-size-caption);
   font-weight: 800;
 }
 
@@ -497,13 +554,13 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 
 .user-copy small {
   color: var(--ocop-text-tertiary);
-  font-size: 11px;
+  font-size: var(--ocop-font-size-caption);
   text-transform: uppercase;
 }
 
 .user-copy strong {
   color: var(--ocop-navy);
-  font-size: 12px;
+  font-size: var(--ocop-font-size-caption);
 }
 
 .logout-button,
@@ -511,7 +568,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   border: 0;
   background: transparent;
   color: var(--ocop-primary-900);
-  font-size: 12px;
+  font-size: var(--ocop-font-size-caption);
   font-weight: 700;
   text-decoration: none;
 }
@@ -524,10 +581,10 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 }
 
 .guest-actions .register-button {
-  padding: 8px 12px;
+  padding: var(--ocop-space-2) var(--ocop-space-3);
   border-radius: var(--ocop-radius-sm);
   background: var(--ocop-primary-700);
-  color: #fff;
+  color: var(--ocop-white);
 }
 
 .menu-toggle {
@@ -542,6 +599,13 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   align-items: center;
   justify-content: center;
   color: var(--ocop-primary-950);
+}
+
+/* Màn hình rộng: menu chỉ có chữ như thiết kế; icon giữ lại trong menu thu gọn. */
+@media (min-width: 1200px) {
+  .main-nav :deep(.app-icon) {
+    display: none;
+  }
 }
 
 @media (min-width: 1320px) {
@@ -576,11 +640,11 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
     display: none;
     max-height: calc(100vh - 96px);
     align-items: stretch;
-    padding: 16px;
+    padding: var(--ocop-space-4);
     overflow-y: auto;
     border-bottom: 1px solid var(--ocop-border);
     background: var(--ocop-card);
-    box-shadow: 0 18px 30px rgb(15 23 43 / 12%);
+    box-shadow: 0 18px 30px color-mix(in srgb, var(--ocop-neutral-900) 12%, transparent);
   }
 
   .navigation-panel.open,
@@ -589,7 +653,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   }
 
   .navigation-panel.open {
-    gap: 12px;
+    gap: var(--ocop-space-3);
   }
 
   .main-nav {
@@ -598,13 +662,13 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 
   .main-nav a {
     justify-content: flex-start;
-    padding: 10px 12px;
+    padding: 10px var(--ocop-space-3);
     text-align: left;
   }
 
   .account-actions {
     justify-content: flex-end;
-    padding-top: 12px;
+    padding-top: var(--ocop-space-3);
     border-top: 1px solid var(--ocop-border);
   }
 }
@@ -621,12 +685,9 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 
   .announcement-inner p {
     max-width: 100%;
-    font-size: 10px;
+    font-size: var(--ocop-font-size-caption);
   }
 
-  .announcement-actions {
-    display: none;
-  }
 
   .header-inner {
     min-height: 62px;
@@ -645,8 +706,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
     font-size: 14px;
   }
 
-  .brand-copy > span:last-child,
-  .brand-title small {
+  .brand-copy > span:last-child {
     display: none;
   }
 
@@ -657,6 +717,27 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 
   .responsive-search button {
     grid-column: 1 / -1;
+  }
+
+  /* Điện thoại: điều hướng chính đã có ở thanh dưới, menu ở header chỉ còn tài khoản và mục theo vai trò. */
+  .main-nav a.is-public {
+    display: none;
+  }
+
+  .main-nav {
+    grid-template-columns: 1fr;
+  }
+
+  .menu-toggle .menu-icon {
+    display: none;
+  }
+
+  .menu-toggle .account-icon {
+    display: inline-flex;
+  }
+
+  .announcement-inner p {
+    display: none;
   }
 }
 </style>

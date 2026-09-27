@@ -176,7 +176,7 @@ async function submit(): Promise<void> {
 <style scoped>
 .profile-page {
   min-height: calc(100vh - 4.5rem);
-  background: #f5f7f1;
+  background: var(--ocop-surface-muted);
 }
 
 .profile-heading h1 {
@@ -191,10 +191,10 @@ async function submit(): Promise<void> {
 
 .profile-summary,
 .profile-form-card {
-  border: 1px solid rgb(29 72 39 / 10%);
+  border: 1px solid color-mix(in srgb, var(--ocop-primary-950) 10%, transparent);
   border-radius: 1.25rem;
-  background: #fff;
-  box-shadow: 0 0.8rem 2.5rem rgb(31 64 38 / 7%);
+  background: var(--ocop-card);
+  box-shadow: 0 0.8rem 2.5rem color-mix(in srgb, var(--ocop-primary-950) 7%, transparent);
 }
 
 .profile-summary {
@@ -205,7 +205,7 @@ async function submit(): Promise<void> {
 .profile-avatar {
   width: 6.5rem;
   height: 6.5rem;
-  border: 0.35rem solid #edf4e5;
+  border: 0.35rem solid var(--ocop-sage-50);
   border-radius: 50%;
   object-fit: cover;
 }
@@ -215,7 +215,7 @@ async function submit(): Promise<void> {
   margin-inline: auto;
   place-items: center;
   background: var(--ocop-primary-700);
-  color: #fff;
+  color: var(--ocop-white);
   font-size: 2.75rem;
 }
 
@@ -232,8 +232,8 @@ async function submit(): Promise<void> {
 .role-badge {
   display: inline-block;
   padding: 0.35rem 0.75rem;
-  border-radius: 999px;
-  background: #e9f3df;
+  border-radius: var(--ocop-radius-pill);
+  background: var(--ocop-sage-50);
   color: var(--ocop-primary-700);
   font-size: 0.8rem;
   font-weight: 700;
@@ -241,7 +241,7 @@ async function submit(): Promise<void> {
 
 .profile-summary hr {
   margin: 1.5rem 0;
-  border-color: #dfe6dc;
+  border-color: var(--ocop-border);
 }
 
 .profile-summary dl {
@@ -264,7 +264,7 @@ async function submit(): Promise<void> {
 }
 
 .profile-summary dt {
-  color: #788078;
+  color: var(--ocop-slate);
   font-weight: 500;
 }
 

@@ -284,9 +284,9 @@ onUnmounted(() => {
 
 .error-state {
   padding: 4rem 1.5rem;
-  border: 1px dashed #becbbb;
+  border: 1px dashed var(--ocop-border-strong);
   border-radius: 1rem;
-  background: #fff;
+  background: var(--ocop-card);
   text-align: center;
 }
 
@@ -338,7 +338,7 @@ onUnmounted(() => {
   padding: 0;
   border: 2px solid transparent;
   border-radius: 0.75rem;
-  background: #fff;
+  background: var(--ocop-card);
 }
 
 .thumbnail.active {
@@ -356,9 +356,9 @@ onUnmounted(() => {
   align-items: center;
   gap: 6px;
   padding: 5px 10px;
-  border-radius: 999px;
+  border-radius: var(--ocop-radius-pill);
   background: var(--type-color, var(--ocop-primary-700));
-  color: #fff;
+  color: var(--ocop-white);
   font-size: var(--ocop-font-size-caption);
   font-weight: 700;
 }
@@ -371,7 +371,7 @@ onUnmounted(() => {
 }
 
 .lead-description {
-  color: #4f5d52;
+  color: var(--ocop-sage-800);
   line-height: 1.7;
 }
 
@@ -382,7 +382,7 @@ onUnmounted(() => {
   padding: 1.1rem;
   border: 1px solid var(--ocop-border);
   border-radius: 1rem;
-  background: #fff;
+  background: var(--ocop-card);
 }
 
 .info-list div {
@@ -419,7 +419,7 @@ onUnmounted(() => {
   align-items: center;
   gap: 5px;
   padding: 5px 10px;
-  border-radius: 999px;
+  border-radius: var(--ocop-radius-pill);
   background: var(--ocop-mint-soft);
   color: var(--ocop-primary-900);
   font-size: var(--ocop-font-size-small);

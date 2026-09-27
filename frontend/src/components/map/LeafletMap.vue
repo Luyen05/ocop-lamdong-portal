@@ -40,20 +40,22 @@ interface TileProvider {
   subdomains: string
 }
 
-// Nguồn ảnh nền theo thứ tự ưu tiên. Một số mạng chặn tile.openstreetmap.org nên
-// mặc định dùng CARTO (dữ liệu OpenStreetMap) và tự chuyển nguồn khi không tải được.
+// Nguồn ảnh nền theo thứ tự ưu tiên, đều là dữ liệu OpenStreetMap và không cần API key.
+// CARTO đã bị bỏ: từ 2026 CARTO trả ảnh có chữ "API KEY REQUIRED" (vẫn là mã 200 nên không
+// tự chuyển nguồn được). Nếu mạng chặn tile.openstreetmap.org thì tự chuyển sang bản
+// OSM Humanitarian; cần nguồn khác (có key) thì khai báo VITE_MAP_TILE_URL trong frontend/.env.
 const TILE_PROVIDERS: TileProvider[] = [
   ...(import.meta.env.VITE_MAP_TILE_URL
     ? [{ url: import.meta.env.VITE_MAP_TILE_URL, attribution: OSM_ATTRIBUTION, subdomains: 'abc' }]
     : []),
   {
-    url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-    attribution: `${OSM_ATTRIBUTION} &copy; <a href="https://carto.com/attributions">CARTO</a>`,
-    subdomains: 'abcd',
-  },
-  {
     url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
     attribution: OSM_ATTRIBUTION,
+    subdomains: 'abc',
+  },
+  {
+    url: 'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',
+    attribution: `${OSM_ATTRIBUTION}, bản đồ nền <a href="https://www.hotosm.org/">Humanitarian OpenStreetMap Team</a>`,
     subdomains: 'abc',
   },
 ]
@@ -183,12 +185,12 @@ function renderUserPosition(): void {
   userLayer.clearLayers()
   if (!props.userPosition) return
   const position: L.LatLngTuple = [props.userPosition.latitude, props.userPosition.longitude]
+  // Màu viền và nền lấy từ token qua class .ocop-user-position (CSS ghi đè thuộc tính SVG).
   L.circleMarker(position, {
     radius: 9,
-    color: '#ffffff',
     weight: 3,
-    fillColor: '#2563eb',
     fillOpacity: 1,
+    className: 'ocop-user-position',
   })
     .bindTooltip('Vị trí của bạn', { direction: 'top' })
     .addTo(userLayer)
@@ -201,7 +203,7 @@ function renderRoute(): void {
   routeLayer = null
   if (!props.route?.length) return
   const points = props.route.map(([longitude, latitude]) => [latitude, longitude] as L.LatLngTuple)
-  routeLayer = L.polyline(points, { color: '#1e714f', weight: 5, opacity: 0.85 }).addTo(map)
+  routeLayer = L.polyline(points, { className: 'ocop-route-line', weight: 5, opacity: 0.85 }).addTo(map)
   map.fitBounds(routeLayer.getBounds(), { padding: [40, 40] })
 }
 
@@ -282,7 +284,7 @@ onBeforeUnmount(() => {
   height: 100%;
   min-height: inherit;
   border-radius: inherit;
-  background: #e8efe9;
+  background: var(--ocop-surface-muted);
 }
 
 .map-load-error {
@@ -290,7 +292,7 @@ onBeforeUnmount(() => {
   z-index: 500;
   inset: auto 12px 12px;
   margin: 0;
-  padding: 10px 12px;
+  padding: 10px var(--ocop-space-3);
   border-radius: var(--ocop-radius-sm);
   background: var(--ocop-danger-soft);
   color: var(--ocop-danger);
@@ -299,6 +301,19 @@ onBeforeUnmount(() => {
 </style>
 
 <style>
+.ocop-user-position {
+  stroke: var(--ocop-white);
+  fill: var(--ocop-location-user);
+}
+
+.ocop-route-line {
+  stroke: var(--ocop-location-route);
+}
+
+.leaflet-tooltip small {
+  font-size: var(--ocop-font-size-caption);
+}
+
 .ocop-marker-anchor {
   border: 0;
   background: transparent;
@@ -309,12 +324,12 @@ onBeforeUnmount(() => {
   width: 34px;
   height: 34px;
   place-items: center;
-  border: 2px solid #fff;
-  border-radius: 50% 50% 50% 4px;
-  background: var(--marker-color, #1e714f);
-  box-shadow: 0 6px 14px rgb(15 23 43 / 28%);
-  color: #fff;
-  font-size: 15px;
+  border: 2px solid var(--ocop-white);
+  border-radius: 50% 50% 50% var(--ocop-radius-xs);
+  background: var(--marker-color, var(--ocop-primary-700));
+  box-shadow: 0 6px 14px color-mix(in srgb, var(--ocop-neutral-900) 28%, transparent);
+  color: var(--ocop-white);
+  font-size: var(--ocop-font-size-body);
   transform: rotate(-45deg);
   transition: transform 160ms ease;
 }
@@ -324,11 +339,11 @@ onBeforeUnmount(() => {
 }
 
 .ocop-marker.is-selected {
-  outline: 3px solid rgb(245 158 11 / 70%);
+  outline: 3px solid color-mix(in srgb, var(--ocop-star) 70%, transparent);
   transform: rotate(-45deg) scale(1.18);
 }
 
 .leaflet-marker-icon:focus-visible .ocop-marker {
-  outline: 3px solid rgb(53 164 117 / 60%);
+  outline: 3px solid color-mix(in srgb, var(--ocop-primary-500) 60%, transparent);
 }
 </style>
