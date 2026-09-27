@@ -13,7 +13,8 @@ const errorMessage = ref('')
 
 const featuredProducts = computed(() => {
   const certified = products.value.filter((product) => product.star >= 4)
-  // Chỉ lấy sản phẩm 4–5 sao (sửa của Thuận, PR #5), hiển thị tối đa 8 thẻ.
+  // Chỉ lấy sản phẩm 4–5 sao (sửa của Thuận, PR #5), hiển thị tối đa 8 thẻ. API chỉ sắp theo điểm
+  // đánh giá nên lấy tối đa 100 sản phẩm (giới hạn của API) rồi lọc ở đây để đủ thẻ.
   return certified.slice(0, 8)
 })
 
@@ -26,7 +27,7 @@ async function loadProducts(): Promise<void> {
   isLoading.value = true
   errorMessage.value = ''
   try {
-    const response = await getProducts({ page: 1, page_size: 24, sort: 'rating' })
+    const response = await getProducts({ page: 1, page_size: 100, sort: 'rating' })
     products.value = response.items
   } catch (error) {
     products.value = []
