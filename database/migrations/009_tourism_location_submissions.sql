@@ -53,6 +53,8 @@ ALTER TABLE tourism_locations
 ALTER TABLE tourism_locations
   ALTER COLUMN status SET DEFAULT 'draft',
   DROP CONSTRAINT IF EXISTS tourism_locations_status_check,
+  -- migration 001_hardening.sql thêm ràng buộc này chỉ cho 3 trạng thái cũ, chặn draft/needs_revision.
+  DROP CONSTRAINT IF EXISTS ck_location_status,
   DROP CONSTRAINT IF EXISTS tourism_locations_location_source_check,
   DROP CONSTRAINT IF EXISTS tourism_locations_location_accuracy_check,
   DROP CONSTRAINT IF EXISTS tourism_locations_version_check;
