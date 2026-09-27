@@ -1,10 +1,12 @@
 // @vitest-environment jsdom
-import { flushPromises, mount } from '@vue/test-utils'
-import { describe, expect, it, vi } from 'vitest'
+import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import FeaturedProducts from '@/components/home/FeaturedProducts.vue'
 import { getProducts } from '@/services/products'
 import type { ProductListItem } from '@/types/product'
+
+enableAutoUnmount(afterEach)
 
 vi.mock('@/services/products', () => ({
   getProducts: vi.fn(),
@@ -47,5 +49,33 @@ describe('FeaturedProducts', () => {
     expect(cards).toHaveLength(4)
     expect(cards.every((card) => !card.text().endsWith('-3'))).toBe(true)
     expect(getProducts).toHaveBeenCalledWith({ page: 1, page_size: 8, sort: 'rating' })
+  })
+})
+
+describe('FeaturedProducts certification filter', () => {
+  it.each([
+    { stars: [3, 3], expectedNames: [] },
+    { stars: [3, 4, 3, 5], expectedNames: [product(2, 4).name, product(4, 5).name] },
+    { stars: [], expectedNames: [] },
+  ])('shows only certified cards for $stars', async ({ stars, expectedNames }) => {
+    const items = stars.map((star, index) => product(index + 1, star))
+    vi.mocked(getProducts).mockResolvedValue({ items, page: 1, page_size: 8, total: items.length })
+    const wrapper = mount(FeaturedProducts, {
+      global: {
+        stubs: {
+          RouterLink: { template: '<a><slot /></a>' },
+          ProductCard: { props: ['product'], template: '<div class="stub-card">{{ product.name }}</div>' },
+        },
+      },
+    })
+    await flushPromises()
+
+    expect(wrapper.findAll('.stub-card').map((card) => card.text())).toEqual(expectedNames)
+    expect(wrapper.find('.featured-empty').exists()).toBe(expectedNames.length === 0)
+    if (expectedNames.length === 0) {
+      expect(wrapper.get('[role="status"]').text()).toContain('Chưa có sản phẩm nổi bật.')
+      expect(wrapper.find('button').exists()).toBe(false)
+    }
+    wrapper.unmount()
   })
 })
