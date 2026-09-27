@@ -14,13 +14,15 @@ File này là quy tắc chung cho mọi lần phát triển tiếp theo. Khi quy
 - **Không thêm dòng ghi công Claude**: không `Co-Authored-By: Claude…`, không `Claude-Session: …`, không "Generated with Claude Code" trong commit hay mô tả PR.
 - Mỗi trang (hoặc mỗi phần việc độc lập) một commit. Thay đổi backend là **commit riêng**, tách khỏi commit giao diện.
 - Thông điệp commit dạng `loại(phạm vi): mô tả tiếng Việt có dấu`, ví dụ `feat(ui): …`, `feat(api): …`, `fix(backend): …`, `style(ui): …`, `refactor(ui): …`, `docs(ui): …`. Thân commit liệt kê ngắn các thay đổi chính.
-- Git trên máy chạy trong môi trường Linux đọc ổ Windows: luôn dùng `git -c core.autocrlf=true …`, nếu không mọi file CRLF sẽ hiện là "modified". Nếu gặp `.git/index.lock` bị kẹt thì cần xin quyền xóa file.
+- Git trên máy chạy trong môi trường Linux đọc ổ Windows: luôn dùng `git -c core.autocrlf=true …`, nếu không mọi file CRLF sẽ hiện là "modified".
+- Sau mỗi lần commit hoặc `git am` trên máy, kiểm tra xem còn file khóa không (`.git/*.lock`, thư mục `.git/rebase-apply`). Môi trường này có thể không xóa được file nên để sót khóa; cần xin quyền xóa rồi dọn (`git am --quit` cho `rebase-apply`) trước khi báo xong.
 
 ## 2. Phạm vi thay đổi
 
 - Khi việc được giao là **giao diện**: chỉ sửa phần trình bày (template, style, component hiển thị). Không đổi logic gọi API, router, store, tên props/emit, kiểu dữ liệu, trừ khi được cho phép rõ ràng. Mỗi lần được cho phép thì ghi lại trong báo cáo.
 - **Không thêm thư viện mới khi chưa hỏi.** Đã được duyệt: Bootstrap 5, Bootstrap Icons, Leaflet + leaflet.markercluster, Chart.js 4 (chỉ đăng ký thành phần cần dùng), font Be Vietnam Pro (Google Fonts). vue-i18n đã bị bỏ, không tự thêm lại.
 - Việc lớn về giao diện: **thiết kế trước trên canvas Claude Design, chờ duyệt, rồi mới code**; có backend thì làm backend sau khi giao diện được duyệt.
+- **Mọi thay đổi database phải đi qua file trong repo**: migration mới trong `database/migrations/` (chạy lặp lại an toàn), cập nhật cùng lúc `database/schema.sql`, model SQLAlchemy và `tools/kiem-tra-database.sql` (sinh lại bằng `tools/sinh_kiem_tra_database.py`). Không sửa thẳng database bằng pgAdmin, Codex hay công cụ khác mà không ghi lại thành migration. Lý do: 27/09/2026 database của nhóm trưởng lệch khoảng 100 chỗ so với repo vì thay đổi làm ngoài repo, phải tạo lại từ đầu.
 - Không tự quyết các vấn đề ngoài phạm vi (lưu ảnh lên Firebase/Cloudinary, bảo mật ảnh chưa duyệt…): ghi nhận vào `docs/ui-audit.md` mục 6 và hỏi.
 
 ## 3. Điểm dừng
@@ -73,7 +75,8 @@ Backend (khi có sửa backend): `python -m pytest -q` trong `backend/`, hoặc 
 
 - Frontend Vue 3 + Vite + TypeScript (`frontend/`). Backend FastAPI + SQLAlchemy + JWT (`backend/`). PostgreSQL 16 + PostGIS (`database/`: `schema.sql`, `migrations/00x_*.sql`, các file seed).
 - Chạy toàn bộ bằng Docker: `docker compose up -d` gồm các service `postgres`, `pgadmin`, `backend` (uvicorn `--reload`, gắn `backend/app`) và `frontend` (Vite dev, cổng 5173).
-- Database đã có dữ liệu thì chạy migration mới bằng lệnh trong README (mục "Migration cho database đã có dữ liệu"). Không dùng `docker compose down -v` nếu chưa được đồng ý.
+- Database đã có dữ liệu thì chạy migration mới bằng lệnh trong README (mục "Migration cho database đã có dữ liệu"), rồi chạy `tools/kiem-tra-database.sql` trong pgAdmin để xác nhận khớp repo. Không dùng `docker compose down -v` nếu chưa được đồng ý (lệnh này xóa cả ảnh đã tải lên).
+- Lệnh PowerShell gửi cho người dùng: Windows PowerShell 5.1 làm mất dấu ngoặc kép bên trong tham số truyền cho chương trình ngoài (docker, psql), nên tránh truyền chuỗi có `"` lồng bên trong; gửi SQL qua stdin (`Get-Content … -Raw | docker compose exec -T postgres …`).
 - API quản trị nằm dưới `/api/v1/admin/*` và chỉ role `admin` gọi được. Hiện có: `dashboard`, `statistics`, `products`, `subject-applications`, `data-sources`, `product-change-requests`.
 - Bản đồ: `/api/v1/locations`, `/api/v1/map/locations` (GeoJSON), `/map/nearby`, `/map/route` (OSRM). Frontend ở `/ban-do`, `/diem-du-lich`.
 
@@ -84,3 +87,18 @@ Backend (khi có sửa backend): `python -m pytest -q` trong `backend/`, hoặc 
   - Mục 5 là nhật ký xử lý. Mỗi đợt thêm một mục ghi ngày, việc đã làm và số liệu kiểm thử.
   - Mục 6 ghi những việc ngoài phạm vi.
 - Tài liệu dự án trên claude.ai (Project) ghi tiến độ từng nhánh. Cập nhật sau mỗi điểm dừng quan trọng.
+
+## 8. Thư mục đồ án ngoài repo (`D:\DO_AN_CHUYEN_NGANH`)
+
+Repo `ocop-lamdong-portal` chỉ chứa mã nguồn và tài liệu kỹ thuật. File khác để ở thư mục cha, đúng nhóm:
+
+| Thư mục | Nội dung |
+|---|---|
+| `01-tai-lieu-du-an` | Đề cương, hướng dẫn và kế hoạch nhóm, tài liệu OCOP (xlsx), kế hoạch triển khai, sơ đồ CSDL |
+| `02-bao-cao-thuyet-trinh` | Báo cáo tiến độ, slide, kịch bản thuyết trình, ảnh và dữ liệu demo cho báo cáo |
+| `03-hinh-anh` | Ảnh gốc Unsplash, ảnh chụp giao diện trước/sau, ảnh tham khảo |
+| `04-database` | Script tạo lại database, file kiểm tra, bản sao lưu `.dump` (`sao-luu/`) |
+| `05-git-pull-request` | Mô tả PR soạn sẵn, file patch đã áp dụng |
+| `99-luu-tru` | Bản cũ không dùng nữa (i18n đã bỏ, thư mục tạm của Codex); xem xong có thể xóa |
+
+File tạm do Claude tạo (patch, script, kết quả kiểm tra) đặt vào đúng thư mục trên, không để ở gốc `D:\DO_AN_CHUYEN_NGANH` hay trong repo.
