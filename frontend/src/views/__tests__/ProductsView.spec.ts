@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
-import { flushPromises, mount } from '@vue/test-utils'
+import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils'
 import { reactive } from 'vue'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import ProductsView from '@/views/ProductsView.vue'
 import { getCategories } from '@/services/categories'
@@ -27,10 +27,18 @@ vi.mock('@/services/categories', () => ({
   getCategories: vi.fn(),
 }))
 
+enableAutoUnmount(afterEach)
+
 describe('ProductsView', () => {
   beforeEach(() => {
     route.query = {}
-    vi.clearAllMocks()
+    vi.resetAllMocks()
+    const navigate = async (target: { query?: Record<string, string> }) => {
+      route.query = { ...target.query }
+    }
+    router.push.mockImplementation(navigate)
+    router.replace.mockImplementation(navigate)
+    vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
     vi.mocked(getProducts).mockResolvedValue({ items: [], page: 1, page_size: 12, total: 62 })
     vi.mocked(getProductFilterOptions).mockResolvedValue({ districts: ['phường Đà Lạt', 'xã Tánh Linh'] })
     vi.mocked(getCategories).mockResolvedValue({ items: [], page: 1, page_size: 100, total: 0 })
@@ -63,4 +71,137 @@ describe('ProductsView', () => {
     expect(wrapper.text()).toContain('Giá tối thiểu không được lớn hơn giá tối đa.')
     expect(router.push).not.toHaveBeenCalled()
   })
+  it('keeps draft search out of chips, URL and requests until submit', async () => {
+    const wrapper = mount(ProductsView)
+    await flushPromises()
+    await wrapper.get('#product-search').setValue('atiso')
+
+    expect(route.query).toEqual({})
+    expect(router.push).not.toHaveBeenCalled()
+    expect(wrapper.find('.active-filters').exists()).toBe(false)
+    expect(getProducts).toHaveBeenCalledTimes(1)
+  })
+
+  it('paginates with applied filters instead of draft values', async () => {
+    route.query = { search: 'coffee', category: 'do-uong' }
+    const wrapper = mount(ProductsView)
+    await flushPromises()
+    await wrapper.get('#product-search').setValue('atiso')
+    await wrapper.get('.page-number:nth-child(2)').trigger('click')
+    await flushPromises()
+
+    expect(route.query).toEqual({ search: 'coffee', category: 'do-uong', page: '2' })
+    expect(getProducts).toHaveBeenLastCalledWith(expect.objectContaining({
+      search: 'coffee', category: 'do-uong', page: 2,
+    }))
+    expect(wrapper.get('.active-filters').text()).toContain('coffee')
+    expect(wrapper.get('.active-filters').text()).not.toContain('atiso')
+  })
+
+  it('retries the applied query after an error despite draft edits', async () => {
+    route.query = { search: 'coffee' }
+    vi.mocked(getProducts).mockRejectedValueOnce(new Error('Network error'))
+    const wrapper = mount(ProductsView)
+    await flushPromises()
+    await wrapper.get('#product-search').setValue('atiso')
+    await wrapper.get('.state-box.is-error button').trigger('click')
+    await flushPromises()
+
+    expect(getProducts).toHaveBeenCalledTimes(2)
+    expect(getProducts).toHaveBeenLastCalledWith(expect.objectContaining({ search: 'coffee' }))
+    expect(route.query).toEqual({ search: 'coffee' })
+    expect(wrapper.find('.state-box.is-error').exists()).toBe(false)
+  })
+
+  it('submits draft filters through the URL and resets the page', async () => {
+    route.query = { search: 'coffee', star: '4', page: '3' }
+    const wrapper = mount(ProductsView)
+    await flushPromises()
+    await wrapper.get('#product-search').setValue('atiso')
+    await wrapper.get('form').trigger('submit')
+    await flushPromises()
+
+    expect(route.query).toEqual({ search: 'atiso', star: '4' })
+    expect(getProducts).toHaveBeenCalledTimes(2)
+    expect(getProducts).toHaveBeenLastCalledWith(expect.objectContaining({
+      search: 'atiso', star: 4, page: 1,
+    }))
+    expect(wrapper.get('.active-filters').text()).toContain('atiso')
+  })
+
+  it('applies a star button on top of applied filters without the draft search', async () => {
+    route.query = { search: 'coffee', page: '3' }
+    const wrapper = mount(ProductsView)
+    await flushPromises()
+    await wrapper.get('#product-search').setValue('atiso')
+    const threeStar = wrapper.findAll('.star-segment button').find((button) => button.text().includes('3 sao'))!
+    await threeStar.trigger('click')
+    await flushPromises()
+
+    expect(route.query).toEqual({ search: 'coffee', star: '3' })
+    expect(getProducts).toHaveBeenLastCalledWith(expect.objectContaining({ search: 'coffee', star: 3, page: 1 }))
+  })
+
+  it('hydrates form, chips and requests on back/forward query changes', async () => {
+    route.query = { search: 'coffee', star: '4' }
+    const wrapper = mount(ProductsView)
+    await flushPromises()
+    await wrapper.get('#product-search').setValue('unsubmitted')
+    route.query = { search: 'atiso', star: '3', page: '2' }
+    await flushPromises()
+
+    expect((wrapper.get('#product-search').element as HTMLInputElement).value).toBe('atiso')
+    const pressed = wrapper.findAll('.star-segment button').filter((button) => button.attributes('aria-pressed') === 'true')
+    expect(pressed.map((button) => button.text())).toEqual(['3 sao'])
+    expect(wrapper.get('.active-filters').text()).toContain('atiso')
+    expect(getProducts).toHaveBeenLastCalledWith(expect.objectContaining({ search: 'atiso', star: 3, page: 2 }))
+
+    route.query = { search: 'coffee', star: '4' }
+    await flushPromises()
+    expect((wrapper.get('#product-search').element as HTMLInputElement).value).toBe('coffee')
+    expect(wrapper.get('.active-filters').text()).not.toContain('atiso')
+    expect(getProducts).toHaveBeenLastCalledWith(expect.objectContaining({ search: 'coffee', star: 4, page: 1 }))
+  })
+
+  it('removes an applied chip without applying other draft edits', async () => {
+    route.query = { search: 'coffee', star: '4', page: '2', sort: 'name' }
+    const wrapper = mount(ProductsView)
+    await flushPromises()
+    await wrapper.get('#product-search').setValue('atiso')
+    await wrapper.get('.active-filters button').trigger('click')
+    await flushPromises()
+
+    expect(route.query).toEqual({ star: '4', sort: 'name' })
+    expect(getProducts).toHaveBeenLastCalledWith(expect.objectContaining({
+      search: undefined, star: 4, sort: 'name', page: 1,
+    }))
+  })
+
+  it('clears all applied filters and hydrates the empty form', async () => {
+    route.query = { search: 'coffee', star: '4', page: '2' }
+    const wrapper = mount(ProductsView)
+    await flushPromises()
+    await wrapper.get('#product-search').setValue('atiso')
+    await wrapper.get('.btn-reset').trigger('click')
+    await flushPromises()
+
+    expect(route.query).toEqual({})
+    expect((wrapper.get('#product-search').element as HTMLInputElement).value).toBe('')
+    expect(wrapper.find('.active-filters').exists()).toBe(false)
+    expect(getProducts).toHaveBeenLastCalledWith(expect.objectContaining({ search: undefined, star: undefined, page: 1 }))
+  })
+
+  it('corrects an out-of-range page using applied filters', async () => {
+    route.query = { search: 'coffee', page: '99' }
+    let resolveRequest!: (value: Awaited<ReturnType<typeof getProducts>>) => void
+    vi.mocked(getProducts).mockReturnValueOnce(new Promise((resolve) => { resolveRequest = resolve }))
+    const wrapper = mount(ProductsView)
+    await wrapper.get('#product-search').setValue('atiso')
+    resolveRequest({ items: [], page: 99, page_size: 12, total: 62 })
+    await flushPromises()
+
+    expect(router.replace).toHaveBeenCalledWith({ name: 'products', query: { search: 'coffee', page: '6' } })
+    expect(getProducts).toHaveBeenLastCalledWith(expect.objectContaining({ search: 'coffee', page: 6 }))
+  })
+
 })
