@@ -112,10 +112,11 @@ Không dùng `docker compose down -v`: lệnh này xóa cả database và ảnh 
 ## 5. Database và migration
 
 - Database mới tạo từ `database/schema.sql` luôn là phiên bản mới nhất, không cần chạy migration.
-- Database đã có dữ liệu: sau mỗi lần `git pull`, chạy các migration chưa chạy theo thứ tự. Mọi migration chạy lặp lại an toàn. Ví dụ:
+- Database đã có dữ liệu: sau mỗi lần `git pull`, chạy các migration chưa chạy theo thứ tự (từ file đầu tiên chưa chạy tới 010). Mọi migration chạy lặp lại an toàn. Ví dụ:
 
   ```powershell
   Get-Content .\database\migrations\009_tourism_location_submissions.sql -Raw | docker compose exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+  Get-Content .\database\migrations\010_normalize_constraint_names.sql -Raw | docker compose exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
   ```
 
 | Migration | Nội dung |
@@ -129,6 +130,7 @@ Không dùng `docker compose down -v`: lệnh này xóa cả database và ảnh 
 | 007_hide_demo_products | Ẩn dữ liệu demo khỏi trang công khai |
 | 008_tourism_location_map | Thông tin điểm du lịch cho bản đồ số |
 | 009_tourism_location_submissions | Chủ thể khai báo điểm du lịch, admin duyệt, yêu cầu cập nhật |
+| 010_normalize_constraint_names | Chuẩn hóa tên ràng buộc để database nâng cấp giống hệt database tạo mới |
 
 **Kiểm tra database khớp repo:** mở `tools/kiem-tra-database.sql` trong Query Tool của pgAdmin và chạy.
 Kết quả rỗng là khớp; dòng `thieu_so_voi_repo` là migration chưa chạy; dòng `thua_ngoai_repo` là thay đổi làm thẳng trên database mà repo không có.
