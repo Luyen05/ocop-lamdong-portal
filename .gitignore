@@ -18,3 +18,7 @@ coverage/
 firebase-service-account.json
 backend/uploads/
 .tmp/
+# Thư mục tạm của công cụ khác (Codex...) và tài liệu báo cáo: để ngoài repo
+.codex-*/
+artifacts/
+*.dump

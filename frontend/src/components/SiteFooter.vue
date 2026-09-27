@@ -3,9 +3,9 @@ import AppIcon from '@/components/ui/AppIcon.vue'
 
 const stats = [
   { icon: 'award', value: '3–5 sao', label: 'Sản phẩm OCOP được kiểm duyệt', tone: 'green' },
-  { icon: 'map', value: 'GIS', label: 'Bản đồ điểm đến nông nghiệp', tone: 'gold' },
-  { icon: 'building', value: 'HTX', label: 'Không gian dành cho chủ thể', tone: 'blue' },
-  { icon: 'map-pin', value: '124', label: 'Xã, phường & đặc khu Lâm Đồng', tone: 'purple' },
+  { icon: 'map', value: 'Bản đồ số', label: 'Vị trí và chỉ đường tới điểm du lịch', tone: 'gold' },
+  { icon: 'building', value: 'Chủ thể', label: 'HTX, doanh nghiệp tự khai báo sản phẩm', tone: 'blue' },
+  { icon: 'map-pin', value: '124', label: 'Xã, phường và đặc khu Lâm Đồng', tone: 'purple' },
 ]
 </script>
 
@@ -26,44 +26,43 @@ const stats = [
         <section class="footer-brand" aria-labelledby="footer-brand-title">
           <h2 id="footer-brand-title">
             <span><img src="/assets/figma/home/icon-brand.svg" alt="" /></span>
-            CỔNG OCOP LÂM ĐỒNG
+            Cổng OCOP Lâm Đồng
           </h2>
-          <p>Hệ thống Cổng thông tin trực tuyến quảng bá sản phẩm OCOP và Bản đồ số Du lịch Nông nghiệp tỉnh Lâm Đồng.</p>
+          <p>Cổng thông tin quảng bá sản phẩm OCOP và bản đồ số du lịch nông nghiệp tỉnh Lâm Đồng.</p>
           <address>
-            <span><AppIcon name="map-pin" :size="14" /> Trung tâm Hành chính Tỉnh Lâm Đồng, 36 Trần Phú, TP. Đà Lạt</span>
-            <span><AppIcon name="phone" :size="14" /> 0263.3822000 - 0263.3831200</span>
-            <span><AppIcon name="mail" :size="14" /> sonnptnt@lamdong.gov.vn</span>
+            <span><AppIcon name="map-pin" :size="14" /> Trung tâm Hành chính tỉnh Lâm Đồng, 36 Trần Phú, Đà Lạt</span>
+            <span><AppIcon name="phone" :size="14" /> <a href="tel:02633822000">0263.3822000</a> - <a href="tel:02633831200">0263.3831200</a></span>
+            <span><AppIcon name="mail" :size="14" /> <a href="mailto:sonnptnt@lamdong.gov.vn">sonnptnt@lamdong.gov.vn</a></span>
           </address>
         </section>
 
         <nav aria-labelledby="footer-system-title">
-          <h2 id="footer-system-title">Danh Mục Hệ Thống</h2>
+          <h2 id="footer-system-title">Khám phá</h2>
           <RouterLink to="/">Trang chủ</RouterLink>
-          <RouterLink to="/san-pham">Tra cứu sản phẩm OCOP 3-5 sao</RouterLink>
-          <RouterLink to="/diem-du-lich">Khám phá điểm du lịch nông nghiệp</RouterLink>
-          <RouterLink to="/ban-do">Bản đồ số GIS &amp; Chỉ đường</RouterLink>
-          <RouterLink to="/tin-tuc">Tin tức &amp; Sự kiện OCOP</RouterLink>
+          <RouterLink to="/san-pham">Sản phẩm OCOP 3–5 sao</RouterLink>
+          <RouterLink to="/diem-du-lich">Điểm du lịch nông nghiệp</RouterLink>
+          <RouterLink to="/ban-do">Bản đồ số và chỉ đường</RouterLink>
+          <RouterLink to="/tin-tuc">Tin tức OCOP</RouterLink>
         </nav>
 
         <section aria-labelledby="footer-product-title">
-          <h2 id="footer-product-title">Nhóm Sản Phẩm OCOP</h2>
+          <h2 id="footer-product-title">Nhóm sản phẩm OCOP</h2>
           <p>• Nông sản tươi Đà Lạt - Lâm Đồng</p>
-          <p>• Thực phẩm chế biến &amp; Mứt đặc sản</p>
-          <p>• Đồ uống, Trà &amp; Cà phê Arabica Cầu Đất</p>
-          <p>• Thảo dược, Atisô &amp; Đông trùng hạ thảo</p>
-          <p>• Làng nghề &amp; Thủ công mỹ nghệ</p>
+          <p>• Thực phẩm chế biến và mứt đặc sản</p>
+          <p>• Đồ uống, trà và cà phê Arabica Cầu Đất</p>
+          <p>• Thảo dược, atiso và đông trùng hạ thảo</p>
+          <p>• Làng nghề và thủ công mỹ nghệ</p>
         </section>
 
         <aside class="info-card">
-          <strong><AppIcon name="shieldCheck" :size="15" /> THÔNG TIN MINH BẠCH</strong>
+          <strong><AppIcon name="shieldCheck" :size="15" /> Thông tin minh bạch</strong>
           <p>Nội dung sản phẩm, chủ thể và điểm đến chỉ được công khai sau khi hoàn thành quy trình kiểm duyệt.</p>
           <span>Dữ liệu cập nhật theo phê duyệt</span>
         </aside>
       </div>
 
       <div class="footer-bottom">
-        <span>© 2026 Cổng Thông Tin Quảng Bá OCOP &amp; Bản Đồ Số Du Lịch Nông Nghiệp Lâm Đồng.</span>
-        <span>Phát triển với Vue 3 / FastAPI / PostGIS</span>
+        <span>© 2026 Cổng thông tin quảng bá OCOP và bản đồ số du lịch nông nghiệp Lâm Đồng.</span>
       </div>
     </div>
   </footer>
@@ -71,26 +70,27 @@ const stats = [
 
 <style scoped>
 .site-footer {
-  padding: 48px 0 28px;
+  padding: var(--ocop-space-12) 0 var(--ocop-space-8);
+  border-top: 4px solid var(--ocop-daquy-400);
   background: var(--ocop-sidebar);
   color: var(--ocop-sidebar-muted);
 }
 
 .stat-grid {
   display: grid;
-  padding-bottom: 32px;
+  padding-bottom: var(--ocop-space-8);
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 16px;
-  border-bottom: 1px solid rgb(148 163 184 / 12%);
+  gap: var(--ocop-space-4);
+  border-bottom: 1px solid color-mix(in srgb, var(--ocop-neutral-400) 12%, transparent);
 }
 
 .stat-card {
   display: flex;
   min-height: 82px;
-  padding: 16px;
+  padding: var(--ocop-space-4);
   align-items: center;
-  gap: 12px;
-  border: 1px solid rgb(148 163 184 / 10%);
+  gap: var(--ocop-space-3);
+  border: 1px solid color-mix(in srgb, var(--ocop-neutral-400) 10%, transparent);
   border-radius: var(--ocop-radius-md);
   background: var(--ocop-sidebar-card);
 }
@@ -102,13 +102,13 @@ const stats = [
   flex: 0 0 auto;
   place-items: center;
   border-radius: var(--ocop-radius-sm);
-  font-size: 18px;
+  font-size: var(--ocop-font-size-title-sm);
 }
 
-.tone-green .stat-icon { background: rgb(102 201 150 / 14%); color: #83d7ad; }
-.tone-gold .stat-icon { background: rgb(217 155 36 / 14%); color: #e9b958; }
-.tone-blue .stat-icon { background: rgb(40 120 165 / 18%); color: #75b5d6; }
-.tone-purple .stat-icon { background: rgb(141 99 164 / 16%); color: #c09bd0; }
+.tone-green .stat-icon { background: color-mix(in srgb, var(--ocop-daquy-400) 14%, transparent); color: var(--ocop-daquy-300); }
+.tone-gold .stat-icon { background: color-mix(in srgb, var(--ocop-mist-300) 16%, transparent); color: var(--ocop-mist-200); }
+.tone-blue .stat-icon { background: color-mix(in srgb, var(--ocop-blue) 18%, transparent); color: var(--ocop-blue-300); }
+.tone-purple .stat-icon { background: color-mix(in srgb, var(--ocop-tone-purple) 16%, transparent); color: var(--ocop-tone-purple-light); }
 
 .stat-card strong,
 .stat-card small {
@@ -116,31 +116,31 @@ const stats = [
 }
 
 .stat-card strong {
-  color: #fff;
-  font-size: 18px;
+  color: var(--ocop-white);
+  font-size: var(--ocop-font-size-title-sm);
   line-height: 22px;
 }
 
 .stat-card small {
   margin-top: 2px;
-  color: #7f8da4;
-  font-size: 11px;
+  color: var(--ocop-text-on-dark-muted);
+  font-size: var(--ocop-font-size-caption);
 }
 
 .footer-grid {
   display: grid;
-  padding: 36px 0 32px;
+  padding: 36px 0 var(--ocop-space-8);
   grid-template-columns: 1.15fr 1fr 1.1fr 1fr;
-  gap: 48px;
-  border-bottom: 1px solid rgb(148 163 184 / 12%);
+  gap: var(--ocop-space-12);
+  border-bottom: 1px solid color-mix(in srgb, var(--ocop-neutral-400) 12%, transparent);
 }
 
 .footer-grid h2 {
-  margin: 0 0 12px;
-  color: #f8fafc;
-  font-size: 12px;
+  margin: 0 0 var(--ocop-space-3);
+  color: var(--ocop-white);
+  font-size: var(--ocop-font-size-body);
   font-weight: 750;
-  line-height: 18px;
+  line-height: 1.4;
 }
 
 .footer-brand h2 {
@@ -154,8 +154,9 @@ const stats = [
   width: 28px;
   height: 28px;
   place-items: center;
-  border-radius: 7px;
-  background: var(--ocop-primary-700);
+  border-radius: var(--ocop-radius-sm);
+  background: var(--ocop-mist-700);
+  box-shadow: inset 0 -3px 0 var(--ocop-daquy-400);
 }
 
 .footer-brand h2 img {
@@ -167,10 +168,10 @@ const stats = [
 .footer-grid a,
 .footer-grid address {
   margin: 0;
-  color: #8290a6;
-  font-size: 11px;
+  color: var(--ocop-text-on-dark-muted);
+  font-size: var(--ocop-font-size-small);
   font-style: normal;
-  line-height: 18px;
+  line-height: 1.6;
   text-decoration: none;
 }
 
@@ -180,12 +181,25 @@ const stats = [
   flex-direction: column;
 }
 
+.footer-grid nav a {
+  display: flex;
+  min-height: 24px;
+  align-items: center;
+}
+
+@media (pointer: coarse) {
+  .footer-grid nav a {
+    min-height: var(--ocop-control-md);
+  }
+}
+
 .footer-grid a:hover {
-  color: #d0fae5;
+  color: var(--ocop-white);
+  text-decoration: underline;
 }
 
 .footer-brand > p {
-  margin-bottom: 12px;
+  margin-bottom: var(--ocop-space-3);
 }
 
 .footer-brand address {
@@ -201,23 +215,23 @@ const stats = [
 
 .footer-brand address :deep(.app-icon) {
   margin-top: 2px;
-  color: #83d7ad;
+  color: var(--ocop-mint-300);
 }
 
 .info-card {
   align-self: start;
-  padding: 16px;
-  border: 1px solid rgb(148 163 184 / 14%);
+  padding: var(--ocop-space-4);
+  border: 1px solid color-mix(in srgb, var(--ocop-neutral-400) 14%, transparent);
   border-radius: var(--ocop-radius-md);
-  background: color-mix(in srgb, var(--ocop-sidebar-card) 88%, white);
+  background: color-mix(in srgb, var(--ocop-sidebar-card) 88%, var(--ocop-white));
 }
 
 .info-card strong {
   display: flex;
   align-items: center;
   gap: 6px;
-  color: #6ee7b7;
-  font-size: 11px;
+  color: var(--ocop-daquy-300);
+  font-size: var(--ocop-font-size-caption);
 }
 
 .info-card p {
@@ -228,20 +242,20 @@ const stats = [
   display: block;
   padding: 7px 10px;
   border-radius: 6px;
-  background: var(--ocop-primary-700);
-  color: #fff;
-  font-size: 11px;
+  background: var(--ocop-daquy-400);
+  color: var(--ocop-mist-950);
+  font-size: var(--ocop-font-size-caption);
   font-weight: 700;
   text-align: center;
 }
 
 .footer-bottom {
   display: flex;
-  padding-top: 24px;
+  padding-top: var(--ocop-space-6);
   justify-content: space-between;
-  gap: 20px;
-  color: #65748b;
-  font-size: 11px;
+  gap: var(--ocop-space-5);
+  color: var(--ocop-text-on-dark-muted);
+  font-size: var(--ocop-font-size-caption);
 }
 
 @media (max-width: 991.98px) {
@@ -251,13 +265,19 @@ const stats = [
   }
 
   .footer-grid {
-    gap: 32px;
+    gap: var(--ocop-space-8);
   }
 }
 
 @media (max-width: 575.98px) {
   .site-footer {
-    padding-top: 32px;
+    padding-top: var(--ocop-space-8);
+  }
+
+  /* Điện thoại: bỏ thẻ số liệu và danh sách nhóm sản phẩm để footer gọn (audit G-08). */
+  .stat-grid,
+  .footer-grid > section:not(.footer-brand) {
+    display: none;
   }
 
   .stat-grid,

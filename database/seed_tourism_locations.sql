@@ -11,7 +11,8 @@ BEGIN;
 
 INSERT INTO tourism_locations (
   name, slug, type, district, address, geom, contact_phone, opening_hours,
-  ticket_price, services, description, website, source_url, status
+  ticket_price, services, description, website, source_url, status,
+  reviewed_by, reviewed_at
 )
 VALUES
   (
@@ -28,7 +29,9 @@ VALUES
     'Đồi chè và vườn cà phê lâu năm ở vùng Cầu Đất, phía đông nam trung tâm Đà Lạt. Du khách có thể dạo đồi chè, tìm hiểu quy trình chế biến trà và ngắm cảnh cao nguyên.',
     NULL,
     'https://www.foody.vn/lam-dong/doi-che-cau-dat',
-    'approved'
+    'approved',
+    (SELECT id FROM users WHERE email = 'public-reference-admin@local.invalid'),
+    CURRENT_TIMESTAMP
   ),
   (
     'Mê Linh Coffee Garden',
@@ -44,7 +47,9 @@ VALUES
     'Vườn cà phê trên sườn đồi khu vực Tà Nung, có tầm nhìn ra thung lũng. Du khách có thể tìm hiểu cây cà phê và thưởng thức cà phê ngay tại vườn.',
     NULL,
     'https://www.foody.vn/lam-dong/me-linh-cafe',
-    'approved'
+    'approved',
+    (SELECT id FROM users WHERE email = 'public-reference-admin@local.invalid'),
+    CURRENT_TIMESTAMP
   ),
   (
     'Nông trại Dalat Milk',
@@ -60,7 +65,9 @@ VALUES
     'Nông trại chăn nuôi bò sữa với đồng cỏ và cảnh quan rộng. Khách có thể tham quan, chụp ảnh và mua các sản phẩm từ sữa tại chỗ.',
     NULL,
     'https://www.foody.vn/lam-dong/nong-trai-dalat-milk',
-    'approved'
+    'approved',
+    (SELECT id FROM users WHERE email = 'public-reference-admin@local.invalid'),
+    CURRENT_TIMESTAMP
   ),
   (
     'Đồi chè Tâm Châu',
@@ -76,7 +83,9 @@ VALUES
     'Đồi chè rộng thuộc vùng chè Bảo Lâm - Bảo Lộc, một trong những vùng trồng chè lớn của Lâm Đồng. Điểm dừng chân tham quan, chụp ảnh và tìm hiểu cây chè.',
     NULL,
     'https://www.foody.vn/lam-dong/doi-che-tam-chau',
-    'approved'
+    'approved',
+    (SELECT id FROM users WHERE email = 'public-reference-admin@local.invalid'),
+    CURRENT_TIMESTAMP
   ),
   (
     'Vườn dâu Chào Đà Lạt',
@@ -92,7 +101,9 @@ VALUES
     'Vườn dâu tây phục vụ khách tham quan và tự tay hái dâu, nằm trên tuyến tỉnh lộ 723 thuộc khu vực Lạc Dương.',
     NULL,
     'https://www.foody.vn/lam-dong/vuon-dau-chao-da-lat',
-    'approved'
+    'approved',
+    (SELECT id FROM users WHERE email = 'public-reference-admin@local.invalid'),
+    CURRENT_TIMESTAMP
   ),
   (
     'Vườn dâu tây Cô Liên',
@@ -108,7 +119,9 @@ VALUES
     'Vườn dâu tây trong khu dân cư phía bắc Đà Lạt, khách có thể tham quan và hái dâu tại vườn.',
     NULL,
     'https://www.foody.vn/lam-dong/vuon-dau-tay-co-lien',
-    'approved'
+    'approved',
+    (SELECT id FROM users WHERE email = 'public-reference-admin@local.invalid'),
+    CURRENT_TIMESTAMP
   ),
   (
     'Vườn hồng Nhà Tom',
@@ -124,7 +137,9 @@ VALUES
     'Vườn hồng gắn với mùa hồng và đặc sản hồng treo gió của Đà Lạt, phục vụ khách tham quan và chụp ảnh.',
     NULL,
     'https://www.foody.vn/lam-dong/vuon-hong-nha-tom',
-    'approved'
+    'approved',
+    (SELECT id FROM users WHERE email = 'public-reference-admin@local.invalid'),
+    CURRENT_TIMESTAMP
   ),
   (
     'Vườn hoa Cẩm Tú Cầu',
@@ -140,7 +155,9 @@ VALUES
     'Vườn hoa cẩm tú cầu ở khu vực Xuân Thọ, phía đông Đà Lạt, thu hút khách tham quan và chụp ảnh.',
     NULL,
     'https://www.foody.vn/lam-dong/cam-tu-cau-garden',
-    'approved'
+    'approved',
+    (SELECT id FROM users WHERE email = 'public-reference-admin@local.invalid'),
+    CURRENT_TIMESTAMP
   ),
   (
     'Cánh đồng Lavender hồ Tuyền Lâm',
@@ -156,7 +173,9 @@ VALUES
     'Cánh đồng hoa oải hương ven khu vực hồ Tuyền Lâm, có không gian ngắm hoa và phục vụ đồ uống.',
     NULL,
     'https://www.foody.vn/lam-dong/canh-dong-lavender-ho-tuyen-lam',
-    'approved'
+    'approved',
+    (SELECT id FROM users WHERE email = 'public-reference-admin@local.invalid'),
+    CURRENT_TIMESTAMP
   )
 ON CONFLICT (slug) DO UPDATE SET
   name = EXCLUDED.name,

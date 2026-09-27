@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue'
 
 import AppIcon from '@/components/ui/AppIcon.vue'
 import type { ProductListItem } from '@/types/product'
+import { categoryTheme } from '@/utils/category'
 
 const props = defineProps<{
   product: ProductListItem
@@ -17,6 +18,18 @@ watch(
   },
 )
 
+// Ảnh "dữ liệu tham khảo" dùng chung cho mọi sản phẩm chưa có ảnh thật: thay bằng khung giữ chỗ
+// riêng cho từng sản phẩm để các thẻ không giống hệt nhau, vẫn ghi rõ là chưa có ảnh.
+const isReferenceImage = computed(() => props.product.primary_image_url?.includes('/public-reference') ?? false)
+const showImage = computed(() => Boolean(props.product.primary_image_url) && !imageFailed.value && !isReferenceImage.value)
+// Khung ảnh chờ và nhãn nhóm dùng cùng màu với chip danh mục (utils/category.ts).
+const theme = computed(() => categoryTheme(props.product.category.slug))
+const themeStyle = computed(() => ({
+  '--placeholder-bg': theme.value.background,
+  '--placeholder-fg': theme.value.foreground,
+}))
+const hasPrice = computed(() => props.product.price !== null && props.product.price > 0)
+
 const formattedPrice = computed(() => {
   if (props.product.price === null || props.product.price <= 0) return 'Liên hệ'
   return new Intl.NumberFormat('vi-VN', {
@@ -29,39 +42,44 @@ const formattedPrice = computed(() => {
 </script>
 
 <template>
-  <article class="product-card">
+  <article class="product-card" :style="themeStyle">
     <RouterLink class="product-card-link" :to="`/san-pham/${product.slug}`" :aria-label="product.name">
       <div class="product-media">
         <img
-          v-if="product.primary_image_url && !imageFailed"
-          :src="product.primary_image_url"
+          v-if="showImage"
+          :src="product.primary_image_url ?? undefined"
           :alt="product.name"
           loading="lazy"
           @error="imageFailed = true"
         />
-        <div v-else class="product-placeholder" aria-hidden="true">
-          <span class="placeholder-mark">OCOP</span>
-          <span>Lâm Đồng</span>
+        <div v-else class="product-placeholder">
+          <span class="placeholder-mark" aria-hidden="true"><AppIcon :name="theme.icon" :size="26" /></span>
+          <span class="placeholder-note">Ảnh sản phẩm đang cập nhật</span>
         </div>
-        <span class="star-badge"><AppIcon name="star" :size="12" /> OCOP {{ product.star }} sao</span>
+        <span class="star-badge">
+          <span class="stars" aria-hidden="true">
+            <AppIcon v-for="index in product.star" :key="index" name="star" :size="11" />
+          </span>
+          OCOP {{ product.star }} sao
+        </span>
       </div>
 
       <div class="product-body">
         <span class="product-location"><AppIcon name="map-pin" :size="14" /> {{ product.subject.district }}</span>
         <h2>{{ product.name }}</h2>
         <p class="product-meta">
-          {{ product.category.name }}
-          <span v-if="product.vietgap_code"><AppIcon name="checkCircle" :size="12" /> VietGAP</span>
+          <span class="category-tag">{{ product.category.name }}</span>
+          <span v-if="product.vietgap_code" class="vietgap"><AppIcon name="checkCircle" :size="12" /> VietGAP</span>
         </p>
 
-        <div class="product-subject">
-          <span>Chủ thể</span>
-          <strong :title="product.subject.name">{{ product.subject.name }}</strong>
-        </div>
+        <p class="product-subject" :title="product.subject.name">
+          <AppIcon name="building" :size="13" />
+          <span>{{ product.subject.name }}</span>
+        </p>
 
         <div class="product-price-row">
-          <div class="product-price">
-            <strong>{{ formattedPrice }}</strong>
+          <div class="product-price" :class="{ 'is-contact': !hasPrice }">
+            <strong>{{ hasPrice ? formattedPrice : 'Giá: Liên hệ' }}</strong>
             <small v-if="product.price !== null && product.price > 0 && product.unit">/ {{ product.unit }}</small>
           </div>
           <span v-if="product.rating_avg > 0" class="product-rating"><AppIcon name="star" :size="12" /> {{ product.rating_avg.toFixed(1) }}</span>
@@ -74,6 +92,7 @@ const formattedPrice = computed(() => {
 <style scoped>
 .product-card {
   display: flex;
+  container-type: inline-size;
   height: 100%;
   min-width: 0;
   overflow: hidden;
@@ -81,8 +100,8 @@ const formattedPrice = computed(() => {
   border: 1px solid var(--ocop-border);
   border-radius: var(--ocop-radius-lg);
   background: var(--ocop-card);
-  box-shadow: 0 4px 12px rgb(15 23 43 / 5%);
-  transition: transform 180ms ease, box-shadow 180ms ease;
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--ocop-neutral-900) 5%, transparent);
+  transition: transform var(--ocop-transition), box-shadow var(--ocop-transition);
 }
 
 .product-card-link {
@@ -96,15 +115,15 @@ const formattedPrice = computed(() => {
 
 .product-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 16px 28px rgb(15 23 43 / 12%);
+  box-shadow: 0 16px 28px color-mix(in srgb, var(--ocop-neutral-900) 12%, transparent);
 }
 
 .product-media {
   position: relative;
   display: block;
   overflow: hidden;
-  aspect-ratio: 1.4 / 1;
-  background: #e9eef2;
+  aspect-ratio: 16 / 10;
+  background: var(--ocop-border-soft);
 }
 
 .product-media > img,
@@ -123,46 +142,61 @@ const formattedPrice = computed(() => {
 }
 
 .product-placeholder {
-  display: grid;
-  place-content: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ocop-space-2);
   background:
-    radial-gradient(circle at 20% 15%, rgb(255 255 255 / 75%), transparent 7rem),
-    linear-gradient(145deg, #dcead8, #a9c6a4);
-  color: var(--ocop-primary-900);
+    radial-gradient(circle at 80% 20%, color-mix(in srgb, var(--ocop-white) 70%, transparent), transparent 45%),
+    var(--placeholder-bg, var(--ocop-mist-100));
   text-align: center;
 }
 
-.product-placeholder span {
-  color: rgb(0 79 59 / 70%);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-
 .product-placeholder .placeholder-mark {
-  color: var(--ocop-primary-900);
-  font-size: 25px;
+  display: grid;
+  width: 56px;
+  height: 56px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--ocop-card);
+  box-shadow: var(--ocop-shadow-sm);
+  color: var(--placeholder-fg, var(--ocop-mist-800));
+  font-size: var(--ocop-font-size-title-md);
   font-weight: 800;
-  letter-spacing: 0.1em;
 }
 
+.product-placeholder .placeholder-note {
+  color: var(--ocop-mist-700);
+  font-size: var(--ocop-font-size-caption);
+  font-weight: 600;
+}
+
+/* Huy hiệu sao OCOP (audit G-03): nền xanh đêm, sao vàng dã quỳ, chữ trắng. Chữ 16:1, sao 10:1. */
 .star-badge {
   position: absolute;
   z-index: 1;
-  padding: 5px 10px;
-  border-radius: var(--ocop-radius-sm);
+  top: var(--ocop-space-3);
+  left: var(--ocop-space-3);
+  display: inline-flex;
+  min-height: 28px;
+  align-items: center;
+  gap: var(--ocop-space-1);
+  padding: 0 var(--ocop-space-3);
+  border-radius: var(--ocop-radius-pill);
+  background: var(--ocop-mist-950);
+  box-shadow: 0 3px 8px color-mix(in srgb, var(--ocop-mist-950) 24%, transparent);
   color: var(--ocop-white);
-  font-size: 11px;
+  font-size: var(--ocop-font-size-caption);
   font-weight: 700;
-  line-height: 14px;
+  line-height: 1;
+  white-space: nowrap;
 }
 
-.star-badge {
-  top: 12px;
-  left: 12px;
-  background: var(--ocop-star-strong);
-  box-shadow: 0 3px 8px rgb(151 60 0 / 20%);
+.stars {
+  display: inline-flex;
+  gap: 1px;
+  color: var(--ocop-daquy-400);
 }
 
 .product-body {
@@ -170,15 +204,15 @@ const formattedPrice = computed(() => {
   min-height: 188px;
   flex: 1;
   flex-direction: column;
-  padding: 16px;
+  padding: var(--ocop-space-4);
 }
 
 .product-location {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--ocop-space-1);
   color: var(--ocop-text-secondary);
-  font-size: 12px;
+  font-size: var(--ocop-font-size-caption);
   font-weight: 500;
 }
 
@@ -186,9 +220,9 @@ const formattedPrice = computed(() => {
   display: -webkit-box;
   overflow: hidden;
   min-height: 42px;
-  margin: 7px 0 4px;
+  margin: 7px 0 var(--ocop-space-1);
   color: var(--ocop-text-primary);
-  font-size: 16px;
+  font-size: var(--ocop-font-size-body-lg);
   font-weight: 750;
   line-height: 1.4;
   -webkit-box-orient: vertical;
@@ -200,33 +234,43 @@ const formattedPrice = computed(() => {
   margin: 0;
   align-items: center;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--ocop-space-2);
   color: var(--ocop-text-secondary);
-  font-size: 12px;
+  font-size: var(--ocop-font-size-caption);
 }
 
-.product-meta span {
+/* Nhãn nhóm cùng màu với chip danh mục. */
+.category-tag {
+  display: inline-flex;
+  padding: 2px var(--ocop-space-2);
+  border-radius: var(--ocop-radius-pill);
+  background: var(--placeholder-bg, var(--ocop-mist-100));
+  color: var(--placeholder-fg, var(--ocop-mist-700));
+  font-weight: 700;
+}
+
+.product-meta .vietgap {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--ocop-space-1);
   color: var(--ocop-success);
   font-weight: 700;
 }
 
 .product-subject {
-  display: grid;
+  display: flex;
   min-width: 0;
-  margin-top: auto;
-  padding-top: 12px;
-  gap: 2px;
-  color: var(--ocop-text-tertiary);
-  font-size: 11px;
+  margin: auto 0 0;
+  padding-top: var(--ocop-space-3);
+  align-items: center;
+  gap: var(--ocop-space-1);
+  color: var(--ocop-text-muted);
+  font-size: var(--ocop-font-size-caption);
+  font-weight: 600;
 }
 
-.product-subject strong {
+.product-subject span {
   overflow: hidden;
-  color: var(--ocop-text-muted);
-  font-size: 12px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -240,7 +284,7 @@ const formattedPrice = computed(() => {
 .product-price-row {
   margin-top: 7px;
   justify-content: space-between;
-  gap: 8px;
+  gap: var(--ocop-space-2);
 }
 
 .product-price {
@@ -250,29 +294,82 @@ const formattedPrice = computed(() => {
 
 .product-price strong {
   color: var(--ocop-primary-700);
-  font-size: 16px;
+  font-size: var(--ocop-font-size-body-lg);
   line-height: 20px;
   white-space: nowrap;
+}
+
+.product-price.is-contact strong {
+  color: var(--ocop-text-muted);
+  font-size: var(--ocop-font-size-body);
+  font-weight: 600;
 }
 
 .product-price small {
   overflow: hidden;
   color: var(--ocop-text-tertiary);
-  font-size: 11px;
+  font-size: var(--ocop-font-size-caption);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .product-rating {
+  display: inline-flex;
   flex: 0 0 auto;
-  color: var(--ocop-star);
-  font-size: 12px;
+  align-items: center;
+  gap: 2px;
+  color: var(--ocop-daquy-700);
+  font-size: var(--ocop-font-size-caption);
   font-weight: 700;
+}
+
+.product-rating :deep(.app-icon) {
+  color: var(--ocop-daquy-500);
+}
+
+/* Thẻ hẹp (lưới 2 cột trên điện thoại): thu gọn chữ và khoảng cách. */
+@container (max-width: 220px) {
+  .product-body {
+    min-height: 0;
+    padding: var(--ocop-space-3);
+  }
+
+  .product-body h2 {
+    min-height: 0;
+    font-size: var(--ocop-font-size-body);
+  }
+
+  .star-badge {
+    top: var(--ocop-space-2);
+    left: var(--ocop-space-2);
+    padding: 0 var(--ocop-space-2);
+  }
+
+  .stars {
+    display: none;
+  }
+
+  .product-placeholder {
+    padding-top: var(--ocop-space-8);
+  }
+
+  .product-placeholder .placeholder-mark {
+    width: 40px;
+    height: 40px;
+  }
+
+  .product-placeholder .placeholder-note {
+    display: none;
+  }
+
+  .product-price strong {
+    font-size: var(--ocop-font-size-body);
+  }
 }
 
 .product-card-link:focus-visible {
   border-radius: inherit;
-  outline: 3px solid rgb(53 164 117 / 28%);
+  outline: 3px solid color-mix(in srgb, var(--ocop-primary-500) 28%, transparent);
   outline-offset: -3px;
 }
 </style>

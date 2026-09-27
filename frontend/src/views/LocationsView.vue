@@ -277,7 +277,7 @@ onUnmounted(() => {
 
 .page-banner {
   background:
-    radial-gradient(circle at 82% 25%, rgb(184 214 145 / 52%), transparent 22rem),
+    radial-gradient(circle at 82% 25%, color-mix(in srgb, var(--ocop-lime-300) 52%, transparent), transparent 22rem),
     var(--ocop-mint-soft);
 }
 
@@ -299,7 +299,7 @@ onUnmounted(() => {
 .page-banner p {
   max-width: 42rem;
   margin: 0;
-  color: #627066;
+  color: var(--ocop-slate);
 }
 
 .page-banner .btn {
@@ -313,13 +313,13 @@ onUnmounted(() => {
   margin-bottom: 1.75rem;
   padding: 1.25rem;
   gap: 1rem;
-  border: 1px solid rgb(29 72 39 / 10%);
+  border: 1px solid color-mix(in srgb, var(--ocop-primary-950) 10%, transparent);
   border-radius: 1rem;
-  background: #fff;
+  background: var(--ocop-card);
 }
 
 .filter-bar .form-label {
-  color: #4f5d52;
+  color: var(--ocop-sage-800);
   font-size: 0.84rem;
   font-weight: 700;
 }
@@ -356,7 +356,7 @@ onUnmounted(() => {
   min-height: 24rem;
   padding: 1rem;
   border-radius: 1rem;
-  background: #fff;
+  background: var(--ocop-card);
 }
 
 .media-placeholder {
@@ -367,21 +367,21 @@ onUnmounted(() => {
 
 .empty-state {
   padding: 4rem 1.5rem;
-  border: 1px dashed #becbbb;
+  border: 1px dashed var(--ocop-border-strong);
   border-radius: 1rem;
-  background: #fff;
+  background: var(--ocop-card);
   text-align: center;
 }
 
 .empty-state strong {
   display: block;
-  color: #203b27;
+  color: var(--ocop-primary-950);
   font-size: 1.15rem;
 }
 
 .empty-state p {
   margin: 0.5rem 0 1.25rem;
-  color: #6b756d;
+  color: var(--ocop-slate);
 }
 
 .pagination-wrap {
@@ -390,7 +390,7 @@ onUnmounted(() => {
 }
 
 .pagination-wrap span {
-  color: #5f6b62;
+  color: var(--ocop-slate);
   font-size: 0.9rem;
   font-weight: 650;
 }

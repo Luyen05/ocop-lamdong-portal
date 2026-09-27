@@ -104,30 +104,42 @@ describe('ProductsView', () => {
     const wrapper = mount(ProductsView)
     await flushPromises()
     await wrapper.get('#product-search').setValue('atiso')
-    await wrapper.get('.alert-danger button').trigger('click')
+    await wrapper.get('.state-box.is-error button').trigger('click')
     await flushPromises()
 
     expect(getProducts).toHaveBeenCalledTimes(2)
     expect(getProducts).toHaveBeenLastCalledWith(expect.objectContaining({ search: 'coffee' }))
     expect(route.query).toEqual({ search: 'coffee' })
-    expect(wrapper.find('.alert-danger').exists()).toBe(false)
+    expect(wrapper.find('.state-box.is-error').exists()).toBe(false)
   })
 
   it('submits draft filters through the URL and resets the page', async () => {
+    route.query = { search: 'coffee', star: '4', page: '3' }
+    const wrapper = mount(ProductsView)
+    await flushPromises()
+    await wrapper.get('#product-search').setValue('atiso')
+    await wrapper.get('form').trigger('submit')
+    await flushPromises()
+
+    expect(route.query).toEqual({ search: 'atiso', star: '4' })
+    expect(getProducts).toHaveBeenCalledTimes(2)
+    expect(getProducts).toHaveBeenLastCalledWith(expect.objectContaining({
+      search: 'atiso', star: 4, page: 1,
+    }))
+    expect(wrapper.get('.active-filters').text()).toContain('atiso')
+  })
+
+  it('applies a star button on top of applied filters without the draft search', async () => {
     route.query = { search: 'coffee', page: '3' }
     const wrapper = mount(ProductsView)
     await flushPromises()
     await wrapper.get('#product-search').setValue('atiso')
-    await wrapper.get('#product-star').setValue('3')
-    await wrapper.get('form').trigger('submit')
+    const threeStar = wrapper.findAll('.star-segment button').find((button) => button.text().includes('3 sao'))!
+    await threeStar.trigger('click')
     await flushPromises()
 
-    expect(route.query).toEqual({ search: 'atiso', star: '3' })
-    expect(getProducts).toHaveBeenCalledTimes(2)
-    expect(getProducts).toHaveBeenLastCalledWith(expect.objectContaining({
-      search: 'atiso', star: 3, page: 1,
-    }))
-    expect(wrapper.get('.active-filters').text()).toContain('atiso')
+    expect(route.query).toEqual({ search: 'coffee', star: '3' })
+    expect(getProducts).toHaveBeenLastCalledWith(expect.objectContaining({ search: 'coffee', star: 3, page: 1 }))
   })
 
   it('hydrates form, chips and requests on back/forward query changes', async () => {
@@ -139,7 +151,8 @@ describe('ProductsView', () => {
     await flushPromises()
 
     expect((wrapper.get('#product-search').element as HTMLInputElement).value).toBe('atiso')
-    expect((wrapper.get('#product-star').element as HTMLSelectElement).value).toBe('3')
+    const pressed = wrapper.findAll('.star-segment button').filter((button) => button.attributes('aria-pressed') === 'true')
+    expect(pressed.map((button) => button.text())).toEqual(['3 sao'])
     expect(wrapper.get('.active-filters').text()).toContain('atiso')
     expect(getProducts).toHaveBeenLastCalledWith(expect.objectContaining({ search: 'atiso', star: 3, page: 2 }))
 
@@ -155,7 +168,6 @@ describe('ProductsView', () => {
     const wrapper = mount(ProductsView)
     await flushPromises()
     await wrapper.get('#product-search').setValue('atiso')
-    await wrapper.get('#product-star').setValue('3')
     await wrapper.get('.active-filters button').trigger('click')
     await flushPromises()
 
