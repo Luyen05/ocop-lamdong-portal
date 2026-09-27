@@ -1,251 +1,185 @@
-# Cổng thông tin OCOP và du lịch nông nghiệp Lâm Đồng
+# Cổng thông tin OCOP và bản đồ số du lịch nông nghiệp Lâm Đồng
 
-Dự án nhóm xây dựng cổng thông tin quảng bá sản phẩm OCOP, điểm du lịch nông
-nghiệp và bản đồ số tỉnh Lâm Đồng.
+Đồ án chuyên ngành: **Xây dựng Cổng thông tin quảng bá nông sản OCOP và bản đồ số du lịch nông nghiệp tỉnh Lâm Đồng**.
 
-## Công nghệ chính
+Mốc: báo cáo tiến độ đợt 2 ngày **15/10/2026**, hạn nộp đồ án **15/11/2026**.
+Kế hoạch chi tiết và tự đánh giá tiến độ: [`docs/KE_HOACH_HOAN_THANH_DO_AN.md`](docs/KE_HOACH_HOAN_THANH_DO_AN.md).
 
-- Backend: FastAPI và PostgreSQL/PostGIS.
-- Frontend: Vue 3, Vue Router, Axios và Bootstrap/CSS.
-- Bản đồ: Leaflet (gom cụm bằng Leaflet.markercluster), GeoJSON, PostGIS và OSRM thông qua backend.
+---
 
-## Thiết lập môi trường
+## 1. Chức năng hiện có
 
-1. Sao chép `.env.example` thành `.env`.
-2. Thay tất cả giá trị `change-me` bằng thông tin chỉ dùng trên máy cá nhân.
-3. Không commit `.env` hoặc Firebase service account.
+✅ đã xong · 🟡 làm một phần · ⬜ chưa làm (xem kế hoạch để biết tuần thực hiện).
 
-Máy phát triển chỉ cần Git và Docker Desktop. Python, Node.js, npm và toàn bộ
-dependency của dự án được cài trong Docker image.
+**Người dùng, khách du lịch**
 
-Cấu hình Compose hiện tại dành cho phát triển local, có hot reload và Vite dev
-server; không dùng trực tiếp cấu hình này để triển khai production.
+- ✅ Trang chủ: ảnh thật, tìm kiếm sản phẩm hoặc điểm du lịch, bản đồ xem trước, nhóm sản phẩm, sản phẩm nổi bật.
+- ✅ Danh sách sản phẩm OCOP: tìm kiếm, lọc theo nhóm, hạng sao, địa bàn; chi tiết sản phẩm kèm điểm du lịch liên quan.
+- ✅ Danh sách và chi tiết điểm du lịch nông nghiệp.
+- ✅ Bản đồ số: gom cụm điểm, lọc, định vị người dùng, tìm điểm gần nhất (PostGIS), gợi ý tuyến đường (OSRM).
+- ✅ Tin tức lấy từ RSS của cổng OCOP tỉnh.
+- ✅ Đăng ký, đăng nhập (JWT), cập nhật hồ sơ; đăng ký trở thành chủ thể.
+- ⬜ Đánh giá sản phẩm, điểm du lịch.
 
-Khởi động toàn bộ PostgreSQL/PostGIS, pgAdmin, FastAPI và Vue/Vite:
+**Chủ thể OCOP (hợp tác xã, doanh nghiệp, hộ sản xuất)**
 
-```powershell
-docker compose build
-docker compose up -d
-docker compose ps
-```
+- ✅ Quản lý sản phẩm: bản nháp, gửi duyệt, yêu cầu sửa hoặc ngừng hiển thị sau khi duyệt, ảnh, giấy chứng nhận.
+- 🟡 Khai báo điểm du lịch: đã có cấu trúc database (migration 009), đang làm API và giao diện.
+- 🟡 Cập nhật thông tin đơn vị: hiện sửa bằng cách gửi lại hồ sơ.
 
-Các địa chỉ phát triển:
+**Quản trị viên**
 
-- Frontend: `http://localhost:5173`.
-- Backend: `http://localhost:8000`.
-- Health check: `http://localhost:8000/health`.
-- Swagger: `http://localhost:8000/docs`.
-- pgAdmin: `http://localhost:5050`. Đăng nhập bằng `PGADMIN_DEFAULT_EMAIL` /
-  `PGADMIN_DEFAULT_PASSWORD` trong `.env`; server "LamDong PostgreSQL" được thêm sẵn,
-  mật khẩu kết nối là `POSTGRES_PASSWORD`. Tài khoản và kết nối đã lưu nằm trong
-  volume `pgadmin_data` nên không mất khi tạo lại container.
+- ✅ Tổng quan: hàng đợi việc cần xử lý, số liệu chính, thống kê và biểu đồ (Chart.js).
+- ✅ Kiểm duyệt sản phẩm, yêu cầu sửa sản phẩm, nguồn chứng cứ công nhận OCOP.
+- ✅ Duyệt hồ sơ đăng ký chủ thể.
+- ⬜ Duyệt điểm du lịch, quản lý danh mục, quản lý người dùng, kiểm duyệt đánh giá.
 
-Các API đầu tiên:
+Giao diện dùng bộ design token chung (bảng màu "Sương sớm & dã quỳ", font Be Vietnam Pro) và đạt WCAG 2.2 AA trên các trang đã làm mới.
 
-- `GET /health`: kiểm tra tiến trình backend.
-- `GET /api/v1/health/database`: kiểm tra kết nối PostgreSQL.
-- `GET /api/v1/categories`: danh sách danh mục, hỗ trợ `page`, `page_size`, `search`, `sort`.
-- `GET /api/v1/categories/{slug}`: chi tiết một danh mục.
-- `GET /api/v1/products`: danh sách sản phẩm đã duyệt, hỗ trợ tìm kiếm, lọc và phân trang.
-- `GET /api/v1/products/filter-options`: danh sách địa bàn có sản phẩm công khai để gợi ý bộ lọc.
-- `GET /api/v1/products/{slug}`: chi tiết sản phẩm đã duyệt.
-- `POST /api/v1/auth/register`: đăng ký tài khoản với role `user`.
-- `POST /api/v1/auth/login`: đăng nhập bằng JSON và nhận JWT access token.
-- `GET /api/v1/auth/me`: xem tài khoản hiện tại bằng Bearer token.
-- `PATCH /api/v1/auth/me`: cập nhật họ tên, số điện thoại hoặc ảnh đại diện.
-- `POST /api/v1/subject-applications`: người dùng gửi hồ sơ đăng ký chủ thể.
-- `GET/PUT /api/v1/subject-applications/me`: xem hoặc gửi lại hồ sơ của mình.
-- `GET /api/v1/admin/subject-applications`: admin tìm kiếm và lọc hồ sơ.
-- `PATCH /api/v1/admin/subject-applications/{id}/moderation`: admin duyệt hoặc từ chối.
-- `GET /api/v1/locations`: danh sách điểm du lịch nông nghiệp đã duyệt, hỗ trợ `search`, `type`, `district`, `sort`, phân trang.
-- `GET /api/v1/locations/filter-options`, `GET /api/v1/locations/{slug}`: bộ lọc và chi tiết điểm du lịch.
-- `GET /api/v1/map/locations`: điểm du lịch dạng GeoJSON cho bản đồ.
-- `GET /api/v1/map/nearby`: tìm điểm gần nhất trong bán kính bằng PostGIS.
-- `GET /api/v1/map/route`: gợi ý tuyến đường tới điểm du lịch qua OSRM.
+## 2. Công nghệ
 
-JWT access token mặc định có hiệu lực 60 phút. Tạo `JWT_SECRET_KEY` riêng cho
-mỗi môi trường, dài tối thiểu 32 ký tự; không commit khóa thật lên Git.
+| Phần | Công nghệ |
+|---|---|
+| Backend | Python, FastAPI, SQLAlchemy, JWT, pytest |
+| Frontend | Vue 3, TypeScript, Vite, Vue Router, Axios, Bootstrap 5, Leaflet + markercluster, Chart.js, Vitest |
+| Database | PostgreSQL 16 + PostGIS 3.4 |
+| Dịch vụ ngoài | Ảnh nền OpenStreetMap, định tuyến OSRM, RSS cổng OCOP Lâm Đồng |
+| Môi trường | Docker Compose (postgres, pgadmin, backend, frontend) |
 
-Xem log theo service:
-
-```powershell
-docker compose logs -f backend
-docker compose logs -f frontend
-docker compose logs -f postgres
-```
-
-Backend và frontend đều mount source code từ máy vào container để hỗ trợ hot
-reload. Dependency frontend nằm trong volume `frontend_node_modules`, không tạo
-`node_modules` trên máy host. Docker Compose tự tạo `DATABASE_URL` từ các biến
-`POSTGRES_*` và sử dụng hostname nội bộ `postgres`.
-
-Khi volume PostgreSQL còn trống, Docker tự chạy `database/schema.sql`,
-`database/seed_dev.sql` rồi `database/seed_tourism_locations.sql` (dữ liệu điểm du
-lịch cho bản đồ số). Các file trong `docker-entrypoint-initdb.d` không chạy
-lại với volume đã có dữ liệu. Không xóa volume chỉ để nạp lại schema nếu chưa
-sao lưu dữ liệu cần giữ.
-
-Để nạp bổ sung dữ liệu mẫu vào volume đang có mà không xóa dữ liệu, chạy:
-
-```powershell
-docker compose exec postgres sh -lc 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -f /docker-entrypoint-initdb.d/002-seed-dev.sql'
-```
-
-Seed có tính lặp lại an toàn: chạy nhiều lần không tạo trùng danh mục, chủ thể
-hoặc sản phẩm. Tài khoản gắn với dữ liệu mẫu bị khóa và không dùng để đăng nhập.
-
-Ngoài dữ liệu minh họa mặc định, dự án có bộ sản phẩm tham khảo thu thập từ
-nguồn công khai. Xem nguồn, giới hạn sử dụng và cách nạp tại
-[`docs/DU_LIEU_THAM_KHAO_CONG_KHAI.md`](docs/DU_LIEU_THAM_KHAO_CONG_KHAI.md).
-
-Sau khi cập nhật mã nguồn có migration mới, áp dụng lần lượt các file chưa chạy
-trong `database/migrations`. Ví dụ với migration hồ sơ chủ thể:
-
-```powershell
-Get-Content .\database\migrations\002_subject_moderation.sql -Raw | docker compose exec -T postgres sh -lc 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
-```
-
-Có thể mở cùng file trong Query Tool của pgAdmin và chạy một lần. Không xóa
-volume PostgreSQL chỉ để áp dụng migration.
-
-Sau khi pull hoặc chạy migration, mở `tools/kiem-tra-database.sql` trong Query Tool
-của pgAdmin và chạy để so sánh database đang dùng với cấu trúc chuẩn của repo.
-Kết quả rỗng nghĩa là khớp; dòng `thieu_so_voi_repo` là migration chưa chạy, dòng
-`thua_ngoai_repo` là thay đổi làm trực tiếp trên database mà repo không có.
-
-## Kiểm tra luồng đăng ký chủ thể
-
-1. Đăng nhập bằng tài khoản `user`, mở `http://localhost:5173/dang-ky-chu-the`
-   và gửi hồ sơ.
-2. Đăng nhập bằng tài khoản `admin`, mở
-   `http://localhost:5173/quan-tri/ho-so-chu-the`.
-3. Duyệt hồ sơ để cấp role `subject`, hoặc từ chối kèm lý do để người dùng sửa
-   và gửi lại.
-
-Backend kiểm tra role trong database tại thời điểm gọi API. Việc sửa role trong
-JWT hoặc tự hiện nút quản trị trên frontend không làm tăng quyền tài khoản.
-
-## Kiểm tra nhanh module sản phẩm
-
-Sau khi backend và frontend đã chạy, mở các địa chỉ:
-
-- Danh sách sản phẩm: `http://localhost:5173/san-pham`.
-- Chi tiết dữ liệu tham khảo: `http://localhost:5173/san-pham/tham-khao-2026-mam-nem-seagull`.
-- API danh sách: `http://localhost:8000/api/v1/products`.
-- API chi tiết: `http://localhost:8000/api/v1/products/tham-khao-2026-mam-nem-seagull`.
-
-Ví dụ lọc sản phẩm 5 sao thuộc danh mục đồ uống tại Đà Lạt:
+## 3. Cấu trúc thư mục
 
 ```text
-http://localhost:8000/api/v1/products?category=do-uong&star=5&district=Đà%20Lạt
+backend/     API FastAPI: app/api/routes (route), app/models (model), app/schemas, tests/
+frontend/    Giao diện Vue: src/views (trang), src/components, src/services (gọi API), src/styles (token)
+database/    schema.sql, migrations/00x_*.sql, file seed, ERD.md, pgadmin/servers.json
+data/        Dữ liệu gốc: danh sách OCOP, điểm du lịch (CSV)
+docs/        Tài liệu: API, dữ liệu, quy trình kiểm duyệt, audit giao diện, kế hoạch, Postman
+tools/       Script sinh seed từ dữ liệu gốc, kiểm tra database
+scripts/     verify-mvp.ps1 (kiểm tra nhanh toàn hệ thống)
+CLAUDE.md    Quy tắc làm việc của nhóm khi dùng Claude
 ```
 
-API công khai chỉ trả sản phẩm đã duyệt, thuộc chủ thể đã duyệt và không phải dữ
-liệu demo. Sản phẩm cần có chứng nhận còn hiệu lực hoặc nguồn công nhận mức A/B1.
+## 4. Chạy dự án
 
-## Kiểm tra nhanh bản đồ số
+Chỉ cần Git và Docker Desktop (đang chạy).
 
-- Bản đồ: `http://localhost:5173/ban-do` (gom cụm điểm, lọc, định vị, tìm điểm
-  gần nhất, chỉ đường).
-- Danh sách điểm du lịch: `http://localhost:5173/diem-du-lich`.
-- Chi tiết: `http://localhost:5173/diem-du-lich/cau-dat-farm`.
-- API GeoJSON: `http://localhost:8000/api/v1/map/locations`.
-- Tìm điểm gần trung tâm Đà Lạt:
-  `http://localhost:8000/api/v1/map/nearby?latitude=11.9404&longitude=108.4383&radius_km=20`.
+1. Sao chép `.env.example` thành `.env`, thay mọi giá trị `change-me`. Không commit `.env`.
+2. Khởi động:
 
-Chức năng chỉ đường cần backend truy cập được `OSRM_BASE_URL`; nếu dịch vụ không
-phản hồi, giao diện hiển thị thông báo và liên kết mở Google Maps. Sau khi `git
-pull`, chạy `docker compose run --rm --no-deps frontend npm ci` để cài thư viện
-Leaflet. Nguồn và cách cập nhật dữ liệu xem tại
-[`docs/DU_LIEU_DIEM_DU_LICH.md`](docs/DU_LIEU_DIEM_DU_LICH.md).
+   ```powershell
+   docker compose up -d --build
+   docker compose ps
+   ```
 
-## Kiểm thử trong Docker
+3. Mở:
 
-Backend:
+   | Dịch vụ | Địa chỉ |
+   |---|---|
+   | Trang web | http://localhost:5173 |
+   | API và Swagger | http://localhost:8000/docs |
+   | pgAdmin | http://localhost:5050 |
+
+   pgAdmin đăng nhập bằng `PGADMIN_DEFAULT_EMAIL` / `PGADMIN_DEFAULT_PASSWORD` trong `.env`; server "LamDong PostgreSQL" có sẵn, mật khẩu kết nối là `POSTGRES_PASSWORD`.
+
+Lần đầu (volume PostgreSQL trống), Docker tự chạy `database/schema.sql`, `seed_dev.sql` và `seed_tourism_locations.sql` (9 điểm du lịch). Nạp thêm dữ liệu sản phẩm và tài khoản demo:
 
 ```powershell
-docker compose exec backend python -m pytest -q
+Get-Content .\database\seed_public_reference.sql -Raw | docker compose exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+Get-Content .\database\seed_ocop_2025_2026.sql -Raw | docker compose exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+Get-Content .\database\seed_product_workflow.sql -Raw | docker compose exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
 ```
 
-Frontend:
+Tài khoản demo (chỉ dùng khi phát triển, mật khẩu `DemoOCOP@2026`):
+
+| Tài khoản | Vai trò |
+|---|---|
+| `admin.ocop.demo@example.com` | Quản trị viên |
+| `chuthe.ocop.demo@example.com` | Chủ thể đã duyệt, có sản phẩm ở đủ các trạng thái |
+| `ungvien.ocop.demo@example.com` | Người dùng đang chờ duyệt hồ sơ chủ thể |
+
+Chi tiết dữ liệu kiểm thử: [`docs/DU_LIEU_KIEM_THU_SAN_PHAM.md`](docs/DU_LIEU_KIEM_THU_SAN_PHAM.md).
+
+Lệnh thường dùng:
 
 ```powershell
+docker compose logs -f backend        # xem log (backend, frontend, postgres)
+docker compose restart frontend       # sau khi package.json đổi: container tự npm install khi khởi động
+docker compose down                   # dừng, giữ nguyên dữ liệu
+```
+
+Không dùng `docker compose down -v`: lệnh này xóa cả database và ảnh đã tải lên.
+
+## 5. Database và migration
+
+- Database mới tạo từ `database/schema.sql` luôn là phiên bản mới nhất, không cần chạy migration.
+- Database đã có dữ liệu: sau mỗi lần `git pull`, chạy các migration chưa chạy theo thứ tự. Mọi migration chạy lặp lại an toàn. Ví dụ:
+
+  ```powershell
+  Get-Content .\database\migrations\009_tourism_location_submissions.sql -Raw | docker compose exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+  ```
+
+| Migration | Nội dung |
+|---|---|
+| 001_hardening | Ràng buộc, index, trigger cập nhật thời gian |
+| 002_subject_moderation | Kiểm duyệt hồ sơ chủ thể |
+| 003_sync_product_rating | Cột điểm đánh giá sản phẩm |
+| 004_product_moderation | Quy trình kiểm duyệt sản phẩm, yêu cầu sửa |
+| 005_add_product_sources | Nguồn chứng cứ công nhận OCOP |
+| 006_simplify_subject_product_flow | Bản nháp sản phẩm, giấy chứng nhận riêng tư |
+| 007_hide_demo_products | Ẩn dữ liệu demo khỏi trang công khai |
+| 008_tourism_location_map | Thông tin điểm du lịch cho bản đồ số |
+| 009_tourism_location_submissions | Chủ thể khai báo điểm du lịch, admin duyệt, yêu cầu cập nhật |
+
+**Kiểm tra database khớp repo:** mở `tools/kiem-tra-database.sql` trong Query Tool của pgAdmin và chạy.
+Kết quả rỗng là khớp; dòng `thieu_so_voi_repo` là migration chưa chạy; dòng `thua_ngoai_repo` là thay đổi làm thẳng trên database mà repo không có.
+
+**Quy tắc:** mọi thay đổi database phải là một migration mới trong repo, cập nhật cùng lúc `schema.sql`, model và `tools/kiem-tra-database.sql` (sinh lại bằng `tools/sinh_kiem_tra_database.py`). Không sửa thẳng database bằng pgAdmin hay công cụ khác.
+
+## 6. Kiểm thử
+
+```powershell
+docker compose exec backend python -m pytest -q      # backend: 95 test
+docker compose exec frontend npm test                # frontend: 92 test
 docker compose exec frontend npm run type-check
 docker compose exec frontend npm run build
+.\scripts\verify-mvp.ps1                             # kiểm tra nhanh toàn hệ thống, chỉ đọc dữ liệu
 ```
 
-Để chạy toàn bộ kiểm tra backend, frontend, build, kết nối database và các địa
-chỉ chính bằng một lệnh:
+Pull Request phải qua đủ test, type-check và build. Thay đổi giao diện kiểm tra thêm trợ năng (axe, WCAG 2.2 AA) và không tràn ngang ở màn 375px.
 
-```powershell
-.\scripts\verify-mvp.ps1
-```
+## 7. API
 
-Lệnh này chỉ đọc dữ liệu qua API công khai, không tạo, sửa hoặc xóa bản ghi.
+Tài liệu đầy đủ ở Swagger (`/docs`) và [`docs/API.md`](docs/API.md). Các nhóm endpoint dưới `/api/v1`:
 
-## Cài thêm dependency
+| Nhóm | Endpoint chính | Quyền |
+|---|---|---|
+| Tài khoản | `POST /auth/register`, `POST /auth/login`, `GET/PATCH /auth/me` | Công khai / đăng nhập |
+| Công khai | `GET /categories`, `/products`, `/products/{slug}`, `/locations`, `/locations/{slug}`, `/news` | Công khai |
+| Bản đồ | `GET /map/locations` (GeoJSON), `/map/nearby`, `/map/route` | Công khai |
+| Hồ sơ chủ thể | `POST /subject-applications`, `GET/PUT /subject-applications/me` | Người dùng |
+| Chủ thể | `/subject/products` (CRUD, `submit`, `change-requests`, `deletion-requests`), `/subject/product-images`, `/subject/product-certificates`, `/subject/product-change-requests` | Chủ thể |
+| Quản trị | `/admin/dashboard`, `/admin/statistics`, `/admin/products` (duyệt, chứng cứ), `/admin/product-change-requests`, `/admin/subject-applications`, `/admin/data-sources` | Admin |
 
-Backend: thêm package có phiên bản cố định vào `backend/requirements.txt`, sau
-đó build lại service:
+Backend kiểm tra vai trò trong database ở mỗi lần gọi; sửa JWT hay hiện nút trên giao diện không làm tăng quyền.
 
-```powershell
-docker compose build backend
-docker compose up -d backend
-```
+## 8. Quy trình làm việc nhóm
 
-Frontend: cài package bên trong container để đồng thời cập nhật `package.json`
-và `package-lock.json` trên source được mount:
+- Mỗi chức năng một nhánh `2312682_HaLuyen_<TenChucNang>` (hoặc tên theo người làm), tạo từ `main` mới nhất.
+- Không sửa trực tiếp `main`. Code lên `main` qua Pull Request, có người review.
+- Commit dạng `loại(phạm vi): mô tả tiếng Việt`, ví dụ `feat(api): …`, `fix(ui): …`, `docs: …`. Backend và giao diện là các commit riêng.
+- Không commit `.env`, file sao lưu `.dump`, `node_modules`, khóa Firebase.
+- Khi làm cùng Claude: quy tắc chi tiết trong [`CLAUDE.md`](CLAUDE.md).
 
-```powershell
-docker compose exec frontend npm install <ten-package>
-docker compose build frontend
-docker compose up -d frontend
-```
+## 9. Tài liệu
 
-Sau khi `git pull`, nếu `frontend/package-lock.json` thay đổi, đồng bộ lại
-volume thư viện rồi khởi động frontend:
-
-```powershell
-docker compose run --rm --no-deps frontend npm ci
-docker compose up -d frontend
-```
-
-Không cài dependency thủ công trên máy host hoặc chỉ cài tạm trong container mà
-không cập nhật file lock.
-
-## Dừng môi trường
-
-```powershell
-docker compose down
-```
-
-Lệnh trên giữ volume PostgreSQL. Không dùng `docker compose down -v` nếu chưa
-chủ động sao lưu và xác nhận có thể xóa toàn bộ dữ liệu local.
-
-## Migration cho database đã có dữ liệu
-
-Với database đã có volume từ phiên bản cũ, chạy lần lượt các migration còn thiếu
-trước khi sử dụng màn hình quản lý sản phẩm:
-
-    Get-Content .\database\migrations\004_product_moderation.sql -Raw | docker compose exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
-    Get-Content .\database\migrations\005_add_product_sources.sql -Raw | docker compose exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
-    Get-Content .\database\migrations\006_simplify_subject_product_flow.sql -Raw | docker compose exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
-    Get-Content .\database\migrations\007_hide_demo_products.sql -Raw | docker compose exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
-    Get-Content .\database\migrations\008_tourism_location_map.sql -Raw | docker compose exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
-    Get-Content .\database\migrations\009_tourism_location_submissions.sql -Raw | docker compose exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
-    Get-Content .\database\seed_tourism_locations.sql -Raw | docker compose exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
-
-Mỗi file đều chạy trong transaction và dùng `ON_ERROR_STOP=1`; nếu có lỗi, dừng
-để kiểm tra thay vì chạy tiếp. Không cần chạy các lệnh này với database được tạo
-mới từ `database/schema.sql` hiện tại.
-
-## Tài liệu nền
-
-- Schema PostgreSQL/PostGIS: `database/schema.sql`.
-- ERD: `database/ERD.md`.
-- Hợp đồng REST API dự kiến: `docs/API.md`.
-- Quy trình kiểm duyệt sản phẩm: `docs/QUY_TRINH_KIEM_DUYET_SAN_PHAM.md`.
-- Dữ liệu điểm du lịch và bản đồ số: `docs/DU_LIEU_DIEM_DU_LICH.md`.
-- Tài khoản và dữ liệu kiểm thử: `docs/DU_LIEU_KIEM_THU_SAN_PHAM.md`.
-- Postman collection: `docs/postman/OCOP-Lam-Dong.postman_collection.json`.
-- Hướng dẫn chạy và kế hoạch nhóm: `docs/HUONG_DAN_CHAY_VA_KE_HOACH_NHOM_OCOP_LAM_DONG.docx`.
+| Tài liệu | Nội dung |
+|---|---|
+| [`docs/KE_HOACH_HOAN_THANH_DO_AN.md`](docs/KE_HOACH_HOAN_THANH_DO_AN.md) | Kế hoạch tới khi nộp, tự đánh giá tiến độ, phân công |
+| [`database/ERD.md`](database/ERD.md) | Sơ đồ quan hệ dữ liệu |
+| [`docs/API.md`](docs/API.md), [`docs/postman/`](docs/postman/) | Hợp đồng API, bộ Postman |
+| [`docs/QUY_TRINH_KIEM_DUYET_SAN_PHAM.md`](docs/QUY_TRINH_KIEM_DUYET_SAN_PHAM.md) | Quy trình kiểm duyệt sản phẩm |
+| [`docs/DU_LIEU_THAM_KHAO_CONG_KHAI.md`](docs/DU_LIEU_THAM_KHAO_CONG_KHAI.md) | Nguồn dữ liệu sản phẩm OCOP |
+| [`docs/DU_LIEU_DIEM_DU_LICH.md`](docs/DU_LIEU_DIEM_DU_LICH.md) | Dữ liệu điểm du lịch, bản đồ, định tuyến |
+| [`docs/DU_LIEU_KIEM_THU_SAN_PHAM.md`](docs/DU_LIEU_KIEM_THU_SAN_PHAM.md) | Tài khoản và dữ liệu kiểm thử |
+| [`docs/ui-audit.md`](docs/ui-audit.md) | Đánh giá và nhật ký cải thiện giao diện |
+| `docs/*.docx` | Phân tích yêu cầu, phụ lục nguồn dữ liệu, hướng dẫn nhóm |
