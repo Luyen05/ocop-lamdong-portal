@@ -175,9 +175,11 @@ CREATE TABLE tourism_locations (
   name VARCHAR(255) NOT NULL,
   slug VARCHAR(255) NOT NULL UNIQUE,
   type VARCHAR(100) NOT NULL,
-  district VARCHAR(100) NOT NULL,
-  address TEXT NOT NULL,
-  geom GEOMETRY(Point, 4326) NOT NULL,
+  -- Vị trí, xã/phường, địa chỉ chỉ được trống khi đang soạn (draft) hoặc đang bổ sung (needs_revision),
+  -- xem tourism_locations_required_fields_check.
+  district VARCHAR(100),
+  address TEXT,
+  geom GEOMETRY(Point, 4326),
   contact_phone VARCHAR(20),
   opening_hours VARCHAR(100),
   ticket_price NUMERIC(12,2) CHECK (ticket_price >= 0),
@@ -189,7 +191,7 @@ CREATE TABLE tourism_locations (
   views INTEGER NOT NULL DEFAULT 0 CHECK (views >= 0),
   status VARCHAR(20) NOT NULL DEFAULT 'draft'
     CONSTRAINT tourism_locations_status_check
-    CHECK (status IN ('draft', 'pending', 'needs_revision', 'approved', 'rejected')),
+    CHECK (status IN ('draft', 'pending', 'needs_revision', 'approved', 'rejected', 'archived')),
   -- Cách lấy vị trí: admin_import (nhóm nhập từ nguồn công khai), map_pin, device_gps,
   -- coordinates, google_maps_link (chủ thể khai báo). Độ chính xác chỉ có khi dùng GPS.
   location_source VARCHAR(20) NOT NULL DEFAULT 'admin_import'
@@ -205,7 +207,11 @@ CREATE TABLE tourism_locations (
   version INTEGER NOT NULL DEFAULT 1
     CONSTRAINT tourism_locations_version_check CHECK (version >= 1),
   created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT tourism_locations_required_fields_check CHECK (
+    status IN ('draft', 'needs_revision')
+    OR (geom IS NOT NULL AND district IS NOT NULL AND address IS NOT NULL)
+  )
 );
 
 CREATE TABLE location_images (
