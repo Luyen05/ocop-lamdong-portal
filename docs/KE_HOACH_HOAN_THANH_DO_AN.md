@@ -5,7 +5,9 @@ Nhóm trưởng: Liêng Hót Ha Luyến (2312682). GVHD: KS. La Quốc Thắng.
 
 - Cập nhật lần cuối: **27/09/2026** (cuối tuần 7 theo đề cương).
 - Căn cứ: đề cương ngày 10/08/2026 (lộ trình 14 tuần), tài liệu hướng dẫn nhóm 25/08/2026, mã nguồn và lịch sử commit.
-- Giả định cần xác nhận: tuần 1 bắt đầu 10/08/2026, nên **tuần 14 kết thúc 15/11/2026**. Nếu hạn nộp hoặc ngày bảo vệ khác, nhóm trưởng báo để dời lịch.
+- Mốc đã chốt (27/09/2026):
+  - **Thứ Năm 15/10/2026: báo cáo tiến độ đợt 2** (giữa tuần 10).
+  - **Chủ nhật 15/11/2026: hạn cuối nộp đồ án** (cuối tuần 14). Mọi sản phẩm nộp phải xong trước **14/11**.
 
 Cách dùng file này:
 
@@ -105,6 +107,13 @@ Lưu ý phối hợp:
 - Nhánh giao diện `2312682_HaLuyen_ToiUuGiaoDien` đã sửa trang chủ và trang sản phẩm (phần của Thái, Thuận), nên hai bạn cần review PR này trước khi merge.
 - Chỗ giao nhau (sản phẩm gắn với điểm, đánh giá): Luyến làm API và phần nhập liệu, Thái, Thuận hiển thị trên trang công khai; thống nhất định dạng dữ liệu API trước khi làm.
 
+## Mốc quan trọng
+
+| Ngày | Mốc | Cần có để trình bày |
+|---|---|---|
+| 15/10/2026 | Báo cáo tiến độ đợt 2 | Chủ thể khai báo điểm và admin duyệt chạy được (tuần 8–9), thống kê quản trị, giao diện đã làm mới, số liệu tiến độ |
+| 15/11/2026 | Hạn cuối nộp đồ án | Toàn bộ chức năng theo đề cương, bản triển khai, báo cáo tổng kết, slide, hướng dẫn |
+
 ## 4. Kế hoạch chi tiết từng tuần (tuần 8–14)
 
 Mỗi việc làm trên nhánh riêng `2312682_HaLuyen_<TenChucNang>`, theo quy tắc trong `CLAUDE.md`. Giao diện lớn thiết kế trên canvas trước, chờ duyệt rồi mới code; backend là commit riêng.
@@ -133,10 +142,13 @@ Nhánh: `2312682_HaLuyen_KhaiBaoDiemDuLich`
 | 9.4 | Trang admin duyệt điểm, thêm việc chờ duyệt vào dashboard và thống kê | Luyến | ⬜ | Hàng đợi và số liệu cập nhật đúng |
 | 9.5 | Kiểm thử luồng: chủ thể khai báo → admin duyệt → điểm hiện trên bản đồ | Luyến | ⬜ | Test tự động và chạy thử bằng tài khoản demo |
 
-### Tuần 10 (12/10 – 18/10): Đánh giá và các chức năng quản trị còn thiếu
+### Tuần 10 (12/10 – 18/10): Báo cáo tiến độ đợt 2 (15/10), đánh giá và các chức năng quản trị còn thiếu
 
 | # | Việc | Phụ trách | Trạng thái | Tiêu chí xong |
 |---|---|---|---|---|
+| 10.0a | Chuẩn bị báo cáo tiến độ đợt 2: cập nhật báo cáo và slide (dựa trên báo cáo đợt 1), số liệu tiến độ lấy từ file này | Cả nhóm | ⬜ | Xong trước 13/10 |
+| 10.0b | Kịch bản và dữ liệu demo đợt 2: luồng chủ thể khai báo điểm → admin duyệt → điểm hiện trên bản đồ, thống kê quản trị | Luyến | ⬜ | Diễn tập trơn tru trên máy demo trước 14/10 |
+| 10.0c | **Báo cáo tiến độ đợt 2 (15/10)** | Cả nhóm | ⬜ | Ghi nhận góp ý của GVHD vào mục 7 |
 | 10.1 | API và giao diện đánh giá sản phẩm/điểm (mỗi người một đánh giá, chờ duyệt) | Luyến (API, form đánh giá); Thái, Thuận (hiển thị đánh giá trên trang chi tiết) | ⬜ | Tính lại `rating_avg` khi duyệt; test |
 | 10.2 | Admin kiểm duyệt đánh giá | Luyến | ⬜ | Duyệt / từ chối có lý do |
 | 10.3 | Admin quản lý danh mục (thêm, sửa, ẩn) | Luyến | ⬜ | Không xóa danh mục đang có sản phẩm |
@@ -173,7 +185,7 @@ Nhánh: `2312682_HaLuyen_KhaiBaoDiemDuLich`
 | 13.3 | Hướng dẫn cài đặt (dev và production) | Luyến | ⬜ | Người khác làm theo chạy được |
 | 13.4 | Hướng dẫn sử dụng cho người dùng, chủ thể, admin (có ảnh chụp) | Cả nhóm (mỗi người viết phần mình) | ⬜ | |
 
-### Tuần 14 (09/11 – 15/11): Báo cáo, slide, demo
+### Tuần 14 (09/11 – 15/11): Báo cáo, slide, demo — nộp đồ án trước 15/11
 
 | # | Việc | Phụ trách | Trạng thái | Tiêu chí xong |
 |---|---|---|---|---|
@@ -181,6 +193,7 @@ Nhánh: `2312682_HaLuyen_KhaiBaoDiemDuLich`
 | 14.2 | Slide thuyết trình và kịch bản demo | Cả nhóm | ⬜ | Demo 3 vai: khách, chủ thể, admin |
 | 14.3 | Dữ liệu demo sạch, tài khoản demo, diễn tập demo | Cả nhóm | ⬜ | Chạy trọn kịch bản không lỗi |
 | 14.4 | Rà soát mã nguồn, README, gắn tag phiên bản nộp | Luyến | ⬜ | Tag `v1.0` trên main |
+| 14.5 | **Nộp đồ án** (mã nguồn, báo cáo, slide, tài liệu) | Cả nhóm | ⬜ | Nộp xong trước 15/11 |
 
 ---
 
@@ -202,7 +215,6 @@ Nhánh: `2312682_HaLuyen_KhaiBaoDiemDuLich`
 
 | Mã | Câu hỏi | Cần trước |
 |---|---|---|
-| Q1 | Xác nhận hạn nộp và ngày bảo vệ (đang giả định tuần 14 kết thúc 15/11/2026) | Tuần 8 |
 | Q2 | Lưu ảnh: dùng Firebase Storage như đề cương, hay giữ lưu cục bộ trên máy chủ | Tuần 10 |
 | Q3 | Tin tức: chỉ lấy RSS từ cổng OCOP tỉnh, hay thêm chức năng admin tự đăng tin | Tuần 10 |
 | Q4 | Nơi triển khai: VPS (nhà cung cấp nào), cloud miễn phí, hay chỉ demo bằng Docker | Tuần 12 |
@@ -216,5 +228,6 @@ Nhánh: `2312682_HaLuyen_KhaiBaoDiemDuLich`
 | 24/09/2026 | Merge PR #2 bản đồ số và điểm du lịch vào main | f39c33c |
 | 26/09/2026 | Hoàn thành giao diện trang chủ, sản phẩm, tổng quan quản trị; API và biểu đồ thống kê; CLAUDE.md; push nhánh giao diện | 4c74369 … 32595e6 |
 | 26/09/2026 | Migration 009 cho khai báo điểm du lịch; bỏ ảnh nền CARTO | 8385d89, 8ab93fb |
+| 27/09/2026 | Chốt mốc: báo cáo tiến độ đợt 2 ngày 15/10, hạn nộp đồ án 15/11 (Q1) | Mục Mốc quan trọng |
 | 27/09/2026 | Chốt phân công: Luyến làm admin, chủ thể, tài khoản người dùng; Thái, Thuận làm trang chủ và trang công khai (Q5) | Mục 3 |
 | 27/09/2026 | Sửa migration 009 cho database cũ; tạo lại database sạch; dọn thư mục đồ án và nhánh git; thêm kiểm tra database, pgAdmin giữ tài khoản; lập kế hoạch này | 0710abf, a52b7f6, a7eb63b |
