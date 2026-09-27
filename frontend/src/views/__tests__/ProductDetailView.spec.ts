@@ -1,11 +1,13 @@
 // @vitest-environment jsdom
-import { flushPromises, mount } from '@vue/test-utils'
+import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils'
 import { reactive } from 'vue'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import ProductDetailView from '@/views/ProductDetailView.vue'
 import { getProduct, getProducts } from '@/services/products'
 import type { ProductDetail, ProductListItem } from '@/types/product'
+
+enableAutoUnmount(afterEach)
 
 const route = reactive({ params: { slug: 'tra-atiso-da-lat' } })
 
@@ -103,5 +105,131 @@ describe('ProductDetailView', () => {
     await wrapper.get('.main-image img').trigger('error')
     expect(wrapper.find('.main-image .image-placeholder').exists()).toBe(true)
     wrapper.unmount()
+  })
+})
+
+function deferred<T>() {
+  let resolve!: (value: T) => void
+  let reject!: (reason: unknown) => void
+  const promise = new Promise<T>((resolvePromise, rejectPromise) => {
+    resolve = resolvePromise
+    reject = rejectPromise
+  })
+  return { promise, resolve, reject }
+}
+
+function mountDetail() {
+  return mount(ProductDetailView, {
+    global: {
+      stubs: {
+        RouterLink: { props: ['to'], template: '<a><slot /></a>' },
+        ProductCard: { props: ['product'], template: '<div class="related-card">{{ product.name }}</div>' },
+      },
+    },
+  })
+}
+
+describe('ProductDetailView overlapping requests', () => {
+  const productB = { ...product, id: 3, slug: 'product-b', name: 'Product B' }
+  const relatedB = { ...relatedProduct, id: 4, name: 'Related B' }
+  const relatedResponse = {
+    items: [relatedB], page: 1, page_size: 4, total: 1,
+  }
+
+  beforeEach(() => {
+    vi.resetAllMocks()
+    route.params.slug = product.slug
+    vi.mocked(getProducts).mockResolvedValue(relatedResponse)
+  })
+
+  it('keeps B when product A resolves after B', async () => {
+    const requestA = deferred<ProductDetail>()
+    const requestB = deferred<ProductDetail>()
+    vi.mocked(getProduct)
+      .mockReturnValueOnce(requestA.promise)
+      .mockReturnValueOnce(requestB.promise)
+    const wrapper = mountDetail()
+    route.params.slug = productB.slug
+    await flushPromises()
+    expect(getProduct).toHaveBeenNthCalledWith(2, productB.slug)
+
+    requestB.resolve(productB)
+    await flushPromises()
+    expect(wrapper.get('h1').text()).toBe(productB.name)
+    requestA.resolve(product)
+    await flushPromises()
+
+    expect(wrapper.get('h1').text()).toBe(productB.name)
+    expect(document.title).toContain(productB.name)
+    expect(wrapper.get('.related-card').text()).toBe(relatedB.name)
+    expect(getProducts).toHaveBeenCalledTimes(1)
+  })
+
+  it.each(['pending', 'resolved'] as const)(
+    'ignores stale product errors while B is %s', async (state) => {
+      const requestA = deferred<ProductDetail>()
+      const requestB = deferred<ProductDetail>()
+      vi.mocked(getProduct)
+        .mockReturnValueOnce(requestA.promise)
+        .mockReturnValueOnce(requestB.promise)
+      const wrapper = mountDetail()
+      route.params.slug = productB.slug
+      await flushPromises()
+      if (state === 'resolved') {
+        requestB.resolve(productB)
+        await flushPromises()
+      }
+      requestA.reject(new Error('Stale A error'))
+      await flushPromises()
+
+      expect(wrapper.find('.error-state').exists()).toBe(false)
+      expect(wrapper.find('.detail-loading').exists()).toBe(state === 'pending')
+      if (state === 'pending') {
+        requestB.resolve(productB)
+        await flushPromises()
+      }
+      expect(wrapper.get('h1').text()).toBe(productB.name)
+    },
+  )
+
+  it.each(['resolve', 'reject'] as const)(
+    'ignores stale related products that %s after B', async (outcome) => {
+      const relatedA = deferred<Awaited<ReturnType<typeof getProducts>>>()
+      vi.mocked(getProduct).mockResolvedValueOnce(product).mockResolvedValueOnce(productB)
+      vi.mocked(getProducts).mockReturnValueOnce(relatedA.promise)
+      const wrapper = mountDetail()
+      await flushPromises()
+      route.params.slug = productB.slug
+      await flushPromises()
+      expect(wrapper.get('.related-card').text()).toBe(relatedB.name)
+
+      if (outcome === 'resolve') {
+        relatedA.resolve({ ...relatedResponse, items: [relatedProduct] })
+      } else {
+        relatedA.reject(new Error('Stale related error'))
+      }
+      await flushPromises()
+      expect(wrapper.get('h1').text()).toBe(productB.name)
+      expect(wrapper.get('.related-card').text()).toBe(relatedB.name)
+    },
+  )
+
+  it('keeps loading B when stale related products finish', async () => {
+    const relatedA = deferred<Awaited<ReturnType<typeof getProducts>>>()
+    const requestB = deferred<ProductDetail>()
+    vi.mocked(getProduct).mockResolvedValueOnce(product).mockReturnValueOnce(requestB.promise)
+    vi.mocked(getProducts).mockReturnValueOnce(relatedA.promise)
+    const wrapper = mountDetail()
+    await flushPromises()
+    route.params.slug = productB.slug
+    await flushPromises()
+    relatedA.resolve({ ...relatedResponse, items: [relatedProduct] })
+    await flushPromises()
+    expect(wrapper.find('.detail-loading').exists()).toBe(true)
+
+    requestB.resolve(productB)
+    await flushPromises()
+    expect(wrapper.get('h1').text()).toBe(productB.name)
+    expect(wrapper.get('.related-card').text()).toBe(relatedB.name)
   })
 })
