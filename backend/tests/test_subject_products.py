@@ -873,3 +873,27 @@ def test_certificate_upload_validates_type_content_size_and_role(
     assert oversized.status_code == 413
     assert oversized.json()["code"] == "CERTIFICATE_TOO_LARGE"
     assert forbidden.status_code == 403
+
+
+def test_subject_can_replace_primary_image_of_editable_product(subject_product_context) -> None:
+    client, _ = subject_product_context
+    headers = auth_header(1, "subject")
+    created = client.post("/api/v1/subject/products", headers=headers, json=product_payload("OCOP-LD-IMG"))
+    old_url = created.json()["images"][0]["image_url"]
+
+    replaced = client.patch(
+        f"/api/v1/subject/products/{created.json()['id']}",
+        headers=headers,
+        json={
+            "images": [
+                {"image_url": "https://example.com/images/moi.jpg", "is_primary": True},
+                {"image_url": old_url, "is_primary": False, "sort_order": 1},
+            ]
+        },
+    )
+
+    assert replaced.status_code == 200, replaced.text
+    assert [image["image_url"] for image in replaced.json()["images"]] == [
+        "https://example.com/images/moi.jpg",
+        old_url,
+    ]
