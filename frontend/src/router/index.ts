@@ -136,6 +136,24 @@ const router = createRouter({
           component: () => import('@/views/subject/SubjectLocationsView.vue'),
           meta: { title: 'Điểm du lịch của tôi' },
         },
+        {
+          path: 'diem-du-lich/khai-bao',
+          name: 'subject-location-create',
+          component: () => import('@/views/subject/SubjectLocationEditorView.vue'),
+          meta: { title: 'Khai báo điểm du lịch' },
+        },
+        {
+          path: 'diem-du-lich/yeu-cau/:requestId(\\d+)',
+          name: 'subject-location-request-edit',
+          component: () => import('@/views/subject/SubjectLocationEditorView.vue'),
+          meta: { title: 'Bổ sung yêu cầu cập nhật' },
+        },
+        {
+          path: 'diem-du-lich/:id(\\d+)',
+          name: 'subject-location-edit',
+          component: () => import('@/views/subject/SubjectLocationEditorView.vue'),
+          meta: { title: 'Hồ sơ điểm du lịch' },
+        },
       ],
     },
     {
