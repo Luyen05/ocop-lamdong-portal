@@ -35,7 +35,10 @@ Các địa chỉ phát triển:
 - Backend: `http://localhost:8000`.
 - Health check: `http://localhost:8000/health`.
 - Swagger: `http://localhost:8000/docs`.
-- pgAdmin: `http://localhost:5050`.
+- pgAdmin: `http://localhost:5050`. Đăng nhập bằng `PGADMIN_DEFAULT_EMAIL` /
+  `PGADMIN_DEFAULT_PASSWORD` trong `.env`; server "LamDong PostgreSQL" được thêm sẵn,
+  mật khẩu kết nối là `POSTGRES_PASSWORD`. Tài khoản và kết nối đã lưu nằm trong
+  volume `pgadmin_data` nên không mất khi tạo lại container.
 
 Các API đầu tiên:
 
@@ -104,6 +107,11 @@ Get-Content .\database\migrations\002_subject_moderation.sql -Raw | docker compo
 
 Có thể mở cùng file trong Query Tool của pgAdmin và chạy một lần. Không xóa
 volume PostgreSQL chỉ để áp dụng migration.
+
+Sau khi pull hoặc chạy migration, mở `tools/kiem-tra-database.sql` trong Query Tool
+của pgAdmin và chạy để so sánh database đang dùng với cấu trúc chuẩn của repo.
+Kết quả rỗng nghĩa là khớp; dòng `thieu_so_voi_repo` là migration chưa chạy, dòng
+`thua_ngoai_repo` là thay đổi làm trực tiếp trên database mà repo không có.
 
 ## Kiểm tra luồng đăng ký chủ thể
 
