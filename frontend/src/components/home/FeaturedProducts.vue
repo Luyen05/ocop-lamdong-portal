@@ -13,7 +13,7 @@ const errorMessage = ref('')
 
 const featuredProducts = computed(() => {
   const certified = products.value.filter((product) => product.star >= 4)
-  return (certified.length ? certified : products.value).slice(0, 4)
+  return certified.slice(0, 4)
 })
 
 async function loadProducts(): Promise<void> {
