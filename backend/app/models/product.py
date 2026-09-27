@@ -8,8 +8,10 @@ from uuid import uuid4
 from sqlalchemy import (
     BigInteger,
     Boolean,
+    CheckConstraint,
     DateTime,
     ForeignKey,
+    Index,
     Integer,
     JSON,
     Numeric,
@@ -18,6 +20,7 @@ from sqlalchemy import (
     Text,
     desc,
     func,
+    text,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -124,6 +127,16 @@ class Product(Base):
 
 class ProductImage(Base):
     __tablename__ = "product_images"
+    # Giống schema.sql: mỗi sản phẩm tối đa một ảnh chính (để SQLite trong kiểm thử cũng kiểm tra).
+    __table_args__ = (
+        Index(
+            "uq_product_primary_image",
+            "product_id",
+            unique=True,
+            sqlite_where=text("is_primary"),
+            postgresql_where=text("is_primary"),
+        ),
+    )
 
     id: Mapped[int] = mapped_column(
         BigInteger().with_variant(Integer, "sqlite"),
@@ -155,6 +168,13 @@ class ProductImage(Base):
 
 class ProductChangeRequest(Base):
     __tablename__ = "product_change_requests"
+    __table_args__ = (
+        CheckConstraint(
+            "(request_type = 'update' AND proposed_data IS NOT NULL)"
+            " OR (request_type = 'delete' AND proposed_data IS NULL)",
+            name="product_change_payload",
+        ),
+    )
 
     id: Mapped[int] = mapped_column(
         BigInteger().with_variant(Integer, "sqlite"),
@@ -171,7 +191,9 @@ class ProductChangeRequest(Base):
         nullable=False,
     )
     request_type: Mapped[str] = mapped_column(String(20), nullable=False)
-    proposed_data: Mapped[dict | None] = mapped_column(JSON)
+    # none_as_null: yêu cầu ngừng hiển thị lưu NULL thật (không phải JSON null) để khớp ràng buộc
+    # product_change_payload; nếu không PostgreSQL từ chối mọi yêu cầu ngừng hiển thị.
+    proposed_data: Mapped[dict | None] = mapped_column(JSON(none_as_null=True))
     reason: Mapped[str | None] = mapped_column(Text)
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="pending")
     base_version: Mapped[int] = mapped_column(Integer, nullable=False)
