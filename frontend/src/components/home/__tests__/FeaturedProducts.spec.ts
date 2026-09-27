@@ -48,7 +48,7 @@ describe('FeaturedProducts', () => {
     const cards = wrapper.findAll('.stub-card')
     expect(cards).toHaveLength(8)
     expect(cards.every((card) => !card.text().endsWith('-3'))).toBe(true)
-    expect(getProducts).toHaveBeenCalledWith({ page: 1, page_size: 24, sort: 'rating' })
+    expect(getProducts).toHaveBeenCalledWith({ page: 1, page_size: 100, sort: 'rating' })
   })
 })
 
