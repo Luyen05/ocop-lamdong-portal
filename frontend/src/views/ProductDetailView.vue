@@ -43,7 +43,10 @@ function selectImage(imageUrl: string): void {
   activeImageFailed.value = false
 }
 
+let latestRequestId = 0
+
 async function loadProduct(slug: string): Promise<void> {
+  const requestId = ++latestRequestId
   isLoading.value = true
   errorMessage.value = ''
   product.value = null
@@ -51,7 +54,9 @@ async function loadProduct(slug: string): Promise<void> {
   activeImageFailed.value = false
   relatedProducts.value = []
   try {
-    product.value = await getProduct(slug)
+    const loadedProduct = await getProduct(slug)
+    if (requestId !== latestRequestId) return
+    product.value = loadedProduct
     selectedImageUrl.value = product.value.images[0]?.image_url ?? null
     document.title = `${product.value.name} | OCOP Lâm Đồng`
 
@@ -62,13 +67,16 @@ async function loadProduct(slug: string): Promise<void> {
         category: product.value.category.slug,
         sort: 'newest',
       })
+      if (requestId !== latestRequestId) return
       relatedProducts.value = related.items
         .filter((item) => item.id !== product.value?.id)
         .slice(0, 3)
     } catch {
+      if (requestId !== latestRequestId) return
       relatedProducts.value = []
     }
   } catch (error) {
+    if (requestId !== latestRequestId) return
     errorTitle.value = axios.isAxiosError(error) && error.response?.status === 404
       ? 'Không tìm thấy sản phẩm'
       : 'Không thể tải sản phẩm'
@@ -77,7 +85,7 @@ async function loadProduct(slug: string): Promise<void> {
       'Không thể tải thông tin sản phẩm. Vui lòng thử lại.',
     )
   } finally {
-    isLoading.value = false
+    if (requestId === latestRequestId) isLoading.value = false
   }
 }
 
@@ -90,6 +98,7 @@ watch(
 )
 
 onUnmounted(() => {
+  latestRequestId++
   document.title = 'OCOP Lâm Đồng'
 })
 </script>
