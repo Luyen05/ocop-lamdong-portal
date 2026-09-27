@@ -130,6 +130,12 @@ const router = createRouter({
           name: 'subject-product-request-edit',
           component: () => import('@/views/subject/SubjectProductEditorView.vue'),
         },
+        {
+          path: 'diem-du-lich',
+          name: 'subject-locations',
+          component: () => import('@/views/subject/SubjectLocationsView.vue'),
+          meta: { title: 'Điểm du lịch của tôi' },
+        },
       ],
     },
     {
