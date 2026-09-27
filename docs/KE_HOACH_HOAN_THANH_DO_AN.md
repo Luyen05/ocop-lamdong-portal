@@ -126,8 +126,8 @@ Nhánh: `2312682_HaLuyen_KhaiBaoDiemDuLich`
 |---|---|---|---|---|
 | 8.1 | Migration 009: trạng thái kiểm duyệt, nguồn vị trí, yêu cầu cập nhật | Luyến | ✅ | Chạy lặp lại an toàn, cấu trúc khớp schema.sql (commit 8385d89, 0710abf, a52b7f6) |
 | 8.2 | Tạo lại database sạch, dọn thư mục đồ án, thêm kiểm tra database | Luyến | ✅ | `kiem-tra-database.sql` trả rỗng (commit a7eb63b) |
-| 8.3 | Nhóm duyệt và merge PR giao diện `2312682_HaLuyen_ToiUuGiaoDien` | Cả nhóm (review) | ⬜ | PR merge vào main; cả nhóm `docker compose restart frontend` |
-| 8.4 | Thiết kế canvas: form khai báo điểm (ô chọn vị trí: ghim bản đồ, GPS, dán tọa độ/link Google Maps), trang admin duyệt điểm, việc chờ duyệt trên dashboard | Luyến | ⬜ | Nhóm trưởng duyệt thiết kế |
+| 8.3 | Gộp nhánh giao diện và dọn dẹp vào main (kèm 4 sửa lỗi trang sản phẩm của Thuận) | Luyến | ✅ | Gộp local 27/09 (merge ee2610a và merge vào main); nhóm trưởng push |
+| 8.4 | Thiết kế canvas: form khai báo điểm (ô chọn vị trí: ghim bản đồ, GPS, dán tọa độ/link Google Maps), trang admin duyệt điểm, việc chờ duyệt trên dashboard | Luyến | ✅ | Nhóm trưởng đã duyệt 27/09 (canvas "OCOP – Khai báo và duyệt điểm du lịch"): bắt buộc mô tả ≥ 40 ký tự và ≥ 1 ảnh; kiểm tra Lâm Đồng bằng khung tọa độ; điểm cách điểm đã duyệt < 200 m chỉ cảnh báo; điện thoại chia 5 bước |
 | 8.5 | API chủ thể: tạo, sửa, xóa bản nháp, gửi duyệt, xem danh sách điểm của mình | Luyến | ⬜ | Kiểm tra quyền sở hữu; điểm nằm trong Lâm Đồng; test |
 | 8.6 | API admin: danh sách chờ duyệt, xem chi tiết, chỉnh vị trí, duyệt / cần bổ sung / từ chối | Luyến | ⬜ | Ghi người duyệt, ngày duyệt, ghi chú; test |
 | 8.7 | API yêu cầu cập nhật / ngừng hiển thị điểm đã duyệt | Luyến | ⬜ | Điểm cũ vẫn hiển thị tới khi duyệt; đối chiếu `version`; test |
@@ -228,6 +228,7 @@ Nhánh: `2312682_HaLuyen_KhaiBaoDiemDuLich`
 | 24/09/2026 | Merge PR #2 bản đồ số và điểm du lịch vào main | f39c33c |
 | 26/09/2026 | Hoàn thành giao diện trang chủ, sản phẩm, tổng quan quản trị; API và biểu đồ thống kê; CLAUDE.md; push nhánh giao diện | 4c74369 … 32595e6 |
 | 26/09/2026 | Migration 009 cho khai báo điểm du lịch; bỏ ảnh nền CARTO | 8385d89, 8ab93fb |
+| 27/09/2026 | Duyệt thiết kế khai báo/duyệt điểm (8.4); gộp main mới (PR #3–#6 của Thuận) vào nhánh, viết lại README; gộp nhánh vào main | ee2610a, commit này |
 | 27/09/2026 | Chốt mốc: báo cáo tiến độ đợt 2 ngày 15/10, hạn nộp đồ án 15/11 (Q1) | Mục Mốc quan trọng |
 | 27/09/2026 | Chốt phân công: Luyến làm admin, chủ thể, tài khoản người dùng; Thái, Thuận làm trang chủ và trang công khai (Q5) | Mục 3 |
 | 27/09/2026 | Sửa migration 009 cho database cũ; tạo lại database sạch; dọn thư mục đồ án và nhánh git; thêm kiểm tra database, pgAdmin giữ tài khoản; lập kế hoạch này | 0710abf, a52b7f6, a7eb63b |
