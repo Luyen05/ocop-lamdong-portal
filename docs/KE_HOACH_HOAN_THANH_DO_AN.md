@@ -9,8 +9,8 @@ Nhóm trưởng: Liêng Hót Ha Luyến (2312682). GVHD: KS. La Quốc Thắng.
 
 Cách dùng file này:
 
-- Mỗi phiên làm việc bắt đầu bằng việc đọc mục 3 (việc tuần hiện tại) và mục 5 (quyết định đang chờ).
-- Làm xong một việc thì đổi trạng thái, ghi commit, và thêm một dòng vào mục 6 (nhật ký).
+- Mỗi phiên làm việc bắt đầu bằng việc đọc mục 4 (việc tuần hiện tại) và mục 6 (quyết định đang chờ). Claude chỉ nhận việc thuộc phần của Luyến (mục 3).
+- Làm xong một việc thì đổi trạng thái, ghi commit, và thêm một dòng vào mục 7 (nhật ký).
 - Ký hiệu trạng thái: ✅ xong · 🟡 đang làm hoặc làm một phần · ⬜ chưa làm · ⏸ chờ quyết định.
 
 ---
@@ -91,7 +91,21 @@ Tiến độ ước lượng theo khối lượng các hạng mục trong đề 
 
 ---
 
-## 3. Kế hoạch chi tiết từng tuần (tuần 8–14)
+## 3. Phân công
+
+Theo phân công của nhóm trưởng:
+
+| Thành viên | Phụ trách |
+|---|---|
+| Liêng Hót Ha Luyến (nhóm trưởng, làm cùng Claude) | Phân hệ **admin**, phân hệ **chủ thể**, chức năng **tài khoản người dùng** (đăng ký, đăng nhập, hồ sơ, đánh giá), backend và database cho các phần này, triển khai |
+| Nguyễn Quốc Thái, Nguyễn Khiêm Thuận | **Trang chủ và các trang công khai**: sản phẩm, chi tiết sản phẩm, điểm du lịch, chi tiết điểm, bản đồ, tin tức, trang lỗi; SEO và hiệu năng trang công khai |
+
+Lưu ý phối hợp:
+
+- Nhánh giao diện `2312682_HaLuyen_ToiUuGiaoDien` đã sửa trang chủ và trang sản phẩm (phần của Thái, Thuận), nên hai bạn cần review PR này trước khi merge.
+- Chỗ giao nhau (sản phẩm gắn với điểm, đánh giá): Luyến làm API và phần nhập liệu, Thái, Thuận hiển thị trên trang công khai; thống nhất định dạng dữ liệu API trước khi làm.
+
+## 4. Kế hoạch chi tiết từng tuần (tuần 8–14)
 
 Mỗi việc làm trên nhánh riêng `2312682_HaLuyen_<TenChucNang>`, theo quy tắc trong `CLAUDE.md`. Giao diện lớn thiết kế trên canvas trước, chờ duyệt rồi mới code; backend là commit riêng.
 
@@ -99,78 +113,78 @@ Mỗi việc làm trên nhánh riêng `2312682_HaLuyen_<TenChucNang>`, theo quy 
 
 Nhánh: `2312682_HaLuyen_KhaiBaoDiemDuLich`
 
-| # | Việc | Trạng thái | Tiêu chí xong |
-|---|---|---|---|
-| 8.1 | Migration 009: trạng thái kiểm duyệt, nguồn vị trí, yêu cầu cập nhật | ✅ | Chạy lặp lại an toàn, cấu trúc khớp schema.sql (commit 8385d89, 0710abf, a52b7f6) |
-| 8.2 | Tạo lại database sạch, dọn thư mục đồ án, thêm kiểm tra database | ✅ | `kiem-tra-database.sql` trả rỗng (commit a7eb63b) |
-| 8.3 | Nhóm duyệt và merge PR giao diện `2312682_HaLuyen_ToiUuGiaoDien` | ⬜ | PR merge vào main; cả nhóm `docker compose restart frontend` |
-| 8.4 | Thiết kế canvas: form khai báo điểm (ô chọn vị trí: ghim bản đồ, GPS, dán tọa độ/link Google Maps), trang admin duyệt điểm, việc chờ duyệt trên dashboard | ⬜ | Nhóm trưởng duyệt thiết kế |
-| 8.5 | API chủ thể: tạo, sửa, xóa bản nháp, gửi duyệt, xem danh sách điểm của mình | ⬜ | Kiểm tra quyền sở hữu; điểm nằm trong Lâm Đồng; test |
-| 8.6 | API admin: danh sách chờ duyệt, xem chi tiết, chỉnh vị trí, duyệt / cần bổ sung / từ chối | ⬜ | Ghi người duyệt, ngày duyệt, ghi chú; test |
-| 8.7 | API yêu cầu cập nhật / ngừng hiển thị điểm đã duyệt | ⬜ | Điểm cũ vẫn hiển thị tới khi duyệt; đối chiếu `version`; test |
+| # | Việc | Phụ trách | Trạng thái | Tiêu chí xong |
+|---|---|---|---|---|
+| 8.1 | Migration 009: trạng thái kiểm duyệt, nguồn vị trí, yêu cầu cập nhật | Luyến | ✅ | Chạy lặp lại an toàn, cấu trúc khớp schema.sql (commit 8385d89, 0710abf, a52b7f6) |
+| 8.2 | Tạo lại database sạch, dọn thư mục đồ án, thêm kiểm tra database | Luyến | ✅ | `kiem-tra-database.sql` trả rỗng (commit a7eb63b) |
+| 8.3 | Nhóm duyệt và merge PR giao diện `2312682_HaLuyen_ToiUuGiaoDien` | Cả nhóm (review) | ⬜ | PR merge vào main; cả nhóm `docker compose restart frontend` |
+| 8.4 | Thiết kế canvas: form khai báo điểm (ô chọn vị trí: ghim bản đồ, GPS, dán tọa độ/link Google Maps), trang admin duyệt điểm, việc chờ duyệt trên dashboard | Luyến | ⬜ | Nhóm trưởng duyệt thiết kế |
+| 8.5 | API chủ thể: tạo, sửa, xóa bản nháp, gửi duyệt, xem danh sách điểm của mình | Luyến | ⬜ | Kiểm tra quyền sở hữu; điểm nằm trong Lâm Đồng; test |
+| 8.6 | API admin: danh sách chờ duyệt, xem chi tiết, chỉnh vị trí, duyệt / cần bổ sung / từ chối | Luyến | ⬜ | Ghi người duyệt, ngày duyệt, ghi chú; test |
+| 8.7 | API yêu cầu cập nhật / ngừng hiển thị điểm đã duyệt | Luyến | ⬜ | Điểm cũ vẫn hiển thị tới khi duyệt; đối chiếu `version`; test |
 
 ### Tuần 9 (05/10 – 11/10): Điểm du lịch, phần giao diện
 
-| # | Việc | Trạng thái | Tiêu chí xong |
-|---|---|---|---|
-| 9.1 | Khu chủ thể: danh sách điểm, form khai báo với ô chọn vị trí | ⬜ | Chạy trên điện thoại (GPS); axe 0 lỗi |
-| 9.2 | Ảnh điểm du lịch: tải lên, chọn ảnh chính, xóa | ⬜ | Dùng cùng cơ chế lưu ảnh với sản phẩm (theo Q2) |
-| 9.3 | Liên kết sản phẩm của chủ thể với điểm du lịch | ⬜ | Chi tiết điểm hiện sản phẩm, chi tiết sản phẩm hiện điểm |
-| 9.4 | Trang admin duyệt điểm, thêm việc chờ duyệt vào dashboard và thống kê | ⬜ | Hàng đợi và số liệu cập nhật đúng |
-| 9.5 | Kiểm thử luồng: chủ thể khai báo → admin duyệt → điểm hiện trên bản đồ | ⬜ | Test tự động và chạy thử bằng tài khoản demo |
+| # | Việc | Phụ trách | Trạng thái | Tiêu chí xong |
+|---|---|---|---|---|
+| 9.1 | Khu chủ thể: danh sách điểm, form khai báo với ô chọn vị trí | Luyến | ⬜ | Chạy trên điện thoại (GPS); axe 0 lỗi |
+| 9.2 | Ảnh điểm du lịch: tải lên, chọn ảnh chính, xóa | Luyến | ⬜ | Dùng cùng cơ chế lưu ảnh với sản phẩm (theo Q2) |
+| 9.3 | Liên kết sản phẩm của chủ thể với điểm du lịch | Luyến (chủ thể gắn sản phẩm); Thái, Thuận (hiển thị trên trang chi tiết) | ⬜ | Chi tiết điểm hiện sản phẩm, chi tiết sản phẩm hiện điểm |
+| 9.4 | Trang admin duyệt điểm, thêm việc chờ duyệt vào dashboard và thống kê | Luyến | ⬜ | Hàng đợi và số liệu cập nhật đúng |
+| 9.5 | Kiểm thử luồng: chủ thể khai báo → admin duyệt → điểm hiện trên bản đồ | Luyến | ⬜ | Test tự động và chạy thử bằng tài khoản demo |
 
 ### Tuần 10 (12/10 – 18/10): Đánh giá và các chức năng quản trị còn thiếu
 
-| # | Việc | Trạng thái | Tiêu chí xong |
-|---|---|---|---|
-| 10.1 | API và giao diện đánh giá sản phẩm/điểm (mỗi người một đánh giá, chờ duyệt) | ⬜ | Tính lại `rating_avg` khi duyệt; test |
-| 10.2 | Admin kiểm duyệt đánh giá | ⬜ | Duyệt / từ chối có lý do |
-| 10.3 | Admin quản lý danh mục (thêm, sửa, ẩn) | ⬜ | Không xóa danh mục đang có sản phẩm |
-| 10.4 | Admin quản lý người dùng (tìm kiếm, khóa/mở khóa, xem vai trò) | ⬜ | Không tự khóa chính mình; test phân quyền |
-| 10.5 | Bỏ các mục "Sắp có" trong thanh bên quản trị | ⬜ | Mục nào chưa làm thì ẩn |
+| # | Việc | Phụ trách | Trạng thái | Tiêu chí xong |
+|---|---|---|---|---|
+| 10.1 | API và giao diện đánh giá sản phẩm/điểm (mỗi người một đánh giá, chờ duyệt) | Luyến (API, form đánh giá); Thái, Thuận (hiển thị đánh giá trên trang chi tiết) | ⬜ | Tính lại `rating_avg` khi duyệt; test |
+| 10.2 | Admin kiểm duyệt đánh giá | Luyến | ⬜ | Duyệt / từ chối có lý do |
+| 10.3 | Admin quản lý danh mục (thêm, sửa, ẩn) | Luyến | ⬜ | Không xóa danh mục đang có sản phẩm |
+| 10.4 | Admin quản lý người dùng (tìm kiếm, khóa/mở khóa, xem vai trò) | Luyến | ⬜ | Không tự khóa chính mình; test phân quyền |
+| 10.5 | Bỏ các mục "Sắp có" trong thanh bên quản trị | Luyến | ⬜ | Mục nào chưa làm thì ẩn |
 
 ### Tuần 11 (19/10 – 25/10): Lưu ảnh, thông tin đơn vị, giao diện các trang còn lại
 
-| # | Việc | Trạng thái | Tiêu chí xong |
-|---|---|---|---|
-| 11.1 | Lưu ảnh theo quyết định Q2 (Firebase Storage hoặc giữ lưu cục bộ); chặn xem ảnh chưa duyệt | ⏸ | Ảnh chưa duyệt không mở được bằng link công khai |
-| 11.2 | Chủ thể cập nhật thông tin đơn vị trực tiếp (thay đổi quan trọng cần admin duyệt) | ⬜ | Test |
-| 11.3 | Giao diện mới: danh sách và chi tiết điểm du lịch, chi tiết sản phẩm | ⬜ | Theo design token; axe 0 lỗi; không tràn ngang |
-| 11.4 | Giao diện mới: trang quản trị con (duyệt sản phẩm, hồ sơ chủ thể), khu chủ thể | ⬜ | Sửa QT-01, QT-04 |
-| 11.5 | Giao diện mới: đăng nhập, đăng ký, hồ sơ, tin tức, trang lỗi | ⬜ | |
+| # | Việc | Phụ trách | Trạng thái | Tiêu chí xong |
+|---|---|---|---|---|
+| 11.1 | Lưu ảnh theo quyết định Q2 (Firebase Storage hoặc giữ lưu cục bộ); chặn xem ảnh chưa duyệt | Luyến | ⏸ | Ảnh chưa duyệt không mở được bằng link công khai |
+| 11.2 | Chủ thể cập nhật thông tin đơn vị trực tiếp (thay đổi quan trọng cần admin duyệt) | Luyến | ⬜ | Test |
+| 11.3 | Giao diện mới: danh sách và chi tiết điểm du lịch, chi tiết sản phẩm | Thái, Thuận | ⬜ | Theo design token; axe 0 lỗi; không tràn ngang |
+| 11.4 | Giao diện mới: trang quản trị con (duyệt sản phẩm, hồ sơ chủ thể), khu chủ thể | Luyến | ⬜ | Sửa QT-01, QT-04 |
+| 11.5 | Giao diện mới: đăng nhập, đăng ký, hồ sơ, tin tức, trang lỗi | Luyến (đăng nhập, đăng ký, hồ sơ); Thái, Thuận (tin tức, trang lỗi) | ⬜ | |
 
 ### Tuần 12 (26/10 – 01/11): Kiểm thử tổng thể, SEO, tài liệu API
 
-| # | Việc | Trạng thái | Tiêu chí xong |
-|---|---|---|---|
-| 12.1 | Kiểm thử E2E các luồng chính (Playwright): khách, chủ thể, admin | ⬜ | Chạy lại được bằng một lệnh |
-| 12.2 | Kiểm tra responsive (375, 768, 1024, 1440px) và trợ năng toàn bộ trang | ⬜ | axe 0 lỗi |
-| 12.3 | SEO cơ bản: title/description từng trang, thẻ Open Graph khi chia sẻ sản phẩm/điểm | ⬜ | Chia sẻ link lên Facebook hiện đúng ảnh và tiêu đề |
-| 12.4 | Hiệu năng: nén ảnh, lazy load, kích thước gói JS | ⬜ | Lighthouse Performance ≥ 80 trên máy tính |
-| 12.5 | Cập nhật `docs/API.md` và Postman cho mọi endpoint | ⬜ | Khớp Swagger |
-| 12.6 | Kiểm tra bảo mật cơ bản: phân quyền, upload file, giới hạn tần suất đăng nhập | ⬜ | Danh sách kiểm tra có kết quả |
+| # | Việc | Phụ trách | Trạng thái | Tiêu chí xong |
+|---|---|---|---|---|
+| 12.1 | Kiểm thử E2E các luồng chính (Playwright): khách, chủ thể, admin | Cả nhóm (mỗi người viết cho phần mình) | ⬜ | Chạy lại được bằng một lệnh |
+| 12.2 | Kiểm tra responsive (375, 768, 1024, 1440px) và trợ năng toàn bộ trang | Cả nhóm | ⬜ | axe 0 lỗi |
+| 12.3 | SEO cơ bản: title/description từng trang, thẻ Open Graph khi chia sẻ sản phẩm/điểm | Thái, Thuận | ⬜ | Chia sẻ link lên Facebook hiện đúng ảnh và tiêu đề |
+| 12.4 | Hiệu năng: nén ảnh, lazy load, kích thước gói JS | Thái, Thuận | ⬜ | Lighthouse Performance ≥ 80 trên máy tính |
+| 12.5 | Cập nhật `docs/API.md` và Postman cho mọi endpoint | Luyến | ⬜ | Khớp Swagger |
+| 12.6 | Kiểm tra bảo mật cơ bản: phân quyền, upload file, giới hạn tần suất đăng nhập | Luyến | ⬜ | Danh sách kiểm tra có kết quả |
 
 ### Tuần 13 (02/11 – 08/11): Triển khai và hướng dẫn
 
-| # | Việc | Trạng thái | Tiêu chí xong |
-|---|---|---|---|
-| 13.1 | Chọn nơi triển khai (Q4), cấu hình Docker production, Nginx, HTTPS | ⏸ | Truy cập được bằng tên miền hoặc IP công khai |
-| 13.2 | Sao lưu database định kỳ trên máy chủ, biến môi trường production | ⬜ | Không lộ secret |
-| 13.3 | Hướng dẫn cài đặt (dev và production) | ⬜ | Người khác làm theo chạy được |
-| 13.4 | Hướng dẫn sử dụng cho người dùng, chủ thể, admin (có ảnh chụp) | ⬜ | |
+| # | Việc | Phụ trách | Trạng thái | Tiêu chí xong |
+|---|---|---|---|---|
+| 13.1 | Chọn nơi triển khai (Q4), cấu hình Docker production, Nginx, HTTPS | Luyến | ⏸ | Truy cập được bằng tên miền hoặc IP công khai |
+| 13.2 | Sao lưu database định kỳ trên máy chủ, biến môi trường production | Luyến | ⬜ | Không lộ secret |
+| 13.3 | Hướng dẫn cài đặt (dev và production) | Luyến | ⬜ | Người khác làm theo chạy được |
+| 13.4 | Hướng dẫn sử dụng cho người dùng, chủ thể, admin (có ảnh chụp) | Cả nhóm (mỗi người viết phần mình) | ⬜ | |
 
 ### Tuần 14 (09/11 – 15/11): Báo cáo, slide, demo
 
-| # | Việc | Trạng thái | Tiêu chí xong |
-|---|---|---|---|
-| 14.1 | Báo cáo tổng kết: phân tích, thiết kế (Use Case, ERD, API, phân quyền), kết quả, khó khăn | ⬜ | Theo mẫu của khoa |
-| 14.2 | Slide thuyết trình và kịch bản demo | ⬜ | Demo 3 vai: khách, chủ thể, admin |
-| 14.3 | Dữ liệu demo sạch, tài khoản demo, diễn tập demo | ⬜ | Chạy trọn kịch bản không lỗi |
-| 14.4 | Rà soát mã nguồn, README, gắn tag phiên bản nộp | ⬜ | Tag `v1.0` trên main |
+| # | Việc | Phụ trách | Trạng thái | Tiêu chí xong |
+|---|---|---|---|---|
+| 14.1 | Báo cáo tổng kết: phân tích, thiết kế (Use Case, ERD, API, phân quyền), kết quả, khó khăn | Cả nhóm | ⬜ | Theo mẫu của khoa |
+| 14.2 | Slide thuyết trình và kịch bản demo | Cả nhóm | ⬜ | Demo 3 vai: khách, chủ thể, admin |
+| 14.3 | Dữ liệu demo sạch, tài khoản demo, diễn tập demo | Cả nhóm | ⬜ | Chạy trọn kịch bản không lỗi |
+| 14.4 | Rà soát mã nguồn, README, gắn tag phiên bản nộp | Luyến | ⬜ | Tag `v1.0` trên main |
 
 ---
 
-## 4. Rủi ro và cách xử lý
+## 5. Rủi ro và cách xử lý
 
 | Rủi ro | Ảnh hưởng | Cách xử lý |
 |---|---|---|
@@ -179,11 +193,12 @@ Nhánh: `2312682_HaLuyen_KhaiBaoDiemDuLich`
 | Firebase cần tài khoản, khóa dịch vụ và có thể phát sinh phí | Trễ tuần 11 | Chốt Q2 trong tuần 8; nếu không kịp thì giữ lưu cục bộ và giải thích trong báo cáo |
 | Chưa có VPS/tên miền | Không demo được bản trực tuyến | Chốt Q4 sớm; phương án dự phòng: demo bằng Docker trên máy |
 | Dịch vụ ngoài (OSRM, ảnh nền bản đồ) thay đổi chính sách | Chức năng bản đồ lỗi lúc demo | Đã có nguồn dự phòng; kiểm tra lại trước buổi demo |
-| Khối lượng dồn cho nhóm trưởng | Trễ các tuần cuối | Phân công thành viên theo vai trò trong tài liệu hướng dẫn nhóm (mục 5, Q5) |
+| Khối lượng dồn cho nhóm trưởng | Trễ các tuần cuối | Giữ đúng phân công ở mục 3; phần công khai giao cho Thái, Thuận |
+| Sửa chồng lên phần của thành viên khác | Xung đột, mất công sửa lại | Trang công khai chỉ sửa khi đã báo và được người phụ trách review |
 
 ---
 
-## 5. Quyết định đang chờ nhóm trưởng
+## 6. Quyết định đang chờ nhóm trưởng
 
 | Mã | Câu hỏi | Cần trước |
 |---|---|---|
@@ -191,15 +206,15 @@ Nhánh: `2312682_HaLuyen_KhaiBaoDiemDuLich`
 | Q2 | Lưu ảnh: dùng Firebase Storage như đề cương, hay giữ lưu cục bộ trên máy chủ | Tuần 10 |
 | Q3 | Tin tức: chỉ lấy RSS từ cổng OCOP tỉnh, hay thêm chức năng admin tự đăng tin | Tuần 10 |
 | Q4 | Nơi triển khai: VPS (nhà cung cấp nào), cloud miễn phí, hay chỉ demo bằng Docker | Tuần 12 |
-| Q5 | Phân công việc tuần 9–14 cho Thái và Thuận (mặc định nhóm trưởng làm cùng Claude) | Tuần 8 |
 
 ---
 
-## 6. Nhật ký cập nhật
+## 7. Nhật ký cập nhật
 
 | Ngày | Nội dung | Commit / tài liệu |
 |---|---|---|
 | 24/09/2026 | Merge PR #2 bản đồ số và điểm du lịch vào main | f39c33c |
 | 26/09/2026 | Hoàn thành giao diện trang chủ, sản phẩm, tổng quan quản trị; API và biểu đồ thống kê; CLAUDE.md; push nhánh giao diện | 4c74369 … 32595e6 |
 | 26/09/2026 | Migration 009 cho khai báo điểm du lịch; bỏ ảnh nền CARTO | 8385d89, 8ab93fb |
+| 27/09/2026 | Chốt phân công: Luyến làm admin, chủ thể, tài khoản người dùng; Thái, Thuận làm trang chủ và trang công khai (Q5) | Mục 3 |
 | 27/09/2026 | Sửa migration 009 cho database cũ; tạo lại database sạch; dọn thư mục đồ án và nhánh git; thêm kiểm tra database, pgAdmin giữ tài khoản; lập kế hoạch này | 0710abf, a52b7f6, a7eb63b |
