@@ -24,13 +24,13 @@ Tiến độ ước lượng theo khối lượng các hạng mục trong đề 
 | Nhóm hạng mục | Tiến độ | Nhận xét |
 |---|---|---|
 | Khảo sát, dữ liệu, thiết kế (tuần 1–4) | 90% | Đủ dữ liệu 77 sản phẩm OCOP và 9 điểm du lịch có nguồn. Cần rà lại sơ đồ Use Case và sơ đồ chức năng cho báo cáo cuối. |
-| Cơ sở dữ liệu PostgreSQL + PostGIS | 90% | Schema, 9 migration, seed, file kiểm tra database. Còn phần review và các bảng quản trị sẽ phát sinh. |
-| Backend (tuần 5–7) | 65% | Có auth JWT/RBAC, sản phẩm (công khai, chủ thể, kiểm duyệt, yêu cầu sửa, chứng nhận), hồ sơ chủ thể, bản đồ, thống kê. Thiếu API điểm du lịch cho chủ thể/admin, đánh giá, danh mục, người dùng. |
+| Cơ sở dữ liệu PostgreSQL + PostGIS | 90% | Schema, 11 migration, seed, file kiểm tra database. Còn phần review và các bảng quản trị sẽ phát sinh. |
+| Backend (tuần 5–7) | 75% | Có auth JWT/RBAC, sản phẩm (công khai, chủ thể, kiểm duyệt, yêu cầu sửa, chứng nhận), hồ sơ chủ thể, bản đồ, thống kê, khai báo và duyệt điểm du lịch. Thiếu đánh giá, danh mục, người dùng. |
 | Bản đồ số (tuần 8–9) | 85% | Clustering, lọc, định vị, điểm gần nhất, chỉ đường OSRM. Thiếu chủ thể khai báo điểm; chưa kiểm thử OSRM thật trong Docker. |
 | Phân hệ chủ thể (tuần 10–11) | 55% | Quản lý sản phẩm, ảnh, chứng nhận đầy đủ. Thiếu quản lý địa điểm, cập nhật thông tin đơn vị trực tiếp. |
 | Phân hệ admin (tuần 10–11) | 50% | Dashboard và thống kê Chart.js, duyệt sản phẩm, duyệt hồ sơ chủ thể. Thiếu quản lý danh mục, địa điểm, người dùng, kiểm duyệt đánh giá. |
 | Giao diện UX/UI | 45% | Làm mới trang chủ, sản phẩm, tổng quan quản trị (đạt WCAG AA). Còn khoảng 10 trang dùng giao diện cũ. |
-| Kiểm thử | 50% | 95 test backend, 72 test frontend, axe cho các trang đã làm. Chưa có kiểm thử E2E theo luồng và kiểm thử trên nhiều thiết bị. |
+| Kiểm thử | 55% | 138 test backend, 92 test frontend, axe cho các trang đã làm. Chưa có kiểm thử E2E theo luồng và kiểm thử trên nhiều thiết bị. |
 | Triển khai, SEO, lưu ảnh Firebase (tuần 13) | 5% | Mới có Docker cho môi trường phát triển. Chưa có VPS, Nginx, HTTPS, thẻ meta/chia sẻ, Firebase. |
 | Tài liệu và báo cáo (tuần 13–14) | 30% | Có README, API.md, Postman, ERD, báo cáo tiến độ đợt 1. Thiếu hướng dẫn sử dụng, báo cáo tổng kết, slide, kịch bản demo. |
 | **Toàn đồ án** | **khoảng 60%** | Đúng tiến độ phần lõi (sản phẩm, bản đồ); chậm ở phần quản trị và triển khai. Còn 7 tuần. |
@@ -128,9 +128,9 @@ Nhánh: `2312682_HaLuyen_KhaiBaoDiemDuLich`
 | 8.2 | Tạo lại database sạch, dọn thư mục đồ án, thêm kiểm tra database | Luyến | ✅ | `kiem-tra-database.sql` trả rỗng (commit a7eb63b) |
 | 8.3 | Gộp nhánh giao diện và dọn dẹp vào main (kèm 4 sửa lỗi trang sản phẩm của Thuận) | Luyến | ✅ | Gộp local 27/09 (merge ee2610a và merge vào main); nhóm trưởng push |
 | 8.4 | Thiết kế canvas: form khai báo điểm (ô chọn vị trí: ghim bản đồ, GPS, dán tọa độ/link Google Maps), trang admin duyệt điểm, việc chờ duyệt trên dashboard | Luyến | ✅ | Nhóm trưởng đã duyệt 27/09 (canvas "OCOP – Khai báo và duyệt điểm du lịch"): bắt buộc mô tả ≥ 40 ký tự và ≥ 1 ảnh; kiểm tra Lâm Đồng bằng khung tọa độ; điểm cách điểm đã duyệt < 200 m chỉ cảnh báo; điện thoại chia 5 bước |
-| 8.5 | API chủ thể: tạo, sửa, xóa bản nháp, gửi duyệt, xem danh sách điểm của mình | Luyến | ⬜ | Kiểm tra quyền sở hữu; điểm nằm trong Lâm Đồng; test |
-| 8.6 | API admin: danh sách chờ duyệt, xem chi tiết, chỉnh vị trí, duyệt / cần bổ sung / từ chối | Luyến | ⬜ | Ghi người duyệt, ngày duyệt, ghi chú; test |
-| 8.7 | API yêu cầu cập nhật / ngừng hiển thị điểm đã duyệt | Luyến | ⬜ | Điểm cũ vẫn hiển thị tới khi duyệt; đối chiếu `version`; test |
+| 8.5 | API chủ thể: tạo, sửa, xóa bản nháp, gửi duyệt, xem danh sách điểm của mình | Luyến | ✅ | `/subject/locations`, `/subject/location-images`; kiểm tra vị trí (`position-check`), đọc tọa độ/link Google Maps (`parse-coordinates`); migration 011 cho bản nháp thiếu vị trí; test SQLite và PostgreSQL |
+| 8.6 | API admin: danh sách chờ duyệt, xem chi tiết, chỉnh vị trí, duyệt / cần bổ sung / từ chối | Luyến | ✅ | `/admin/locations`; chỉnh ghim ghi vào ghi chú duyệt; dashboard có `pending_locations` |
+| 8.7 | API yêu cầu cập nhật / ngừng hiển thị điểm đã duyệt | Luyến | ✅ | `/subject/location-change-requests`, `/admin/location-change-requests`; ngừng hiển thị chuyển sang `archived` |
 
 ### Tuần 9 (05/10 – 11/10): Điểm du lịch, phần giao diện
 
@@ -231,4 +231,5 @@ Nhánh: `2312682_HaLuyen_KhaiBaoDiemDuLich`
 | 27/09/2026 | Duyệt thiết kế khai báo/duyệt điểm (8.4); gộp main mới (PR #3–#6 của Thuận) vào nhánh, viết lại README; gộp nhánh vào main | ee2610a, commit này |
 | 27/09/2026 | Chốt mốc: báo cáo tiến độ đợt 2 ngày 15/10, hạn nộp đồ án 15/11 (Q1) | Mục Mốc quan trọng |
 | 27/09/2026 | Chốt phân công: Luyến làm admin, chủ thể, tài khoản người dùng; Thái, Thuận làm trang chủ và trang công khai (Q5) | Mục 3 |
+| 27/09/2026 | Backend khai báo/duyệt điểm du lịch (8.5–8.7), migration 011; sửa lỗi thay ảnh sản phẩm và yêu cầu ngừng hiển thị sản phẩm trên PostgreSQL | f687843, commit này |
 | 27/09/2026 | Sửa migration 009 cho database cũ; tạo lại database sạch; dọn thư mục đồ án và nhánh git; thêm kiểm tra database, pgAdmin giữ tài khoản; lập kế hoạch này | 0710abf, a52b7f6, a7eb63b |

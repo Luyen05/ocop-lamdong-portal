@@ -73,12 +73,43 @@ của từng endpoint.
 - `GET /products/{slug}` bổ sung `related_locations`: các điểm du lịch đã duyệt có
   giới thiệu sản phẩm.
 
+### Khai báo và duyệt điểm du lịch đã triển khai
+
+- Chủ thể đã duyệt tạo bản nháp tại `POST /subject/locations` (chỉ cần `name`, `type`),
+  lưu dần bằng `PATCH /subject/locations/{id}` và gửi duyệt bằng
+  `POST /subject/locations/{id}/submit`. Chỉ `draft` và `needs_revision` được sửa/gửi;
+  `rejected` là kết thúc (được xóa, khai báo lại thành điểm mới).
+- Vị trí gửi kèm `latitude`, `longitude` và `location_source`
+  (`map_pin`, `device_gps`, `coordinates`, `google_maps_link`); `location_accuracy_m`
+  chỉ dùng với `device_gps`.
+- `GET /subject/locations/position-check?latitude=&longitude=&exclude_id=`: vị trí có
+  nằm trong khung tỉnh Lâm Đồng không, điểm đã duyệt gần nhất và cảnh báo trùng khi
+  cách dưới 200 m (chỉ cảnh báo, không chặn).
+- `POST /subject/locations/parse-coordinates` `{text}`: đọc tọa độ thập phân,
+  độ-phút-giây hoặc link Google Maps đầy đủ. Link rút gọn trả
+  `422 SHORT_MAPS_LINK_UNSUPPORTED`.
+- Gửi duyệt cần đủ vị trí, xã/phường, địa chỉ, mô tả ≥ 40 ký tự và đúng một ảnh chính;
+  thiếu trả `422 LOCATION_SUBMISSION_INCOMPLETE` kèm `missing_fields`; ngoài tỉnh trả
+  `422 LOCATION_OUTSIDE_LAM_DONG`.
+- Ảnh tải lên tại `POST /subject/location-images` (JPEG/PNG/WebP ≤ 5 MB), phục vụ ở
+  `/uploads/locations/...`; ảnh tạm xóa bằng `DELETE /subject/location-images/{file}`.
+- `product_ids` chỉ nhận sản phẩm OCOP đã duyệt của chính chủ thể.
+- Admin xem hàng đợi `GET /admin/locations` (lọc `status`, `origin=subject|import`,
+  `type`, `location_source`, `search`; có `status_counts`) và xử lý
+  `PATCH /admin/locations/{id}/moderation` `{status, note, latitude?, longitude?}`.
+  Tọa độ admin chỉnh được ghi vào ghi chú duyệt để chủ thể biết.
+- Điểm đã duyệt: `POST /subject/locations/{id}/change-requests` (gửi đủ thông tin mới)
+  hoặc `/deletion-requests` (lý do); điểm cũ vẫn hiển thị tới khi admin duyệt tại
+  `PATCH /admin/location-change-requests/{id}/moderation`. Ngừng hiển thị chuyển điểm
+  sang `archived`. Yêu cầu tạo trước khi điểm đổi phiên bản trả
+  `409 LOCATION_VERSION_CONFLICT`.
+
 ## Quy trình trạng thái
 
 - Hồ sơ subject: user tạo `pending`; admin chuyển `approved/rejected`. Khi approved,
   backend tự cấp role `subject`; khi rejected tự trả về role `user`.
 - Sản phẩm mới đi qua draft -> pending -> approved. Sản phẩm đã duyệt sử dụng
-  yêu cầu thay đổi riêng; địa điểm sẽ được hoàn thiện ở module sau.
+  yêu cầu thay đổi riêng. Điểm du lịch dùng cùng quy trình (mục trên).
 - Review mới luôn `pending`; chỉ review `approved` được tính vào `rating_avg`.
 - News dùng `draft/published/archived`; `published_at` được backend quản lý.
 

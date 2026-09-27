@@ -29,13 +29,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-public_product_uploads = settings.upload_directory / "products"
-public_product_uploads.mkdir(parents=True, exist_ok=True)
-app.mount(
-    "/uploads/products",
-    StaticFiles(directory=public_product_uploads),
-    name="product-uploads",
-)
+# Chỉ công khai ảnh sản phẩm và ảnh điểm du lịch; file chứng nhận (uploads/certificates) được tải qua API có
+# kiểm tra quyền.
+for folder, mount_name in (("products", "product-uploads"), ("locations", "location-uploads")):
+    public_uploads = settings.upload_directory / folder
+    public_uploads.mkdir(parents=True, exist_ok=True)
+    app.mount(f"/uploads/{folder}", StaticFiles(directory=public_uploads), name=mount_name)
 
 app.include_router(api_router, prefix=settings.api_v1_prefix)
 
