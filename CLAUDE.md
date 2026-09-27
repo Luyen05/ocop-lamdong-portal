@@ -21,6 +21,8 @@ File này là quy tắc chung cho mọi lần phát triển tiếp theo. Khi quy
 
 ## 2. Phạm vi thay đổi
 
+- **Phân công:** Claude làm cùng nhóm trưởng (Luyến) phần admin, chủ thể, tài khoản người dùng (đăng ký, đăng nhập, hồ sơ, đánh giá) cùng backend/database của các phần này. Trang chủ và các trang công khai (sản phẩm, điểm du lịch, bản đồ, tin tức, trang lỗi) do Thái và Thuận phụ trách: chỉ sửa khi nhóm trưởng yêu cầu, và ghi rõ trong PR để hai bạn review.
+
 - Khi việc được giao là **giao diện**: chỉ sửa phần trình bày (template, style, component hiển thị). Không đổi logic gọi API, router, store, tên props/emit, kiểu dữ liệu, trừ khi được cho phép rõ ràng. Mỗi lần được cho phép thì ghi lại trong báo cáo.
 - **Không thêm thư viện mới khi chưa hỏi.** Đã được duyệt: Bootstrap 5, Bootstrap Icons, Leaflet + leaflet.markercluster, Chart.js 4 (chỉ đăng ký thành phần cần dùng), font Be Vietnam Pro (Google Fonts). vue-i18n đã bị bỏ, không tự thêm lại.
 - Việc lớn về giao diện: **thiết kế trước trên canvas Claude Design, chờ duyệt, rồi mới code**; có backend thì làm backend sau khi giao diện được duyệt.
