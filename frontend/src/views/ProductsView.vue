@@ -70,16 +70,17 @@ const pageNumbers = computed(() => {
 })
 
 const activeFilters = computed(() => {
+  const applied = appliedForm.value
   const filters: Array<{ key: keyof typeof form; label: string }> = []
-  if (form.search) filters.push({ key: 'search', label: `Từ khóa: ${form.search}` })
-  if (form.category) {
-    const category = categories.value.find((item) => item.slug === form.category)
-    filters.push({ key: 'category', label: `Danh mục: ${category?.name || form.category}` })
+  if (applied.search) filters.push({ key: 'search', label: `Từ khóa: ${applied.search}` })
+  if (applied.category) {
+    const category = categories.value.find((item) => item.slug === applied.category)
+    filters.push({ key: 'category', label: `Danh mục: ${category?.name || applied.category}` })
   }
-  if (form.star) filters.push({ key: 'star', label: `${form.star} sao` })
-  if (form.district) filters.push({ key: 'district', label: `Địa bàn: ${form.district}` })
-  if (form.minPrice) filters.push({ key: 'minPrice', label: `Giá từ ${Number(form.minPrice).toLocaleString('vi-VN')}đ` })
-  if (form.maxPrice) filters.push({ key: 'maxPrice', label: `Giá đến ${Number(form.maxPrice).toLocaleString('vi-VN')}đ` })
+  if (applied.star) filters.push({ key: 'star', label: `${applied.star} sao` })
+  if (applied.district) filters.push({ key: 'district', label: `Địa bàn: ${applied.district}` })
+  if (applied.minPrice) filters.push({ key: 'minPrice', label: `Giá từ ${Number(applied.minPrice).toLocaleString('vi-VN')}đ` })
+  if (applied.maxPrice) filters.push({ key: 'maxPrice', label: `Giá đến ${Number(applied.maxPrice).toLocaleString('vi-VN')}đ` })
   return filters
 })
 
@@ -93,34 +94,40 @@ function queryNumber(value: unknown): number | undefined {
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined
 }
 
-function hydrateFormFromQuery(): void {
-  form.search = queryText(route.query.search)
-  form.category = queryText(route.query.category)
-  form.star = queryText(route.query.star)
-  form.district = queryText(route.query.district)
-  form.minPrice = queryText(route.query.min_price)
-  form.maxPrice = queryText(route.query.max_price)
-
+const appliedForm = computed(() => {
   const requestedSort = queryText(route.query.sort) as ProductSort
-  form.sort = sortOptions.some((option) => option.value === requestedSort)
-    ? requestedSort
-    : 'newest'
+  return {
+    search: queryText(route.query.search),
+    category: queryText(route.query.category),
+    star: queryText(route.query.star),
+    district: queryText(route.query.district),
+    minPrice: queryText(route.query.min_price),
+    maxPrice: queryText(route.query.max_price),
+    sort: sortOptions.some((option) => option.value === requestedSort)
+      ? requestedSort
+      : 'newest' as ProductSort,
+  }
+})
 
+function hydrateFormFromQuery(): void {
+  Object.assign(form, appliedForm.value)
+  validationMessage.value = ''
   const requestedPage = Number(route.query.page)
   currentPage.value = Number.isInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1
 }
 
 function filtersFromRoute(): ProductFilters {
+  const applied = appliedForm.value
   return {
     page: currentPage.value,
     page_size: pageSize,
-    search: form.search || undefined,
-    category: form.category || undefined,
-    star: queryNumber(form.star),
-    district: form.district || undefined,
-    min_price: queryNumber(form.minPrice),
-    max_price: queryNumber(form.maxPrice),
-    sort: form.sort,
+    search: applied.search || undefined,
+    category: applied.category || undefined,
+    star: queryNumber(applied.star),
+    district: applied.district || undefined,
+    min_price: queryNumber(applied.minPrice),
+    max_price: queryNumber(applied.maxPrice),
+    sort: applied.sort,
   }
 }
 
@@ -168,16 +175,16 @@ async function loadFilterOptions(): Promise<void> {
   }
 }
 
-function filterQuery(page = 1): Record<string, string> {
+function filterQuery(page = 1, filters = appliedForm.value): Record<string, string> {
   const query: Record<string, string> = {}
   if (page > 1) query.page = String(page)
-  if (form.search) query.search = form.search
-  if (form.category) query.category = form.category
-  if (form.star) query.star = form.star
-  if (form.district) query.district = form.district
-  if (form.minPrice) query.min_price = form.minPrice
-  if (form.maxPrice) query.max_price = form.maxPrice
-  if (form.sort !== 'newest') query.sort = form.sort
+  if (filters.search) query.search = filters.search
+  if (filters.category) query.category = filters.category
+  if (filters.star) query.star = filters.star
+  if (filters.district) query.district = filters.district
+  if (filters.minPrice) query.min_price = filters.minPrice
+  if (filters.maxPrice) query.max_price = filters.maxPrice
+  if (filters.sort !== 'newest') query.sort = filters.sort
   return query
 }
 
@@ -189,37 +196,35 @@ async function applyFilters(): Promise<void> {
     validationMessage.value = 'Giá tối thiểu không được lớn hơn giá tối đa.'
     return
   }
-  await router.push({ name: 'products', query: filterQuery() })
+  await router.push({ name: 'products', query: filterQuery(1, form) })
 }
 
 async function clearFilters(): Promise<void> {
   validationMessage.value = ''
-  Object.assign(form, {
-    search: '',
-    category: '',
-    star: '',
-    district: '',
-    minPrice: '',
-    maxPrice: '',
-    sort: 'newest',
-  })
   await router.push({ name: 'products' })
+  hydrateFormFromQuery()
 }
 
 async function removeFilter(key: keyof typeof form): Promise<void> {
-  if (key === 'sort') form.sort = 'newest'
-  else form[key] = ''
-  await applyFilters()
+  const filters = { ...appliedForm.value }
+  if (key === 'sort') filters.sort = 'newest'
+  else filters[key] = ''
+  await router.push({ name: 'products', query: filterQuery(1, filters) })
+}
+
+// Chip nhóm và nút hạng sao áp dụng ngay, chỉ đổi đúng bộ lọc đó trên các bộ lọc đang áp dụng;
+// giá trị đang gõ dở trong form (chưa bấm Tìm/Áp dụng) không bị gửi kèm.
+async function applyQuickFilter(change: Partial<typeof form>): Promise<void> {
+  const filters = { ...appliedForm.value, ...change }
+  await router.push({ name: 'products', query: filterQuery(1, filters) })
 }
 
 async function selectCategory(slug: string): Promise<void> {
-  form.category = slug
-  await applyFilters()
+  await applyQuickFilter({ category: slug })
 }
 
 async function selectStar(value: string): Promise<void> {
-  form.star = value
-  await applyFilters()
+  await applyQuickFilter({ star: value })
 }
 
 async function submitFromDrawer(): Promise<void> {

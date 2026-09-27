@@ -43,7 +43,7 @@ const formattedPrice = computed(() => {
 
 <template>
   <article class="product-card" :style="themeStyle">
-    <RouterLink class="product-card-link" :to="`/san-pham/${product.slug}`">
+    <RouterLink class="product-card-link" :to="`/san-pham/${product.slug}`" :aria-label="product.name">
       <div class="product-media">
         <img
           v-if="showImage"
