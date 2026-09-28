@@ -6,6 +6,7 @@ from typing import Literal
 
 from sqlalchemy import func, or_
 
+from app.core.geometry import GeoPoint
 from app.models.location import TourismLocation
 from app.schemas.location import (
     LocationListItem,
@@ -69,6 +70,14 @@ def public_location_filters(
     return filters
 
 
+def public_point(location: TourismLocation) -> GeoPoint:
+    """Tọa độ của điểm công khai; database bắt buộc có khi điểm không còn là bản nháp."""
+
+    if location.geom is None:
+        raise ValueError(f"Điểm du lịch {location.id} chưa có tọa độ.")
+    return location.geom
+
+
 def primary_image_url(location: TourismLocation) -> str | None:
     return location.images[0].image_url if location.images else None
 
@@ -80,10 +89,10 @@ def to_location_list_item(location: TourismLocation) -> LocationListItem:
         slug=location.slug,
         type=location.type,
         type_label=location_type_label(location.type),
-        district=location.district,
-        address=location.address,
-        latitude=location.geom.latitude,
-        longitude=location.geom.longitude,
+        district=location.district or "",
+        address=location.address or "",
+        latitude=public_point(location).latitude,
+        longitude=public_point(location).longitude,
         opening_hours=location.opening_hours,
         ticket_price=float(location.ticket_price) if location.ticket_price is not None else None,
         services=list(location.services or []),
@@ -96,7 +105,7 @@ def to_location_list_item(location: TourismLocation) -> LocationListItem:
 def to_map_feature(location: TourismLocation) -> MapFeature:
     return MapFeature(
         geometry=PointGeometryRead(
-            coordinates=(location.geom.longitude, location.geom.latitude),
+            coordinates=(public_point(location).longitude, public_point(location).latitude),
         ),
         properties=MapFeatureProperties(
             id=location.id,
@@ -104,8 +113,8 @@ def to_map_feature(location: TourismLocation) -> MapFeature:
             name=location.name,
             type=location.type,
             type_label=location_type_label(location.type),
-            district=location.district,
-            address=location.address,
+            district=location.district or "",
+            address=location.address or "",
             opening_hours=location.opening_hours,
             ticket_price=(
                 float(location.ticket_price) if location.ticket_price is not None else None

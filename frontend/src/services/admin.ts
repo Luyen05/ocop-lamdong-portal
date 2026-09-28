@@ -7,6 +7,8 @@ export interface AdminDashboardStats {
   pending_subject_applications: number
   pending_change_requests: number
   products_missing_decision: number
+  pending_locations: number
+  pending_location_change_requests: number
 }
 
 export async function getAdminDashboard(): Promise<AdminDashboardStats> {

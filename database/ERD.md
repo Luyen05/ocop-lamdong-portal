@@ -37,3 +37,8 @@ cho biết vị trí lấy từ đâu (`admin_import` là dữ liệu nhóm nh�
 ngừng hiển thị qua `tourism_location_change_requests`: mỗi điểm có tối đa một yêu cầu
 đang mở, điểm cũ vẫn hiển thị cho tới khi admin duyệt; `base_version` đối chiếu với
 `tourism_locations.version` để phát hiện dữ liệu đã thay đổi.
+
+Migration 011 cho phép bản nháp (`draft`) và điểm đang bổ sung (`needs_revision`) còn
+trống `geom`, `district`, `address` vì chủ thể lưu dần từng phần biểu mẫu; các trạng thái
+khác bắt buộc đủ (ràng buộc `tourism_locations_required_fields_check`). Yêu cầu ngừng
+hiển thị được duyệt chuyển điểm sang `archived` (không xóa dữ liệu).

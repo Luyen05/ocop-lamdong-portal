@@ -1,10 +1,10 @@
-"""Kiểm tra model khớp migration 009: trạng thái, nguồn vị trí, yêu cầu cập nhật điểm du lịch."""
+"""Kiểm tra model khớp migration 009, 011: trạng thái, nguồn vị trí, bản nháp, yêu cầu cập nhật điểm du lịch."""
 
 from collections.abc import Generator
 from decimal import Decimal
 
 import pytest
-from sqlalchemy import create_engine, event
+from sqlalchemy import create_engine, event, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
@@ -104,6 +104,46 @@ def test_location_rejects_invalid_values(session: Session, overrides: dict) -> N
 
     with pytest.raises(IntegrityError):
         session.commit()
+
+
+def test_only_drafts_may_miss_position_district_or_address(session: Session) -> None:
+    empty = {"geom": None, "district": None, "address": None}
+    session.add_all(
+        [
+            new_location(slug="nhap", status="draft", **empty),
+            new_location(slug="bo-sung", status="needs_revision", **empty),
+            new_location(slug="ngung", status="archived"),
+        ]
+    )
+    session.commit()
+
+    for missing in ("geom", "district", "address"):
+        session.add(new_location(slug=f"cho-duyet-{missing}", status="pending", **{missing: None}))
+        with pytest.raises(IntegrityError):
+            session.commit()
+        session.rollback()
+
+
+def test_delete_request_stores_real_null_payload(session: Session) -> None:
+    location = new_location(subject_id=1, status="approved")
+    session.add(location)
+    session.commit()
+
+    session.add(
+        TourismLocationChangeRequest(
+            location_id=location.id,
+            subject_id=1,
+            request_type="delete",
+            proposed_data=None,
+            reason="Tạm dừng đón khách",
+            base_version=1,
+        )
+    )
+    session.commit()
+
+    assert session.execute(
+        text("SELECT proposed_data IS NULL FROM tourism_location_change_requests")
+    ).scalar_one() == 1
 
 
 def test_change_request_payload_must_match_type(session: Session) -> None:

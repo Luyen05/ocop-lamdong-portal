@@ -33,10 +33,22 @@ const tasks = computed(() => [
     to: '/quan-tri/san-pham',
   },
   {
-    title: 'Yêu cầu sửa hoặc ngừng hiển thị',
+    title: 'Yêu cầu sửa hoặc ngừng hiển thị sản phẩm',
     description: 'So sánh dữ liệu cũ và mới theo đề nghị của chủ thể.',
     count: stats.value?.pending_change_requests ?? 0,
     to: '/quan-tri/san-pham',
+  },
+  {
+    title: 'Điểm du lịch chờ duyệt',
+    description: 'Kiểm tra ghim trên bản đồ, địa chỉ và ảnh chụp tại điểm.',
+    count: stats.value?.pending_locations ?? 0,
+    to: '/quan-tri/diem-du-lich',
+  },
+  {
+    title: 'Yêu cầu sửa hoặc ngừng hiển thị điểm',
+    description: 'Đối chiếu thông tin đang hiển thị với đề xuất của chủ thể.',
+    count: stats.value?.pending_location_change_requests ?? 0,
+    to: '/quan-tri/diem-du-lich?tab=requests',
   },
   {
     title: 'Hồ sơ chủ thể chờ xác minh',

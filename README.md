@@ -24,7 +24,7 @@ Kế hoạch chi tiết và tự đánh giá tiến độ: [`docs/KE_HOACH_HOAN_
 **Chủ thể OCOP (hợp tác xã, doanh nghiệp, hộ sản xuất)**
 
 - ✅ Quản lý sản phẩm: bản nháp, gửi duyệt, yêu cầu sửa hoặc ngừng hiển thị sau khi duyệt, ảnh, giấy chứng nhận.
-- 🟡 Khai báo điểm du lịch: đã có cấu trúc database (migration 009), đang làm API và giao diện.
+- ✅ Khai báo điểm du lịch: bản nháp, lấy vị trí bằng ghim bản đồ / GPS / tọa độ / link Google Maps, ảnh, gắn sản phẩm OCOP, gửi duyệt, yêu cầu cập nhật hoặc ngừng hiển thị.
 - 🟡 Cập nhật thông tin đơn vị: hiện sửa bằng cách gửi lại hồ sơ.
 
 **Quản trị viên**
@@ -32,7 +32,8 @@ Kế hoạch chi tiết và tự đánh giá tiến độ: [`docs/KE_HOACH_HOAN_
 - ✅ Tổng quan: hàng đợi việc cần xử lý, số liệu chính, thống kê và biểu đồ (Chart.js).
 - ✅ Kiểm duyệt sản phẩm, yêu cầu sửa sản phẩm, nguồn chứng cứ công nhận OCOP.
 - ✅ Duyệt hồ sơ đăng ký chủ thể.
-- ⬜ Duyệt điểm du lịch, quản lý danh mục, quản lý người dùng, kiểm duyệt đánh giá.
+- ✅ Duyệt điểm du lịch: kiểm tra vị trí trong tỉnh, cảnh báo trùng điểm trong 200 m, chỉnh ghim khi duyệt, so sánh và duyệt yêu cầu cập nhật.
+- ⬜ Quản lý danh mục, quản lý người dùng, kiểm duyệt đánh giá.
 
 Giao diện dùng bộ design token chung (bảng màu "Sương sớm & dã quỳ", font Be Vietnam Pro) và đạt WCAG 2.2 AA trên các trang đã làm mới.
 
@@ -112,11 +113,12 @@ Không dùng `docker compose down -v`: lệnh này xóa cả database và ảnh 
 ## 5. Database và migration
 
 - Database mới tạo từ `database/schema.sql` luôn là phiên bản mới nhất, không cần chạy migration.
-- Database đã có dữ liệu: sau mỗi lần `git pull`, chạy các migration chưa chạy theo thứ tự (từ file đầu tiên chưa chạy tới 010). Mọi migration chạy lặp lại an toàn. Ví dụ:
+- Database đã có dữ liệu: sau mỗi lần `git pull`, chạy các migration chưa chạy theo thứ tự (từ file đầu tiên chưa chạy tới 011). Mọi migration chạy lặp lại an toàn. Ví dụ:
 
   ```powershell
   Get-Content .\database\migrations\009_tourism_location_submissions.sql -Raw | docker compose exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
   Get-Content .\database\migrations\010_normalize_constraint_names.sql -Raw | docker compose exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+  Get-Content .\database\migrations\011_tourism_location_drafts.sql -Raw | docker compose exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
   ```
 
 | Migration | Nội dung |
@@ -131,6 +133,7 @@ Không dùng `docker compose down -v`: lệnh này xóa cả database và ảnh 
 | 008_tourism_location_map | Thông tin điểm du lịch cho bản đồ số |
 | 009_tourism_location_submissions | Chủ thể khai báo điểm du lịch, admin duyệt, yêu cầu cập nhật |
 | 010_normalize_constraint_names | Chuẩn hóa tên ràng buộc để database nâng cấp giống hệt database tạo mới |
+| 011_tourism_location_drafts | Bản nháp điểm du lịch được thiếu vị trí/địa chỉ; trạng thái ngừng hiển thị (archived) |
 
 **Kiểm tra database khớp repo:** mở `tools/kiem-tra-database.sql` trong Query Tool của pgAdmin và chạy.
 Kết quả rỗng là khớp; dòng `thieu_so_voi_repo` là migration chưa chạy; dòng `thua_ngoai_repo` là thay đổi làm thẳng trên database mà repo không có.
@@ -140,8 +143,8 @@ Kết quả rỗng là khớp; dòng `thieu_so_voi_repo` là migration chưa ch�
 ## 6. Kiểm thử
 
 ```powershell
-docker compose exec backend python -m pytest -q      # backend: 95 test
-docker compose exec frontend npm test                # frontend: 92 test
+docker compose exec backend python -m pytest -q      # backend: 138 test
+docker compose exec frontend npm test                # frontend: 111 test
 docker compose exec frontend npm run type-check
 docker compose exec frontend npm run build
 .\scripts\verify-mvp.ps1                             # kiểm tra nhanh toàn hệ thống, chỉ đọc dữ liệu
@@ -160,7 +163,8 @@ Tài liệu đầy đủ ở Swagger (`/docs`) và [`docs/API.md`](docs/API.md).
 | Bản đồ | `GET /map/locations` (GeoJSON), `/map/nearby`, `/map/route` | Công khai |
 | Hồ sơ chủ thể | `POST /subject-applications`, `GET/PUT /subject-applications/me` | Người dùng |
 | Chủ thể | `/subject/products` (CRUD, `submit`, `change-requests`, `deletion-requests`), `/subject/product-images`, `/subject/product-certificates`, `/subject/product-change-requests` | Chủ thể |
-| Quản trị | `/admin/dashboard`, `/admin/statistics`, `/admin/products` (duyệt, chứng cứ), `/admin/product-change-requests`, `/admin/subject-applications`, `/admin/data-sources` | Admin |
+| Chủ thể – điểm du lịch | `/subject/locations` (CRUD, `submit`, `position-check`, `parse-coordinates`, `change-requests`, `deletion-requests`), `/subject/location-images`, `/subject/location-change-requests` | Chủ thể |
+| Quản trị | `/admin/dashboard`, `/admin/statistics`, `/admin/products` (duyệt, chứng cứ), `/admin/product-change-requests`, `/admin/subject-applications`, `/admin/data-sources`, `/admin/locations` (duyệt, chỉnh ghim), `/admin/location-change-requests` | Admin |
 
 Backend kiểm tra vai trò trong database ở mỗi lần gọi; sửa JWT hay hiện nút trên giao diện không làm tăng quyền.
 

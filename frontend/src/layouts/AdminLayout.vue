@@ -20,7 +20,7 @@ const pageTitle = computed(() =>
 const navigation = [
   { label: 'Tổng quan', icon: 'dashboard', to: '/quan-tri', available: true },
   { label: 'Sản phẩm', icon: 'package', to: '/quan-tri/san-pham', available: true },
-  { label: 'Điểm du lịch', icon: 'map-pin', to: '', available: false },
+  { label: 'Điểm du lịch', icon: 'map-pin', to: '/quan-tri/diem-du-lich', available: true },
   { label: 'Chủ thể / HTX', icon: 'building', to: '/quan-tri/ho-so-chu-the', available: true },
   { label: 'Người dùng', icon: 'users', to: '', available: false },
   { label: 'Đánh giá', icon: 'star', to: '', available: false },
