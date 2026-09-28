@@ -142,6 +142,26 @@ Nhánh: `2312682_HaLuyen_KhaiBaoDiemDuLich`
 | 9.4 | Trang admin duyệt điểm, thêm việc chờ duyệt vào dashboard và thống kê | Luyến | ✅ | `/quan-tri/diem-du-lich`: chỉnh ghim, so sánh yêu cầu cập nhật; dashboard có 2 việc mới |
 | 9.5 | Kiểm thử luồng: chủ thể khai báo → admin duyệt → điểm hiện trên bản đồ | Luyến | ✅ | 19 test giao diện mới; chạy thật bằng trình duyệt với tài khoản demo: khai báo → duyệt → hiện trên bản đồ công khai |
 
+### Giai đoạn A (28/09 – 07/10): Quản trị nội dung, làm sớm các việc 10.1–10.5
+
+Tuần 8–9 đã xong sớm (PR #7 merge vào main ngày 28/09), nên làm trước các việc quản trị của tuần 10.
+Nhánh: `2312682_HaLuyen_QuanTriNoiDung`.
+
+Quy tắc nhóm trưởng chốt ngày 28/09:
+- **Đánh giá:** mọi tài khoản đã đăng nhập đều được viết; mỗi người một đánh giá cho mỗi sản phẩm hoặc điểm;
+  chủ thể không tự đánh giá sản phẩm, điểm của đơn vị mình; đánh giá mới chờ admin duyệt mới hiện.
+- **Ẩn danh mục:** sản phẩm thuộc danh mục vẫn hiện; danh mục ẩn chỉ biến mất khỏi bộ lọc và ô chọn khi tạo sản phẩm mới.
+
+| # | Việc | Phụ trách | Trạng thái | Tiêu chí xong |
+|---|---|---|---|---|
+| A1 | Thiết kế canvas: trang admin Danh mục, Người dùng, Đánh giá; form viết đánh giá; "Đánh giá của tôi" trong trang tài khoản | Luyến | ⬜ | Nhóm trưởng duyệt |
+| A2 | Migration 012: danh mục ẩn/hiện và thứ tự; đánh giá thêm người duyệt, ngày duyệt, lý do từ chối | Luyến | ⬜ | Chạy lặp lại an toàn; `kiem-tra-database.sql` rỗng |
+| A3 | Backend quản lý danh mục (thêm, sửa, ẩn; không xóa danh mục đang có sản phẩm) | Luyến | ⬜ | Commit riêng, có test |
+| A4 | Backend quản lý người dùng (tìm, lọc vai trò, khóa/mở khóa; không tự khóa mình, không khóa admin cuối cùng) | Luyến | ⬜ | Commit riêng, có test phân quyền |
+| A5 | Backend đánh giá: xem đánh giá đã duyệt, viết/sửa/xóa khi còn chờ duyệt, admin duyệt/từ chối, tính lại điểm trung bình | Luyến | ⬜ | Commit riêng, có test |
+| A6 | Giao diện 3 trang admin, form đánh giá, "Đánh giá của tôi"; bỏ các mục "Sắp có" trong menu quản trị | Luyến | ⬜ | Mỗi trang một commit; axe 0 lỗi; không tràn ngang |
+| A7 | Ghi định dạng API đánh giá vào `docs/API.md` để Thái, Thuận hiển thị trên trang chi tiết | Luyến | ⬜ | Hai bạn xác nhận |
+
 ### Tuần 10 (12/10 – 18/10): Báo cáo tiến độ đợt 2 (15/10), đánh giá và các chức năng quản trị còn thiếu
 
 | # | Việc | Phụ trách | Trạng thái | Tiêu chí xong |
@@ -149,21 +169,23 @@ Nhánh: `2312682_HaLuyen_KhaiBaoDiemDuLich`
 | 10.0a | Chuẩn bị báo cáo tiến độ đợt 2: cập nhật báo cáo và slide (dựa trên báo cáo đợt 1), số liệu tiến độ lấy từ file này | Cả nhóm | ⬜ | Xong trước 13/10 |
 | 10.0b | Kịch bản và dữ liệu demo đợt 2: luồng chủ thể khai báo điểm → admin duyệt → điểm hiện trên bản đồ, thống kê quản trị | Luyến | ⬜ | Diễn tập trơn tru trên máy demo trước 14/10 |
 | 10.0c | **Báo cáo tiến độ đợt 2 (15/10)** | Cả nhóm | ⬜ | Ghi nhận góp ý của GVHD vào mục 7 |
-| 10.1 | API và giao diện đánh giá sản phẩm/điểm (mỗi người một đánh giá, chờ duyệt) | Luyến (API, form đánh giá); Thái, Thuận (hiển thị đánh giá trên trang chi tiết) | ⬜ | Tính lại `rating_avg` khi duyệt; test |
-| 10.2 | Admin kiểm duyệt đánh giá | Luyến | ⬜ | Duyệt / từ chối có lý do |
-| 10.3 | Admin quản lý danh mục (thêm, sửa, ẩn) | Luyến | ⬜ | Không xóa danh mục đang có sản phẩm |
-| 10.4 | Admin quản lý người dùng (tìm kiếm, khóa/mở khóa, xem vai trò) | Luyến | ⬜ | Không tự khóa chính mình; test phân quyền |
-| 10.5 | Bỏ các mục "Sắp có" trong thanh bên quản trị | Luyến | ⬜ | Mục nào chưa làm thì ẩn |
+| 10.1 | API và giao diện đánh giá sản phẩm/điểm (mỗi người một đánh giá, chờ duyệt) | Luyến (API, form đánh giá); Thái, Thuận (hiển thị đánh giá trên trang chi tiết) | ⏩ A5, A6 | Tính lại `rating_avg` khi duyệt; test |
+| 10.2 | Admin kiểm duyệt đánh giá | Luyến | ⏩ A5, A6 | Duyệt / từ chối có lý do |
+| 10.3 | Admin quản lý danh mục (thêm, sửa, ẩn) | Luyến | ⏩ A3, A6 | Không xóa danh mục đang có sản phẩm |
+| 10.4 | Admin quản lý người dùng (tìm kiếm, khóa/mở khóa, xem vai trò) | Luyến | ⏩ A4, A6 | Không tự khóa chính mình; test phân quyền |
+| 10.5 | Bỏ các mục "Sắp có" trong thanh bên quản trị | Luyến | ⏩ A6 | Mục nào chưa làm thì ẩn |
 
 ### Tuần 11 (19/10 – 25/10): Lưu ảnh, thông tin đơn vị, giao diện các trang còn lại
 
 | # | Việc | Phụ trách | Trạng thái | Tiêu chí xong |
 |---|---|---|---|---|
-| 11.1 | Lưu ảnh theo quyết định Q2 (Firebase Storage hoặc giữ lưu cục bộ); chặn xem ảnh chưa duyệt | Luyến | ⏸ | Ảnh chưa duyệt không mở được bằng link công khai |
+| 11.1 | Lưu ảnh lên Firebase Storage (Q2 đã chốt); chuyển ảnh đang lưu cục bộ; chặn xem ảnh chưa duyệt | Luyến | ⬜ | Ảnh chưa duyệt không mở được bằng link công khai; cần nhóm trưởng tạo project Firebase và khóa dịch vụ |
 | 11.2 | Chủ thể cập nhật thông tin đơn vị trực tiếp (thay đổi quan trọng cần admin duyệt) | Luyến | ⬜ | Test |
 | 11.3 | Giao diện mới: danh sách và chi tiết điểm du lịch, chi tiết sản phẩm | Thái, Thuận | ⬜ | Theo design token; axe 0 lỗi; không tràn ngang |
 | 11.4 | Giao diện mới: trang quản trị con (duyệt sản phẩm, hồ sơ chủ thể), khu chủ thể | Luyến | ⬜ | Sửa QT-01, QT-04 |
 | 11.5 | Giao diện mới: đăng nhập, đăng ký, hồ sơ, tin tức, trang lỗi | Luyến (đăng nhập, đăng ký, hồ sơ); Thái, Thuận (tin tức, trang lỗi) | ⬜ | |
+| 11.6 | Admin quản lý tin tức (Q3 đã chốt): soạn, lưu nháp, đăng, gỡ tin; ảnh tin lưu Firebase | Luyến | ⬜ | Thiết kế canvas trước; test |
+| 11.7 | Trang tin tức công khai đọc tin admin đăng (có thể giữ RSS làm nguồn bổ sung) | Thái, Thuận | ⬜ | Thống nhất API với Luyến |
 
 ### Tuần 12 (26/10 – 01/11): Kiểm thử tổng thể, SEO, tài liệu API
 
@@ -215,9 +237,11 @@ Nhánh: `2312682_HaLuyen_KhaiBaoDiemDuLich`
 
 | Mã | Câu hỏi | Cần trước |
 |---|---|---|
-| Q2 | Lưu ảnh: dùng Firebase Storage như đề cương, hay giữ lưu cục bộ trên máy chủ | Tuần 10 |
-| Q3 | Tin tức: chỉ lấy RSS từ cổng OCOP tỉnh, hay thêm chức năng admin tự đăng tin | Tuần 10 |
 | Q4 | Nơi triển khai: VPS (nhà cung cấp nào), cloud miễn phí, hay chỉ demo bằng Docker | Tuần 12 |
+| Q6 | Tin tức: sau khi admin tự đăng tin, còn giữ tin RSS từ cổng OCOP tỉnh làm nguồn bổ sung không | Tuần 11 |
+
+Đã chốt ngày 28/09: **Q2** dùng Firebase Storage như đề cương (cần thêm thư viện `firebase-admin` cho backend,
+nhóm trưởng tạo project Firebase, bật Storage và cấp khóa dịch vụ); **Q3** admin tự đăng tin (việc 11.6).
 
 ---
 
@@ -231,6 +255,7 @@ Nhánh: `2312682_HaLuyen_KhaiBaoDiemDuLich`
 | 27/09/2026 | Duyệt thiết kế khai báo/duyệt điểm (8.4); gộp main mới (PR #3–#6 của Thuận) vào nhánh, viết lại README; gộp nhánh vào main | ee2610a, commit này |
 | 27/09/2026 | Chốt mốc: báo cáo tiến độ đợt 2 ngày 15/10, hạn nộp đồ án 15/11 (Q1) | Mục Mốc quan trọng |
 | 27/09/2026 | Chốt phân công: Luyến làm admin, chủ thể, tài khoản người dùng; Thái, Thuận làm trang chủ và trang công khai (Q5) | Mục 3 |
+| 28/09/2026 | Merge PR #7 (khai báo và duyệt điểm du lịch) vào main; chốt Q2 (Firebase), Q3 (admin đăng tin), quy tắc đánh giá và ẩn danh mục; lập giai đoạn A | 0aa5404, commit này |
 | 27/09/2026 | Giao diện khai báo điểm (chủ thể), duyệt điểm (admin), việc chờ duyệt trên tổng quan (9.1–9.5) | 3f0c3d5, 3a8126f, 8adc963, 1fa5736, commit này |
 | 27/09/2026 | Backend khai báo/duyệt điểm du lịch (8.5–8.7), migration 011; sửa lỗi thay ảnh sản phẩm và yêu cầu ngừng hiển thị sản phẩm trên PostgreSQL | f687843, commit này |
 | 27/09/2026 | Sửa migration 009 cho database cũ; tạo lại database sạch; dọn thư mục đồ án và nhánh git; thêm kiểm tra database, pgAdmin giữ tài khoản; lập kế hoạch này | 0710abf, a52b7f6, a7eb63b |
