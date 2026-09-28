@@ -68,6 +68,8 @@ describe('AdminDashboardView', () => {
       pending_subject_applications: 3,
       pending_change_requests: 2,
       products_missing_decision: 8,
+      pending_locations: 1,
+      pending_location_change_requests: 0,
     })
     vi.mocked(getAdminStatistics).mockResolvedValue(statistics)
   })
@@ -77,8 +79,9 @@ describe('AdminDashboardView', () => {
     await flushPromises()
 
     expect(wrapper.text()).toContain('60')
-    // Hàng đợi việc cần làm: 5 sản phẩm + 2 yêu cầu sửa + 3 hồ sơ chủ thể.
-    expect(wrapper.text()).toContain('Có 10 việc đang chờ bạn xử lý')
+    // Hàng đợi việc cần làm: 5 sản phẩm + 2 yêu cầu sửa + 1 điểm du lịch + 3 hồ sơ chủ thể.
+    expect(wrapper.text()).toContain('Có 11 việc đang chờ bạn xử lý')
+    expect(wrapper.text()).toContain('Điểm du lịch chờ duyệt')
     expect(wrapper.text()).toContain('Sản phẩm mới chờ duyệt')
     expect(wrapper.text()).toContain('45 đang công khai, 75% tổng số sản phẩm')
     expect(wrapper.text()).toContain('Thiếu số quyết định công nhận8')
@@ -121,7 +124,7 @@ describe('AdminDashboardView', () => {
 
     expect(wrapper.find('[role="alert"]').text()).toContain('Chưa tải được số liệu thống kê.')
     // Hàng đợi việc vẫn hiển thị bình thường.
-    expect(wrapper.text()).toContain('Có 10 việc đang chờ bạn xử lý')
+    expect(wrapper.text()).toContain('Có 11 việc đang chờ bạn xử lý')
 
     await wrapper.get('[role="alert"] button').trigger('click')
     await flushPromises()

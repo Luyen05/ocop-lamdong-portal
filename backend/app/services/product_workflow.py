@@ -6,7 +6,7 @@ from datetime import date
 
 from fastapi import HTTPException, status
 from sqlalchemy import select
-from sqlalchemy.orm import Session, joinedload, selectinload
+from sqlalchemy.orm import Session, joinedload, object_session, selectinload
 
 from app.models.category import Category
 from app.models.data_source import ProductSource
@@ -179,7 +179,13 @@ def replace_product_images(
 ) -> None:
     if payload.images is None:
         return
-    product.images.clear()
+    if product.images:
+        product.images.clear()
+        # Xóa ảnh cũ trước khi thêm ảnh mới: nếu không, SQLAlchemy chèn ảnh mới trước rồi mới xóa,
+        # vi phạm chỉ mục một ảnh chính mỗi sản phẩm (uq_product_primary_image) trên PostgreSQL.
+        session = object_session(product)
+        if session is not None:
+            session.flush()
     for image in payload.images:
         image_kwargs = {}
         if image.storage_path is not None:

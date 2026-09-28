@@ -269,6 +269,7 @@ WITH expected(kind, name) AS (
     ('constraint','tourism_locations.tourism_locations_location_source_check'),
     ('constraint','tourism_locations.tourism_locations_pkey'),
     ('constraint','tourism_locations.tourism_locations_rating_avg_check'),
+    ('constraint','tourism_locations.tourism_locations_required_fields_check'),
     ('constraint','tourism_locations.tourism_locations_reviewed_by_fkey'),
     ('constraint','tourism_locations.tourism_locations_slug_key'),
     ('constraint','tourism_locations.tourism_locations_status_check'),

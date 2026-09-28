@@ -465,4 +465,58 @@ WHERE products.slug = 'demo-workflow-mat-ong-approved'
       AND product_change_requests.reason = '[DEMO] Chủ thể đã ngừng kinh doanh sản phẩm.'
   );
 
+-- Điểm du lịch chủ thể demo đã khai báo và đang chờ admin duyệt (cần migration 009, 011).
+INSERT INTO tourism_locations (
+  subject_id,
+  name,
+  slug,
+  type,
+  district,
+  address,
+  geom,
+  contact_phone,
+  opening_hours,
+  ticket_price,
+  services,
+  description,
+  status,
+  location_source,
+  submitted_at
+)
+SELECT
+  subjects.id,
+  'Vườn dâu Langbiang Demo',
+  'demo-vuon-dau-langbiang',
+  'fruit_garden',
+  'Phường Lang Biang - Đà Lạt',
+  '[DEMO] Thôn Đan Kia, Phường Lang Biang - Đà Lạt',
+  ST_SetSRID(ST_MakePoint(108.441, 12.047), 4326),
+  '0901000002',
+  '07:00 - 17:00',
+  50000,
+  ARRAY['Tham quan vườn', 'Tự tay thu hoạch'],
+  '[DEMO] Vườn dâu tây trồng trong nhà kính, du khách được tự tay hái dâu và thưởng thức tại vườn.',
+  'pending',
+  'map_pin',
+  CURRENT_TIMESTAMP
+FROM subjects
+WHERE subjects.tax_code = 'DEMO-WORKFLOW-2026'
+ON CONFLICT (slug) DO NOTHING;
+
+INSERT INTO location_images (location_id, image_url, is_primary, sort_order, alt_text)
+SELECT locations.id, '/assets/demo/products/strawberry-jam.svg', TRUE, 0, locations.name
+FROM tourism_locations AS locations
+WHERE locations.slug = 'demo-vuon-dau-langbiang'
+  AND NOT EXISTS (
+    SELECT 1 FROM location_images WHERE location_images.location_id = locations.id
+  );
+
+INSERT INTO location_ocop_products (location_id, product_id)
+SELECT locations.id, products.id
+FROM tourism_locations AS locations
+CROSS JOIN ocop_products AS products
+WHERE locations.slug = 'demo-vuon-dau-langbiang'
+  AND products.slug = 'demo-workflow-hong-treo-gio-approved'
+ON CONFLICT DO NOTHING;
+
 COMMIT;

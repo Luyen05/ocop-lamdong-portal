@@ -18,6 +18,7 @@ from app.schemas.location import (
 from app.services.location_catalog import (
     LocationTypeCode,
     public_location_filters,
+    public_point,
     to_location_list_item,
     to_map_feature,
 )
@@ -149,7 +150,7 @@ def get_route_to_location(
 
     origin = GeoPoint(longitude=from_longitude, latitude=from_latitude)
     try:
-        route = get_driving_route(origin, location.geom)
+        route = get_driving_route(origin, public_point(location))
     except RouteNotFoundError as exc:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -174,8 +175,8 @@ def get_route_to_location(
         destination=RouteDestination(
             slug=location.slug,
             name=location.name,
-            latitude=location.geom.latitude,
-            longitude=location.geom.longitude,
+            latitude=public_point(location).latitude,
+            longitude=public_point(location).longitude,
         ),
         distance_m=round(route.distance_m, 1),
         duration_s=round(route.duration_s, 1),

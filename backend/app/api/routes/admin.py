@@ -6,12 +6,15 @@ from app.api.dependencies import CurrentUser, require_roles
 from app.core.database import get_db
 from app.core.roles import RoleName
 from app.models.data_source import DataSource, ProductSource
+from app.models.location import TourismLocation, TourismLocationChangeRequest
 from app.models.product import Product, ProductChangeRequest
 from app.models.subject import Subject
 from app.schemas.access import AdminAccessResponse, AdminDashboardResponse
 from app.schemas.error import ErrorResponse
 from app.api.routes import (
     admin_data_sources,
+    admin_location_changes,
+    admin_locations,
     admin_product_changes,
     admin_products,
     admin_statistics,
@@ -69,6 +72,14 @@ def get_admin_dashboard(db: Session = Depends(get_db)) -> AdminDashboardResponse
             )
         ) or 0,
         products_missing_decision=count_products(~has_decision),
+        pending_locations=db.scalar(
+            select(func.count(TourismLocation.id)).where(TourismLocation.status == "pending")
+        ) or 0,
+        pending_location_change_requests=db.scalar(
+            select(func.count(TourismLocationChangeRequest.id)).where(
+                TourismLocationChangeRequest.status == "pending"
+            )
+        ) or 0,
     )
 
 
@@ -80,3 +91,5 @@ router.include_router(admin_products.router)
 router.include_router(admin_product_changes.router)
 router.include_router(admin_data_sources.router)
 router.include_router(admin_statistics.router)
+router.include_router(admin_locations.router)
+router.include_router(admin_location_changes.router)
