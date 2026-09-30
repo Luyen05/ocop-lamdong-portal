@@ -48,6 +48,11 @@ const router = createRouter({
       component: () => import('@/views/ProductDetailView.vue'),
     },
     {
+      path: '/san-pham/:slug/diem-trai-nghiem',
+      name: 'product-experience',
+      component: () => import('@/views/ProductExperienceView.vue'),
+    },
+    {
       path: '/diem-du-lich',
       name: 'locations',
       component: () => import('@/views/LocationsView.vue'),
