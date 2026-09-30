@@ -173,6 +173,13 @@ onUnmounted(() => {
             </div>
 
             <h1>{{ product.name }}</h1>
+            <RouterLink
+              class="btn btn-success my-3"
+              data-test="experience-cta"
+              :to="{ name: 'product-experience', params: { slug: product.slug } }"
+            >
+              Tìm nơi mua &amp; trải nghiệm
+            </RouterLink>
             <div v-if="product.rating_avg > 0 || product.views > 0" class="rating-row">
               <span v-if="product.rating_avg > 0"><AppIcon name="star" :size="14" /> {{ product.rating_avg.toFixed(1) }}</span>
               <span v-if="product.views > 0">{{ product.views }} lượt xem</span>

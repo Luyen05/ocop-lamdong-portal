@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils'
-import { reactive } from 'vue'
+import { defineComponent, reactive } from 'vue'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import ProductDetailView from '@/views/ProductDetailView.vue'
@@ -10,6 +10,7 @@ import type { ProductDetail, ProductListItem } from '@/types/product'
 enableAutoUnmount(afterEach)
 
 const route = reactive({ params: { slug: 'tra-atiso-da-lat' } })
+const RouterLinkStub = defineComponent({ props: ['to'], template: '<a><slot /></a>' })
 
 vi.mock('vue-router', () => ({
   useRoute: () => route,
@@ -74,6 +75,15 @@ const product: ProductDetail = {
 }
 
 describe('ProductDetailView', () => {
+  it('links to experience finder for the current product even without locations', async () => {
+    vi.mocked(getProduct).mockResolvedValue({ ...product, related_locations: [] })
+    const wrapper = mountDetail()
+    await flushPromises()
+    const cta = wrapper.findAllComponents(RouterLinkStub).find((link) => link.attributes('data-test') === 'experience-cta')
+    expect(cta?.props('to')).toEqual({
+      name: 'product-experience', params: { slug: product.slug },
+    })
+  })
   beforeEach(() => {
     route.params.slug = 'tra-atiso-da-lat'
     vi.clearAllMocks()
@@ -90,7 +100,7 @@ describe('ProductDetailView', () => {
     const wrapper = mount(ProductDetailView, {
       global: {
         stubs: {
-          RouterLink: { props: ['to'], template: '<a><slot /></a>' },
+          RouterLink: RouterLinkStub,
           ProductCard: { props: ['product'], template: '<div class="related-card">{{ product.name }}</div>' },
         },
       },
@@ -122,7 +132,7 @@ function mountDetail() {
   return mount(ProductDetailView, {
     global: {
       stubs: {
-        RouterLink: { props: ['to'], template: '<a><slot /></a>' },
+        RouterLink: RouterLinkStub,
         ProductCard: { props: ['product'], template: '<div class="related-card">{{ product.name }}</div>' },
       },
     },
