@@ -231,7 +231,7 @@ Lần 3: đánh giá lại dưới góc nhìn người dùng (du khách tìm đ�
 ### Khung chung khu quản trị và khu chủ thể (02/10/2026)
 
 - Thêm `layouts/PortalShell.vue` dùng chung cho `AdminLayout` và `SubjectLayout` (hai file này chỉ còn khai báo menu, tiêu đề, phụ đề). Sidebar sáng 220px; máy tính bảng (768–1023px) thu thành cột icon; điện thoại (dưới 768px) là ngăn kéo.
-- Khối token `--admin-*` trong `tokens.css` đổi sang trỏ về `--ocop-*` (bảng "Sương sớm & dã quỳ", Be Vietnam Pro); bỏ màu xanh dương, nền sidebar xanh đen và font Inter. Cỡ chữ nhỏ nhất 12px, vùng chạm 44px.
+- Khối token `--admin-*` trong `tokens.css` đổi sang trỏ về `--ocop-*` (bảng "Sương sớm & dã quỳ", Be Vietnam Pro); bỏ nền sidebar xanh đen và font Inter. Nền sáng, màu chủ đạo là xanh trời Đà Lạt (`--ocop-tone-sky`, cẩm tú cầu xanh), tách khỏi xanh lá (đã duyệt) và đỏ (lỗi); dã quỳ giữ làm điểm nhấn. Cỡ chữ nhỏ nhất 12px, vùng chạm 44px.
 - Bỏ các mục "Sắp có" (QT-03). Chuông thông báo (chỉ khu quản trị) đếm việc chờ từ `GET /admin/dashboard`, ẩn khi chưa có dữ liệu. Chấm trạng thái kết nối lấy từ `GET /health/database`.
 - Thêm `services/system.ts`, icon `bell`, 13 test mới (`layouts/__tests__`). Axe 0 lỗi và không tràn ngang ở 375/768/1024/1440px (trừ chữ cam ở thẻ "Thiếu số quyết định" trên tổng quan, xử lý ở bước trang tổng quan).
 
