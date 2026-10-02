@@ -237,7 +237,7 @@
 /*
  * ════════════════════════════════════════════════════════════════
  * Token khung quản trị và chủ thể (sidebar, topbar, card, badge, bảng)
- * Mọi giá trị trỏ về token --ocop-* (bảng "Sương sớm & dã quỳ"), không có màu riêng. Khu quản trị dùng nền sáng và xanh lá `leaf` làm màu chủ đạo.
+ * Mọi giá trị trỏ về token --ocop-* (bảng "Sương sớm & dã quỳ"), không có màu riêng. Khu quản trị dùng nền sáng và xanh trời Đà Lạt `sky` (cẩm tú cầu xanh) làm màu chủ đạo.
  * Màu đỏ chỉ dành cho lỗi, cảnh báo, từ chối; xanh lá cho trạng thái tốt, đã duyệt.
  * Chữ vàng trên nền sáng dùng daquy-700 (--admin-accent-text).
  * ════════════════════════════════════════════════════════════════
@@ -246,12 +246,12 @@
   --admin-font: var(--ocop-font-family-sans);
 
   /* Nền */
-  --admin-bg: color-mix(in srgb, var(--ocop-tone-leaf-soft) 55%, var(--ocop-white));
+  --admin-bg: color-mix(in srgb, var(--ocop-tone-sky-soft) 55%, var(--ocop-white));
   --admin-card: var(--ocop-card);
   --admin-sidebar-bg: var(--ocop-card);
   --admin-sidebar-border: var(--ocop-border);
-  --admin-sidebar-hover: var(--ocop-tone-leaf-soft);
-  --admin-sidebar-active-bg: color-mix(in srgb, var(--ocop-tone-leaf) 13%, var(--ocop-white));
+  --admin-sidebar-hover: var(--ocop-tone-sky-soft);
+  --admin-sidebar-active-bg: color-mix(in srgb, var(--ocop-tone-sky) 13%, var(--ocop-white));
   --admin-sidebar-active-text: var(--admin-primary-dark);
   --admin-topbar-bg: var(--ocop-card);
   --admin-scrim: color-mix(in srgb, var(--ocop-mist-950) 48%, transparent);
@@ -261,9 +261,9 @@
   --admin-muted: var(--ocop-mist-600);
 
   /* Màu chủ đạo */
-  --admin-primary: var(--ocop-tone-leaf);
-  --admin-primary-soft: var(--ocop-tone-leaf-soft);
-  --admin-primary-dark: color-mix(in srgb, var(--ocop-tone-leaf) 78%, var(--ocop-black));
+  --admin-primary: var(--ocop-tone-sky);
+  --admin-primary-soft: var(--ocop-tone-sky-soft);
+  --admin-primary-dark: color-mix(in srgb, var(--ocop-tone-sky) 78%, var(--ocop-black));
   --admin-on-primary: var(--ocop-white);
 
   /* Dã quỳ: nền nhấn (chữ mist-950) hoặc chữ trên nền sáng (daquy-700) */
