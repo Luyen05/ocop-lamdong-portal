@@ -248,6 +248,12 @@ Lần 3: đánh giá lại dưới góc nhìn người dùng (du khách tìm đ�
 - Thêm token `--admin-primary-border`. Thay nút nền tối, bước đã xong, chip chọn và viền focus ở `SubjectLocationEditorView`, `SubjectLocationsView` bằng token `--admin-primary`.
 - Axe 0 lỗi và không tràn ngang ở 375/768/1024/1440px cho 5 trang chủ thể (sản phẩm, thêm sản phẩm, điểm du lịch, khai báo điểm, hồ sơ). Type-check, 124 test và build qua.
 
+### Trang công khai và footer theo tông xanh trời (03/10/2026)
+
+- Theo yêu cầu của nhóm trưởng, thang `--ocop-mist-*` trong `tokens.css` đổi từ xám xanh thông sang xám xanh trời Đà Lạt (tông lạnh, sáng). Chỉ đổi giá trị token, không sửa component công khai nào, nên mọi trang công khai đổi theo. **Ghi chú cho PR: đây là thay đổi lên phần của Thái và Thuận, cần hai bạn rà soát.**
+- `SiteFooter.vue` đổi từ nền tối sang nền sáng (nền `mist-100`, thẻ số liệu trắng, chữ `mist-700/950`, thẻ minh bạch nền dã quỳ nhạt). Không đổi nội dung hay cấu trúc.
+- Axe 0 lỗi và không tràn ngang ở 375/768/1024/1440px cho 10 trang công khai (trang chủ, sản phẩm, chi tiết sản phẩm, điểm du lịch, chi tiết điểm, bản đồ, tin tức, đăng nhập, đăng ký, không có quyền). Còn vài khối nền navy đậm (thẻ "3–5 sao", ô nhóm điểm du lịch khi chưa có ảnh) do dùng `mist-900/950`.
+
 ## 6. Ngoài phạm vi giao diện (ghi nhận, không sửa trong nhánh này)
 
 - Quản trị chưa có module quản lý điểm du lịch (mục "Sắp phát triển" ở sidebar).
