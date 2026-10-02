@@ -63,6 +63,7 @@ const iconNames: Record<string, string> = {
   barChart: 'bar-chart-line',
   table: 'table',
   alert: 'exclamation-triangle',
+  bell: 'bell',
 }
 
 const iconName = computed(() => iconNames[props.name] ?? 'check-circle')

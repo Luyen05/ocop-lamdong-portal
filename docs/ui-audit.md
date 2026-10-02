@@ -139,7 +139,7 @@ Trạng thái: **Chưa xử lý**, **Đang xử lý**, **Đã xử lý**.
 |---|---|---|---|---|---|---|
 | QT-01 | Responsive | Bảng hồ sơ chủ thể ở 375px: cột bị ép, tên đơn vị xuống dòng từng chữ, cột thứ ba bị cắt | Ảnh chụp 375px | Cao | Trên điện thoại chuyển mỗi hàng thành thẻ; giữ bảng trên máy tính | Chưa xử lý |
 | QT-02 | Nội dung dashboard | Dashboard chỉ có 4 thẻ số liệu và không có biểu đồ; còn các khối nội dung dành cho người phát triển ("Kế hoạch tiếp theo", "Module quản trị ưu tiên", "Nền tảng hiện có", "Số liệu trực tiếp từ database") | Ảnh chụp, `AdminDashboardView.vue` | Trung bình | Thay bằng hàng việc cần xử lý (hồ sơ và sản phẩm chờ duyệt). Nếu muốn có biểu đồ (sản phẩm theo hạng sao, theo địa bàn) thì phải thêm Chart.js, là thư viện mới nên cần xin ý kiến trước | Đã xử lý (26/09: hàng đợi việc cần xử lý, thống kê bằng Chart.js) |
-| QT-03 | Điều hướng | Sidebar có 5 mục bị vô hiệu kèm nhãn "Sắp phát triển" chữ 8px (Điểm du lịch, Chủ thể/HTX, Người dùng, Đánh giá, Bài viết) | `AdminLayout.vue` | Trung bình | Ẩn các mục chưa có hoặc gom vào một nhóm "Sắp có" | Chưa xử lý |
+| QT-03 | Điều hướng | Sidebar có 5 mục bị vô hiệu kèm nhãn "Sắp phát triển" chữ 8px (Điểm du lịch, Chủ thể/HTX, Người dùng, Đánh giá, Bài viết) | `AdminLayout.vue` | Trung bình | Ẩn các mục chưa có hoặc gom vào một nhóm "Sắp có" | Đã xử lý (02/10: khung chung, bỏ các mục chưa có) |
 | QT-04 | Cỡ chữ, tương phản | Trang duyệt sản phẩm dùng nhiều chữ 9–11px; chip trạng thái "Chờ duyệt", "Thiếu quyết định" tương phản 3.96 | Đo cỡ chữ, axe | Trung bình | Theo G-01, G-02, G-10 | Chưa xử lý |
 
 ## 4. Đề xuất thứ tự thiết kế lại
@@ -227,6 +227,13 @@ Lần 3: đánh giá lại dưới góc nhìn người dùng (du khách tìm đ�
 - Frontend: `components/admin/StatChart.vue` bọc Chart.js (chỉ đăng ký BarController, BarElement, CategoryScale, LinearScale, Tooltip). Màu đọc từ token CSS lúc vẽ; mỗi biểu đồ có `aria-label` tóm tắt số liệu và nút "Bảng số liệu" chuyển sang bảng; tắt hiệu ứng khi người dùng bật giảm chuyển động. Chart.js chỉ nằm trong gói của trang quản trị (khoảng 56 kB gzip), trang công khai không phải tải.
 - Trạng thái riêng cho phần thống kê: đang tải (khung chờ), lỗi (có "Thử lại", hàng đợi việc vẫn hiện), rỗng (lượt xem chưa có, không vẽ biểu đồ toàn số 0).
 - Kiểm tra: axe 0 lỗi ở 1440px và 390px, cả chế độ biểu đồ lẫn bảng; không tràn ngang ở 390, 1024, 1440px.
+
+### Khung chung khu quản trị và khu chủ thể (02/10/2026)
+
+- Thêm `layouts/PortalShell.vue` dùng chung cho `AdminLayout` và `SubjectLayout` (hai file này chỉ còn khai báo menu, tiêu đề, phụ đề). Sidebar sáng 220px; máy tính bảng (768–1023px) thu thành cột icon; điện thoại (dưới 768px) là ngăn kéo.
+- Khối token `--admin-*` trong `tokens.css` đổi sang trỏ về `--ocop-*` (bảng "Sương sớm & dã quỳ", Be Vietnam Pro); bỏ màu xanh dương, nền sidebar xanh đen và font Inter. Cỡ chữ nhỏ nhất 12px, vùng chạm 44px.
+- Bỏ các mục "Sắp có" (QT-03). Chuông thông báo (chỉ khu quản trị) đếm việc chờ từ `GET /admin/dashboard`, ẩn khi chưa có dữ liệu. Chấm trạng thái kết nối lấy từ `GET /health/database`.
+- Thêm `services/system.ts`, icon `bell`, 13 test mới (`layouts/__tests__`). Axe 0 lỗi và không tràn ngang ở 375/768/1024/1440px (trừ chữ cam ở thẻ "Thiếu số quyết định" trên tổng quan, xử lý ở bước trang tổng quan).
 
 ## 6. Ngoài phạm vi giao diện (ghi nhận, không sửa trong nhánh này)
 
