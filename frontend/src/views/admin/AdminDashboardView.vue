@@ -84,7 +84,7 @@ const STATUS_ORDER = Object.keys(STATUS_META)
 const STAR_COLORS: Record<number, string> = {
   3: 'var(--ocop-daquy-600)',
   4: 'var(--ocop-daquy-700)',
-  5: 'var(--ocop-mist-900)',
+  5: 'var(--ocop-daquy-800)',
 }
 
 const LOCATION_LABELS: Record<string, string> = {
@@ -155,7 +155,7 @@ const districtItems = computed<StatChartItem[]>(() =>
   (statistics.value?.approved_by_district ?? []).map((item, index) => ({
     label: capitalize(item.district),
     value: item.count,
-    color: index < 3 ? 'var(--ocop-mist-700)' : 'var(--ocop-mist-500)',
+    color: index < 3 ? 'var(--ocop-tone-sky)' : 'var(--ocop-blue-300)',
   })),
 )
 
@@ -171,7 +171,7 @@ const monthItems = computed<StatChartItem[]>(() =>
       label: `T${month}/${String(year).slice(2)}`,
       fullLabel: `Tháng ${month}/${year}`,
       value: item.count,
-      color: 'var(--ocop-mist-700)',
+      color: 'var(--ocop-tone-sky)',
     }
   }),
 )
@@ -187,7 +187,7 @@ const certYearItems = computed<StatChartItem[]>(() =>
     label: String(item.year),
     fullLabel: `Năm ${item.year}`,
     value: item.count,
-    color: 'var(--ocop-mist-600)',
+    color: 'var(--ocop-tone-sky)',
   })),
 )
 
@@ -238,7 +238,7 @@ onMounted(() => {
 })
 </script>
 <template>
-  <main class="dashboard-page">
+  <div class="dashboard-page">
     <header class="dash-head">
       <div>
         <p class="dash-date">{{ todayLabel }}</p>
@@ -264,7 +264,7 @@ onMounted(() => {
       <div class="ad-card task-panel">
         <div class="card-head">
           <div class="card-head__title">
-            <span class="card-eyebrow">HÀNH ĐỘNG</span>
+            <span class="card-icon" aria-hidden="true"><AppIcon name="checkCircle" :size="18" /></span>
             <h2>Việc cần xử lý</h2>
           </div>
           <span class="task-count-badge">{{ loading ? '...' : `${openTaskCount} việc` }}</span>
@@ -285,8 +285,8 @@ onMounted(() => {
 
       <div class="kpi-grid">
         <article class="ad-card kpi-card">
-          <div class="kpi-icon-wrap" style="background:#EFF6FF">
-            <AppIcon name="package" :size="20" style="color:#2F6BFF" />
+          <div class="kpi-icon-wrap is-primary">
+            <AppIcon name="package" :size="20" />
           </div>
           <span class="kpi-label">Tổng sản phẩm</span>
           <strong class="kpi-value">{{ loading ? '–' : (stats?.total_products ?? 0) }}</strong>
@@ -294,24 +294,24 @@ onMounted(() => {
           <span class="kpi-note">{{ stats?.approved_products ?? 0 }} đang công khai ({{ approvedShare }}%)</span>
         </article>
         <article class="ad-card kpi-card">
-          <div class="kpi-icon-wrap" style="background:#D1FAE5">
-            <AppIcon name="building" :size="20" style="color:#059669" />
+          <div class="kpi-icon-wrap is-success">
+            <AppIcon name="building" :size="20" />
           </div>
           <span class="kpi-label">Chủ thể đã duyệt</span>
           <strong class="kpi-value">{{ statisticsLoading ? '–' : approvedSubjects }}</strong>
           <span class="kpi-note">{{ stats?.pending_subject_applications ?? 0 }} hồ sơ chờ xác minh</span>
         </article>
         <article class="ad-card kpi-card">
-          <div class="kpi-icon-wrap" style="background:#F0FDF4">
-            <AppIcon name="map-pin" :size="20" style="color:#10B981" />
+          <div class="kpi-icon-wrap is-accent">
+            <AppIcon name="map-pin" :size="20" />
           </div>
           <span class="kpi-label">Điểm du lịch</span>
           <strong class="kpi-value">{{ statisticsLoading ? '–' : locationTotal }}</strong>
           <span class="kpi-note">{{ locationItems.length }} loại hình trên bản đồ</span>
         </article>
         <article class="ad-card kpi-card" :class="{ 'is-warning': (stats?.products_missing_decision ?? 0) > 0 }">
-          <div class="kpi-icon-wrap" :style="{ background: (stats?.products_missing_decision ?? 0) > 0 ? '#FEF3C7' : '#F3F4F6' }">
-            <AppIcon name="alert" :size="20" :style="{ color: (stats?.products_missing_decision ?? 0) > 0 ? '#D97706' : '#6B7280' }" />
+          <div class="kpi-icon-wrap" :class="(stats?.products_missing_decision ?? 0) > 0 ? 'is-warning' : 'is-neutral'">
+            <AppIcon name="alert" :size="20" />
           </div>
           <span class="kpi-label">Thiếu số quyết định</span>
           <strong class="kpi-value">{{ loading ? '–' : (stats?.products_missing_decision ?? 0) }}</strong>
@@ -405,7 +405,7 @@ onMounted(() => {
         <StatChart kind="bar" title="Điểm du lịch theo loại hình" :description="`${locationTotal} điểm đang hiển thị trên bản đồ số`" :items="locationItems" :summary="describe(locationItems, 'điểm')" unit="điểm" :height="Math.max(160, locationItems.length * 40)" />
       </div>
     </section>
-  </main>
+  </div>
 </template>
 
 <style scoped>
@@ -414,26 +414,27 @@ onMounted(() => {
 .dash-date { margin: 0; color: var(--admin-muted); font-size: var(--admin-font-sm); text-transform: capitalize; }
 .dash-head h1 { margin: 4px 0 6px; color: var(--admin-text); font-size: 1.75rem; font-weight: 800; }
 .dash-summary { margin: 0; color: var(--admin-muted); font-size: var(--admin-font-base); }
-.dash-summary strong { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: var(--admin-radius-pill); background: var(--admin-primary); color: #fff; font-weight: 700; }
+.dash-summary strong { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: var(--admin-radius-pill); background: var(--admin-primary); color: var(--admin-on-primary); font-weight: 700; }
 .head-actions { display: flex; gap: var(--admin-space-2); flex-wrap: wrap; }
 .dash-btn-ghost { display: inline-flex; align-items: center; gap: 5px; padding: 8px 14px; border: 1px solid var(--admin-border); border-radius: var(--admin-radius-sm); background: var(--admin-card); color: var(--admin-text); font-size: var(--admin-font-sm); font-weight: 600; text-decoration: none; transition: background var(--admin-transition), border-color var(--admin-transition); }
 .dash-btn-ghost:hover { border-color: var(--admin-primary); background: var(--admin-primary-soft); color: var(--admin-primary); }
 .ad-alert { display: flex; align-items: center; justify-content: space-between; gap: var(--admin-space-3); padding: var(--admin-space-4); border-radius: var(--admin-radius-md); font-size: var(--admin-font-sm); }
-.ad-alert.is-error { background: var(--admin-danger-soft); color: var(--admin-danger-text); border: 1px solid #FECACA; }
-.ad-btn-primary { padding: 7px 14px; border: 0; border-radius: var(--admin-radius-sm); background: var(--admin-primary); color: #fff; font-size: var(--admin-font-sm); font-weight: 700; cursor: pointer; white-space: nowrap; }
+.ad-alert.is-error { background: var(--admin-danger-soft); color: var(--admin-danger-text); border: 1px solid var(--admin-danger-border); }
+.ad-btn-primary { padding: 7px 14px; border: 0; border-radius: var(--admin-radius-sm); background: var(--admin-primary); color: var(--admin-on-primary); font-size: var(--admin-font-sm); font-weight: 700; cursor: pointer; white-space: nowrap; }
 .ad-card { background: var(--admin-card); border: 1px solid var(--admin-border); border-radius: var(--admin-radius-lg); box-shadow: var(--admin-shadow-card); }
-.top-grid { display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 7fr); gap: var(--admin-space-5); }
+.top-grid { display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 4fr); gap: var(--admin-space-5); }
 .task-panel { padding: var(--admin-space-6); }
 .card-head { display: flex; align-items: center; justify-content: space-between; gap: var(--admin-space-3); margin-bottom: var(--admin-space-5); }
-.card-head__title { display: grid; gap: 2px; }
-.card-eyebrow { font-size: 10px; font-weight: 800; letter-spacing: 0.08em; color: var(--admin-primary); text-transform: uppercase; }
-.card-head h2 { margin: 0; font-size: var(--admin-font-xl); font-weight: 700; color: var(--admin-text); }
+.card-head__title { display: flex; align-items: center; gap: var(--admin-space-3); }
+.card-icon { display: grid; width: 36px; height: 36px; place-items: center; border-radius: var(--admin-radius-md); background: var(--admin-primary-soft); color: var(--admin-primary); }
+.card-eyebrow { font-size: var(--admin-font-xs); font-weight: 800; letter-spacing: 0.08em; color: var(--admin-primary); text-transform: uppercase; }
+.card-head h2 { margin: 0; font-size: var(--admin-font-sm); font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; color: var(--admin-text); }
 .task-count-badge { padding: 4px 12px; border-radius: var(--admin-radius-pill); background: var(--admin-primary-soft); color: var(--admin-primary); font-size: var(--admin-font-xs); font-weight: 700; white-space: nowrap; }
 .task-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
 .task-item { display: grid; grid-template-columns: 48px minmax(0, 1fr) 24px; align-items: center; gap: 12px; padding: 12px; border: 1px solid var(--admin-border-soft); border-radius: var(--admin-radius-md); background: var(--admin-bg); color: var(--admin-text); text-decoration: none; transition: border-color var(--admin-transition), background var(--admin-transition); }
 .task-item:hover { border-color: var(--admin-primary); background: var(--admin-primary-soft); }
 .task-num { display: grid; width: 48px; height: 48px; place-items: center; border-radius: var(--admin-radius-sm); background: var(--admin-card); border: 1px solid var(--admin-border); color: var(--admin-muted); font-size: 1.125rem; font-weight: 800; }
-.task-item.is-open .task-num { background: var(--admin-primary); border-color: var(--admin-primary); color: #fff; }
+.task-item.is-open .task-num { background: var(--admin-primary); border-color: var(--admin-primary); color: var(--admin-on-primary); }
 .task-body { display: grid; gap: 2px; }
 .task-body strong { font-size: var(--admin-font-sm); font-weight: 700; color: var(--admin-text); }
 .task-body span { font-size: var(--admin-font-xs); color: var(--admin-muted); line-height: 1.45; }
@@ -442,11 +443,16 @@ onMounted(() => {
 .kpi-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--admin-space-4); }
 .kpi-card { display: flex; flex-direction: column; gap: 6px; padding: var(--admin-space-5); }
 .kpi-icon-wrap { display: grid; width: 40px; height: 40px; place-items: center; border-radius: var(--admin-radius-md); margin-bottom: 4px; }
+.kpi-icon-wrap.is-primary { background: var(--admin-primary-soft); color: var(--admin-primary); }
+.kpi-icon-wrap.is-success { background: var(--admin-success-soft); color: var(--admin-success-text); }
+.kpi-icon-wrap.is-accent { background: var(--admin-accent-soft); color: var(--admin-accent-text); }
+.kpi-icon-wrap.is-warning { background: var(--admin-warning-soft); color: var(--admin-warning-text); }
+.kpi-icon-wrap.is-neutral { background: var(--admin-badge-draft-bg); color: var(--admin-badge-draft-text); }
 .kpi-label { font-size: var(--admin-font-sm); font-weight: 600; color: var(--admin-muted); }
 .kpi-value { font-size: 2rem; font-weight: 800; color: var(--admin-text); line-height: 1.1; letter-spacing: -0.02em; }
-.kpi-card.is-warning .kpi-value { color: #D97706; }
+.kpi-card.is-warning .kpi-value { color: var(--admin-warning-text); }
 .kpi-note { font-size: var(--admin-font-xs); color: var(--admin-muted); margin-top: 2px; }
-.kpi-link { display: inline-flex; align-items: center; gap: 3px; margin-top: auto; font-size: var(--admin-font-xs); font-weight: 700; color: #D97706; text-decoration: none; }
+.kpi-link { display: inline-flex; align-items: center; gap: 3px; margin-top: auto; font-size: var(--admin-font-xs); font-weight: 700; color: var(--admin-warning-text); text-decoration: none; }
 .kpi-meter { height: 6px; border-radius: var(--admin-radius-pill); background: var(--admin-bg); overflow: hidden; margin: 2px 0; }
 .kpi-meter__fill { height: 100%; border-radius: inherit; background: var(--admin-primary); transition: width 0.4s ease; }
 .stats-section { display: grid; gap: var(--admin-space-4); scroll-margin-top: 80px; }
@@ -466,7 +472,7 @@ onMounted(() => {
 .dot { width: 9px; height: 9px; border-radius: 3px; flex-shrink: 0; }
 .status-legend strong { font-size: var(--admin-font-xl); font-weight: 800; color: var(--admin-text); }
 .legend-share { font-size: var(--admin-font-xs); color: var(--admin-muted); }
-.note { margin: 0; padding: var(--admin-space-3); border-radius: var(--admin-radius-sm); background: #FEF9C3; color: #713F12; font-size: var(--admin-font-sm); }
+.note { margin: 0; padding: var(--admin-space-3); border-radius: var(--admin-radius-sm); background: var(--admin-warning-soft); color: var(--admin-warning-text); font-size: var(--admin-font-sm); }
 .cert-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--admin-space-3); }
 .cert-tile { display: flex; flex-direction: column; gap: 4px; padding: var(--admin-space-3); border-radius: var(--admin-radius-md); background: var(--admin-bg); color: var(--admin-muted); font-size: var(--admin-font-sm); text-decoration: none; }
 .cert-tile strong { color: var(--admin-text); font-size: 1.5rem; font-weight: 800; }
@@ -475,7 +481,7 @@ onMounted(() => {
 .tile-cta { display: inline-flex; align-items: center; gap: 3px; font-weight: 700; font-size: var(--admin-font-xs); }
 .tile-note { color: var(--admin-muted); font-size: var(--admin-font-xs); }
 .plain-card { display: flex; flex-direction: column; gap: var(--admin-space-4); padding: var(--admin-space-5); }
-.plain-head h3 { margin: 0; font-size: var(--admin-font-lg); font-weight: 700; color: var(--admin-text); }
+.plain-head h3 { margin: 0; font-size: var(--admin-font-sm); font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; color: var(--admin-text); }
 .plain-head p { margin: 4px 0 0; color: var(--admin-muted); font-size: var(--admin-font-sm); }
 .viewed-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; }
 .viewed-list li { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; align-items: center; gap: var(--admin-space-3); min-height: 44px; padding: 6px 0; border-bottom: 1px solid var(--admin-border-soft); }

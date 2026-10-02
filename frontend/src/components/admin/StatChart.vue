@@ -236,10 +236,11 @@ onBeforeUnmount(() => chart?.destroy())
   min-width: 0;
   flex-direction: column;
   gap: var(--ocop-space-4);
-  padding: var(--ocop-space-5);
-  border: 1px solid var(--ocop-border);
-  border-radius: var(--ocop-radius-lg);
-  background: var(--ocop-card);
+  padding: var(--admin-card-padding);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-lg);
+  background: var(--admin-card);
+  box-shadow: var(--admin-shadow-card);
 }
 
 .chart-head {
@@ -251,9 +252,11 @@ onBeforeUnmount(() => chart?.destroy())
 
 .chart-head h3 {
   margin: 0;
-  color: var(--ocop-mist-950);
-  font-size: var(--ocop-font-size-body-lg);
-  font-weight: 700;
+  color: var(--admin-text);
+  font-size: var(--admin-font-sm);
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
 .chart-head p {
