@@ -7,8 +7,8 @@
  * --ocop-sidebar-muted chỉ dùng trên nền tối.
  *
  * Bảng màu "Sương sớm & dã quỳ" (từ bước 1, trang chủ):
- * - Sương sớm (--ocop-mist-*): xám xanh thông và nền sương ấm, trích từ ảnh thật của trang (đồi thông, đồi chè,
- *   trại hoa), là màu thương hiệu, chữ, nền, viền. Nhờ vậy khung, thẻ và ảnh cùng một tông.
+ * - Sương sớm (--ocop-mist-*): thang xám xanh trời Đà Lạt (cẩm tú cầu xanh, tông lạnh và sáng), là màu thương hiệu,
+ *   chữ, nền, viền; hợp với ảnh đồi, trời và trại hoa. Giữ tên mist để không phải đổi component.
  * - Dã quỳ (--ocop-daquy-*): vàng hoa dã quỳ, là màu nhấn (nút hành động chính, sao OCOP, tiêu đề nhỏ).
  *   Dã quỳ 300/400 chỉ làm nền kèm chữ mist-950, hoặc làm chữ/biểu tượng trên nền tối.
  *   Chữ vàng trên nền sáng dùng --ocop-daquy-700 (5.5:1 trên trắng).
@@ -21,17 +21,17 @@
   --ocop-font-family-sans: "Be Vietnam Pro", "Segoe UI", Arial, sans-serif;
 
   /* Sương sớm trên rừng thông: thang xám xanh thông ấm, trích từ màu ảnh thật (thông #273328, sương #f4eee4) */
-  --ocop-mist-50: #f7f6f1;
-  --ocop-mist-100: #ecebe1;
-  --ocop-mist-200: #dcdccd;
-  --ocop-mist-300: #bcc0ab;
-  --ocop-mist-400: #929a84;
-  --ocop-mist-500: #677160;
-  --ocop-mist-600: #535e4d;
-  --ocop-mist-700: #3e4c3d;
-  --ocop-mist-800: #2e3b30;
-  --ocop-mist-900: #212b23;
-  --ocop-mist-950: #161d18;
+  --ocop-mist-50: #f4f9fc;
+  --ocop-mist-100: #e4eff6;
+  --ocop-mist-200: #d0e1ec;
+  --ocop-mist-300: #a9c7da;
+  --ocop-mist-400: #7ea6bf;
+  --ocop-mist-500: #57829d;
+  --ocop-mist-600: #3d6a85;
+  --ocop-mist-700: #24607f;
+  --ocop-mist-800: #1b4d68;
+  --ocop-mist-900: #143a4f;
+  --ocop-mist-950: #0d2634;
 
   /* Dã quỳ: thang vàng */
   --ocop-daquy-50: #fff9e5;
