@@ -352,8 +352,8 @@ onMounted(loadData)
   gap: var(--ocop-space-2); border-radius: var(--ocop-radius-sm); font-size: var(--ocop-font-size-small); font-weight: 700;
   text-decoration: none; white-space: nowrap; cursor: pointer;
 }
-.btn-dark { border: 0; background: var(--ocop-mist-950); color: var(--ocop-white); }
-.btn-dark:hover { background: var(--ocop-mist-800); color: var(--ocop-white); }
+.btn-dark { border: 0; background: var(--admin-primary); color: var(--admin-on-primary); }
+.btn-dark:hover { background: var(--admin-primary-dark); color: var(--admin-on-primary); }
 .btn-line { border: 1px solid var(--ocop-mist-300); background: var(--ocop-white); color: var(--ocop-mist-950); }
 .btn-line:hover { border-color: var(--ocop-mist-600); color: var(--ocop-mist-950); }
 .btn-text { border: 0; background: transparent; color: var(--ocop-mist-700); text-decoration: underline; }

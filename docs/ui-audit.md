@@ -242,6 +242,12 @@ Lần 3: đánh giá lại dưới góc nhìn người dùng (du khách tìm đ�
 - Biểu đồ một dãy màu dùng xanh trời thay xanh thông đậm; hạng sao dùng thang dã quỳ. `StatChart` dùng cùng kiểu card (bo 16px, padding 20px, bóng nhẹ).
 - Cập nhật `AdminDashboardView.spec.ts` theo chữ mới của trang (4 câu so khớp). Frontend 35 file, 124 test qua; type-check và build qua.
 
+### Khu chủ thể dùng chung màu sáng xanh trời (03/10/2026)
+
+- Khu chủ thể dùng chung khung `PortalShell`. Trong `.ps-shell` ánh xạ lại `--ocop-primary-*` và `--ocop-mint-*` về token `--admin-primary*` để các trang cũ đổi màu mà không ảnh hưởng trang công khai.
+- Thêm token `--admin-primary-border`. Thay nút nền tối, bước đã xong, chip chọn và viền focus ở `SubjectLocationEditorView`, `SubjectLocationsView` bằng token `--admin-primary`.
+- Axe 0 lỗi và không tràn ngang ở 375/768/1024/1440px cho 5 trang chủ thể (sản phẩm, thêm sản phẩm, điểm du lịch, khai báo điểm, hồ sơ). Type-check, 124 test và build qua.
+
 ## 6. Ngoài phạm vi giao diện (ghi nhận, không sửa trong nhánh này)
 
 - Quản trị chưa có module quản lý điểm du lịch (mục "Sắp phát triển" ở sidebar).

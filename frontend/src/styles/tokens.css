@@ -264,6 +264,7 @@
   --admin-primary: var(--ocop-tone-sky);
   --admin-primary-soft: var(--ocop-tone-sky-soft);
   --admin-primary-dark: color-mix(in srgb, var(--ocop-tone-sky) 78%, var(--ocop-black));
+  --admin-primary-border: color-mix(in srgb, var(--ocop-tone-sky) 24%, var(--ocop-white));
   --admin-on-primary: var(--ocop-white);
 
   /* Dã quỳ: nền nhấn (chữ mist-950) hoặc chữ trên nền sáng (daquy-700) */

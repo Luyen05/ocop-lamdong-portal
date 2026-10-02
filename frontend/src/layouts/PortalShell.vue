@@ -240,6 +240,18 @@ onBeforeUnmount(() => {
   background: var(--admin-bg);
   color: var(--admin-text);
   font-family: var(--admin-font);
+
+  /* Trang bên trong khung dùng token thương hiệu cũ (--ocop-primary-*, --ocop-mint-*):
+     trong khu quản trị và chủ thể chúng trỏ về màu chủ đạo sáng của khung, trang công khai không bị ảnh hưởng. */
+  --ocop-primary-950: var(--admin-primary-dark);
+  --ocop-primary-900: var(--admin-primary-dark);
+  --ocop-primary-800: var(--admin-primary-dark);
+  --ocop-primary-700: var(--admin-primary);
+  --ocop-primary-500: var(--admin-primary);
+  --ocop-mint-soft: var(--admin-primary-soft);
+  --ocop-mint-100: var(--admin-primary-soft);
+  --ocop-mint-border: var(--admin-primary-border);
+  --ocop-mint-200: var(--admin-primary-border);
 }
 
 .ps-skip {
