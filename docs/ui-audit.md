@@ -235,6 +235,13 @@ Lần 3: đánh giá lại dưới góc nhìn người dùng (du khách tìm đ�
 - Bỏ các mục "Sắp có" (QT-03). Chuông thông báo (chỉ khu quản trị) đếm việc chờ từ `GET /admin/dashboard`, ẩn khi chưa có dữ liệu. Chấm trạng thái kết nối lấy từ `GET /health/database`.
 - Thêm `services/system.ts`, icon `bell`, 13 test mới (`layouts/__tests__`). Axe 0 lỗi và không tràn ngang ở 375/768/1024/1440px (trừ chữ cam ở thẻ "Thiếu số quyết định" trên tổng quan, xử lý ở bước trang tổng quan).
 
+### Tổng quan quản trị trong khung mới (03/10/2026)
+
+- Bỏ hết màu gắn cứng (icon thẻ số liệu, chữ cam `#d97706` tương phản 3.18, nền vàng nhạt); dùng token `--admin-*`. Axe 0 lỗi ở 375/768/1024/1440px.
+- Đổi `<main>` của trang thành `<div>` vì khung đã có `<main>`. Tiêu đề card IN HOA cỡ nhỏ, icon trong ô nền nhạt; hàng đợi việc và thẻ số liệu chia 6/4.
+- Biểu đồ một dãy màu dùng xanh trời thay xanh thông đậm; hạng sao dùng thang dã quỳ. `StatChart` dùng cùng kiểu card (bo 16px, padding 20px, bóng nhẹ).
+- Cập nhật `AdminDashboardView.spec.ts` theo chữ mới của trang (4 câu so khớp). Frontend 35 file, 124 test qua; type-check và build qua.
+
 ## 6. Ngoài phạm vi giao diện (ghi nhận, không sửa trong nhánh này)
 
 - Quản trị chưa có module quản lý điểm du lịch (mục "Sắp phát triển" ở sidebar).
