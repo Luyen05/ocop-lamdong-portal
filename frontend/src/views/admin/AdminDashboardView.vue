@@ -238,7 +238,7 @@ onMounted(() => {
 })
 </script>
 <template>
-  <div class="dashboard-page">
+  <div class="dashboard-page stagger-in">
     <header class="dash-head">
       <div>
         <p class="dash-date">{{ todayLabel }}</p>
@@ -283,7 +283,7 @@ onMounted(() => {
         </ul>
       </div>
 
-      <div class="kpi-grid">
+      <div class="kpi-grid stagger-in">
         <article class="ad-card kpi-card">
           <div class="kpi-icon-wrap is-primary">
             <AppIcon name="package" :size="20" />
@@ -336,7 +336,7 @@ onMounted(() => {
         <div class="skeleton span-2" /><div class="skeleton" /><div class="skeleton" /><div class="skeleton span-2" />
         <span class="visually-hidden" role="status">Đang tải số liệu thống kê...</span>
       </div>
-      <div v-else-if="statistics" class="chart-grid">
+      <div v-else-if="statistics" class="chart-grid stagger-in">
         <StatChart class="span-2" kind="stacked" title="Trạng thái hồ sơ sản phẩm" :description="`${statusTotal} hồ sơ, gồm cả bản nháp của chủ thể`" :items="statusItems" :summary="describe(statusItems, 'hồ sơ')" unit="hồ sơ" :height="40">
           <template #lead>
             <p class="lead-figure"><strong>{{ percentText(approvedStatusCount, statusTotal) }}</strong> hồ sơ đã được duyệt và đang hiển thị công khai</p>

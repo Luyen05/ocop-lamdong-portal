@@ -254,6 +254,18 @@ Lần 3: đánh giá lại dưới góc nhìn người dùng (du khách tìm đ�
 - `SiteFooter.vue` đổi từ nền tối sang nền sáng (nền `mist-100`, thẻ số liệu trắng, chữ `mist-700/950`, thẻ minh bạch nền dã quỳ nhạt). Không đổi nội dung hay cấu trúc.
 - Axe 0 lỗi và không tràn ngang ở 375/768/1024/1440px cho 10 trang công khai (trang chủ, sản phẩm, chi tiết sản phẩm, điểm du lịch, chi tiết điểm, bản đồ, tin tức, đăng nhập, đăng ký, không có quyền). Còn vài khối nền navy đậm (thẻ "3–5 sao", ô nhóm điểm du lịch khi chưa có ảnh) do dùng `mist-900/950`.
 
+### Banner ảnh và ảnh dự phòng cho Điểm du lịch, Tin tức (03/10/2026)
+
+- Trang Điểm du lịch và Tin tức trước đây dùng banner phẳng không ảnh, còn thẻ điểm du lịch chưa có ảnh riêng dùng tranh SVG minh họa. Thêm `components/ui/PhotoBanner.vue` (ảnh cảnh quan thật, lớp tối bên trái để chữ trắng đọc rõ, ảnh lỗi thì vẫn đọc được nhờ nền màu) và dùng cho hai trang; bỏ khối `.container` của Bootstrap ở Điểm du lịch để lề thẳng hàng với phần còn lại.
+- `LocationCard` chưa có ảnh riêng thì dùng ảnh cảnh quan thật theo loại hình (`locationFallbackPhoto` trong `constants/photos.ts`); `NewsCard` chưa có ảnh dùng ảnh nền trang trí chọn ổn định theo mã bài. Đây là ảnh minh họa chung (Unsplash, đã ghi tác giả ở trang chủ), không phải ảnh của điểm hay bài viết. **Ghi chú cho PR: sửa các file của Thái và Thuận (`LocationCard`, `NewsCard`, `LocationsView`, `NewsView`).**
+- Trang Tin tức báo "Chưa thể tải tin tức" khi nguồn tin ngoài không phản hồi (trạng thái lỗi đúng thiết kế, không phải lỗi giao diện).
+
+### Animation (03/10/2026)
+
+- Thêm chuyển động nhẹ, chỉ dùng `opacity`/`transform`: directive `v-reveal` (hiện dần khi cuộn tới, `.stagger` cho từng khối con) áp dụng cho các khối trang chủ và footer; lớp `.stagger-in` cho lưới thẻ (sản phẩm, điểm du lịch, tin tức, danh sách sản phẩm chủ thể, thẻ số liệu và biểu đồ ở tổng quan quản trị); `.hero-stagger` và ảnh banner phóng chậm cho banner; nút nhấc nhẹ khi rê chuột; ảnh thẻ phóng nhẹ khi rê chuột; nội dung khu quản trị và chủ thể hiện dần mỗi lần đổi trang.
+- Tắt hết khi hệ điều hành đặt giảm chuyển động (`prefers-reduced-motion`); không có IntersectionObserver thì nội dung hiện bình thường; in ấn luôn hiện đủ.
+- Thêm 14 test (directive, `PhotoBanner`, `LocationCard`, `NewsCard`). Frontend 39 file, 137 test qua; type-check và build qua; axe 0 lỗi và không tràn ngang ở 375/768/1024/1440px cho 10 trang công khai, 4 trang quản trị, 5 trang chủ thể.
+
 ## 6. Ngoài phạm vi giao diện (ghi nhận, không sửa trong nhánh này)
 
 - Quản trị chưa có module quản lý điểm du lịch (mục "Sắp phát triển" ở sidebar).

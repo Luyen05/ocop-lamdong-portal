@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import AppIcon from '@/components/ui/AppIcon.vue'
+import { vReveal } from '@/directives/reveal'
 
 const stats = [
   { icon: 'award', value: '3–5 sao', label: 'Sản phẩm OCOP được kiểm duyệt', tone: 'green' },
@@ -12,7 +13,7 @@ const stats = [
 <template>
   <footer class="site-footer">
     <div class="site-content footer-inner">
-      <div class="stat-grid" aria-label="Số liệu tổng quan">
+      <div v-reveal.stagger class="stat-grid" aria-label="Số liệu tổng quan">
         <div v-for="stat in stats" :key="stat.label" class="stat-card" :class="`tone-${stat.tone}`">
           <span class="stat-icon" aria-hidden="true"><AppIcon :name="stat.icon" :size="19" /></span>
           <span>
@@ -22,7 +23,7 @@ const stats = [
         </div>
       </div>
 
-      <div class="footer-grid">
+      <div v-reveal class="footer-grid">
         <section class="footer-brand" aria-labelledby="footer-brand-title">
           <h2 id="footer-brand-title">
             <span><img src="/assets/figma/home/icon-brand.svg" alt="" /></span>

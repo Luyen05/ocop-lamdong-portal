@@ -614,7 +614,11 @@ onBeforeUnmount(() => {
   .ps-content { padding: var(--admin-space-5) var(--admin-space-4); }
 }
 
+/* Mỗi lần đổi trang, nội dung hiện dần nhẹ (các khối bên trong tự xuất hiện lần lượt bằng .stagger-in). */
+:slotted(*) { animation: ocop-fade-in 260ms ease-out both; }
+
 @media (prefers-reduced-motion: reduce) {
+  :slotted(*) { animation: none; }
   .ps-sidebar,
   .ps-sidebar.is-open,
   .ps-nav__item { transition: none; }
