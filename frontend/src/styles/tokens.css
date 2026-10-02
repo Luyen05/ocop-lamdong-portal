@@ -236,69 +236,84 @@
 
 /*
  * ════════════════════════════════════════════════════════════════
- * Admin Design Tokens — khu quản trị & chủ thể
- * Phong cách: light, hiện đại, nhiều khoảng trắng.
- * Không dùng cho trang công khai (tránh xung đột với --ocop-*).
+ * Token khung quản trị và chủ thể (sidebar, topbar, card, badge, bảng)
+ * Mọi giá trị trỏ về token --ocop-* (bảng "Sương sớm & dã quỳ"), không có màu riêng.
+ * Màu đỏ chỉ dành cho lỗi, cảnh báo, từ chối; xanh lá cho trạng thái tốt, đã duyệt.
+ * Chữ vàng trên nền sáng dùng daquy-700 (--admin-accent-text).
  * ════════════════════════════════════════════════════════════════
  */
 :root {
-  /* Font riêng cho admin: Inter (thêm link trong index.html nếu cần, fallback sẵn) */
-  --admin-font: 'Inter', 'Be Vietnam Pro', 'Segoe UI', Arial, sans-serif;
+  --admin-font: var(--ocop-font-family-sans);
 
   /* Nền */
-  --admin-bg: #F4F7FE;
-  --admin-card: #FFFFFF;
-  --admin-sidebar-bg: #1E2A47;
-  --admin-sidebar-hover: rgba(47, 107, 255, 0.14);
-  --admin-sidebar-active-bg: #E8F0FF;
-  --admin-sidebar-active-text: #2F6BFF;
-  --admin-topbar-bg: rgba(255, 255, 255, 0.92);
+  --admin-bg: var(--ocop-surface);
+  --admin-card: var(--ocop-card);
+  --admin-sidebar-bg: var(--ocop-card);
+  --admin-sidebar-border: var(--ocop-border);
+  --admin-sidebar-hover: var(--ocop-mist-100);
+  --admin-sidebar-active-bg: var(--ocop-mist-100);
+  --admin-sidebar-active-text: var(--ocop-mist-700);
+  --admin-topbar-bg: var(--ocop-card);
+  --admin-scrim: color-mix(in srgb, var(--ocop-mist-950) 48%, transparent);
 
-  /* Chữ */
-  --admin-text: #1E2A47;
-  --admin-muted: #8A94A6;
-  --admin-text-on-dark: #E8EDF8;
-  --admin-muted-on-dark: rgba(232, 237, 248, 0.60);
+  /* Chữ (tương phản trên nền trắng và nền sương đều đạt AA) */
+  --admin-text: var(--ocop-mist-950);
+  --admin-muted: var(--ocop-mist-600);
 
   /* Màu chủ đạo */
-  --admin-primary: #2F6BFF;
-  --admin-primary-soft: #E8F0FF;
-  --admin-primary-dark: #1A4FCC;
+  --admin-primary: var(--ocop-mist-700);
+  --admin-primary-soft: var(--ocop-mist-100);
+  --admin-primary-dark: var(--ocop-mist-800);
+  --admin-on-primary: var(--ocop-white);
+
+  /* Dã quỳ: nền nhấn (chữ mist-950) hoặc chữ trên nền sáng (daquy-700) */
+  --admin-accent: var(--ocop-daquy-400);
+  --admin-accent-soft: var(--ocop-daquy-50);
+  --admin-accent-text: var(--ocop-daquy-700);
+  --admin-on-accent: var(--ocop-mist-950);
 
   /* Màu trạng thái */
-  --admin-success: #10B981;
-  --admin-success-soft: #D1FAE5;
-  --admin-success-text: #065F46;
-  --admin-warning: #F59E0B;
-  --admin-warning-soft: #FEF3C7;
-  --admin-warning-text: #92400E;
-  --admin-danger: #EF4444;
-  --admin-danger-soft: #FEE2E2;
-  --admin-danger-text: #991B1B;
-  --admin-info: #3B82F6;
-  --admin-info-soft: #EFF6FF;
-  --admin-info-text: #1E40AF;
+  --admin-success: var(--ocop-success);
+  --admin-success-soft: var(--ocop-success-soft);
+  --admin-success-text: var(--ocop-success);
+  --admin-success-hover: color-mix(in srgb, var(--ocop-success) 82%, var(--ocop-black));
+  --admin-success-border: color-mix(in srgb, var(--ocop-success) 28%, var(--ocop-white));
+  --admin-warning: var(--ocop-warning);
+  --admin-warning-soft: var(--ocop-warning-soft);
+  --admin-warning-text: var(--ocop-warning-strong);
+  --admin-warning-hover: color-mix(in srgb, var(--ocop-warning) 82%, var(--ocop-black));
+  --admin-warning-border: var(--ocop-warning-border);
+  --admin-danger: var(--ocop-danger);
+  --admin-danger-soft: var(--ocop-danger-soft);
+  --admin-danger-text: var(--ocop-danger-strong);
+  --admin-danger-hover: color-mix(in srgb, var(--ocop-danger) 82%, var(--ocop-black));
+  --admin-danger-border: var(--ocop-danger-border);
+  --admin-info: var(--ocop-info);
+  --admin-info-soft: var(--ocop-info-soft);
+  --admin-info-text: var(--ocop-info-strong);
+  --admin-info-border: var(--ocop-info-border);
+  --admin-highlight: var(--ocop-daquy-50);
 
-  /* Badge trạng thái workflow */
-  --admin-badge-pending-bg: #FEF3C7;
-  --admin-badge-pending-text: #92400E;
-  --admin-badge-approved-bg: #D1FAE5;
-  --admin-badge-approved-text: #065F46;
-  --admin-badge-rejected-bg: #FEE2E2;
-  --admin-badge-rejected-text: #991B1B;
-  --admin-badge-draft-bg: #F3F4F6;
-  --admin-badge-draft-text: #6B7280;
-  --admin-badge-revision-bg: #FEF9C3;
-  --admin-badge-revision-text: #713F12;
-  --admin-badge-suspended-bg: #FEE2E2;
-  --admin-badge-suspended-text: #991B1B;
+  /* Badge trạng thái workflow (nền nhạt, chữ đậm cùng tông) */
+  --admin-badge-pending-bg: var(--ocop-warning-soft);
+  --admin-badge-pending-text: var(--ocop-warning-strong);
+  --admin-badge-approved-bg: var(--ocop-success-soft);
+  --admin-badge-approved-text: var(--ocop-success);
+  --admin-badge-rejected-bg: var(--ocop-danger-soft);
+  --admin-badge-rejected-text: var(--ocop-danger-strong);
+  --admin-badge-draft-bg: var(--ocop-mist-100);
+  --admin-badge-draft-text: var(--ocop-mist-700);
+  --admin-badge-revision-bg: var(--ocop-daquy-100);
+  --admin-badge-revision-text: var(--ocop-daquy-800);
+  --admin-badge-suspended-bg: var(--ocop-danger-soft);
+  --admin-badge-suspended-text: var(--ocop-danger-strong);
 
-  /* Viền và bóng */
-  --admin-border: #E5E9F2;
-  --admin-border-soft: #F0F3FA;
-  --admin-shadow-sm: 0 1px 4px rgba(30, 42, 71, 0.06);
-  --admin-shadow-card: 0 4px 16px rgba(30, 42, 71, 0.08);
-  --admin-shadow-modal: 0 20px 60px rgba(30, 42, 71, 0.18);
+  /* Viền và bóng (rất nhẹ) */
+  --admin-border: var(--ocop-mist-200);
+  --admin-border-soft: var(--ocop-mist-100);
+  --admin-shadow-sm: 0 1px 2px color-mix(in srgb, var(--ocop-mist-950) 6%, transparent);
+  --admin-shadow-card: 0 2px 10px color-mix(in srgb, var(--ocop-mist-950) 6%, transparent);
+  --admin-shadow-modal: 0 20px 60px color-mix(in srgb, var(--ocop-mist-950) 18%, transparent);
 
   /* Bo góc */
   --admin-radius-sm: 8px;
@@ -306,7 +321,7 @@
   --admin-radius-lg: 16px;
   --admin-radius-pill: 999px;
 
-  /* Khoảng cách */
+  /* Khoảng cách: card padding 20px, khoảng cách giữa card 20px */
   --admin-space-1: 4px;
   --admin-space-2: 8px;
   --admin-space-3: 12px;
@@ -314,18 +329,21 @@
   --admin-space-5: 20px;
   --admin-space-6: 24px;
   --admin-space-8: 32px;
+  --admin-card-padding: var(--admin-space-5);
+  --admin-card-gap: var(--admin-space-5);
 
-  /* Cỡ chữ */
-  --admin-font-xs: 0.75rem;    /* 12px */
-  --admin-font-sm: 0.8125rem;  /* 13px */
-  --admin-font-base: 0.9375rem; /* 15px */
-  --admin-font-lg: 1rem;        /* 16px */
-  --admin-font-xl: 1.125rem;    /* 18px */
-  --admin-font-2xl: 1.375rem;   /* 22px */
+  /* Cỡ chữ: 12px là nhỏ nhất */
+  --admin-font-xs: 0.75rem;
+  --admin-font-sm: 0.8125rem;
+  --admin-font-base: 0.9375rem;
+  --admin-font-lg: 1rem;
+  --admin-font-xl: 1.125rem;
+  --admin-font-2xl: 1.375rem;
 
-  /* Control sizes */
-  --admin-control-height: 40px;
+  /* Kích thước control và khung */
+  --admin-control-height: 44px;
   --admin-sidebar-width: 220px;
+  --admin-sidebar-rail-width: 72px;
   --admin-topbar-height: 64px;
 
   /* Chuyển động */
