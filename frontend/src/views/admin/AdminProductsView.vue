@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 
 import ProductEvidenceManager from '@/components/admin/ProductEvidenceManager.vue'
@@ -700,6 +700,9 @@ onMounted(loadData)
   background: var(--admin-card);
   box-shadow: var(--admin-shadow-sm);
 }
+.product-summary { display: grid; gap: 3px; min-width: 0; }
+.product-summary h2 { margin: 2px 0 0; font-size: var(--admin-font-base); font-weight: 700; color: var(--admin-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.product-summary p { margin: 0; font-size: var(--admin-font-sm); color: var(--admin-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .queue-panel article {
   display: grid;
   padding: 14px 20px;
