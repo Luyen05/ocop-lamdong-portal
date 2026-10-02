@@ -1,15 +1,22 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 
 import AppIcon from '@/components/ui/AppIcon.vue'
+import { photoByIndex } from '@/constants/photos'
 import type { NewsItem } from '@/types/news'
 
-defineProps<{
+const props = defineProps<{
   article: NewsItem
   compact?: boolean
 }>()
 
 const imageFailed = ref(false)
+
+// Bài chưa có ảnh dùng ảnh cảnh quan Đà Lạt làm nền trang trí (chọn ổn định theo mã bài), không phải ảnh của bài.
+const fallbackPhoto = computed(() => {
+  const seed = Array.from(props.article.id).reduce((total, char) => total + char.charCodeAt(0), 0)
+  return photoByIndex(seed)
+})
 
 function formatDate(value: string | null): string {
   if (!value) return 'Chưa rõ ngày đăng'
@@ -35,7 +42,8 @@ function formatDate(value: string | null): string {
         @error="imageFailed = true"
       />
       <div v-else class="news-placeholder" aria-hidden="true">
-        <span><AppIcon name="newspaper" :size="compact ? 42 : 50" /></span>
+        <img class="news-placeholder-photo" :src="fallbackPhoto.src" alt="" loading="lazy" />
+        <span><AppIcon name="newspaper" :size="compact ? 30 : 34" /></span>
       </div>
     </div>
 
@@ -91,6 +99,7 @@ function formatDate(value: string | null): string {
 }
 
 .news-placeholder {
+  position: relative;
   display: grid;
   width: 100%;
   height: 100%;
@@ -99,14 +108,25 @@ function formatDate(value: string | null): string {
   color: var(--ocop-primary-700);
 }
 
+.news-media .news-placeholder-photo {
+  position: absolute;
+  inset: 0;
+}
+
+.news-card:hover .news-media .news-placeholder-photo {
+  transform: scale(1.05);
+}
+
 .news-placeholder span {
+  position: relative;
   display: grid;
-  width: 86px;
-  height: 86px;
+  width: 64px;
+  height: 64px;
   place-items: center;
-  border: 1px solid var(--ocop-mint-border);
+  border: 1px solid var(--ocop-white);
   border-radius: 50%;
-  background: color-mix(in srgb, var(--ocop-white) 66%, transparent);
+  background: color-mix(in srgb, var(--ocop-white) 88%, transparent);
+  box-shadow: var(--ocop-shadow-sm);
 }
 
 .news-body {

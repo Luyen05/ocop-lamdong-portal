@@ -4,6 +4,8 @@ import { useRoute, useRouter } from 'vue-router'
 
 import NewsCard from '@/components/news/NewsCard.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
+import PhotoBanner from '@/components/ui/PhotoBanner.vue'
+import { flowerFarmPhoto } from '@/constants/photos'
 import { getApiErrorMessage } from '@/services/api-error'
 import { getNews } from '@/services/news'
 import type { NewsItem } from '@/types/news'
@@ -99,26 +101,24 @@ watch(
 
 <template>
   <main class="news-page">
-    <header class="news-hero">
-      <div class="site-content hero-inner">
-        <span class="eyebrow"><AppIcon name="newspaper" :size="14" /> Tin tức &amp; sự kiện</span>
-        <h1>Hoạt động OCOP Lâm Đồng</h1>
-        <p>Theo dõi chương trình OCOP, hoạt động xúc tiến và những thông tin mới từ cổng thông tin chính thức.</p>
+    <PhotoBanner :photo="flowerFarmPhoto">
+      <span class="banner-eyebrow"><AppIcon name="newspaper" :size="14" /> Tin tức &amp; sự kiện</span>
+      <h1>Hoạt động OCOP Lâm Đồng</h1>
+      <p>Theo dõi chương trình OCOP, hoạt động xúc tiến và những thông tin mới từ cổng thông tin chính thức.</p>
 
-        <form class="news-search" role="search" @submit.prevent="submitSearch">
-          <label class="visually-hidden" for="news-search-input">Tìm kiếm tin tức</label>
-          <AppIcon name="search" :size="18" />
-          <input
-            id="news-search-input"
-            v-model="search"
-            type="search"
-            maxlength="150"
-            placeholder="Tìm theo tiêu đề hoặc nội dung..."
-          />
-          <button type="submit">Tìm kiếm</button>
-        </form>
-      </div>
-    </header>
+      <form class="news-search" role="search" @submit.prevent="submitSearch">
+        <label class="visually-hidden" for="news-search-input">Tìm kiếm tin tức</label>
+        <AppIcon name="search" :size="18" />
+        <input
+          id="news-search-input"
+          v-model="search"
+          type="search"
+          maxlength="150"
+          placeholder="Tìm theo tiêu đề hoặc nội dung..."
+        />
+        <button type="submit">Tìm kiếm</button>
+      </form>
+    </PhotoBanner>
 
     <section class="site-content news-content" aria-labelledby="news-list-title">
       <div class="content-heading">
@@ -152,7 +152,7 @@ watch(
         <button v-if="search" type="button" @click="clearSearch">Xem tất cả tin</button>
       </div>
 
-      <div v-else class="news-grid">
+      <div v-else class="news-grid stagger-in">
         <NewsCard v-for="article in articles" :key="article.id" :article="article" />
       </div>
 
@@ -184,12 +184,7 @@ watch(
 
 <style scoped>
 .news-page { min-height: 65vh; background: var(--ocop-surface); }
-.news-hero { padding: 58px 0 52px; background: linear-gradient(135deg, var(--ocop-primary-950), var(--ocop-primary-700)); color: var(--ocop-white); }
-.hero-inner { max-width: 860px; }
-.eyebrow { display: inline-flex; align-items: center; gap: 7px; color: var(--ocop-mint-100); font-size: var(--ocop-font-size-caption); font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
-.news-hero h1 { margin: 9px 0 var(--ocop-space-2); font-size: clamp(32px, 5vw, 48px); font-weight: 800; letter-spacing: -.035em; }
-.news-hero p { max-width: 700px; margin: 0; color: color-mix(in srgb, var(--ocop-white) 78%, transparent); font-size: var(--ocop-font-size-body-lg); line-height: 1.65; }
-.news-search { display: flex; max-width: 700px; margin-top: 26px; padding: 6px 6px 6px var(--ocop-space-4); align-items: center; gap: 10px; border-radius: var(--ocop-radius-md); background: var(--ocop-card); color: var(--ocop-slate); box-shadow: 0 12px 32px color-mix(in srgb, var(--ocop-black) 16%, transparent); }
+.news-search { display: flex; width: min(100%, 700px); margin-top: var(--ocop-space-3); padding: 6px 6px 6px var(--ocop-space-4); align-items: center; gap: 10px; border-radius: var(--ocop-radius-md); background: var(--ocop-card); color: var(--ocop-slate); box-shadow: 0 12px 32px color-mix(in srgb, var(--ocop-black) 16%, transparent); }
 .news-search input { min-width: 0; padding: 9px 0; flex: 1; border: 0; outline: 0; color: var(--ocop-navy); }
 .news-search button, .state-card button { padding: 10px 17px; border: 0; border-radius: var(--ocop-radius-sm); background: var(--ocop-primary-700); color: var(--ocop-white); font-weight: 700; }
 .news-content { padding-top: 42px; padding-bottom: 54px; }
@@ -212,7 +207,6 @@ watch(
 .source-note p { margin: 0; font-size: var(--ocop-font-size-small); line-height: 1.55; }
 @media (max-width: 991.98px) { .news-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 575.98px) {
-  .news-hero { padding: 42px 0; }
   .news-search { align-items: stretch; flex-wrap: wrap; }
   .news-search input { width: calc(100% - 32px); }
   .news-search button { width: 100%; }
