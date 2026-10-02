@@ -46,50 +46,76 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 </script>
 
 <template>
-  <div class="admin-shell">
-    <aside id="admin-sidebar" class="admin-sidebar" :class="{ open: isSidebarOpen }">
-      <RouterLink class="admin-brand" to="/quan-tri" @click="closeSidebar">
-        <span class="brand-icon">
-          <img src="/assets/figma/home/icon-brand.svg" alt="" />
-        </span>
-        <span>
-          <strong>LÂM ĐỒNG OCOP</strong>
-          <small>Khu vực quản trị</small>
-        </span>
-      </RouterLink>
-
-      <nav class="admin-nav" aria-label="Điều hướng quản trị">
-        <template v-for="item in navigation" :key="item.label">
-          <RouterLink v-if="item.available" :to="item.to" @click="closeSidebar">
-            <span aria-hidden="true"><AppIcon :name="item.icon" :size="18" /></span>
-            {{ item.label }}
-          </RouterLink>
-          <button v-else type="button" disabled :title="`${item.label} sẽ được triển khai ở commit sau`">
-            <span aria-hidden="true"><AppIcon :name="item.icon" :size="18" /></span>
-            {{ item.label }}
-            <small>Sắp có</small>
-          </button>
-        </template>
-      </nav>
-
-      <div class="sidebar-footer">
-        <RouterLink to="/"><AppIcon name="arrowLeft" :size="15" /> Về trang công khai</RouterLink>
-        <button type="button" @click="logout"><AppIcon name="logout" :size="15" /> Đăng xuất</button>
-      </div>
-    </aside>
-
+  <div class="al-shell">
+    <!-- Backdrop mobile -->
     <button
       v-if="isSidebarOpen"
-      class="sidebar-backdrop"
+      class="al-backdrop"
       type="button"
       aria-label="Đóng menu quản trị"
       @click="closeSidebar"
     />
 
-    <div class="admin-main">
-      <header class="admin-topbar">
+    <!-- ══════════ SIDEBAR ══════════ -->
+    <aside id="admin-sidebar" class="al-sidebar" :class="{ 'is-open': isSidebarOpen }">
+      <!-- Brand -->
+      <RouterLink class="al-brand" to="/quan-tri" @click="closeSidebar">
+        <span class="al-brand__icon">
+          <img src="/assets/figma/home/icon-brand.svg" alt="" />
+        </span>
+        <span class="al-brand__text">
+          <strong>LÂM ĐỒNG OCOP</strong>
+          <small>Khu vực quản trị</small>
+        </span>
+      </RouterLink>
+
+      <!-- Nav -->
+      <nav class="al-nav" aria-label="Điều hướng quản trị">
+        <span class="al-nav__section-label">MENU CHÍNH</span>
+        <template v-for="item in navigation" :key="item.label">
+          <RouterLink
+            v-if="item.available"
+            class="al-nav__item"
+            :to="item.to"
+            @click="closeSidebar"
+          >
+            <span class="al-nav__icon"><AppIcon :name="item.icon" :size="17" /></span>
+            <span>{{ item.label }}</span>
+          </RouterLink>
+          <button v-else class="al-nav__item is-disabled" type="button" disabled :title="`${item.label} — sắp triển khai`">
+            <span class="al-nav__icon"><AppIcon :name="item.icon" :size="17" /></span>
+            <span>{{ item.label }}</span>
+            <span class="al-nav__soon">Sắp có</span>
+          </button>
+        </template>
+      </nav>
+
+      <!-- Footer sidebar -->
+      <div class="al-sidebar__footer">
+        <div class="al-status-pill">
+          <span class="al-status-dot" />
+          <span>Hệ thống hoạt động</span>
+        </div>
+        <div class="al-footer-actions">
+          <RouterLink class="al-footer-btn" to="/">
+            <AppIcon name="arrowLeft" :size="14" />
+            <span>Trang công khai</span>
+          </RouterLink>
+          <button class="al-footer-btn is-danger" type="button" @click="logout">
+            <AppIcon name="logout" :size="14" />
+            <span>Đăng xuất</span>
+          </button>
+        </div>
+        <p class="al-version">Phiên bản 0.1.0</p>
+      </div>
+    </aside>
+
+    <!-- ══════════ MAIN ══════════ -->
+    <div class="al-main">
+      <!-- Topbar -->
+      <header class="al-topbar">
         <button
-          class="sidebar-toggle"
+          class="al-topbar__toggle"
           type="button"
           :aria-expanded="isSidebarOpen"
           aria-controls="admin-sidebar"
@@ -98,20 +124,32 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
         >
           <AppIcon name="menu" :size="20" />
         </button>
-        <div>
-          <span class="topbar-label">Hệ thống quản lý OCOP</span>
+
+        <div class="al-topbar__title">
+          <span class="al-topbar__breadcrumb">Hệ thống quản lý OCOP</span>
           <strong>{{ pageTitle }}</strong>
         </div>
-        <RouterLink class="admin-account" to="/tai-khoan">
-          <span>{{ userInitial }}</span>
-          <span>
-            <strong>{{ authStore.currentUser.value?.full_name }}</strong>
-            <small>Quản trị viên</small>
+
+        <div class="al-topbar__right">
+          <!-- API health pill -->
+          <span class="al-api-pill">
+            <span class="al-api-dot" />
+            <span class="al-api-label">API</span>
           </span>
-        </RouterLink>
+
+          <!-- Avatar -->
+          <RouterLink class="al-avatar" to="/tai-khoan">
+            <span class="al-avatar__initial">{{ userInitial }}</span>
+            <span class="al-avatar__info">
+              <strong>{{ authStore.currentUser.value?.full_name }}</strong>
+              <small>Quản trị viên</small>
+            </span>
+          </RouterLink>
+        </div>
       </header>
 
-      <div class="admin-content">
+      <!-- Content -->
+      <div class="al-content">
         <RouterView />
       </div>
     </div>
@@ -119,276 +157,347 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 </template>
 
 <style scoped>
-.admin-shell {
+/* ── Shell ── */
+.al-shell {
   display: grid;
   min-height: 100vh;
-  grid-template-columns: 260px minmax(0, 1fr);
-  background: var(--ocop-surface);
+  grid-template-columns: var(--admin-sidebar-width) minmax(0, 1fr);
+  background: var(--admin-bg);
+  font-family: var(--admin-font);
+  color: var(--admin-text);
 }
 
-.admin-sidebar {
+/* ── Backdrop mobile ── */
+.al-backdrop {
+  position: fixed;
+  z-index: 45;
+  inset: 0;
+  border: 0;
+  background: rgba(30, 42, 71, 0.48);
+  backdrop-filter: blur(2px);
+}
+
+/* ══════════════ SIDEBAR ══════════════ */
+.al-sidebar {
   position: sticky;
-  z-index: 40;
+  z-index: 50;
   top: 0;
   display: flex;
   height: 100vh;
-  padding: var(--ocop-space-5) var(--ocop-space-4);
   flex-direction: column;
-  background: var(--ocop-sidebar);
-  color: var(--ocop-sidebar-muted);
+  overflow-y: auto;
+  padding: 20px 12px 16px;
+  background: var(--admin-sidebar-bg);
+  scrollbar-width: none;
 }
+.al-sidebar::-webkit-scrollbar { display: none; }
 
-.admin-brand {
+/* Brand */
+.al-brand {
   display: flex;
-  padding: 0 var(--ocop-space-2) var(--ocop-space-5);
   align-items: center;
   gap: 10px;
-  border-bottom: 1px solid color-mix(in srgb, var(--ocop-neutral-400) 14%, transparent);
-  color: var(--ocop-white);
+  padding: 4px 8px 18px;
+  border-bottom: 1px solid rgba(232, 237, 248, 0.10);
+  color: #fff;
   text-decoration: none;
 }
-
-.brand-icon {
+.al-brand__icon {
   display: grid;
-  width: 38px;
-  height: 38px;
-  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
   place-items: center;
   border-radius: 10px;
-  background: var(--ocop-primary-700);
+  background: rgba(47, 107, 255, 0.30);
+}
+.al-brand__icon img { width: 20px; height: 20px; }
+.al-brand__text { display: grid; }
+.al-brand__text strong {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+.al-brand__text small {
+  font-size: 11px;
+  color: var(--admin-muted-on-dark);
+  margin-top: 1px;
 }
 
-.brand-icon img {
-  width: 22px;
-  height: 22px;
-}
-
-.admin-brand > span:last-child {
-  display: grid;
-}
-
-.admin-brand strong {
-  font-size: 14px;
-}
-
-.admin-brand small {
-  margin-top: 2px;
-  color: var(--ocop-sidebar-muted);
-  font-size: var(--ocop-font-size-caption);
-}
-
-.admin-nav {
-  display: grid;
-  margin-top: 22px;
-  gap: 5px;
-}
-
-.admin-nav a,
-.admin-nav button {
+/* Nav */
+.al-nav {
   display: flex;
-  min-height: 42px;
-  padding: 10px var(--ocop-space-3);
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 20px;
+}
+.al-nav__section-label {
+  padding: 0 10px 6px;
+  color: var(--admin-muted-on-dark);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+.al-nav__item {
+  display: flex;
+  min-height: 40px;
   align-items: center;
   gap: 10px;
+  padding: 9px 10px;
   border: 1px solid transparent;
-  border-radius: 10px;
+  border-radius: var(--admin-radius-md);
   background: transparent;
-  color: var(--ocop-sidebar-muted);
-  font-size: var(--ocop-font-size-small);
-  font-weight: 650;
+  color: rgba(232, 237, 248, 0.70);
+  font-size: var(--admin-font-sm);
+  font-weight: 600;
   text-align: left;
   text-decoration: none;
+  transition: background var(--admin-transition), color var(--admin-transition);
+  cursor: pointer;
 }
-
-.admin-nav a > span,
-.admin-nav button > span {
+.al-nav__item:hover {
+  background: var(--admin-sidebar-hover);
+  color: #fff;
+}
+.al-nav__item.router-link-exact-active {
+  background: var(--admin-primary-soft);
+  color: var(--admin-primary);
+  font-weight: 700;
+}
+.al-nav__item.router-link-exact-active .al-nav__icon {
+  color: var(--admin-primary);
+}
+.al-nav__icon {
   display: grid;
-  width: 22px;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
   place-items: center;
-  color: var(--ocop-mint-300);
-  font-size: var(--ocop-font-size-body-lg);
+  border-radius: 8px;
+  background: rgba(232, 237, 248, 0.08);
+  color: rgba(232, 237, 248, 0.55);
+  transition: color var(--admin-transition);
 }
-
-.admin-nav a:hover,
-.admin-nav a.router-link-exact-active {
-  border-color: color-mix(in srgb, var(--ocop-mint) 24%, transparent);
-  background: color-mix(in srgb, var(--ocop-primary-500) 22%, transparent);
-  color: var(--ocop-white);
+.al-nav__item:hover .al-nav__icon {
+  background: rgba(47, 107, 255, 0.18);
+  color: #fff;
 }
-
-.admin-nav button {
+.al-nav__item.is-disabled {
   cursor: not-allowed;
-  opacity: 0.58;
+  opacity: 0.45;
 }
-
-.admin-nav button small {
+.al-nav__soon {
   margin-left: auto;
-  color: var(--ocop-neutral-500);
-  font-size: var(--ocop-font-size-caption);
+  padding: 2px 7px;
+  border-radius: var(--admin-radius-pill);
+  background: rgba(232, 237, 248, 0.12);
+  color: var(--admin-muted-on-dark);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
-  white-space: nowrap;
 }
 
-.sidebar-footer {
-  display: grid;
+/* Sidebar footer */
+.al-sidebar__footer {
   margin-top: auto;
-  padding-top: var(--ocop-space-4);
-  gap: var(--ocop-space-2);
-  border-top: 1px solid color-mix(in srgb, var(--ocop-neutral-400) 14%, transparent);
+  padding-top: 14px;
+  border-top: 1px solid rgba(232, 237, 248, 0.10);
 }
-
-.sidebar-footer a,
-.sidebar-footer button {
+.al-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: var(--admin-radius-pill);
+  background: rgba(16, 185, 129, 0.15);
+  color: #6ee7b7;
+  font-size: 11px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+.al-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10B981;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.30);
+  animation: al-pulse 2.4s ease-in-out infinite;
+}
+@keyframes al-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+.al-footer-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+.al-footer-btn {
   display: flex;
-  padding: 9px 10px;
   align-items: center;
   justify-content: center;
-  gap: 7px;
-  border: 1px solid color-mix(in srgb, var(--ocop-neutral-400) 18%, transparent);
-  border-radius: 9px;
+  gap: 5px;
+  padding: 8px 6px;
+  border: 1px solid rgba(232, 237, 248, 0.14);
+  border-radius: var(--admin-radius-sm);
   background: transparent;
-  color: var(--ocop-text-on-dark);
-  font-size: var(--ocop-font-size-caption);
-  font-weight: 650;
+  color: var(--admin-text-on-dark);
+  font-size: 11px;
+  font-weight: 600;
   text-align: center;
   text-decoration: none;
+  cursor: pointer;
+  transition: background var(--admin-transition);
+}
+.al-footer-btn:hover { background: rgba(232, 237, 248, 0.08); }
+.al-footer-btn.is-danger { color: #fca5a5; }
+.al-footer-btn.is-danger:hover { background: rgba(239, 68, 68, 0.12); border-color: rgba(239, 68, 68, 0.24); }
+.al-version {
+  margin: 8px 0 0;
+  text-align: center;
+  color: var(--admin-muted-on-dark);
+  font-size: 10px;
 }
 
-.admin-main {
-  min-width: 0;
-}
+/* ══════════════ MAIN ══════════════ */
+.al-main { min-width: 0; }
 
-.admin-topbar {
+/* Topbar */
+.al-topbar {
   position: sticky;
   z-index: 30;
   top: 0;
   display: flex;
-  min-height: 72px;
-  padding: var(--ocop-space-3) 28px;
+  min-height: var(--admin-topbar-height);
   align-items: center;
-  gap: 14px;
-  border-bottom: 1px solid var(--ocop-border);
-  background: color-mix(in srgb, var(--ocop-white) 94%, transparent);
-  backdrop-filter: blur(12px);
+  gap: 12px;
+  padding: 0 24px;
+  background: var(--admin-topbar-bg);
+  border-bottom: 1px solid var(--admin-border);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
-
-.admin-topbar > div {
-  display: grid;
-}
-
-.topbar-label {
-  color: var(--ocop-slate);
-  font-size: var(--ocop-font-size-caption);
-  text-transform: uppercase;
-}
-
-.admin-topbar > div strong {
-  color: var(--ocop-navy);
-  font-size: var(--ocop-font-size-body-lg);
-}
-
-.sidebar-toggle {
+.al-topbar__toggle {
   display: none;
-  width: 38px;
-  height: 38px;
-  border: 1px solid var(--ocop-border);
-  border-radius: 9px;
-  background: var(--ocop-card);
-  color: var(--ocop-primary-900);
-  place-items: center;
-}
-
-.admin-account {
-  display: flex;
-  margin-left: auto;
-  align-items: center;
-  gap: var(--ocop-space-2);
-  color: var(--ocop-navy);
-  text-decoration: none;
-}
-
-.admin-account > span:first-child {
-  display: grid;
   width: 36px;
   height: 36px;
+  flex-shrink: 0;
+  place-items: center;
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-sm);
+  background: var(--admin-card);
+  color: var(--admin-text);
+  cursor: pointer;
+}
+.al-topbar__title { display: grid; }
+.al-topbar__breadcrumb {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--admin-muted);
+}
+.al-topbar__title strong {
+  font-size: var(--admin-font-lg);
+  font-weight: 700;
+  color: var(--admin-text);
+}
+.al-topbar__right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+}
+
+/* API health pill */
+.al-api-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: var(--admin-radius-pill);
+  background: #D1FAE5;
+  font-size: 12px;
+  font-weight: 700;
+  color: #065F46;
+}
+.al-api-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10B981;
+}
+.al-api-label::before { content: 'API kết nối'; }
+
+/* Avatar */
+.al-avatar {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 5px;
+  border-radius: var(--admin-radius-md);
+  color: var(--admin-text);
+  text-decoration: none;
+  transition: background var(--admin-transition);
+}
+.al-avatar:hover { background: var(--admin-primary-soft); }
+.al-avatar__initial {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
   place-items: center;
   border-radius: 50%;
-  background: var(--ocop-primary-700);
-  color: var(--ocop-white);
-  font-size: var(--ocop-font-size-small);
+  background: var(--admin-primary);
+  color: #fff;
+  font-size: 13px;
   font-weight: 800;
 }
-
-.admin-account > span:last-child {
-  display: grid;
-}
-
-.admin-account strong {
-  max-width: 180px;
+.al-avatar__info { display: grid; }
+.al-avatar__info strong {
+  max-width: 150px;
   overflow: hidden;
-  font-size: var(--ocop-font-size-caption);
+  font-size: var(--admin-font-sm);
   text-overflow: ellipsis;
   white-space: nowrap;
+  color: var(--admin-text);
+}
+.al-avatar__info small {
+  font-size: 11px;
+  color: var(--admin-muted);
 }
 
-.admin-account small {
-  color: var(--ocop-slate);
-  font-size: var(--ocop-font-size-caption);
-}
-
-.admin-content {
+/* Content */
+.al-content {
   width: min(100%, 1280px);
   margin-inline: auto;
   padding: 28px;
 }
 
-.sidebar-backdrop {
-  display: none;
-}
-
+/* ══════════════ RESPONSIVE ══════════════ */
 @media (max-width: 991.98px) {
-  .admin-shell {
-    grid-template-columns: 1fr;
-  }
+  .al-shell { grid-template-columns: 1fr; }
 
-  .admin-sidebar {
+  .al-sidebar {
     position: fixed;
     left: 0;
-    width: min(280px, 86vw);
-    transform: translateX(-105%);
-    transition: transform var(--ocop-transition);
+    top: 0;
+    width: min(var(--admin-sidebar-width), 85vw);
+    transform: translateX(-110%);
+    transition: transform 220ms cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: var(--admin-shadow-modal);
   }
+  .al-sidebar.is-open { transform: translateX(0); }
 
-  .admin-sidebar.open {
-    transform: translateX(0);
-  }
-
-  .sidebar-toggle {
-    display: grid;
-  }
-
-  .sidebar-backdrop {
-    position: fixed;
-    z-index: 35;
-    inset: 0;
-    display: block;
-    border: 0;
-    background: color-mix(in srgb, var(--ocop-neutral-900) 52%, transparent);
-  }
+  .al-topbar__toggle { display: grid; }
+  .al-avatar__info { display: none; }
 }
 
 @media (max-width: 575.98px) {
-  .admin-topbar {
-    padding-inline: var(--ocop-space-4);
-  }
-
-  .topbar-label,
-  .admin-account > span:last-child {
-    display: none;
-  }
-
-  .admin-content {
-    padding: var(--ocop-space-5) var(--ocop-space-4);
-  }
+  .al-topbar { padding-inline: 16px; }
+  .al-api-label::before { content: 'API'; }
+  .al-content { padding: 20px 16px; }
 }
 </style>
