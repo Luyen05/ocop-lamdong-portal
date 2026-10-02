@@ -215,7 +215,7 @@ onMounted(loadData)
     <section class="product-panel">
       <p v-if="loading" class="state-message">Đang tải sản phẩm...</p>
       <p v-else-if="!filteredProducts.length" class="state-message">Chưa có sản phẩm phù hợp.</p>
-      <div v-else class="product-list">
+      <div v-else class="product-list stagger-in">
         <article v-for="product in filteredProducts" :key="product.id">
           <img
             v-if="product.images.find((image) => image.is_primary)?.image_url && !brokenProductImages.has(product.id)"
