@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 
 import AppIcon from '@/components/ui/AppIcon.vue'
 import type { LocationListItem } from '@/types/location'
+import { locationFallbackPhoto } from '@/constants/photos'
 import { formatTicketPrice, locationTypeStyle } from '@/utils/location'
 
 const props = defineProps<{
@@ -11,11 +12,11 @@ const props = defineProps<{
 
 const imageFailed = ref(false)
 const typeStyle = computed(() => locationTypeStyle(props.location.type))
-const imageUrl = computed(() =>
-  props.location.primary_image_url && !imageFailed.value
-    ? props.location.primary_image_url
-    : typeStyle.value.illustration,
-)
+const hasOwnImage = computed(() => Boolean(props.location.primary_image_url) && !imageFailed.value)
+// Chưa có ảnh riêng thì dùng ảnh cảnh quan thật theo loại hình, thay cho tranh minh họa.
+const fallbackPhoto = computed(() => locationFallbackPhoto(props.location.type))
+const imageUrl = computed(() => (hasOwnImage.value ? (props.location.primary_image_url as string) : fallbackPhoto.value.src))
+const imagePosition = computed(() => (hasOwnImage.value ? 'center' : (fallbackPhoto.value.position ?? 'center')))
 const visibleServices = computed(() => props.location.services.slice(0, 3))
 </script>
 
@@ -28,7 +29,8 @@ const visibleServices = computed(() => props.location.services.slice(0, 3))
     >
       <img
         :src="imageUrl"
-        :alt="location.primary_image_url && !imageFailed ? location.name : ''"
+        :alt="hasOwnImage ? location.name : ''"
+        :style="{ objectPosition: imagePosition }"
         loading="lazy"
         @error="imageFailed = true"
       />
@@ -93,6 +95,11 @@ const visibleServices = computed(() => props.location.services.slice(0, 3))
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 600ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.location-card:hover .location-media img {
+  transform: scale(1.06);
 }
 
 .type-badge {
@@ -209,5 +216,17 @@ p {
 .map-link:hover {
   border-color: var(--ocop-mint-border);
   color: var(--ocop-primary-900);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .location-card,
+  .location-media img {
+    transition: none;
+  }
+
+  .location-card:hover,
+  .location-card:hover .location-media img {
+    transform: none;
+  }
 }
 </style>
