@@ -122,12 +122,13 @@ File giấy chứng nhận sản phẩm luôn lưu cục bộ và chỉ tải đ
 ## 5. Database và migration
 
 - Database mới tạo từ `database/schema.sql` luôn là phiên bản mới nhất, không cần chạy migration.
-- Database đã có dữ liệu: sau mỗi lần `git pull`, chạy các migration chưa chạy theo thứ tự (từ file đầu tiên chưa chạy tới 011). Mọi migration chạy lặp lại an toàn. Ví dụ:
+- Database đã có dữ liệu: sau mỗi lần `git pull`, chạy các migration chưa chạy theo thứ tự (từ file đầu tiên chưa chạy tới 012). Mọi migration chạy lặp lại an toàn. Ví dụ:
 
   ```powershell
   Get-Content .\database\migrations\009_tourism_location_submissions.sql -Raw | docker compose exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
   Get-Content .\database\migrations\010_normalize_constraint_names.sql -Raw | docker compose exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
   Get-Content .\database\migrations\011_tourism_location_drafts.sql -Raw | docker compose exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+  Get-Content .\database\migrations\012_image_attribution.sql -Raw | docker compose exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
   ```
 
 | Migration | Nội dung |
@@ -143,6 +144,7 @@ File giấy chứng nhận sản phẩm luôn lưu cục bộ và chỉ tải đ
 | 009_tourism_location_submissions | Chủ thể khai báo điểm du lịch, admin duyệt, yêu cầu cập nhật |
 | 010_normalize_constraint_names | Chuẩn hóa tên ràng buộc để database nâng cấp giống hệt database tạo mới |
 | 011_tourism_location_drafts | Bản nháp điểm du lịch được thiếu vị trí/địa chỉ; trạng thái ngừng hiển thị (archived) |
+| 012_image_attribution | Ghi nguồn, tác giả, giấy phép cho ảnh sản phẩm và ảnh điểm du lịch (ảnh minh họa lấy từ web) |
 
 **Kiểm tra database khớp repo:** mở `tools/kiem-tra-database.sql` trong Query Tool của pgAdmin và chạy.
 Kết quả rỗng là khớp; dòng `thieu_so_voi_repo` là migration chưa chạy; dòng `thua_ngoai_repo` là thay đổi làm thẳng trên database mà repo không có.
