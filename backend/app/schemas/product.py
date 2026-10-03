@@ -47,6 +47,10 @@ class ProductImageRead(BaseModel):
     image_url: str
     is_primary: bool
     sort_order: int
+    # Ảnh lấy từ web để minh họa có ghi nguồn; ảnh chủ thể tự tải lên thì để trống.
+    source_url: str | None = None
+    credit: str | None = None
+    license: str | None = None
 
 
 class ProductPublicSourceRead(BaseModel):
