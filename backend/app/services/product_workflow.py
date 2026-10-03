@@ -186,6 +186,9 @@ def replace_product_images(
         session = object_session(product)
         if session is not None:
             session.flush()
+    # Nhập tại chỗ để tránh vòng nhập: image_storage dùng workflow_error của module này.
+    from app.services.image_storage import uploaded_file_exists
+
     for image in payload.images:
         image_kwargs = {}
         if image.storage_path is not None:
@@ -196,7 +199,7 @@ def replace_product_images(
                     "PRODUCT_IMAGE_NOT_OWNED",
                     "Ảnh tải lên không thuộc chủ thể hiện tại.",
                 )
-            if not (get_settings().upload_directory / image.storage_path).is_file():
+            if not uploaded_file_exists(image.storage_path):
                 raise workflow_error(
                     status.HTTP_422_UNPROCESSABLE_ENTITY,
                     "PRODUCT_IMAGE_NOT_FOUND",
