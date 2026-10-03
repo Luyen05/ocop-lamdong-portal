@@ -179,6 +179,10 @@ def replace_product_images(
 ) -> None:
     if payload.images is None:
         return
+    # Giữ nguồn/giấy phép của ảnh đã có khi chủ thể lưu lại danh sách ảnh (giao diện không gửi các trường này).
+    attribution = {
+        image.image_url: (image.source_url, image.credit, image.license) for image in product.images
+    }
     if product.images:
         product.images.clear()
         # Xóa ảnh cũ trước khi thêm ảnh mới: nếu không, SQLAlchemy chèn ảnh mới trước rồi mới xóa,
@@ -206,12 +210,16 @@ def replace_product_images(
                     "Không tìm thấy file ảnh đã tải lên.",
                 )
             image_kwargs["storage_path"] = image.storage_path
+        source_url, credit, license_name = attribution.get(image.image_url, (None, None, None))
         product.images.append(
             ProductImage(
                 image_url=image.image_url,
                 alt_text=product.name,
                 is_primary=image.is_primary,
                 sort_order=image.sort_order,
+                source_url=source_url,
+                credit=credit,
+                license=license_name,
                 **image_kwargs,
             )
         )

@@ -136,6 +136,10 @@ class ProductImage(Base):
             sqlite_where=text("is_primary"),
             postgresql_where=text("is_primary"),
         ),
+        CheckConstraint(
+            "source_url IS NULL OR source_url LIKE 'http://%' OR source_url LIKE 'https://%'",
+            name="product_images_source_url_check",
+        ),
     )
 
     id: Mapped[int] = mapped_column(
@@ -157,6 +161,10 @@ class ProductImage(Base):
     alt_text: Mapped[str | None] = mapped_column(String(255))
     is_primary: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    # Nguồn ảnh lấy từ web (để minh họa): trang gốc, tác giả/nơi đăng và giấy phép; ảnh chủ thể tự tải lên để trống.
+    source_url: Mapped[str | None] = mapped_column(String(500))
+    credit: Mapped[str | None] = mapped_column(String(255))
+    license: Mapped[str | None] = mapped_column(String(100))
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
