@@ -14,6 +14,7 @@ sản phẩm không đi qua đây: luôn lưu cục bộ và chỉ tải đượ
 from __future__ import annotations
 
 import hashlib
+import logging
 import re
 import time
 from dataclasses import dataclass
@@ -25,6 +26,9 @@ from fastapi import UploadFile, status
 
 from app.core.config import get_settings
 from app.services.product_workflow import workflow_error
+
+
+logger = logging.getLogger(__name__)
 
 
 ALLOWED_IMAGES = {
@@ -106,7 +110,22 @@ def cloudinary_api_url(action: str) -> str:
     return f"https://api.cloudinary.com/v1_1/{get_settings().cloudinary_cloud_name}/image/{action}"
 
 
+def cloudinary_error_reason(response: httpx.Response) -> str:
+    """``HTTP 401: Invalid Signature …``: lấy lời nhắn lỗi Cloudinary trả về để dễ tìm nguyên nhân.
+
+    Lời nhắn của Cloudinary không chứa API secret (với lỗi chữ ký chỉ in chuỗi đã ký, không có secret).
+    """
+
+    try:
+        message = response.json().get("error", {}).get("message", "")
+    except ValueError:
+        message = ""
+    reason = f"HTTP {response.status_code}"
+    return f"{reason}: {message[:200]}" if message else reason
+
+
 def image_storage_unavailable(reason: str) -> Exception:
+    logger.warning("Lưu ảnh lên Cloudinary không thành công: %s", reason)
     return workflow_error(
         status.HTTP_502_BAD_GATEWAY,
         "IMAGE_STORAGE_UNAVAILABLE",
@@ -134,7 +153,7 @@ async def cloudinary_upload(content: bytes, storage_path: str, file_name: str, c
     except httpx.HTTPError as error:
         raise image_storage_unavailable(type(error).__name__) from error
     if response.status_code != 200:
-        raise image_storage_unavailable(f"HTTP {response.status_code}")
+        raise image_storage_unavailable(cloudinary_error_reason(response))
     secure_url = response.json().get("secure_url")
     if not isinstance(secure_url, str) or not secure_url.startswith("https://"):
         raise image_storage_unavailable("INVALID_RESPONSE")
@@ -171,8 +190,10 @@ def cloudinary_destroy(storage_path: str) -> None:
             response = client.post(cloudinary_api_url("destroy"), data=data)
     except httpx.HTTPError as error:
         raise image_storage_unavailable(type(error).__name__) from error
-    if response.status_code != 200 or response.json().get("result") not in {"ok", "not found"}:
-        raise image_storage_unavailable(f"HTTP {response.status_code}")
+    if response.status_code != 200:
+        raise image_storage_unavailable(cloudinary_error_reason(response))
+    if response.json().get("result") not in {"ok", "not found"}:
+        raise image_storage_unavailable("INVALID_RESPONSE")
 
 
 async def store_subject_image(

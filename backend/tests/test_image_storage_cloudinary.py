@@ -19,17 +19,18 @@ PNG = b"\x89PNG\r\n\x1a\n" + b"test-image"
 class FakeCloudinary:
     """Giả lập Cloudinary: ghi lại mọi yêu cầu, lưu ảnh đã tải lên theo public_id."""
 
-    def __init__(self, *, upload_status: int = 200) -> None:
+    def __init__(self, *, upload_status: int = 200, upload_message: str = "lỗi giả lập") -> None:
         self.requests: list[httpx.Request] = []
         self.stored: set[str] = set()
         self.upload_status = upload_status
+        self.upload_message = upload_message
 
     def handler(self, request: httpx.Request) -> httpx.Response:
         self.requests.append(request)
         url = str(request.url)
         if url.endswith("/image/upload") and request.method == "POST":
             if self.upload_status != 200:
-                return httpx.Response(self.upload_status, json={"error": {"message": "lỗi giả lập"}})
+                return httpx.Response(self.upload_status, json={"error": {"message": self.upload_message}})
             public_id = self.field(request, "public_id")
             self.stored.add(public_id)
             return httpx.Response(
@@ -93,6 +94,16 @@ def test_cloudinary_settings_require_credentials() -> None:
         cloudinary_api_secret="secret",
     )
     assert ok.image_storage == "cloudinary"
+    pasted = Settings(
+        _env_file=None,
+        image_storage="cloudinary",
+        cloudinary_cloud_name=' "demo" ',
+        cloudinary_api_key=" 123456 ",
+        cloudinary_api_secret="'secret' ",
+    )
+    assert pasted.cloudinary_cloud_name == "demo"
+    assert pasted.cloudinary_api_key == "123456"
+    assert pasted.cloudinary_api_secret.get_secret_value() == "secret"
     assert Settings(_env_file=None).image_storage == "local"
 
 
@@ -184,12 +195,14 @@ def test_cloudinary_errors_return_502_and_large_files_never_leave_server(subject
     assert oversized.status_code == 413
     assert cloudinary.requests == []
 
-    cloudinary.upload_status = 500
+    cloudinary.upload_status = 401
+    cloudinary.upload_message = "Invalid Signature abc. String to sign - 'public_id=x&timestamp=1'."
     failed = client.post(
         "/api/v1/subject/product-images", headers=headers, files={"file": ("a.png", PNG, "image/png")}
     )
     assert failed.status_code == 502
     assert failed.json()["code"] == "IMAGE_STORAGE_UNAVAILABLE"
+    assert failed.json()["details"]["reason"].startswith("HTTP 401: Invalid Signature")
     assert "secret-abc" not in failed.text
 
 

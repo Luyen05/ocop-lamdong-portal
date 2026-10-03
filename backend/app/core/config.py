@@ -54,6 +54,17 @@ class Settings(BaseSettings):
             raise ValueError("OSRM_BASE_URL phải là đường dẫn http:// hoặc https://.")
         return normalized
 
+    @field_validator("cloudinary_cloud_name", "cloudinary_api_key", "cloudinary_api_secret", mode="before")
+    @classmethod
+    def clean_cloudinary_value(cls, value: object) -> object:
+        """Bỏ khoảng trắng và dấu ngoặc kép thừa khi dán giá trị vào .env."""
+
+        if isinstance(value, SecretStr):
+            value = value.get_secret_value()
+        if isinstance(value, str):
+            return value.strip().strip("\"'").strip()
+        return value
+
     @model_validator(mode="after")
     def validate_cloudinary_settings(self) -> "Settings":
         if self.image_storage == "cloudinary":
