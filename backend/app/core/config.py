@@ -1,8 +1,9 @@
 from functools import lru_cache
 from pathlib import Path
+from typing import Literal
 from urllib.parse import urlparse
 
-from pydantic import Field, SecretStr, field_validator
+from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -24,6 +25,13 @@ class Settings(BaseSettings):
     upload_directory: Path = BACKEND_ROOT / "uploads"
     upload_max_bytes: int = Field(default=5 * 1024 * 1024, ge=1024)
     certificate_upload_max_bytes: int = Field(default=10 * 1024 * 1024, ge=1024)
+    # Nơi lưu ảnh sản phẩm và ảnh điểm du lịch: "local" (thư mục uploads) hoặc "cloudinary".
+    image_storage: Literal["local", "cloudinary"] = "local"
+    cloudinary_cloud_name: str = ""
+    cloudinary_api_key: str = ""
+    cloudinary_api_secret: SecretStr = SecretStr("")
+    cloudinary_folder: str = Field(default="ocop", pattern=r"^[A-Za-z0-9_-]+$")
+    cloudinary_timeout_seconds: float = Field(default=15.0, ge=1.0, le=60.0)
     news_rss_url: str = "https://ocoplamdong.gov.vn/rssChanel/tin-tuc-su-kien.rss"
     news_rss_timeout_seconds: float = Field(default=8.0, ge=1.0, le=30.0)
     news_rss_max_bytes: int = Field(default=1024 * 1024, ge=1024, le=5 * 1024 * 1024)
@@ -45,6 +53,33 @@ class Settings(BaseSettings):
         if parsed.scheme not in {"http", "https"} or not parsed.netloc:
             raise ValueError("OSRM_BASE_URL phải là đường dẫn http:// hoặc https://.")
         return normalized
+
+    @field_validator("cloudinary_cloud_name", "cloudinary_api_key", "cloudinary_api_secret", mode="before")
+    @classmethod
+    def clean_cloudinary_value(cls, value: object) -> object:
+        """Bỏ khoảng trắng và dấu ngoặc kép thừa khi dán giá trị vào .env."""
+
+        if isinstance(value, SecretStr):
+            value = value.get_secret_value()
+        if isinstance(value, str):
+            return value.strip().strip("\"'").strip()
+        return value
+
+    @model_validator(mode="after")
+    def validate_cloudinary_settings(self) -> "Settings":
+        if self.image_storage == "cloudinary":
+            missing = [
+                name
+                for name, value in (
+                    ("CLOUDINARY_CLOUD_NAME", self.cloudinary_cloud_name),
+                    ("CLOUDINARY_API_KEY", self.cloudinary_api_key),
+                    ("CLOUDINARY_API_SECRET", self.cloudinary_api_secret.get_secret_value()),
+                )
+                if not value.strip()
+            ]
+            if missing:
+                raise ValueError(f"IMAGE_STORAGE=cloudinary cần khai báo: {', '.join(missing)}.")
+        return self
 
     @property
     def cors_origin_list(self) -> list[str]:
