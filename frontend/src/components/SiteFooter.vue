@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import AppIcon from '@/components/ui/AppIcon.vue'
+import { vReveal } from '@/directives/reveal'
 
 const stats = [
   { icon: 'award', value: '3–5 sao', label: 'Sản phẩm OCOP được kiểm duyệt', tone: 'green' },
@@ -12,7 +13,7 @@ const stats = [
 <template>
   <footer class="site-footer">
     <div class="site-content footer-inner">
-      <div class="stat-grid" aria-label="Số liệu tổng quan">
+      <div v-reveal.stagger class="stat-grid" aria-label="Số liệu tổng quan">
         <div v-for="stat in stats" :key="stat.label" class="stat-card" :class="`tone-${stat.tone}`">
           <span class="stat-icon" aria-hidden="true"><AppIcon :name="stat.icon" :size="19" /></span>
           <span>
@@ -22,7 +23,7 @@ const stats = [
         </div>
       </div>
 
-      <div class="footer-grid">
+      <div v-reveal class="footer-grid">
         <section class="footer-brand" aria-labelledby="footer-brand-title">
           <h2 id="footer-brand-title">
             <span><img src="/assets/figma/home/icon-brand.svg" alt="" /></span>
@@ -72,8 +73,8 @@ const stats = [
 .site-footer {
   padding: var(--ocop-space-12) 0 var(--ocop-space-8);
   border-top: 4px solid var(--ocop-daquy-400);
-  background: var(--ocop-sidebar);
-  color: var(--ocop-sidebar-muted);
+  background: var(--ocop-mist-100);
+  color: var(--ocop-mist-700);
 }
 
 .stat-grid {
@@ -81,7 +82,7 @@ const stats = [
   padding-bottom: var(--ocop-space-8);
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--ocop-space-4);
-  border-bottom: 1px solid color-mix(in srgb, var(--ocop-neutral-400) 12%, transparent);
+  border-bottom: 1px solid var(--ocop-mist-200);
 }
 
 .stat-card {
@@ -90,9 +91,9 @@ const stats = [
   padding: var(--ocop-space-4);
   align-items: center;
   gap: var(--ocop-space-3);
-  border: 1px solid color-mix(in srgb, var(--ocop-neutral-400) 10%, transparent);
+  border: 1px solid var(--ocop-mist-200);
   border-radius: var(--ocop-radius-md);
-  background: var(--ocop-sidebar-card);
+  background: var(--ocop-card);
 }
 
 .stat-icon {
@@ -105,10 +106,10 @@ const stats = [
   font-size: var(--ocop-font-size-title-sm);
 }
 
-.tone-green .stat-icon { background: color-mix(in srgb, var(--ocop-daquy-400) 14%, transparent); color: var(--ocop-daquy-300); }
-.tone-gold .stat-icon { background: color-mix(in srgb, var(--ocop-mist-300) 16%, transparent); color: var(--ocop-mist-200); }
-.tone-blue .stat-icon { background: color-mix(in srgb, var(--ocop-blue) 18%, transparent); color: var(--ocop-blue-300); }
-.tone-purple .stat-icon { background: color-mix(in srgb, var(--ocop-tone-purple) 16%, transparent); color: var(--ocop-tone-purple-light); }
+.tone-green .stat-icon { background: var(--ocop-daquy-100); color: var(--ocop-daquy-700); }
+.tone-gold .stat-icon { background: var(--ocop-mist-100); color: var(--ocop-mist-700); }
+.tone-blue .stat-icon { background: var(--ocop-tone-sky-soft); color: var(--ocop-tone-sky); }
+.tone-purple .stat-icon { background: var(--ocop-tone-hydrangea-soft); color: var(--ocop-tone-hydrangea); }
 
 .stat-card strong,
 .stat-card small {
@@ -116,14 +117,14 @@ const stats = [
 }
 
 .stat-card strong {
-  color: var(--ocop-white);
+  color: var(--ocop-mist-950);
   font-size: var(--ocop-font-size-title-sm);
   line-height: 22px;
 }
 
 .stat-card small {
   margin-top: 2px;
-  color: var(--ocop-text-on-dark-muted);
+  color: var(--ocop-mist-600);
   font-size: var(--ocop-font-size-caption);
 }
 
@@ -132,12 +133,12 @@ const stats = [
   padding: 36px 0 var(--ocop-space-8);
   grid-template-columns: 1.15fr 1fr 1.1fr 1fr;
   gap: var(--ocop-space-12);
-  border-bottom: 1px solid color-mix(in srgb, var(--ocop-neutral-400) 12%, transparent);
+  border-bottom: 1px solid var(--ocop-mist-200);
 }
 
 .footer-grid h2 {
   margin: 0 0 var(--ocop-space-3);
-  color: var(--ocop-white);
+  color: var(--ocop-mist-950);
   font-size: var(--ocop-font-size-body);
   font-weight: 750;
   line-height: 1.4;
@@ -155,7 +156,7 @@ const stats = [
   height: 28px;
   place-items: center;
   border-radius: var(--ocop-radius-sm);
-  background: var(--ocop-mist-700);
+  background: var(--ocop-tone-sky);
   box-shadow: inset 0 -3px 0 var(--ocop-daquy-400);
 }
 
@@ -168,7 +169,7 @@ const stats = [
 .footer-grid a,
 .footer-grid address {
   margin: 0;
-  color: var(--ocop-text-on-dark-muted);
+  color: var(--ocop-mist-700);
   font-size: var(--ocop-font-size-small);
   font-style: normal;
   line-height: 1.6;
@@ -194,7 +195,7 @@ const stats = [
 }
 
 .footer-grid a:hover {
-  color: var(--ocop-white);
+  color: var(--ocop-tone-sky);
   text-decoration: underline;
 }
 
@@ -215,22 +216,22 @@ const stats = [
 
 .footer-brand address :deep(.app-icon) {
   margin-top: 2px;
-  color: var(--ocop-mint-300);
+  color: var(--ocop-tone-sky);
 }
 
 .info-card {
   align-self: start;
   padding: var(--ocop-space-4);
-  border: 1px solid color-mix(in srgb, var(--ocop-neutral-400) 14%, transparent);
+  border: 1px solid var(--ocop-daquy-200);
   border-radius: var(--ocop-radius-md);
-  background: color-mix(in srgb, var(--ocop-sidebar-card) 88%, var(--ocop-white));
+  background: var(--ocop-daquy-50);
 }
 
 .info-card strong {
   display: flex;
   align-items: center;
   gap: 6px;
-  color: var(--ocop-daquy-300);
+  color: var(--ocop-daquy-700);
   font-size: var(--ocop-font-size-caption);
 }
 
@@ -254,7 +255,7 @@ const stats = [
   padding-top: var(--ocop-space-6);
   justify-content: space-between;
   gap: var(--ocop-space-5);
-  color: var(--ocop-text-on-dark-muted);
+  color: var(--ocop-mist-600);
   font-size: var(--ocop-font-size-caption);
 }
 

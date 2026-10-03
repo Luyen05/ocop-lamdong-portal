@@ -66,7 +66,7 @@ onMounted(loadProducts)
       </div>
     </div>
 
-    <div v-else-if="featuredProducts.length" class="product-grid">
+    <div v-else-if="featuredProducts.length" class="product-grid stagger-in">
       <ProductCard v-for="product in featuredProducts" :key="product.id" :product="product" />
     </div>
 

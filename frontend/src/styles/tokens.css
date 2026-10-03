@@ -7,8 +7,8 @@
  * --ocop-sidebar-muted chỉ dùng trên nền tối.
  *
  * Bảng màu "Sương sớm & dã quỳ" (từ bước 1, trang chủ):
- * - Sương sớm (--ocop-mist-*): xám xanh thông và nền sương ấm, trích từ ảnh thật của trang (đồi thông, đồi chè,
- *   trại hoa), là màu thương hiệu, chữ, nền, viền. Nhờ vậy khung, thẻ và ảnh cùng một tông.
+ * - Sương sớm (--ocop-mist-*): thang xám xanh trời Đà Lạt (cẩm tú cầu xanh, tông lạnh và sáng), là màu thương hiệu,
+ *   chữ, nền, viền; hợp với ảnh đồi, trời và trại hoa. Giữ tên mist để không phải đổi component.
  * - Dã quỳ (--ocop-daquy-*): vàng hoa dã quỳ, là màu nhấn (nút hành động chính, sao OCOP, tiêu đề nhỏ).
  *   Dã quỳ 300/400 chỉ làm nền kèm chữ mist-950, hoặc làm chữ/biểu tượng trên nền tối.
  *   Chữ vàng trên nền sáng dùng --ocop-daquy-700 (5.5:1 trên trắng).
@@ -21,17 +21,17 @@
   --ocop-font-family-sans: "Be Vietnam Pro", "Segoe UI", Arial, sans-serif;
 
   /* Sương sớm trên rừng thông: thang xám xanh thông ấm, trích từ màu ảnh thật (thông #273328, sương #f4eee4) */
-  --ocop-mist-50: #f7f6f1;
-  --ocop-mist-100: #ecebe1;
-  --ocop-mist-200: #dcdccd;
-  --ocop-mist-300: #bcc0ab;
-  --ocop-mist-400: #929a84;
-  --ocop-mist-500: #677160;
-  --ocop-mist-600: #535e4d;
-  --ocop-mist-700: #3e4c3d;
-  --ocop-mist-800: #2e3b30;
-  --ocop-mist-900: #212b23;
-  --ocop-mist-950: #161d18;
+  --ocop-mist-50: #f4f9fc;
+  --ocop-mist-100: #e4eff6;
+  --ocop-mist-200: #d0e1ec;
+  --ocop-mist-300: #a9c7da;
+  --ocop-mist-400: #7ea6bf;
+  --ocop-mist-500: #57829d;
+  --ocop-mist-600: #3d6a85;
+  --ocop-mist-700: #24607f;
+  --ocop-mist-800: #1b4d68;
+  --ocop-mist-900: #143a4f;
+  --ocop-mist-950: #0d2634;
 
   /* Dã quỳ: thang vàng */
   --ocop-daquy-50: #fff9e5;
@@ -232,4 +232,121 @@
   --ocop-green: var(--ocop-primary-700);
   --ocop-green-dark: var(--ocop-primary-950);
   --ocop-cream: var(--ocop-surface);
+}
+
+/*
+ * ════════════════════════════════════════════════════════════════
+ * Token khung quản trị và chủ thể (sidebar, topbar, card, badge, bảng)
+ * Mọi giá trị trỏ về token --ocop-* (bảng "Sương sớm & dã quỳ"), không có màu riêng. Khu quản trị dùng nền sáng và xanh trời Đà Lạt `sky` (cẩm tú cầu xanh) làm màu chủ đạo.
+ * Màu đỏ chỉ dành cho lỗi, cảnh báo, từ chối; xanh lá cho trạng thái tốt, đã duyệt.
+ * Chữ vàng trên nền sáng dùng daquy-700 (--admin-accent-text).
+ * ════════════════════════════════════════════════════════════════
+ */
+:root {
+  --admin-font: var(--ocop-font-family-sans);
+
+  /* Nền */
+  --admin-bg: color-mix(in srgb, var(--ocop-tone-sky-soft) 55%, var(--ocop-white));
+  --admin-card: var(--ocop-card);
+  --admin-sidebar-bg: var(--ocop-card);
+  --admin-sidebar-border: var(--ocop-border);
+  --admin-sidebar-hover: var(--ocop-tone-sky-soft);
+  --admin-sidebar-active-bg: color-mix(in srgb, var(--ocop-tone-sky) 13%, var(--ocop-white));
+  --admin-sidebar-active-text: var(--admin-primary-dark);
+  --admin-topbar-bg: var(--ocop-card);
+  --admin-scrim: color-mix(in srgb, var(--ocop-mist-950) 48%, transparent);
+
+  /* Chữ (tương phản trên nền trắng và nền sương đều đạt AA) */
+  --admin-text: var(--ocop-mist-950);
+  --admin-muted: var(--ocop-mist-600);
+
+  /* Màu chủ đạo */
+  --admin-primary: var(--ocop-tone-sky);
+  --admin-primary-soft: var(--ocop-tone-sky-soft);
+  --admin-primary-dark: color-mix(in srgb, var(--ocop-tone-sky) 78%, var(--ocop-black));
+  --admin-primary-border: color-mix(in srgb, var(--ocop-tone-sky) 24%, var(--ocop-white));
+  --admin-on-primary: var(--ocop-white);
+
+  /* Dã quỳ: nền nhấn (chữ mist-950) hoặc chữ trên nền sáng (daquy-700) */
+  --admin-accent: var(--ocop-daquy-400);
+  --admin-accent-soft: var(--ocop-daquy-50);
+  --admin-accent-text: var(--ocop-daquy-700);
+  --admin-on-accent: var(--ocop-mist-950);
+
+  /* Màu trạng thái */
+  --admin-success: var(--ocop-success);
+  --admin-success-soft: var(--ocop-success-soft);
+  --admin-success-text: var(--ocop-success);
+  --admin-success-hover: color-mix(in srgb, var(--ocop-success) 82%, var(--ocop-black));
+  --admin-success-border: color-mix(in srgb, var(--ocop-success) 28%, var(--ocop-white));
+  --admin-warning: var(--ocop-warning);
+  --admin-warning-soft: var(--ocop-warning-soft);
+  --admin-warning-text: var(--ocop-warning-strong);
+  --admin-warning-hover: color-mix(in srgb, var(--ocop-warning) 82%, var(--ocop-black));
+  --admin-warning-border: var(--ocop-warning-border);
+  --admin-danger: var(--ocop-danger);
+  --admin-danger-soft: var(--ocop-danger-soft);
+  --admin-danger-text: var(--ocop-danger-strong);
+  --admin-danger-hover: color-mix(in srgb, var(--ocop-danger) 82%, var(--ocop-black));
+  --admin-danger-border: var(--ocop-danger-border);
+  --admin-info: var(--ocop-info);
+  --admin-info-soft: var(--ocop-info-soft);
+  --admin-info-text: var(--ocop-info-strong);
+  --admin-info-border: var(--ocop-info-border);
+  --admin-highlight: var(--ocop-daquy-50);
+
+  /* Badge trạng thái workflow (nền nhạt, chữ đậm cùng tông) */
+  --admin-badge-pending-bg: var(--ocop-warning-soft);
+  --admin-badge-pending-text: var(--ocop-warning-strong);
+  --admin-badge-approved-bg: var(--ocop-success-soft);
+  --admin-badge-approved-text: var(--ocop-success);
+  --admin-badge-rejected-bg: var(--ocop-danger-soft);
+  --admin-badge-rejected-text: var(--ocop-danger-strong);
+  --admin-badge-draft-bg: var(--ocop-mist-100);
+  --admin-badge-draft-text: var(--ocop-mist-700);
+  --admin-badge-revision-bg: var(--ocop-daquy-100);
+  --admin-badge-revision-text: var(--ocop-daquy-800);
+  --admin-badge-suspended-bg: var(--ocop-danger-soft);
+  --admin-badge-suspended-text: var(--ocop-danger-strong);
+
+  /* Viền và bóng (rất nhẹ) */
+  --admin-border: var(--ocop-mist-200);
+  --admin-border-soft: var(--ocop-mist-100);
+  --admin-shadow-sm: 0 1px 2px color-mix(in srgb, var(--ocop-mist-950) 6%, transparent);
+  --admin-shadow-card: 0 2px 10px color-mix(in srgb, var(--ocop-mist-950) 6%, transparent);
+  --admin-shadow-modal: 0 20px 60px color-mix(in srgb, var(--ocop-mist-950) 18%, transparent);
+
+  /* Bo góc */
+  --admin-radius-sm: 8px;
+  --admin-radius-md: 12px;
+  --admin-radius-lg: 16px;
+  --admin-radius-pill: 999px;
+
+  /* Khoảng cách: card padding 20px, khoảng cách giữa card 20px */
+  --admin-space-1: 4px;
+  --admin-space-2: 8px;
+  --admin-space-3: 12px;
+  --admin-space-4: 16px;
+  --admin-space-5: 20px;
+  --admin-space-6: 24px;
+  --admin-space-8: 32px;
+  --admin-card-padding: var(--admin-space-5);
+  --admin-card-gap: var(--admin-space-5);
+
+  /* Cỡ chữ: 12px là nhỏ nhất */
+  --admin-font-xs: 0.75rem;
+  --admin-font-sm: 0.8125rem;
+  --admin-font-base: 0.9375rem;
+  --admin-font-lg: 1rem;
+  --admin-font-xl: 1.125rem;
+  --admin-font-2xl: 1.375rem;
+
+  /* Kích thước control và khung */
+  --admin-control-height: 44px;
+  --admin-sidebar-width: 220px;
+  --admin-sidebar-rail-width: 72px;
+  --admin-topbar-height: 64px;
+
+  /* Chuyển động */
+  --admin-transition: 160ms ease;
 }
