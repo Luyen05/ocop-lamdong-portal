@@ -365,12 +365,17 @@ def replace_location_images(
     subject_id: int,
 ) -> None:
     validate_location_images(db, images, subject_id, location.id)
+    # Giữ nguồn/giấy phép của ảnh đã có khi chủ thể lưu lại danh sách ảnh (giao diện không gửi các trường này).
+    attribution = {
+        image.image_url: (image.source_url, image.credit, image.license) for image in location.images
+    }
     if location.images:
         location.images.clear()
         # Xóa ảnh cũ trước khi thêm ảnh mới để không vướng chỉ mục duy nhất
         # (một ảnh chính mỗi điểm, đường dẫn lưu trữ không trùng) trên PostgreSQL.
         db.flush()
     for image in images:
+        source_url, credit, license_name = attribution.get(image.image_url, (None, None, None))
         location.images.append(
             LocationImage(
                 image_url=image.image_url,
@@ -378,6 +383,9 @@ def replace_location_images(
                 is_primary=image.is_primary,
                 sort_order=image.sort_order,
                 alt_text=image.alt_text or location.name,
+                source_url=source_url,
+                credit=credit,
+                license=license_name,
             )
         )
 

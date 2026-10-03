@@ -269,6 +269,9 @@ def get_product(slug: str, db: Session = Depends(get_db)) -> ProductDetail:
                 image_url=image.image_url,
                 is_primary=image.is_primary,
                 sort_order=image.sort_order,
+                source_url=image.source_url,
+                credit=image.credit,
+                license=image.license,
             )
             for image in product.images
         ],

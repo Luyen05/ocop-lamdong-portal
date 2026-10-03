@@ -108,17 +108,27 @@ docker compose restart frontend       # sau khi package.json đổi: container t
 docker compose down                   # dừng, giữ nguyên dữ liệu
 ```
 
-Không dùng `docker compose down -v`: lệnh này xóa cả database và ảnh đã tải lên.
+Không dùng `docker compose down -v`: lệnh này xóa cả database và ảnh đã tải lên (khi `IMAGE_STORAGE=local`).
+
+### Lưu ảnh: cục bộ hoặc Cloudinary
+
+Ảnh sản phẩm và ảnh điểm du lịch do chủ thể tải lên được lưu theo biến `IMAGE_STORAGE` trong `.env`:
+
+- `local` (mặc định): lưu trong thư mục `backend/uploads`. Không cần cấu hình gì, dùng khi phát triển và chạy kiểm thử.
+- `cloudinary`: tải lên Cloudinary. Cần tài khoản Cloudinary (gói Free, không cần thẻ) và điền `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`. Thiếu một biến thì backend báo lỗi khi khởi động. Sau khi đổi `.env`, chạy `docker compose up -d backend` để nạp lại.
+
+File giấy chứng nhận sản phẩm luôn lưu cục bộ và chỉ tải được qua API có kiểm tra quyền. Ảnh đã lưu cục bộ trước đó vẫn dùng được; chuyển chúng lên Cloudinary bằng script riêng (sẽ có ở bước sau).
 
 ## 5. Database và migration
 
 - Database mới tạo từ `database/schema.sql` luôn là phiên bản mới nhất, không cần chạy migration.
-- Database đã có dữ liệu: sau mỗi lần `git pull`, chạy các migration chưa chạy theo thứ tự (từ file đầu tiên chưa chạy tới 011). Mọi migration chạy lặp lại an toàn. Ví dụ:
+- Database đã có dữ liệu: sau mỗi lần `git pull`, chạy các migration chưa chạy theo thứ tự (từ file đầu tiên chưa chạy tới 012). Mọi migration chạy lặp lại an toàn. Ví dụ:
 
   ```powershell
   Get-Content .\database\migrations\009_tourism_location_submissions.sql -Raw | docker compose exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
   Get-Content .\database\migrations\010_normalize_constraint_names.sql -Raw | docker compose exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
   Get-Content .\database\migrations\011_tourism_location_drafts.sql -Raw | docker compose exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+  Get-Content .\database\migrations\012_image_attribution.sql -Raw | docker compose exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
   ```
 
 | Migration | Nội dung |
@@ -134,6 +144,7 @@ Không dùng `docker compose down -v`: lệnh này xóa cả database và ảnh 
 | 009_tourism_location_submissions | Chủ thể khai báo điểm du lịch, admin duyệt, yêu cầu cập nhật |
 | 010_normalize_constraint_names | Chuẩn hóa tên ràng buộc để database nâng cấp giống hệt database tạo mới |
 | 011_tourism_location_drafts | Bản nháp điểm du lịch được thiếu vị trí/địa chỉ; trạng thái ngừng hiển thị (archived) |
+| 012_image_attribution | Ghi nguồn, tác giả, giấy phép cho ảnh sản phẩm và ảnh điểm du lịch (ảnh minh họa lấy từ web) |
 
 **Kiểm tra database khớp repo:** mở `tools/kiem-tra-database.sql` trong Query Tool của pgAdmin và chạy.
 Kết quả rỗng là khớp; dòng `thieu_so_voi_repo` là migration chưa chạy; dòng `thua_ngoai_repo` là thay đổi làm thẳng trên database mà repo không có.
@@ -173,7 +184,7 @@ Backend kiểm tra vai trò trong database ở mỗi lần gọi; sửa JWT hay 
 - Mỗi chức năng một nhánh `2312682_HaLuyen_<TenChucNang>` (hoặc tên theo người làm), tạo từ `main` mới nhất.
 - Không sửa trực tiếp `main`. Code lên `main` qua Pull Request, có người review.
 - Commit dạng `loại(phạm vi): mô tả tiếng Việt`, ví dụ `feat(api): …`, `fix(ui): …`, `docs: …`. Backend và giao diện là các commit riêng.
-- Không commit `.env`, file sao lưu `.dump`, `node_modules`, khóa Firebase.
+- Không commit `.env`, file sao lưu `.dump`, `node_modules`, khóa Cloudinary.
 - Khi làm cùng Claude: quy tắc chi tiết trong [`CLAUDE.md`](CLAUDE.md).
 
 ## 9. Tài liệu

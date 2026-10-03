@@ -164,6 +164,9 @@ def location_client() -> Generator[TestClient, None, None]:
                     location_id=1,
                     image_url="https://example.com/cau-dat.jpg",
                     is_primary=True,
+                    source_url="https://commons.wikimedia.org/wiki/File:Cau-Dat.jpg",
+                    credit="Nguyễn Văn B",
+                    license="CC BY-SA 4.0",
                 ),
             ]
         )
@@ -296,6 +299,9 @@ def test_location_detail_shows_contact_subject_and_public_products(
     assert data["subject"] == {"id": 1, "name": "HTX Chè Cầu Đất", "district": "Đà Lạt"}
     assert [product["slug"] for product in data["products"]] == ["tra-xanh-cau-dat"]
     assert data["images"][0]["is_primary"] is True
+    assert data["images"][0]["source_url"] == "https://commons.wikimedia.org/wiki/File:Cau-Dat.jpg"
+    assert data["images"][0]["credit"] == "Nguyễn Văn B"
+    assert data["images"][0]["license"] == "CC BY-SA 4.0"
 
 
 def test_hidden_or_unknown_location_returns_not_found(location_client: TestClient) -> None:
