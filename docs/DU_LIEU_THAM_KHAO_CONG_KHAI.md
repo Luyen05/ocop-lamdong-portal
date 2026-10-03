@@ -1,5 +1,11 @@
 # Dữ liệu sản phẩm tham khảo từ nguồn công khai
 
+Case Dehavi bổ sung ngày 29/09/2026: xem [Dehavi demo data](DEHAVI_DEMO_DATA.md)
+để biết nguồn B1/C, tọa độ showroom do thành viên dự án xác minh và phạm vi
+SQL cần review trước khi apply. Chỉ nạp `database/seed_dehavi_demo.sql` cho case
+Dehavi; không dùng toàn bộ `seed_public_reference.sql`. Runtime chưa apply,
+cần đồng bộ schema Location migrations 009/011 trước.
+
 ## Phạm vi
 
 Bộ seed này cung cấp dữ liệu gần với thực tế để kiểm tra danh sách, tìm kiếm,
