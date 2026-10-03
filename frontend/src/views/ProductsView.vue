@@ -466,7 +466,7 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <div v-else-if="products.length" class="product-grid">
+          <div v-else-if="products.length" class="product-grid stagger-in">
             <ProductCard v-for="product in products" :key="product.id" :product="product" />
           </div>
 

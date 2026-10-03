@@ -139,7 +139,7 @@ Trạng thái: **Chưa xử lý**, **Đang xử lý**, **Đã xử lý**.
 |---|---|---|---|---|---|---|
 | QT-01 | Responsive | Bảng hồ sơ chủ thể ở 375px: cột bị ép, tên đơn vị xuống dòng từng chữ, cột thứ ba bị cắt | Ảnh chụp 375px | Cao | Trên điện thoại chuyển mỗi hàng thành thẻ; giữ bảng trên máy tính | Chưa xử lý |
 | QT-02 | Nội dung dashboard | Dashboard chỉ có 4 thẻ số liệu và không có biểu đồ; còn các khối nội dung dành cho người phát triển ("Kế hoạch tiếp theo", "Module quản trị ưu tiên", "Nền tảng hiện có", "Số liệu trực tiếp từ database") | Ảnh chụp, `AdminDashboardView.vue` | Trung bình | Thay bằng hàng việc cần xử lý (hồ sơ và sản phẩm chờ duyệt). Nếu muốn có biểu đồ (sản phẩm theo hạng sao, theo địa bàn) thì phải thêm Chart.js, là thư viện mới nên cần xin ý kiến trước | Đã xử lý (26/09: hàng đợi việc cần xử lý, thống kê bằng Chart.js) |
-| QT-03 | Điều hướng | Sidebar có 5 mục bị vô hiệu kèm nhãn "Sắp phát triển" chữ 8px (Điểm du lịch, Chủ thể/HTX, Người dùng, Đánh giá, Bài viết) | `AdminLayout.vue` | Trung bình | Ẩn các mục chưa có hoặc gom vào một nhóm "Sắp có" | Chưa xử lý |
+| QT-03 | Điều hướng | Sidebar có 5 mục bị vô hiệu kèm nhãn "Sắp phát triển" chữ 8px (Điểm du lịch, Chủ thể/HTX, Người dùng, Đánh giá, Bài viết) | `AdminLayout.vue` | Trung bình | Ẩn các mục chưa có hoặc gom vào một nhóm "Sắp có" | Đã xử lý (02/10: khung chung, bỏ các mục chưa có) |
 | QT-04 | Cỡ chữ, tương phản | Trang duyệt sản phẩm dùng nhiều chữ 9–11px; chip trạng thái "Chờ duyệt", "Thiếu quyết định" tương phản 3.96 | Đo cỡ chữ, axe | Trung bình | Theo G-01, G-02, G-10 | Chưa xử lý |
 
 ## 4. Đề xuất thứ tự thiết kế lại
@@ -227,6 +227,44 @@ Lần 3: đánh giá lại dưới góc nhìn người dùng (du khách tìm đ�
 - Frontend: `components/admin/StatChart.vue` bọc Chart.js (chỉ đăng ký BarController, BarElement, CategoryScale, LinearScale, Tooltip). Màu đọc từ token CSS lúc vẽ; mỗi biểu đồ có `aria-label` tóm tắt số liệu và nút "Bảng số liệu" chuyển sang bảng; tắt hiệu ứng khi người dùng bật giảm chuyển động. Chart.js chỉ nằm trong gói của trang quản trị (khoảng 56 kB gzip), trang công khai không phải tải.
 - Trạng thái riêng cho phần thống kê: đang tải (khung chờ), lỗi (có "Thử lại", hàng đợi việc vẫn hiện), rỗng (lượt xem chưa có, không vẽ biểu đồ toàn số 0).
 - Kiểm tra: axe 0 lỗi ở 1440px và 390px, cả chế độ biểu đồ lẫn bảng; không tràn ngang ở 390, 1024, 1440px.
+
+### Khung chung khu quản trị và khu chủ thể (02/10/2026)
+
+- Thêm `layouts/PortalShell.vue` dùng chung cho `AdminLayout` và `SubjectLayout` (hai file này chỉ còn khai báo menu, tiêu đề, phụ đề). Sidebar sáng 220px; máy tính bảng (768–1023px) thu thành cột icon; điện thoại (dưới 768px) là ngăn kéo.
+- Khối token `--admin-*` trong `tokens.css` đổi sang trỏ về `--ocop-*` (bảng "Sương sớm & dã quỳ", Be Vietnam Pro); bỏ nền sidebar xanh đen và font Inter. Nền sáng, màu chủ đạo là xanh trời Đà Lạt (`--ocop-tone-sky`, cẩm tú cầu xanh), tách khỏi xanh lá (đã duyệt) và đỏ (lỗi); dã quỳ giữ làm điểm nhấn. Cỡ chữ nhỏ nhất 12px, vùng chạm 44px.
+- Bỏ các mục "Sắp có" (QT-03). Chuông thông báo (chỉ khu quản trị) đếm việc chờ từ `GET /admin/dashboard`, ẩn khi chưa có dữ liệu. Chấm trạng thái kết nối lấy từ `GET /health/database`.
+- Thêm `services/system.ts`, icon `bell`, 13 test mới (`layouts/__tests__`). Axe 0 lỗi và không tràn ngang ở 375/768/1024/1440px (trừ chữ cam ở thẻ "Thiếu số quyết định" trên tổng quan, xử lý ở bước trang tổng quan).
+
+### Tổng quan quản trị trong khung mới (03/10/2026)
+
+- Bỏ hết màu gắn cứng (icon thẻ số liệu, chữ cam `#d97706` tương phản 3.18, nền vàng nhạt); dùng token `--admin-*`. Axe 0 lỗi ở 375/768/1024/1440px.
+- Đổi `<main>` của trang thành `<div>` vì khung đã có `<main>`. Tiêu đề card IN HOA cỡ nhỏ, icon trong ô nền nhạt; hàng đợi việc và thẻ số liệu chia 6/4.
+- Biểu đồ một dãy màu dùng xanh trời thay xanh thông đậm; hạng sao dùng thang dã quỳ. `StatChart` dùng cùng kiểu card (bo 16px, padding 20px, bóng nhẹ).
+- Cập nhật `AdminDashboardView.spec.ts` theo chữ mới của trang (4 câu so khớp). Frontend 35 file, 124 test qua; type-check và build qua.
+
+### Khu chủ thể dùng chung màu sáng xanh trời (03/10/2026)
+
+- Khu chủ thể dùng chung khung `PortalShell`. Trong `.ps-shell` ánh xạ lại `--ocop-primary-*` và `--ocop-mint-*` về token `--admin-primary*` để các trang cũ đổi màu mà không ảnh hưởng trang công khai.
+- Thêm token `--admin-primary-border`. Thay nút nền tối, bước đã xong, chip chọn và viền focus ở `SubjectLocationEditorView`, `SubjectLocationsView` bằng token `--admin-primary`.
+- Axe 0 lỗi và không tràn ngang ở 375/768/1024/1440px cho 5 trang chủ thể (sản phẩm, thêm sản phẩm, điểm du lịch, khai báo điểm, hồ sơ). Type-check, 124 test và build qua.
+
+### Trang công khai và footer theo tông xanh trời (03/10/2026)
+
+- Theo yêu cầu của nhóm trưởng, thang `--ocop-mist-*` trong `tokens.css` đổi từ xám xanh thông sang xám xanh trời Đà Lạt (tông lạnh, sáng). Chỉ đổi giá trị token, không sửa component công khai nào, nên mọi trang công khai đổi theo. **Ghi chú cho PR: đây là thay đổi lên phần của Thái và Thuận, cần hai bạn rà soát.**
+- `SiteFooter.vue` đổi từ nền tối sang nền sáng (nền `mist-100`, thẻ số liệu trắng, chữ `mist-700/950`, thẻ minh bạch nền dã quỳ nhạt). Không đổi nội dung hay cấu trúc.
+- Axe 0 lỗi và không tràn ngang ở 375/768/1024/1440px cho 10 trang công khai (trang chủ, sản phẩm, chi tiết sản phẩm, điểm du lịch, chi tiết điểm, bản đồ, tin tức, đăng nhập, đăng ký, không có quyền). Còn vài khối nền navy đậm (thẻ "3–5 sao", ô nhóm điểm du lịch khi chưa có ảnh) do dùng `mist-900/950`.
+
+### Banner ảnh và ảnh dự phòng cho Điểm du lịch, Tin tức (03/10/2026)
+
+- Trang Điểm du lịch và Tin tức trước đây dùng banner phẳng không ảnh, còn thẻ điểm du lịch chưa có ảnh riêng dùng tranh SVG minh họa. Thêm `components/ui/PhotoBanner.vue` (ảnh cảnh quan thật, lớp tối bên trái để chữ trắng đọc rõ, ảnh lỗi thì vẫn đọc được nhờ nền màu) và dùng cho hai trang; bỏ khối `.container` của Bootstrap ở Điểm du lịch để lề thẳng hàng với phần còn lại.
+- `LocationCard` chưa có ảnh riêng thì dùng ảnh cảnh quan thật theo loại hình (`locationFallbackPhoto` trong `constants/photos.ts`); `NewsCard` chưa có ảnh dùng ảnh nền trang trí chọn ổn định theo mã bài. Đây là ảnh minh họa chung (Unsplash, đã ghi tác giả ở trang chủ), không phải ảnh của điểm hay bài viết. **Ghi chú cho PR: sửa các file của Thái và Thuận (`LocationCard`, `NewsCard`, `LocationsView`, `NewsView`).**
+- Trang Tin tức báo "Chưa thể tải tin tức" khi nguồn tin ngoài không phản hồi (trạng thái lỗi đúng thiết kế, không phải lỗi giao diện).
+
+### Animation (03/10/2026)
+
+- Thêm chuyển động nhẹ, chỉ dùng `opacity`/`transform`: directive `v-reveal` (hiện dần khi cuộn tới, `.stagger` cho từng khối con) áp dụng cho các khối trang chủ và footer; lớp `.stagger-in` cho lưới thẻ (sản phẩm, điểm du lịch, tin tức, danh sách sản phẩm chủ thể, thẻ số liệu và biểu đồ ở tổng quan quản trị); `.hero-stagger` và ảnh banner phóng chậm cho banner; nút nhấc nhẹ khi rê chuột; ảnh thẻ phóng nhẹ khi rê chuột; nội dung khu quản trị và chủ thể hiện dần mỗi lần đổi trang.
+- Tắt hết khi hệ điều hành đặt giảm chuyển động (`prefers-reduced-motion`); không có IntersectionObserver thì nội dung hiện bình thường; in ấn luôn hiện đủ.
+- Thêm 14 test (directive, `PhotoBanner`, `LocationCard`, `NewsCard`). Frontend 39 file, 137 test qua; type-check và build qua; axe 0 lỗi và không tràn ngang ở 375/768/1024/1440px cho 10 trang công khai, 4 trang quản trị, 5 trang chủ thể.
 
 ## 6. Ngoài phạm vi giao diện (ghi nhận, không sửa trong nhánh này)
 

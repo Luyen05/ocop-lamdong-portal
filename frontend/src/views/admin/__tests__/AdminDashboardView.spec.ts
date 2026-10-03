@@ -83,11 +83,11 @@ describe('AdminDashboardView', () => {
     expect(wrapper.text()).toContain('Có 11 việc đang chờ bạn xử lý')
     expect(wrapper.text()).toContain('Điểm du lịch chờ duyệt')
     expect(wrapper.text()).toContain('Sản phẩm mới chờ duyệt')
-    expect(wrapper.text()).toContain('45 đang công khai, 75% tổng số sản phẩm')
-    expect(wrapper.text()).toContain('Thiếu số quyết định công nhận8')
+    expect(wrapper.text()).toContain('45 đang công khai (75%)')
+    expect(wrapper.text()).toContain('Thiếu số quyết định8')
     // Số chủ thể và điểm du lịch lấy từ API thống kê.
-    expect(wrapper.text()).toContain('Chủ thể / HTX đã duyệt35')
-    expect(wrapper.text()).toContain('Điểm du lịch nông nghiệp4')
+    expect(wrapper.text()).toContain('Chủ thể đã duyệt35')
+    expect(wrapper.text()).toContain('Điểm du lịch4')
   })
 
   it('hien thi cac bieu do thong ke voi nhan tieng Viet', async () => {

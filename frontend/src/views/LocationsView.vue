@@ -4,6 +4,8 @@ import { useRoute, useRouter } from 'vue-router'
 
 import LocationCard from '@/components/locations/LocationCard.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
+import PhotoBanner from '@/components/ui/PhotoBanner.vue'
+import { heroPhoto } from '@/constants/photos'
 import { getApiErrorMessage } from '@/services/api-error'
 import { getLocationFilterOptions, getLocations } from '@/services/locations'
 import type {
@@ -148,18 +150,16 @@ onUnmounted(() => {
 
 <template>
   <main class="locations-page">
-    <section class="page-banner">
-      <div class="container py-5">
-        <span class="page-eyebrow">Du lịch nông nghiệp Lâm Đồng</span>
-        <h1>Điểm đến trải nghiệm</h1>
-        <p>Đồi chè, vườn cà phê, vườn dâu, vườn hoa và nông trại mở cửa đón khách tham quan.</p>
-        <RouterLink class="btn btn-success mt-3" :to="{ name: 'map' }">
-          <AppIcon name="map" :size="16" /> Mở bản đồ số
-        </RouterLink>
-      </div>
-    </section>
+    <PhotoBanner :photo="heroPhoto">
+      <span class="banner-eyebrow">Du lịch nông nghiệp Lâm Đồng</span>
+      <h1>Điểm đến trải nghiệm</h1>
+      <p>Đồi chè, vườn cà phê, vườn dâu, vườn hoa và nông trại mở cửa đón khách tham quan.</p>
+      <RouterLink class="ocop-btn-accent banner-action" :to="{ name: 'map' }">
+        <AppIcon name="map" :size="16" /> Mở bản đồ số
+      </RouterLink>
+    </PhotoBanner>
 
-    <div class="container py-5">
+    <div class="site-content location-content">
       <form class="filter-bar" role="search" @submit.prevent="applyFilters">
         <div class="filter-field search-field">
           <label class="form-label" for="location-search">Từ khóa</label>
@@ -228,7 +228,7 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <div v-else-if="locations.length" class="location-grid">
+        <div v-else-if="locations.length" class="location-grid stagger-in">
           <LocationCard v-for="location in locations" :key="location.id" :location="location" />
         </div>
 
@@ -275,37 +275,13 @@ onUnmounted(() => {
   background: var(--ocop-surface);
 }
 
-.page-banner {
-  background:
-    radial-gradient(circle at 82% 25%, color-mix(in srgb, var(--ocop-lime-300) 52%, transparent), transparent 22rem),
-    var(--ocop-mint-soft);
+.location-content {
+  padding-top: var(--ocop-space-12);
+  padding-bottom: var(--ocop-space-12);
 }
 
-.page-eyebrow {
-  color: var(--ocop-primary-700);
-  font-size: 0.76rem;
-  font-weight: 750;
-  letter-spacing: 0.11em;
-  text-transform: uppercase;
-}
-
-.page-banner h1 {
-  margin: 0.7rem 0;
-  color: var(--ocop-primary-950);
-  font-size: clamp(2.2rem, 5vw, 3.7rem);
-  font-weight: 800;
-}
-
-.page-banner p {
-  max-width: 42rem;
-  margin: 0;
-  color: var(--ocop-slate);
-}
-
-.page-banner .btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+.banner-action {
+  margin-top: var(--ocop-space-2);
 }
 
 .filter-bar {

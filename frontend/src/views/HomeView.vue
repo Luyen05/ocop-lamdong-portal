@@ -7,6 +7,7 @@ import HomeMapPreview from '@/components/home/HomeMapPreview.vue'
 import HomeNews from '@/components/home/HomeNews.vue'
 import TourismSection from '@/components/home/TourismSection.vue'
 import { homePhotos } from '@/constants/photos'
+import { vReveal } from '@/directives/reveal'
 </script>
 
 <template>
@@ -14,19 +15,19 @@ import { homePhotos } from '@/constants/photos'
     <HomeHero />
 
     <div class="site-content">
-      <HomeBento>
+      <HomeBento v-reveal>
         <template #map>
           <HomeMapPreview />
         </template>
       </HomeBento>
-      <HomeCategories />
-      <FeaturedProducts />
+      <HomeCategories v-reveal />
+      <FeaturedProducts v-reveal />
     </div>
 
-    <TourismSection />
+    <TourismSection v-reveal />
 
     <div class="site-content">
-      <HomeNews />
+      <HomeNews v-reveal />
       <p class="photo-credits">
         Ảnh cảnh quan minh họa chụp tại Đà Lạt, dùng theo Giấy phép Unsplash:
         <template v-for="(photo, index) in homePhotos" :key="photo.src">

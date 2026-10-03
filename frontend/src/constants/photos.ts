@@ -49,3 +49,23 @@ export const hydrangeaPhoto: SitePhoto = {
 }
 
 export const homePhotos: SitePhoto[] = [heroPhoto, flowerFarmPhoto, teaPhoto, strawberryPhoto, hydrangeaPhoto]
+
+// Ảnh dự phòng cho thẻ điểm du lịch chưa có ảnh riêng, chọn theo loại hình (ảnh minh họa cảnh quan chung).
+export const locationTypePhotos: Record<string, SitePhoto> = {
+  tea_coffee_farm: teaPhoto,
+  fruit_garden: strawberryPhoto,
+  flower_garden: hydrangeaPhoto,
+  dairy_farm: heroPhoto,
+  vegetable_farm: flowerFarmPhoto,
+  craft_village: flowerFarmPhoto,
+  farmstay: heroPhoto,
+}
+
+export function locationFallbackPhoto(type: string): SitePhoto {
+  return locationTypePhotos[type] ?? heroPhoto
+}
+
+/** Chọn ổn định một ảnh theo số, để thẻ tin không có ảnh vẫn có ảnh nền mà không bị đổi mỗi lần tải. */
+export function photoByIndex(index: number): SitePhoto {
+  return homePhotos[Math.abs(index) % homePhotos.length]
+}
