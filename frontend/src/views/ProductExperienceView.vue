@@ -2,6 +2,7 @@
 import { computed, onUnmounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
+import PresentationGallery from '@/components/products/PresentationGallery.vue'
 import { getApiErrorMessage } from '@/services/api-error'
 import { getProduct } from '@/services/products'
 import { getLocation, getNearbyLocations } from '@/services/locations'
@@ -146,7 +147,7 @@ onUnmounted(() => {
       </section>
       <template v-else-if="product">
         <RouterLink :to="{ name: 'product-detail', params: { slug: product.slug } }">Quay lại sản phẩm</RouterLink>
-        <header class="my-4">
+        <header class="experience-header my-4">
           <h1>{{ product.name }}</h1>
           <p>{{ product.star }} sao OCOP · {{ product.category.name }}</p>
           <p>Chủ thể: {{ product.subject.name }}</p>
@@ -170,18 +171,22 @@ onUnmounted(() => {
             <p v-if="detailError" role="status">Chưa tải được thông tin bổ sung của một số điểm. Bạn vẫn có thể xem chi tiết hoặc bản đồ.</p>
             <div class="experience-grid">
               <article v-for="location in locations" :key="location.id" class="experience-location">
-                <h3>{{ location.name }}</h3>
-                <p>{{ location.type_label }} · {{ location.district }}</p>
-                <p>Địa chỉ: {{ details[location.slug]?.address || 'Chưa cập nhật' }}</p>
-                <p v-if="details[location.slug]?.services.length">Dịch vụ: {{ details[location.slug]?.services.join(', ') }}</p>
-                <p v-if="distances[location.slug] !== undefined">Cách bạn {{ formatDistance(distances[location.slug]!) }}</p>
-                <p v-else-if="hasLocated">Chưa có khoảng cách</p>
-                <div class="experience-actions">
-                  <RouterLink class="btn btn-outline-success" data-test="detail" :to="{ name: 'location-detail', params: { slug: location.slug } }">Xem chi tiết</RouterLink>
-                  <RouterLink class="btn btn-outline-success" data-test="map" :to="{ name: 'map', query: { diem: location.slug } }">Xem bản đồ</RouterLink>
-                  <RouterLink class="btn btn-success" data-test="directions" :to="{ name: 'map', query: { diem: location.slug } }">Chỉ đường</RouterLink>
+                <PresentationGallery v-if="details[location.slug]" :images="details[location.slug]!.images" :primary-url="details[location.slug]!.primary_image_url" :name="location.name" landscape />
+                <div class="location-content">
+                  <h3>{{ location.name }}</h3>
+                  <p>{{ location.type_label }} · {{ location.district }}</p>
+                  <p>Địa chỉ: {{ details[location.slug]?.address || 'Chưa cập nhật' }}</p>
+                  <ul v-if="details[location.slug]?.services.length" class="service-chips" aria-label="Dịch vụ"><li v-for="service in details[location.slug]!.services" :key="service">{{ service }}</li></ul>
+                  <p v-if="details[location.slug]?.subject" class="manager">Đơn vị quản lý: {{ details[location.slug]!.subject!.name }}</p>
+                  <p v-if="distances[location.slug] !== undefined" class="distance" role="status">Cách bạn {{ formatDistance(distances[location.slug]!) }}</p>
+                  <p v-else-if="hasLocated">Chưa có khoảng cách</p>
+                  <div class="experience-actions">
+                    <RouterLink class="btn btn-outline-success" data-test="detail" :to="{ name: 'location-detail', params: { slug: location.slug } }">Xem chi tiết</RouterLink>
+                    <RouterLink class="btn btn-outline-success" data-test="map" :to="{ name: 'map', query: { diem: location.slug } }">Xem bản đồ</RouterLink>
+                    <RouterLink class="btn btn-success" data-test="directions" :to="{ name: 'map', query: { diem: location.slug, action: 'route' } }">Chỉ đường</RouterLink>
+                  </div>
+                  <small>Chỉ đường mở bước xác nhận dùng vị trí của bạn trên bản đồ.</small>
                 </div>
-                <small>Chọn “Chỉ đường” trên bản đồ để lấy vị trí và tìm tuyến đường tới điểm này.</small>
               </article>
             </div>
           </template>
@@ -192,13 +197,20 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
+.experience-header { padding: 1.25rem; border-left: 4px solid var(--ocop-primary-700); background: var(--ocop-card); }
+.location-content { padding: 1.25rem; }
+.service-chips { display: flex; flex-wrap: wrap; gap: .4rem; list-style: none; padding: 0; }
+.service-chips li { background: var(--ocop-sage-50); color: var(--ocop-primary-700); border-radius: var(--ocop-radius-pill); padding: .3rem .6rem; font-size: .8rem; }
+.distance { display: inline-block; padding: .5rem .75rem; border-radius: .5rem; background: var(--ocop-sage-50); color: var(--ocop-primary-700); font-weight: 750; font-size: 1.1rem; }
+.manager { font-size: .85rem; color: var(--ocop-text-secondary); }
+
 .experience-page { min-height: 65vh; background: var(--ocop-surface); }
 h1, h2, h3 { color: var(--ocop-primary-950); overflow-wrap: anywhere; }
 h1 { font-size: clamp(1.5rem, 4vw, 2.2rem); }
 h2 { font-size: 1.4rem; }
 h3 { font-size: 1.15rem; }
 .experience-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 1rem; }
-.experience-location { padding: 1.25rem; border: 1px solid var(--ocop-border); border-radius: var(--ocop-radius-md); background: var(--ocop-card); }
+.experience-location { overflow: hidden; border: 1px solid var(--ocop-border); border-radius: var(--ocop-radius-md); background: var(--ocop-card); }
 .experience-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin: 1rem 0; }
 small { display: block; color: var(--ocop-slate); }
 </style>

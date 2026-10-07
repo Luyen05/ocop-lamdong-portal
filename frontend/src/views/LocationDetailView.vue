@@ -4,6 +4,7 @@ import { computed, onUnmounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
 import LeafletMap from '@/components/map/LeafletMap.vue'
+import PresentationGallery from '@/components/products/PresentationGallery.vue'
 import ProductCard from '@/components/products/ProductCard.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
 import { getApiErrorMessage } from '@/services/api-error'
@@ -19,18 +20,11 @@ import {
 const route = useRoute()
 
 const location = ref<LocationDetail | null>(null)
-const selectedImageUrl = ref<string | null>(null)
-const imageFailed = ref(false)
 const isLoading = ref(true)
 const errorTitle = ref('Không thể tải điểm du lịch')
 const errorMessage = ref('')
 
 const typeStyle = computed(() => locationTypeStyle(location.value?.type ?? 'other'))
-const activeImage = computed(() => {
-  if (imageFailed.value) return typeStyle.value.illustration
-  return selectedImageUrl.value || location.value?.primary_image_url || typeStyle.value.illustration
-})
-const hasRealImage = computed(() => Boolean(location.value?.images.length) && !imageFailed.value)
 const mapFeatures = computed<MapFeature[]>(() => {
   if (!location.value) return []
   const current = location.value
@@ -67,20 +61,12 @@ function formatDate(value: string): string {
   return new Intl.DateTimeFormat('vi-VN').format(new Date(value))
 }
 
-function selectImage(imageUrl: string): void {
-  selectedImageUrl.value = imageUrl
-  imageFailed.value = false
-}
-
 async function loadLocation(slug: string): Promise<void> {
   isLoading.value = true
   errorMessage.value = ''
   location.value = null
-  selectedImageUrl.value = null
-  imageFailed.value = false
   try {
     location.value = await getLocation(slug)
-    selectedImageUrl.value = location.value.images[0]?.image_url ?? null
     document.title = `${location.value.name} | Du lịch nông nghiệp Lâm Đồng`
   } catch (error) {
     errorTitle.value = axios.isAxiosError(error) && error.response?.status === 404
@@ -136,28 +122,7 @@ onUnmounted(() => {
 
       <template v-else-if="location">
         <section class="location-overview">
-          <div class="gallery">
-            <div class="main-image">
-              <img
-                :src="activeImage"
-                :alt="hasRealImage ? location.name : ''"
-                @error="imageFailed = true"
-              />
-            </div>
-            <div v-if="location.images.length > 1" class="thumbnail-list" aria-label="Ảnh điểm du lịch">
-              <button
-                v-for="image in location.images"
-                :key="image.id"
-                class="thumbnail"
-                :class="{ active: activeImage === image.image_url }"
-                type="button"
-                :aria-label="`Xem ảnh ${image.sort_order + 1}`"
-                @click="selectImage(image.image_url)"
-              >
-                <img :src="image.image_url" alt="" />
-              </button>
-            </div>
-          </div>
+          <PresentationGallery :images="location.images" :primary-url="location.primary_image_url" :name="location.name" landscape />
 
           <div class="location-info">
             <span class="type-badge" :style="{ '--type-color': typeStyle.color }">
@@ -232,7 +197,7 @@ onUnmounted(() => {
 
         <section v-if="location.products.length" class="products-block" aria-labelledby="location-products-title">
           <span class="section-eyebrow">Sản phẩm OCOP tại điểm đến</span>
-          <h2 id="location-products-title">Đặc sản được giới thiệu</h2>
+          <h2 id="location-products-title">Sản phẩm OCOP tại điểm này</h2>
           <div class="product-grid">
             <ProductCard v-for="product in location.products" :key="product.id" :product="product" />
           </div>
@@ -308,47 +273,6 @@ onUnmounted(() => {
 
 .error-state p {
   color: var(--ocop-slate);
-}
-
-.main-image {
-  overflow: hidden;
-  aspect-ratio: 4 / 3;
-  border-radius: 1.25rem;
-  background: var(--ocop-mint-soft);
-}
-
-.main-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.thumbnail-list {
-  display: flex;
-  gap: 0.6rem;
-  margin-top: 0.75rem;
-  overflow-x: auto;
-}
-
-.thumbnail {
-  width: 4.5rem;
-  height: 4.5rem;
-  flex: 0 0 auto;
-  overflow: hidden;
-  padding: 0;
-  border: 2px solid transparent;
-  border-radius: 0.75rem;
-  background: var(--ocop-card);
-}
-
-.thumbnail.active {
-  border-color: var(--ocop-primary-700);
-}
-
-.thumbnail img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
 }
 
 .type-badge {
