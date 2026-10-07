@@ -166,7 +166,7 @@ onUnmounted(() => {
               Các điểm có khoảng cách được sắp xếp gần nhất trước. Khoảng cách là đường thẳng.
               Chỉ có khoảng cách cho các điểm trong tối đa 50 kết quả gần nhất, bán kính 200 km.
             </p>
-            <p v-else>Vị trí chỉ được yêu cầu khi bạn bấm “Tìm điểm gần tôi”.</p>
+            <p v-else class="gps-hint">Vị trí chỉ được yêu cầu khi bạn bấm “Tìm điểm gần tôi”.</p>
             <p v-if="isLoadingDetails" role="status">Đang tải địa chỉ và dịch vụ...</p>
             <p v-if="detailError" role="status">Chưa tải được thông tin bổ sung của một số điểm. Bạn vẫn có thể xem chi tiết hoặc bản đồ.</p>
             <div class="experience-grid">
@@ -181,9 +181,9 @@ onUnmounted(() => {
                   <p v-if="distances[location.slug] !== undefined" class="distance" role="status">Cách bạn {{ formatDistance(distances[location.slug]!) }}</p>
                   <p v-else-if="hasLocated">Chưa có khoảng cách</p>
                   <div class="experience-actions">
-                    <RouterLink class="btn btn-outline-success" data-test="detail" :to="{ name: 'location-detail', params: { slug: location.slug } }">Xem chi tiết</RouterLink>
-                    <RouterLink class="btn btn-outline-success" data-test="map" :to="{ name: 'map', query: { diem: location.slug } }">Xem bản đồ</RouterLink>
                     <RouterLink class="btn btn-success" data-test="directions" :to="{ name: 'map', query: { diem: location.slug, action: 'route' } }">Chỉ đường</RouterLink>
+                    <RouterLink class="btn btn-outline-success" data-test="map" :to="{ name: 'map', query: { diem: location.slug } }">Xem bản đồ</RouterLink>
+                    <RouterLink class="btn btn-outline-secondary" data-test="detail" :to="{ name: 'location-detail', params: { slug: location.slug } }">Xem chi tiết</RouterLink>
                   </div>
                   <small>Chỉ đường mở bước xác nhận dùng vị trí của bạn trên bản đồ.</small>
                 </div>
@@ -198,7 +198,8 @@ onUnmounted(() => {
 
 <style scoped>
 .experience-header { padding: 1.25rem; border-left: 4px solid var(--ocop-primary-700); background: var(--ocop-card); }
-.location-content { padding: 1.25rem; }
+.location-content { min-width: 0; padding: 1.25rem; overflow-wrap: anywhere; }
+.gps-hint { color: var(--ocop-text-secondary); font-size: .85rem; }
 .service-chips { display: flex; flex-wrap: wrap; gap: .4rem; list-style: none; padding: 0; }
 .service-chips li { background: var(--ocop-sage-50); color: var(--ocop-primary-700); border-radius: var(--ocop-radius-pill); padding: .3rem .6rem; font-size: .8rem; }
 .distance { display: inline-block; padding: .5rem .75rem; border-radius: .5rem; background: var(--ocop-sage-50); color: var(--ocop-primary-700); font-weight: 750; font-size: 1.1rem; }
@@ -209,8 +210,12 @@ h1, h2, h3 { color: var(--ocop-primary-950); overflow-wrap: anywhere; }
 h1 { font-size: clamp(1.5rem, 4vw, 2.2rem); }
 h2 { font-size: 1.4rem; }
 h3 { font-size: 1.15rem; }
-.experience-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 1rem; }
+.experience-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; }
 .experience-location { overflow: hidden; border: 1px solid var(--ocop-border); border-radius: var(--ocop-radius-md); background: var(--ocop-card); }
 .experience-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin: 1rem 0; }
 small { display: block; color: var(--ocop-slate); }
+@media (min-width: 768px) {
+  .experience-location { display: grid; grid-template-columns: minmax(0, 42%) minmax(0, 1fr); align-items: start; }
+  .experience-location > .gallery { padding: 1rem 0 1rem 1rem; }
+}
 </style>

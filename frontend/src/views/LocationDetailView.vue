@@ -198,8 +198,11 @@ onUnmounted(() => {
         <section v-if="location.products.length" class="products-block" aria-labelledby="location-products-title">
           <span class="section-eyebrow">Sản phẩm OCOP tại điểm đến</span>
           <h2 id="location-products-title">Sản phẩm OCOP tại điểm này</h2>
-          <div class="product-grid">
-            <ProductCard v-for="product in location.products" :key="product.id" :product="product" />
+          <div class="product-grid" :class="{ 'product-grid-spacious': location.products.length <= 2 }">
+            <div v-for="product in location.products" :key="product.id" class="related-product">
+              <ProductCard :product="product" />
+              <RouterLink class="btn btn-outline-success related-product-cta" :to="{ name: 'product-detail', params: { slug: product.slug } }">Xem sản phẩm</RouterLink>
+            </div>
           </div>
         </section>
 
@@ -411,6 +414,22 @@ onUnmounted(() => {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr));
   gap: 1.25rem;
+}
+
+.related-product { min-width: 0; display: flex; flex-direction: column; gap: .75rem; }
+.related-product > :deep(.product-card) { flex: 1; height: auto; }
+.related-product-cta { align-self: flex-start; }
+.product-grid-spacious { grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 768px) {
+  .product-grid-spacious :deep(.product-card-link) { display: grid; grid-template-columns: minmax(0, 40%) minmax(0, 1fr); }
+  .product-grid-spacious :deep(.product-media) { min-height: 15rem; height: 100%; aspect-ratio: auto; }
+  .product-grid-spacious :deep(.product-body) { padding: 1.5rem; }
+  .product-grid-spacious :deep(.product-body h2) { display: block; min-height: 0; font-size: 1.3rem; }
+  .product-grid-spacious :deep(.product-subject span) { white-space: normal; }
+}
+@media (min-width: 1200px) {
+  .product-grid-spacious { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .product-grid-spacious:has(> :only-child) { grid-template-columns: minmax(0, 1fr); }
 }
 
 .source-note {
