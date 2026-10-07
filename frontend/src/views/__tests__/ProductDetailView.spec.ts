@@ -75,6 +75,20 @@ const product: ProductDetail = {
 }
 
 describe('ProductDetailView', () => {
+  it.each(['https://dehavi.com/valley', 'javascript:alert(1)'])('separates story source and validates %s', async (url) => {
+    vi.mocked(getProduct).mockResolvedValue({ ...product, story: `Câu chuyện sản phẩm. Nguồn sản phẩm: ${url}` })
+    const wrapper = mountDetail()
+    await flushPromises()
+    expect(wrapper.get('.story-block p').text()).toBe('Câu chuyện sản phẩm.')
+    expect(wrapper.get('.story-block').text()).not.toContain(url)
+    if (url.startsWith('https:')) {
+      expect(wrapper.get('.story-source').attributes('href')).toBe(url)
+      expect(wrapper.get('.story-source').attributes('target')).toBe('_blank')
+      expect(wrapper.get('.story-source').attributes('rel')).toBe('noopener noreferrer')
+    } else {
+      expect(wrapper.find('.story-source').exists()).toBe(false)
+    }
+  })
   it('prioritizes primary image, changes gallery and attributes the selected image', async () => {
     vi.mocked(getProduct).mockResolvedValue({ ...product, images: [
       { id: 2, image_url: 'https://example.com/secondary.jpg', is_primary: false, sort_order: 0 },

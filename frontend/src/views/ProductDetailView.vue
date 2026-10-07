@@ -9,6 +9,7 @@ import AppIcon from '@/components/ui/AppIcon.vue'
 import { getApiErrorMessage } from '@/services/api-error'
 import { getProduct, getProducts } from '@/services/products'
 import type { ProductDetail, ProductListItem } from '@/types/product'
+import { safeExternalUrl } from '@/utils/location'
 
 const route = useRoute()
 
@@ -17,6 +18,15 @@ const relatedProducts = ref<ProductListItem[]>([])
 const isLoading = ref(true)
 const errorMessage = ref('')
 const errorTitle = ref('Không thể tải sản phẩm')
+
+const storyPresentation = computed(() => {
+  const story = product.value?.story ?? ''
+  const source = story.match(/\s*Nguồn sản phẩm:\s*(\S+)\s*$/u)
+  return {
+    text: source ? story.slice(0, source.index).trim() : story,
+    sourceUrl: safeExternalUrl(source?.[1]),
+  }
+})
 
 const formattedPrice = computed(() => {
   if (!product.value) return ''
@@ -176,7 +186,8 @@ onUnmounted(() => {
           <div v-if="product.story" class="content-block story-block">
             <span class="section-eyebrow">Câu chuyện sản phẩm</span>
             <h2>Câu chuyện sản phẩm</h2>
-            <p>{{ product.story }}</p>
+            <p v-if="storyPresentation.text">{{ storyPresentation.text }}</p>
+            <a v-if="storyPresentation.sourceUrl" class="story-source" :href="storyPresentation.sourceUrl" target="_blank" rel="noopener noreferrer">Xem nguồn chính thức</a>
           </div>
 
           <div class="detail-columns">
@@ -254,6 +265,11 @@ onUnmounted(() => {
 .product-producer, .metadata-note { color: var(--ocop-text-secondary); }
 .ocop-info { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--ocop-border); }
 .ocop-info h2 { font-size: 1rem; font-weight: 750; }
+.ocop-info:has(.metadata-note) { padding-top: .65rem; }
+.ocop-info:has(.metadata-note) h2 { display: inline; margin-right: .5rem; font-size: .85rem; }
+.ocop-info .metadata-note { display: inline; margin: 0; font-size: .85rem; }
+.ocop-info:has(.metadata-note) .certification-list { display: none; }
+.story-source { display: inline-block; margin-top: .75rem; color: var(--ocop-primary-700); font-size: .9rem; font-weight: 650; }
 
 .detail-page {
   min-height: calc(100vh - 4.5rem);
