@@ -57,6 +57,9 @@ export interface LocationFilters {
 }
 
 export interface LocationImage {
+  source_url?: string | null
+  credit?: string | null
+  license?: string | null
   id: number
   image_url: string
   is_primary: boolean

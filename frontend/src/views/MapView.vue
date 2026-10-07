@@ -67,6 +67,7 @@ const selectedCoordinates = computed(() => {
   const [longitude, latitude] = selectedFeature.value.geometry.coordinates
   return { latitude, longitude }
 })
+const routeIntent = computed(() => route.query.action === 'route' && route.query.diem === selectedSlug.value)
 const routeLine = computed(() => routeResult.value?.geometry.coordinates ?? null)
 const directionsUrl = computed(() =>
   selectedCoordinates.value
@@ -340,9 +341,10 @@ onUnmounted(() => {
           </div>
         </dl>
 
+        <p v-if="routeIntent && !routeResult" class="panel-hint" data-test="route-intent" role="status">Điểm đến đã chọn. Bấm “Lấy vị trí &amp; chỉ đường” để xác nhận dùng vị trí hiện tại và tìm tuyến đường.</p>
         <div class="selected-actions">
           <button class="btn btn-success" type="button" :disabled="isRouting || isLocating" @click="showRoute">
-            <AppIcon name="navigation" :size="15" /> {{ isRouting ? 'Đang tìm đường...' : 'Chỉ đường' }}
+            <AppIcon name="navigation" :size="15" /> {{ isRouting ? 'Đang tìm đường...' : routeIntent ? 'Lấy vị trí & chỉ đường' : 'Chỉ đường' }}
           </button>
           <RouterLink
             class="btn btn-outline-success"

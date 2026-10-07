@@ -147,6 +147,53 @@ describe('MapView', () => {
     await flushPromises()
     expect(wrapper.find('#selected-title').exists()).toBe(false)
   })
+  it('normal destination focuses marker without route intent or automatic GPS', async () => {
+    const gps = mockGeolocation({ latitude: 11.9404, longitude: 108.4383 })
+    route.query = { diem: 'cau-dat-farm' }
+    const wrapper = mountView()
+    await flushPromises()
+    expect(wrapper.getComponent(LeafletMapStub).props('selectedSlug')).toBe('cau-dat-farm')
+    expect(wrapper.find('[data-test="route-intent"]').exists()).toBe(false)
+    expect(gps).not.toHaveBeenCalled()
+    expect(getRoute).not.toHaveBeenCalled()
+  })
+  it('route intent selects destination and waits for explicit GPS confirmation before routing', async () => {
+    const origin = { latitude: 11.9404, longitude: 108.4383 }
+    const gps = mockGeolocation(origin)
+    vi.mocked(getNearbyLocations).mockResolvedValue({ origin, radius_m: 50000, items: [] })
+    vi.mocked(getRoute).mockResolvedValue({ provider: 'OSRM', profile: 'driving', origin,
+      destination: { slug: 'cau-dat-farm', name: 'Cầu Đất Farm', latitude: 11.879583, longitude: 108.547398 },
+      distance_m: 1000, duration_s: 120, geometry: { type: 'LineString', coordinates: [[108.4383, 11.9404], [108.547398, 11.879583]] },
+    })
+    route.query = { diem: 'cau-dat-farm', action: 'route' }
+    const wrapper = mountView()
+    await flushPromises()
+    expect(wrapper.getComponent(LeafletMapStub).props('selectedSlug')).toBe('cau-dat-farm')
+    expect(wrapper.get('[data-test="route-intent"]').text()).toContain('xác nhận')
+    expect(gps).not.toHaveBeenCalled()
+    expect(getRoute).not.toHaveBeenCalled()
+    await wrapper.get('.selected-actions button').trigger('click')
+    await flushPromises()
+    expect(gps).toHaveBeenCalledTimes(1)
+    expect(getRoute).toHaveBeenCalledWith('cau-dat-farm', origin)
+    expect(wrapper.find('.route-summary').exists()).toBe(true)
+    expect(wrapper.find('[data-test="route-intent"]').exists()).toBe(false)
+    wrapper.getComponent(LeafletMapStub).vm.$emit('select', 'vuon-hong-nha-tom')
+    await flushPromises()
+    expect(wrapper.find('[data-test="route-intent"]').exists()).toBe(false)
+  })
+  it('route intent respects denied GPS permission without requesting a route', async () => {
+    const gps = mockGeolocation({ code: 1 })
+    route.query = { diem: 'cau-dat-farm', action: 'route' }
+    const wrapper = mountView()
+    await flushPromises()
+    expect(gps).not.toHaveBeenCalled()
+    await wrapper.get('.selected-actions button').trigger('click')
+    await flushPromises()
+    expect(wrapper.text()).toContain('Bạn chưa cho phép truy cập vị trí')
+    expect(getRoute).not.toHaveBeenCalled()
+    expect(wrapper.find('[data-test="route-intent"]').exists()).toBe(true)
+  })
 
   it('dinh vi va liet ke diem gan nhat kem khoang cach', async () => {
     mockGeolocation({ latitude: 11.9404, longitude: 108.4383 })

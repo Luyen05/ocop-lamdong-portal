@@ -140,14 +140,30 @@ describe('Product Experience Finder', () => {
     await flushPromises()
     expect(wrapper.find('[role="alert"]').exists()).toBe(false)
   })
-  it('links detail and map using existing routes; directions use selected Map flow', async () => {
+  it('links map to a selected destination and directions to explicit route intent', async () => {
     const { wrapper, router } = await mountPage()
     const card = wrapper.get('.experience-location')
     expect(card.get('[data-test="detail"]').attributes('href')).toBe('/diem-du-lich/showroom-a')
     expect(card.get('[data-test="map"]').attributes('href')).toBe('/ban-do?diem=showroom-a')
-    expect(card.get('[data-test="directions"]').attributes('href')).toBe('/ban-do?diem=showroom-a')
-    expect(wrapper.text()).toContain('Chọn “Chỉ đường” trên bản đồ')
+    expect(card.get('[data-test="directions"]').attributes('href')).toBe('/ban-do?diem=showroom-a&action=route')
+    expect(wrapper.text()).toContain('Chỉ đường mở bước xác nhận')
     expect(router.resolve(card.get('[data-test="directions"]').attributes('href')!).name).toBe('map')
+    expect(getCurrentPosition).not.toHaveBeenCalled()
+  })
+  it('renders real location imagery, source credit, service chips and manager from API details', async () => {
+    vi.mocked(getLocation).mockResolvedValue({
+      ...detail(0),
+      subject: { id: 9, name: 'Đơn vị quản lý A', district: 'Đà Lạt' },
+      images: [{ id: 1, image_url: 'https://example.com/location.jpg', is_primary: true, sort_order: 0,
+        source_url: 'https://example.com/location-source', credit: 'Chủ điểm đến', license: 'Được cho phép' }],
+    })
+    const { wrapper } = await mountPage()
+    const card = wrapper.get('.experience-location')
+    expect(card.get('.main-image img').attributes('src')).toBe('https://example.com/location.jpg')
+    expect(card.get('.main-image img').attributes('alt')).toBe('Showroom A')
+    expect(card.get('.image-credit').text()).toContain('Chủ điểm đến')
+    expect(card.get('.service-chips li').text()).toBe('Thử cà phê')
+    expect(card.get('.manager').text()).toContain('Đơn vị quản lý A')
     expect(getCurrentPosition).not.toHaveBeenCalled()
   })
   it('shows product loading then error with retry', async () => {
