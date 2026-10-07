@@ -183,6 +183,17 @@ describe('Product Experience Finder', () => {
     const { wrapper } = await mountPage()
     expect(wrapper.findAll('.experience-location')).toHaveLength(3)
     expect(wrapper.text()).toContain('Chưa tải được thông tin bổ sung')
+    expect(wrapper.findAll('.location-media')).toHaveLength(3)
+    expect(wrapper.get('.media-status').text()).toBe('Chưa tải được ảnh điểm đến.')
+    expect(wrapper.get('.location-content').text()).toContain('Địa chỉ: Chưa tải được')
+  })
+  it('keeps media and content columns while location details are loading', async () => {
+    vi.mocked(getLocation).mockReturnValue(new Promise(() => {}))
+    const { wrapper } = await mountPage()
+    expect(wrapper.get('.media-status').text()).toContain('Đang tải thông tin điểm đến')
+    expect(wrapper.get('.location-content').text()).toContain('Địa chỉ: Đang tải...')
+    expect(wrapper.find('[data-test="map"]').exists()).toBe(true)
+    expect(getCurrentPosition).not.toHaveBeenCalled()
   })
   it('ignores stale product response after slug navigation', async () => {
     let resolve!: (value: ProductDetail) => void

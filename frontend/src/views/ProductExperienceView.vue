@@ -171,11 +171,14 @@ onUnmounted(() => {
             <p v-if="detailError" role="status">Chưa tải được thông tin bổ sung của một số điểm. Bạn vẫn có thể xem chi tiết hoặc bản đồ.</p>
             <div class="experience-grid">
               <article v-for="location in locations" :key="location.id" class="experience-location">
-                <PresentationGallery v-if="details[location.slug]" :images="details[location.slug]!.images" :primary-url="details[location.slug]!.primary_image_url" :name="location.name" landscape />
+                <div class="location-media">
+                  <PresentationGallery v-if="details[location.slug]" :images="details[location.slug]!.images" :primary-url="details[location.slug]!.primary_image_url" :name="location.name" landscape />
+                  <p v-else class="media-status" role="status">{{ isLoadingDetails ? 'Đang tải thông tin điểm đến...' : 'Chưa tải được ảnh điểm đến.' }}</p>
+                </div>
                 <div class="location-content">
                   <h3>{{ location.name }}</h3>
                   <p>{{ location.type_label }} · {{ location.district }}</p>
-                  <p>Địa chỉ: {{ details[location.slug]?.address || 'Chưa cập nhật' }}</p>
+                  <p>Địa chỉ: {{ details[location.slug] ? (details[location.slug]!.address || 'Chưa cập nhật') : isLoadingDetails ? 'Đang tải...' : 'Chưa tải được' }}</p>
                   <ul v-if="details[location.slug]?.services.length" class="service-chips" aria-label="Dịch vụ"><li v-for="service in details[location.slug]!.services" :key="service">{{ service }}</li></ul>
                   <p v-if="details[location.slug]?.subject" class="manager">Đơn vị quản lý: {{ details[location.slug]!.subject!.name }}</p>
                   <p v-if="distances[location.slug] !== undefined" class="distance" role="status">Cách bạn {{ formatDistance(distances[location.slug]!) }}</p>
@@ -200,6 +203,8 @@ onUnmounted(() => {
 .experience-header { padding: 1.25rem; border-left: 4px solid var(--ocop-primary-700); background: var(--ocop-card); }
 .location-content { min-width: 0; padding: 1.25rem; overflow-wrap: anywhere; }
 .gps-hint { color: var(--ocop-text-secondary); font-size: .85rem; }
+.location-media { min-width: 0; }
+.media-status { display: flex; min-height: 7rem; margin: 0; padding: 1rem; align-items: center; justify-content: center; background: var(--ocop-sage-50); color: var(--ocop-text-secondary); font-size: .9rem; }
 .service-chips { display: flex; flex-wrap: wrap; gap: .4rem; list-style: none; padding: 0; }
 .service-chips li { background: var(--ocop-sage-50); color: var(--ocop-primary-700); border-radius: var(--ocop-radius-pill); padding: .3rem .6rem; font-size: .8rem; }
 .distance { display: inline-block; padding: .5rem .75rem; border-radius: .5rem; background: var(--ocop-sage-50); color: var(--ocop-primary-700); font-weight: 750; font-size: 1.1rem; }
@@ -216,6 +221,6 @@ h3 { font-size: 1.15rem; }
 small { display: block; color: var(--ocop-slate); }
 @media (min-width: 768px) {
   .experience-location { display: grid; grid-template-columns: minmax(0, 42%) minmax(0, 1fr); align-items: start; }
-  .experience-location > .gallery { padding: 1rem 0 1rem 1rem; }
+  .location-media { padding: 1rem 0 1rem 1rem; }
 }
 </style>
