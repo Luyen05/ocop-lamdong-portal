@@ -144,7 +144,13 @@ CREATE TABLE product_images (
   alt_text VARCHAR(255),
   is_primary BOOLEAN NOT NULL DEFAULT FALSE,
   sort_order INTEGER NOT NULL DEFAULT 0 CHECK (sort_order >= 0),
-  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+  source_url VARCHAR(500),
+  credit VARCHAR(255),
+  license VARCHAR(100),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT product_images_source_url_check CHECK (
+    source_url IS NULL OR source_url LIKE 'http://%' OR source_url LIKE 'https://%'
+  )
 );
 
 CREATE TABLE product_change_requests (
@@ -222,7 +228,13 @@ CREATE TABLE location_images (
   sort_order INTEGER NOT NULL DEFAULT 0 CHECK (sort_order >= 0),
   storage_path VARCHAR(500),
   alt_text VARCHAR(255),
-  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+  source_url VARCHAR(500),
+  credit VARCHAR(255),
+  license VARCHAR(100),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT location_images_source_url_check CHECK (
+    source_url IS NULL OR source_url LIKE 'http://%' OR source_url LIKE 'https://%'
+  )
 );
 
 CREATE TABLE tourism_location_change_requests (

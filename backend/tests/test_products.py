@@ -227,6 +227,9 @@ def product_client() -> Generator[TestClient, None, None]:
                     image_url="https://example.com/coffee.webp",
                     is_primary=True,
                     sort_order=0,
+                    source_url="https://unsplash.com/photos/coffee",
+                    credit="Trần Thị C",
+                    license="Unsplash License",
                 ),
                 ProductImage(
                     id=2,
@@ -330,6 +333,10 @@ def test_get_product_returns_public_detail(product_client: TestClient) -> None:
         "https://example.com/coffee.webp",
         "https://example.com/coffee-detail.webp",
     ]
+    assert body["images"][0]["source_url"] == "https://unsplash.com/photos/coffee"
+    assert body["images"][0]["credit"] == "Trần Thị C"
+    assert body["images"][0]["license"] == "Unsplash License"
+    assert body["images"][1]["credit"] is None
     assert body["recognition_sources"] == []
 
 

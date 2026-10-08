@@ -91,8 +91,14 @@ của từng endpoint.
 - Gửi duyệt cần đủ vị trí, xã/phường, địa chỉ, mô tả ≥ 40 ký tự và đúng một ảnh chính;
   thiếu trả `422 LOCATION_SUBMISSION_INCOMPLETE` kèm `missing_fields`; ngoài tỉnh trả
   `422 LOCATION_OUTSIDE_LAM_DONG`.
-- Ảnh tải lên tại `POST /subject/location-images` (JPEG/PNG/WebP ≤ 5 MB), phục vụ ở
-  `/uploads/locations/...`; ảnh tạm xóa bằng `DELETE /subject/location-images/{file}`.
+- Ảnh tải lên tại `POST /subject/location-images` (JPEG/PNG/WebP ≤ 5 MB); ảnh tạm xóa bằng
+  `DELETE /subject/location-images/{file}`. Nơi lưu theo biến `IMAGE_STORAGE`: `local` phục vụ ở
+  `/uploads/locations/...`, `cloudinary` trả đường dẫn https của Cloudinary trong `image_url`
+  (`storage_path` vẫn dạng `locations/<chủ thể>/<uuid>.<đuôi>`). Cloudinary lỗi trả
+  `502 IMAGE_STORAGE_UNAVAILABLE`. Ảnh sản phẩm (`POST /subject/product-images`) làm tương tự.
+- Ảnh trong `GET /locations/{slug}` và `GET /products/{slug}` có thêm `source_url`, `credit`, `license`
+  (có thể `null`): ảnh lấy từ web để minh họa ghi nguồn, tác giả và giấy phép; trang công khai nên hiện
+  chú thích "Ảnh minh họa" kèm `credit` khi các trường này có giá trị. Ảnh chủ thể tự tải lên để trống.
 - `product_ids` chỉ nhận sản phẩm OCOP đã duyệt của chính chủ thể.
 - Admin xem hàng đợi `GET /admin/locations` (lọc `status`, `origin=subject|import`,
   `type`, `location_source`, `search`; có `status_counts`) và xử lý

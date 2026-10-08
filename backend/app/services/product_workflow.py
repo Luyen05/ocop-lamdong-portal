@@ -179,6 +179,10 @@ def replace_product_images(
 ) -> None:
     if payload.images is None:
         return
+    # Giữ nguồn/giấy phép của ảnh đã có khi chủ thể lưu lại danh sách ảnh (giao diện không gửi các trường này).
+    attribution = {
+        image.image_url: (image.source_url, image.credit, image.license) for image in product.images
+    }
     if product.images:
         product.images.clear()
         # Xóa ảnh cũ trước khi thêm ảnh mới: nếu không, SQLAlchemy chèn ảnh mới trước rồi mới xóa,
@@ -186,6 +190,9 @@ def replace_product_images(
         session = object_session(product)
         if session is not None:
             session.flush()
+    # Nhập tại chỗ để tránh vòng nhập: image_storage dùng workflow_error của module này.
+    from app.services.image_storage import uploaded_file_exists
+
     for image in payload.images:
         image_kwargs = {}
         if image.storage_path is not None:
@@ -196,19 +203,23 @@ def replace_product_images(
                     "PRODUCT_IMAGE_NOT_OWNED",
                     "Ảnh tải lên không thuộc chủ thể hiện tại.",
                 )
-            if not (get_settings().upload_directory / image.storage_path).is_file():
+            if not uploaded_file_exists(image.storage_path):
                 raise workflow_error(
                     status.HTTP_422_UNPROCESSABLE_ENTITY,
                     "PRODUCT_IMAGE_NOT_FOUND",
                     "Không tìm thấy file ảnh đã tải lên.",
                 )
             image_kwargs["storage_path"] = image.storage_path
+        source_url, credit, license_name = attribution.get(image.image_url, (None, None, None))
         product.images.append(
             ProductImage(
                 image_url=image.image_url,
                 alt_text=product.name,
                 is_primary=image.is_primary,
                 sort_order=image.sort_order,
+                source_url=source_url,
+                credit=credit,
+                license=license_name,
                 **image_kwargs,
             )
         )

@@ -3,7 +3,7 @@
 Đề tài: **Xây dựng Cổng thông tin quảng bá nông sản OCOP và bản đồ số du lịch nông nghiệp tỉnh Lâm Đồng**
 Nhóm trưởng: Liêng Hót Ha Luyến (2312682). GVHD: KS. La Quốc Thắng.
 
-- Cập nhật lần cuối: **27/09/2026** (cuối tuần 7 theo đề cương).
+- Cập nhật lần cuối: **07/10/2026**.
 - Căn cứ: đề cương ngày 10/08/2026 (lộ trình 14 tuần), tài liệu hướng dẫn nhóm 25/08/2026, mã nguồn và lịch sử commit.
 - Mốc đã chốt (27/09/2026):
   - **Thứ Năm 15/10/2026: báo cáo tiến độ đợt 2** (giữa tuần 10).
@@ -31,7 +31,7 @@ Tiến độ ước lượng theo khối lượng các hạng mục trong đề 
 | Phân hệ admin (tuần 10–11) | 60% | Dashboard và thống kê Chart.js, duyệt sản phẩm, duyệt hồ sơ chủ thể, duyệt điểm du lịch. Thiếu quản lý danh mục, người dùng, kiểm duyệt đánh giá. |
 | Giao diện UX/UI | 45% | Làm mới trang chủ, sản phẩm, tổng quan quản trị (đạt WCAG AA). Còn khoảng 10 trang dùng giao diện cũ. |
 | Kiểm thử | 60% | 138 test backend, 111 test frontend, axe cho các trang đã làm. Chưa có kiểm thử E2E theo luồng và kiểm thử trên nhiều thiết bị. |
-| Triển khai, SEO, lưu ảnh Firebase (tuần 13) | 5% | Mới có Docker cho môi trường phát triển. Chưa có VPS, Nginx, HTTPS, thẻ meta/chia sẻ, Firebase. |
+| Triển khai, SEO, lưu ảnh cloud (tuần 13) | 5% | Mới có Docker cho môi trường phát triển. Chưa có VPS, Nginx, HTTPS, thẻ meta/chia sẻ. Lưu ảnh cloud: đã có lớp lưu ảnh Cloudinary (đổi từ Firebase, 03/10), chờ khóa để thử thật. |
 | Tài liệu và báo cáo (tuần 13–14) | 30% | Có README, API.md, Postman, ERD, báo cáo tiến độ đợt 1. Thiếu hướng dẫn sử dụng, báo cáo tổng kết, slide, kịch bản demo. |
 | **Toàn đồ án** | **khoảng 65%** | Đúng tiến độ phần lõi (sản phẩm, bản đồ); chậm ở phần quản trị và triển khai. Còn 7 tuần. |
 
@@ -58,7 +58,7 @@ Tiến độ ước lượng theo khối lượng các hạng mục trong đề 
 |---|---|---|
 | Đăng ký trở thành chủ thể | ✅ | Admin duyệt hồ sơ |
 | Quản lý sản phẩm | ✅ | Nháp, gửi duyệt, yêu cầu sửa sau duyệt, giấy chứng nhận |
-| Quản lý hình ảnh | 🟡 | Ảnh sản phẩm lưu trong `backend/uploads`; chưa có Firebase; ảnh chưa duyệt vẫn mở được bằng link |
+| Quản lý hình ảnh | 🟡 | Ảnh sản phẩm lưu trong `backend/uploads`; đã có lớp lưu ảnh Cloudinary (bật bằng `IMAGE_STORAGE`, chưa thử với khóa thật); ảnh chưa duyệt vẫn mở được bằng link (giới hạn đã chấp nhận, xem B3) |
 | Quản lý địa điểm | ✅ | Khai báo, ảnh, gắn sản phẩm, gửi duyệt, yêu cầu cập nhật/ngừng hiển thị (27/09) |
 | Cập nhật thông tin đơn vị | 🟡 | Xem được hồ sơ; sửa phải gửi lại hồ sơ |
 
@@ -81,7 +81,7 @@ Tiến độ ước lượng theo khối lượng các hạng mục trong đề 
 | PostgreSQL + PostGIS, migration | ✅ | `tools/kiem-tra-database.sql` để kiểm tra database khớp repo |
 | JWT, phân quyền admin/subject/user | ✅ | |
 | Chart.js cho dashboard | ✅ | |
-| Firebase Storage cho ảnh | ⏸ | Đề cương cam kết; chờ quyết định Q2 |
+| Lưu ảnh trên cloud | 🟡 | Đề cương ghi Firebase Storage; **đổi sang Cloudinary (03/10)** vì Firebase yêu cầu gói Blaze và thẻ thanh toán. Đã có lớp lưu ảnh và test; chờ khóa Cloudinary để thử thật. Phải nêu lý do trong báo cáo (mục 6) |
 | Responsive, trợ năng | 🟡 | 3 trang đạt; các trang khác làm ở tuần 11 |
 | Triển khai Cloud/VPS, Nginx, HTTPS | ⬜ | Tuần 13; chờ quyết định Q4 |
 | SEO cơ bản, chia sẻ mạng xã hội | ⬜ | Tuần 12 |
@@ -137,7 +137,7 @@ Nhánh: `2312682_HaLuyen_KhaiBaoDiemDuLich`
 | # | Việc | Phụ trách | Trạng thái | Tiêu chí xong |
 |---|---|---|---|---|
 | 9.1 | Khu chủ thể: danh sách điểm, form khai báo với ô chọn vị trí | Luyến | ✅ | `/chu-the/diem-du-lich`; ghim bản đồ, GPS, dán tọa độ/link; điện thoại chia 5 bước; axe 0 lỗi ở 375–1440px. Chưa thử GPS trên điện thoại thật |
-| 9.2 | Ảnh điểm du lịch: tải lên, chọn ảnh chính, xóa | Luyến | ✅ | Lưu cục bộ `uploads/locations` như ảnh sản phẩm (Q2 vẫn chờ); kéo thả nhiều ảnh |
+| 9.2 | Ảnh điểm du lịch: tải lên, chọn ảnh chính, xóa | Luyến | ✅ | Lưu cục bộ `uploads/locations` như ảnh sản phẩm (nay có thể chuyển sang Cloudinary bằng `IMAGE_STORAGE`); kéo thả nhiều ảnh |
 | 9.3 | Liên kết sản phẩm của chủ thể với điểm du lịch | Luyến (chủ thể gắn sản phẩm); Thái, Thuận (hiển thị trên trang chi tiết) | ✅ phần Luyến | Chi tiết điểm hiện sản phẩm, chi tiết sản phẩm hiện điểm |
 | 9.4 | Trang admin duyệt điểm, thêm việc chờ duyệt vào dashboard và thống kê | Luyến | ✅ | `/quan-tri/diem-du-lich`: chỉnh ghim, so sánh yêu cầu cập nhật; dashboard có 2 việc mới |
 | 9.5 | Kiểm thử luồng: chủ thể khai báo → admin duyệt → điểm hiện trên bản đồ | Luyến | ✅ | 19 test giao diện mới; chạy thật bằng trình duyệt với tài khoản demo: khai báo → duyệt → hiện trên bản đồ công khai |
@@ -162,6 +162,19 @@ Quy tắc nhóm trưởng chốt ngày 28/09:
 | A6 | Giao diện 3 trang admin, form đánh giá, "Đánh giá của tôi"; bỏ các mục "Sắp có" trong menu quản trị | Luyến | ⬜ | Mỗi trang một commit; axe 0 lỗi; không tràn ngang |
 | A7 | Ghi định dạng API đánh giá vào `docs/API.md` để Thái, Thuận hiển thị trên trang chi tiết | Luyến | ⬜ | Hai bạn xác nhận |
 
+### Giai đoạn B (08/10 – 11/10): Lưu ảnh trên Cloudinary (kéo việc 11.1 lên sớm)
+
+Chốt ngày 03/10: dùng **Cloudinary** (gói Free, không cần thẻ) thay cho Firebase; gọi API bằng `httpx` có sẵn, **không thêm thư viện**; thêm migration cột nguồn và giấy phép cho ảnh. Nhánh `2312682_HaLuyen_LuuAnhCloudinary`.
+
+| # | Việc | Phụ trách | Trạng thái | Tiêu chí xong |
+|---|---|---|---|---|
+| B1 | Nhóm trưởng tạo tài khoản Cloudinary (Free), lấy cloud name, API key, API secret; cho vào `.env`, không đưa lên git; thử tải ảnh thật | Luyến | ✅ | `.env.example` có tên biến, không có giá trị thật; một ảnh sản phẩm thật lên Cloudinary (đã thử thành công 06/10; nhớ đổi khóa API sau khi thử) |
+| B2 | Lớp lưu ảnh có công tắc `IMAGE_STORAGE` (mặc định lưu cục bộ để Thái, Thuận và test không cần khóa); bộ lưu Cloudinary gọi API upload, xóa, kiểm tra tồn tại có chữ ký bằng `httpx` | Luyến | ✅ | 7 test với MockTransport; chạy được cả hai chế độ (commit 396a694) |
+| B3 | Ảnh chưa duyệt: **chọn phương án 1, giữ như hiện nay** (ảnh công khai nhưng đường dẫn chứa mã ngẫu nhiên 32 ký tự); ghi giới hạn này vào báo cáo | Luyến | ✅ | Quyết định ngày 03/10. Nếu còn thời gian: dùng chế độ riêng tư của Cloudinary và đổi đường dẫn khi duyệt |
+| B4 | Migration 012 thêm `source_url`, `credit`, `license` cho `location_images` và `product_images`; API công khai trả thêm các trường này; lưu lại ảnh thì giữ nguồn cũ | Luyến (DB, API); Thái, Thuận (hiển thị "Ảnh minh họa" và nguồn) | ✅ phần Luyến | `kiem-tra-database.sql` rỗng trên database tạo mới và database nâng cấp; 3 test mới |
+| B5 | Script chuyển ảnh đang lưu cục bộ lên Cloudinary và cập nhật `image_url`, `storage_path` | Luyến | ⬜ | Chạy lặp lại không tạo ảnh trùng |
+| B6 | Cập nhật README, `docs/API.md`, `.env.example`; ghi lý do đổi Firebase → Cloudinary cho báo cáo | Luyến | 🟡 | README, API.md, `.env.example` đã cập nhật; còn mục "Thay đổi so với đề cương" trong báo cáo |
+
 ### Tuần 10 (12/10 – 18/10): Báo cáo tiến độ đợt 2 (15/10), đánh giá và các chức năng quản trị còn thiếu
 
 | # | Việc | Phụ trách | Trạng thái | Tiêu chí xong |
@@ -179,12 +192,12 @@ Quy tắc nhóm trưởng chốt ngày 28/09:
 
 | # | Việc | Phụ trách | Trạng thái | Tiêu chí xong |
 |---|---|---|---|---|
-| 11.1 | Lưu ảnh lên Firebase Storage (Q2 đã chốt); chuyển ảnh đang lưu cục bộ; chặn xem ảnh chưa duyệt | Luyến | ⬜ | Ảnh chưa duyệt không mở được bằng link công khai; cần nhóm trưởng tạo project Firebase và khóa dịch vụ |
+| 11.1 | Lưu ảnh lên cloud (Cloudinary); chuyển ảnh đang lưu cục bộ | Luyến | ⏩ B1–B6 | Xem giai đoạn B; chặn xem ảnh chưa duyệt không làm (B3 phương án 1) |
 | 11.2 | Chủ thể cập nhật thông tin đơn vị trực tiếp (thay đổi quan trọng cần admin duyệt) | Luyến | ⬜ | Test |
 | 11.3 | Giao diện mới: danh sách và chi tiết điểm du lịch, chi tiết sản phẩm | Thái, Thuận | ⬜ | Theo design token; axe 0 lỗi; không tràn ngang |
 | 11.4 | Giao diện mới: trang quản trị con (duyệt sản phẩm, hồ sơ chủ thể), khu chủ thể | Luyến | ⬜ | Sửa QT-01, QT-04 |
 | 11.5 | Giao diện mới: đăng nhập, đăng ký, hồ sơ, tin tức, trang lỗi | Luyến (đăng nhập, đăng ký, hồ sơ); Thái, Thuận (tin tức, trang lỗi) | ⬜ | |
-| 11.6 | Admin quản lý tin tức (Q3 đã chốt): soạn, lưu nháp, đăng, gỡ tin; ảnh tin lưu Firebase | Luyến | ⬜ | Thiết kế canvas trước; test |
+| 11.6 | Admin quản lý tin tức (Q3 đã chốt): soạn, lưu nháp, đăng, gỡ tin; ảnh tin lưu Cloudinary | Luyến | ⬜ | Thiết kế canvas trước; test. Nếu thiếu thời gian, đây là việc đầu tiên bị dời hoặc cắt |
 | 11.7 | Trang tin tức công khai đọc tin admin đăng (có thể giữ RSS làm nguồn bổ sung) | Thái, Thuận | ⬜ | Thống nhất API với Luyến |
 
 ### Tuần 12 (26/10 – 01/11): Kiểm thử tổng thể, SEO, tài liệu API
@@ -211,7 +224,7 @@ Quy tắc nhóm trưởng chốt ngày 28/09:
 
 | # | Việc | Phụ trách | Trạng thái | Tiêu chí xong |
 |---|---|---|---|---|
-| 14.1 | Báo cáo tổng kết: phân tích, thiết kế (Use Case, ERD, API, phân quyền), kết quả, khó khăn | Cả nhóm | ⬜ | Theo mẫu của khoa |
+| 14.1 | Báo cáo tổng kết: phân tích, thiết kế (Use Case, ERD, API, phân quyền), kết quả, khó khăn; **mục "Thay đổi so với đề cương": lưu ảnh bằng Cloudinary thay vì Firebase** | Cả nhóm | ⬜ | Theo mẫu của khoa |
 | 14.2 | Slide thuyết trình và kịch bản demo | Cả nhóm | ⬜ | Demo 3 vai: khách, chủ thể, admin |
 | 14.3 | Dữ liệu demo sạch, tài khoản demo, diễn tập demo | Cả nhóm | ⬜ | Chạy trọn kịch bản không lỗi |
 | 14.4 | Rà soát mã nguồn, README, gắn tag phiên bản nộp | Luyến | ⬜ | Tag `v1.0` trên main |
@@ -225,7 +238,8 @@ Quy tắc nhóm trưởng chốt ngày 28/09:
 |---|---|---|
 | Database các máy lệch nhau do sửa ngoài repo | Lỗi chỉ xảy ra trên một máy, mất thời gian dò | Chỉ sửa qua migration; chạy `tools/kiem-tra-database.sql` sau mỗi lần pull |
 | PR chờ review lâu, các nhánh chồng lên nhau | Xung đột khi merge | Merge PR giao diện ngay tuần 8; mỗi nhánh nhỏ, một mục tiêu |
-| Firebase cần tài khoản, khóa dịch vụ và có thể phát sinh phí | Trễ tuần 11 | Chốt Q2 trong tuần 8; nếu không kịp thì giữ lưu cục bộ và giải thích trong báo cáo |
+| Cloudinary Free có hạn mức (25 credit/tháng, mỗi credit tương đương 1 GB lưu trữ, 1 GB băng thông hoặc 1.000 lượt xử lý) và là dịch vụ ngoài | Hết hạn mức hoặc dịch vụ đổi chính sách thì ảnh không hiện | Nén ảnh trước khi tải lên; đặt `IMAGE_STORAGE=local` để quay về lưu cục bộ; kiểm tra lại trước buổi demo |
+| Ảnh lấy từ web có thể vi phạm bản quyền | Bị nhắc trong báo cáo | Chỉ dùng ảnh có giấy phép cho phép (Wikimedia Commons, Unsplash, Pexels) hoặc đã xin phép chủ vườn; ghi `source_url`, `credit`, `license`; ảnh minh họa có chú thích |
 | Chưa có VPS/tên miền | Không demo được bản trực tuyến | Chốt Q4 sớm; phương án dự phòng: demo bằng Docker trên máy |
 | Dịch vụ ngoài (OSRM, ảnh nền bản đồ) thay đổi chính sách | Chức năng bản đồ lỗi lúc demo | Đã có nguồn dự phòng; kiểm tra lại trước buổi demo |
 | Khối lượng dồn cho nhóm trưởng | Trễ các tuần cuối | Giữ đúng phân công ở mục 3; phần công khai giao cho Thái, Thuận |
@@ -240,8 +254,11 @@ Quy tắc nhóm trưởng chốt ngày 28/09:
 | Q4 | Nơi triển khai: VPS (nhà cung cấp nào), cloud miễn phí, hay chỉ demo bằng Docker | Tuần 12 |
 | Q6 | Tin tức: sau khi admin tự đăng tin, còn giữ tin RSS từ cổng OCOP tỉnh làm nguồn bổ sung không | Tuần 11 |
 
-Đã chốt ngày 28/09: **Q2** dùng Firebase Storage như đề cương (cần thêm thư viện `firebase-admin` cho backend,
-nhóm trưởng tạo project Firebase, bật Storage và cấp khóa dịch vụ); **Q3** admin tự đăng tin (việc 11.6).
+Đã chốt:
+
+- 28/09: **Q3** admin tự đăng tin (việc 11.6). **Q2** ban đầu chọn Firebase Storage như đề cương.
+- **03/10: Q2 đổi sang Cloudinary.** Lý do: Firebase Storage cho dự án mới phải dùng gói Blaze (trả theo mức dùng, phải gắn thẻ thanh toán), nhóm không muốn gắn thẻ; Cloudinary Free không cần thẻ, có CDN và tự đổi kích thước/định dạng ảnh. Gọi API bằng `httpx` có sẵn, không thêm thư viện. Khác đề cương nên phải ghi trong báo cáo tổng kết (việc 14.1) mục "Thay đổi so với đề cương".
+- 03/10: ảnh chưa duyệt vẫn công khai bằng đường dẫn khó đoán (B3 phương án 1); thêm cột nguồn/giấy phép cho ảnh (B4); dữ liệu và ảnh công khai trên web là nguồn dữ liệu chính, ảnh khác dùng để minh họa nếu có giấy phép và ghi chú "Ảnh minh họa".
 
 ---
 
@@ -259,3 +276,6 @@ nhóm trưởng tạo project Firebase, bật Storage và cấp khóa dịch v�
 | 27/09/2026 | Giao diện khai báo điểm (chủ thể), duyệt điểm (admin), việc chờ duyệt trên tổng quan (9.1–9.5) | 3f0c3d5, 3a8126f, 8adc963, 1fa5736, commit này |
 | 27/09/2026 | Backend khai báo/duyệt điểm du lịch (8.5–8.7), migration 011; sửa lỗi thay ảnh sản phẩm và yêu cầu ngừng hiển thị sản phẩm trên PostgreSQL | f687843, commit này |
 | 27/09/2026 | Sửa migration 009 cho database cũ; tạo lại database sạch; dọn thư mục đồ án và nhánh git; thêm kiểm tra database, pgAdmin giữ tài khoản; lập kế hoạch này | 0710abf, a52b7f6, a7eb63b |
+| 03/10/2026 | Đổi Q2 từ Firebase sang Cloudinary; lập giai đoạn B; xong B2 (lớp lưu ảnh Cloudinary, 7 test) và B4 (migration 012 cột nguồn/giấy phép ảnh); chọn B3 phương án 1 | 396a694, commit này |
+| 06/10/2026 | B1 xong (tải ảnh lên Cloudinary thành công); PR #11 (lưu ảnh Cloudinary, migration 012) gộp vào main; rà lỗi dữ liệu và lập hồ sơ dữ liệu dâu tây (Claude Doc "Hồ sơ dữ liệu dâu tây và rà lỗi dữ liệu OCOP") | 0068ccc |
+| 07/10/2026 | Viết lại README: chạy lần đầu, chọn dữ liệu demo hoặc nhập tay, tạo tài khoản quản trị, cập nhật code mới, chạy không dùng Docker, xử lý sự cố pgAdmin; số test mới (148 backend, 154 frontend). Ngoài repo: script làm sạch dữ liệu demo (`04-database`), hồ sơ 4 chủ thể dâu tây và danh sách ảnh (`02-bao-cao-thuyet-trinh/du-lieu-demo-dau-tay`) | commit này |
