@@ -200,7 +200,7 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-.experience-header { padding: 1.25rem; border-left: 4px solid var(--ocop-primary-700); background: var(--ocop-card); }
+.experience-header { padding: var(--ocop-space-5); border: 1px solid var(--ocop-border); border-radius: var(--ocop-radius-lg); background: var(--ocop-card); }
 .location-content { min-width: 0; padding: 1.25rem; overflow-wrap: anywhere; }
 .gps-hint { color: var(--ocop-text-secondary); font-size: .85rem; }
 .location-media { min-width: 0; }
