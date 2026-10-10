@@ -14,6 +14,12 @@ BEGIN
   END IF;
 END $$;
 
+-- seed_public_reference.sql gắn ảnh minh họa SVG làm ảnh chính; nếu giữ lại thì ảnh thật
+-- bên dưới vi phạm uq_product_primary_image. Ảnh minh họa chỉ là chỗ trống nên bỏ đi.
+DELETE FROM product_images i USING ocop_products p
+WHERE p.id=i.product_id AND p.slug='tham-khao-ca-phe-dehavi-valley'
+  AND i.storage_path LIKE 'public-reference/product-images/%';
+
 INSERT INTO product_images
   (product_id,storage_path,image_url,alt_text,is_primary,sort_order,source_url,credit,license)
 SELECT id,'external/product-images/dehavi/valley-500gr',
