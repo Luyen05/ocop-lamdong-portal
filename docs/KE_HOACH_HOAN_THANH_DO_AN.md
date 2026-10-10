@@ -1,9 +1,9 @@
 # Kế hoạch hoàn thành đồ án và tự đánh giá tiến độ
 
 Đề tài: **Xây dựng Cổng thông tin quảng bá nông sản OCOP và bản đồ số du lịch nông nghiệp tỉnh Lâm Đồng**
-Nhóm trưởng: Liêng Hót Ha Luyến (2312682). GVHD: KS. La Quốc Thắng.
+Nhóm trưởng: Liêng Hót Ha Luyến (2312682). GVHD: Trần Ngô Như Khánh.
 
-- Cập nhật lần cuối: **07/10/2026**.
+- Cập nhật lần cuối: **10/10/2026**.
 - Căn cứ: đề cương ngày 10/08/2026 (lộ trình 14 tuần), tài liệu hướng dẫn nhóm 25/08/2026, mã nguồn và lịch sử commit.
 - Mốc đã chốt (27/09/2026):
   - **Thứ Năm 15/10/2026: báo cáo tiến độ đợt 2** (giữa tuần 10).
@@ -171,7 +171,7 @@ Chốt ngày 03/10: dùng **Cloudinary** (gói Free, không cần thẻ) thay ch
 | B1 | Nhóm trưởng tạo tài khoản Cloudinary (Free), lấy cloud name, API key, API secret; cho vào `.env`, không đưa lên git; thử tải ảnh thật | Luyến | ✅ | `.env.example` có tên biến, không có giá trị thật; một ảnh sản phẩm thật lên Cloudinary (đã thử thành công 06/10; nhớ đổi khóa API sau khi thử) |
 | B2 | Lớp lưu ảnh có công tắc `IMAGE_STORAGE` (mặc định lưu cục bộ để Thái, Thuận và test không cần khóa); bộ lưu Cloudinary gọi API upload, xóa, kiểm tra tồn tại có chữ ký bằng `httpx` | Luyến | ✅ | 7 test với MockTransport; chạy được cả hai chế độ (commit 396a694) |
 | B3 | Ảnh chưa duyệt: **chọn phương án 1, giữ như hiện nay** (ảnh công khai nhưng đường dẫn chứa mã ngẫu nhiên 32 ký tự); ghi giới hạn này vào báo cáo | Luyến | ✅ | Quyết định ngày 03/10. Nếu còn thời gian: dùng chế độ riêng tư của Cloudinary và đổi đường dẫn khi duyệt |
-| B4 | Migration 012 thêm `source_url`, `credit`, `license` cho `location_images` và `product_images`; API công khai trả thêm các trường này; lưu lại ảnh thì giữ nguồn cũ | Luyến (DB, API); Thái, Thuận (hiển thị "Ảnh minh họa" và nguồn) | ✅ phần Luyến | `kiem-tra-database.sql` rỗng trên database tạo mới và database nâng cấp; 3 test mới |
+| B4 | Migration 012 thêm `source_url`, `credit`, `license` cho `location_images` và `product_images`; API công khai trả thêm các trường này; lưu lại ảnh thì giữ nguồn cũ | Luyến (DB, API); Thái, Thuận (hiển thị "Ảnh minh họa" và nguồn) | ✅ | `kiem-tra-database.sql` rỗng trên database tạo mới và database nâng cấp; 3 test mới. Trang chi tiết sản phẩm và điểm hiện nguồn ảnh, tác giả, giấy phép (PR #12) |
 | B5 | Script chuyển ảnh đang lưu cục bộ lên Cloudinary và cập nhật `image_url`, `storage_path` | Luyến | ⬜ | Chạy lặp lại không tạo ảnh trùng |
 | B6 | Cập nhật README, `docs/API.md`, `.env.example`; ghi lý do đổi Firebase → Cloudinary cho báo cáo | Luyến | 🟡 | README, API.md, `.env.example` đã cập nhật; còn mục "Thay đổi so với đề cương" trong báo cáo |
 
@@ -194,7 +194,7 @@ Chốt ngày 03/10: dùng **Cloudinary** (gói Free, không cần thẻ) thay ch
 |---|---|---|---|---|
 | 11.1 | Lưu ảnh lên cloud (Cloudinary); chuyển ảnh đang lưu cục bộ | Luyến | ⏩ B1–B6 | Xem giai đoạn B; chặn xem ảnh chưa duyệt không làm (B3 phương án 1) |
 | 11.2 | Chủ thể cập nhật thông tin đơn vị trực tiếp (thay đổi quan trọng cần admin duyệt) | Luyến | ⬜ | Test |
-| 11.3 | Giao diện mới: danh sách và chi tiết điểm du lịch, chi tiết sản phẩm | Thái, Thuận | ⬜ | Theo design token; axe 0 lỗi; không tràn ngang |
+| 11.3 | Giao diện mới: danh sách và chi tiết điểm du lịch, chi tiết sản phẩm | Thái, Thuận | 🟡 | PR #12 (Thuận) làm mới chi tiết sản phẩm, chi tiết điểm và trang tìm điểm trải nghiệm; còn danh sách điểm du lịch. Theo design token; axe 0 lỗi; không tràn ngang |
 | 11.4 | Giao diện mới: trang quản trị con (duyệt sản phẩm, hồ sơ chủ thể), khu chủ thể | Luyến | ⬜ | Sửa QT-01, QT-04 |
 | 11.5 | Giao diện mới: đăng nhập, đăng ký, hồ sơ, tin tức, trang lỗi | Luyến (đăng nhập, đăng ký, hồ sơ); Thái, Thuận (tin tức, trang lỗi) | ⬜ | |
 | 11.6 | Admin quản lý tin tức (Q3 đã chốt): soạn, lưu nháp, đăng, gỡ tin; ảnh tin lưu Cloudinary | Luyến | ⬜ | Thiết kế canvas trước; test. Nếu thiếu thời gian, đây là việc đầu tiên bị dời hoặc cắt |
@@ -279,3 +279,4 @@ Chốt ngày 03/10: dùng **Cloudinary** (gói Free, không cần thẻ) thay ch
 | 03/10/2026 | Đổi Q2 từ Firebase sang Cloudinary; lập giai đoạn B; xong B2 (lớp lưu ảnh Cloudinary, 7 test) và B4 (migration 012 cột nguồn/giấy phép ảnh); chọn B3 phương án 1 | 396a694, commit này |
 | 06/10/2026 | B1 xong (tải ảnh lên Cloudinary thành công); PR #11 (lưu ảnh Cloudinary, migration 012) gộp vào main; rà lỗi dữ liệu và lập hồ sơ dữ liệu dâu tây (Claude Doc "Hồ sơ dữ liệu dâu tây và rà lỗi dữ liệu OCOP") | 0068ccc |
 | 07/10/2026 | Viết lại README: chạy lần đầu, chọn dữ liệu demo hoặc nhập tay, tạo tài khoản quản trị, cập nhật code mới, chạy không dùng Docker, xử lý sự cố pgAdmin; số test mới (148 backend, 154 frontend). Ngoài repo: script làm sạch dữ liệu demo (`04-database`), hồ sơ 4 chủ thể dâu tây và danh sách ảnh (`02-bao-cao-thuyet-trinh/du-lieu-demo-dau-tay`) | commit này |
+| 10/10/2026 | Gộp PR #12 của Thuận (trải nghiệm sản phẩm OCOP, ảnh Dehavi có ghi nguồn) vào main: đặt lại 5 commit lên main mới vì main bị force-push 08/10, xung đột ưu tiên bản main. Sửa seed ảnh Dehavi lỗi trùng ảnh chính khi chạy sau `seed_public_reference.sql`; ảnh nhỏ lỗi tự ẩn; bỏ tham chiếu Firebase còn sót. README: GVHD Trần Ngô Như Khánh, cách A là nhập tay (quyết định 07/10), số test mới (backend 148 + 9 bỏ qua, frontend 166). Chưa xử lý: lỗi chỉ đường và tải tin tức nhóm trưởng báo 09/10 (đang chờ ảnh chụp lỗi) | commit này |
