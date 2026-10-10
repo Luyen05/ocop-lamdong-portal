@@ -8,4 +8,3 @@ __pycache__/
 .coverage
 htmlcov/
 .env
-firebase-service-account.json

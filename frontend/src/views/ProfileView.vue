@@ -153,7 +153,7 @@ async function submit(): Promise<void> {
                 maxlength="500"
                 placeholder="https://..."
               />
-              <div class="form-text">Upload ảnh lên Firebase sẽ được bổ sung trong module Ảnh.</div>
+              <div class="form-text">Chức năng tải ảnh đại diện sẽ được bổ sung sau.</div>
             </div>
 
             <div class="d-flex justify-content-end pt-2">

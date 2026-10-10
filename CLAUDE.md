@@ -27,7 +27,8 @@ File này là quy tắc chung cho mọi lần phát triển tiếp theo. Khi quy
 - **Không thêm thư viện mới khi chưa hỏi.** Đã được duyệt: Bootstrap 5, Bootstrap Icons, Leaflet + leaflet.markercluster, Chart.js 4 (chỉ đăng ký thành phần cần dùng), font Be Vietnam Pro (Google Fonts). vue-i18n đã bị bỏ, không tự thêm lại.
 - Việc lớn về giao diện: **thiết kế trước trên canvas Claude Design, chờ duyệt, rồi mới code**; có backend thì làm backend sau khi giao diện được duyệt.
 - **Mọi thay đổi database phải đi qua file trong repo**: migration mới trong `database/migrations/` (chạy lặp lại an toàn), cập nhật cùng lúc `database/schema.sql`, model SQLAlchemy và `tools/kiem-tra-database.sql` (sinh lại bằng `tools/sinh_kiem_tra_database.py`). Không sửa thẳng database bằng pgAdmin, Codex hay công cụ khác mà không ghi lại thành migration. Lý do: 27/09/2026 database của nhóm trưởng lệch khoảng 100 chỗ so với repo vì thay đổi làm ngoài repo, phải tạo lại từ đầu.
-- Không tự quyết các vấn đề ngoài phạm vi (lưu ảnh lên Firebase/Cloudinary, bảo mật ảnh chưa duyệt…): ghi nhận vào `docs/ui-audit.md` mục 6 và hỏi.
+- Lưu ảnh trên cloud: đã chốt **Cloudinary** (03/10/2026, thay Firebase trong đề cương), gọi bằng `httpx`, không thêm thư viện.
+- Không tự quyết các vấn đề ngoài phạm vi (bảo mật ảnh chưa duyệt…): ghi nhận vào `docs/ui-audit.md` mục 6 và hỏi.
 
 ## 3. Điểm dừng
 
@@ -81,7 +82,7 @@ Backend (khi có sửa backend): `python -m pytest -q` trong `backend/`, hoặc 
 - Chạy toàn bộ bằng Docker: `docker compose up -d` gồm các service `postgres`, `pgadmin`, `backend` (uvicorn `--reload`, gắn `backend/app`) và `frontend` (Vite dev, cổng 5173).
 - Database đã có dữ liệu thì chạy migration mới bằng lệnh trong README (mục "Migration cho database đã có dữ liệu"), rồi chạy `tools/kiem-tra-database.sql` trong pgAdmin để xác nhận khớp repo. Không dùng `docker compose down -v` nếu chưa được đồng ý (lệnh này xóa cả ảnh đã tải lên).
 - Lệnh PowerShell gửi cho người dùng: Windows PowerShell 5.1 làm mất dấu ngoặc kép bên trong tham số truyền cho chương trình ngoài (docker, psql), nên tránh truyền chuỗi có `"` lồng bên trong; gửi SQL qua stdin (`Get-Content … -Raw | docker compose exec -T postgres …`).
-- API quản trị nằm dưới `/api/v1/admin/*` và chỉ role `admin` gọi được. Hiện có: `dashboard`, `statistics`, `products`, `subject-applications`, `data-sources`, `product-change-requests`.
+- API quản trị nằm dưới `/api/v1/admin/*` và chỉ role `admin` gọi được. Hiện có: `access`, `dashboard`, `statistics`, `products`, `subject-applications`, `data-sources`, `product-change-requests`, `locations`, `location-change-requests`.
 - Bản đồ: `/api/v1/locations`, `/api/v1/map/locations` (GeoJSON), `/map/nearby`, `/map/route` (OSRM). Frontend ở `/ban-do`, `/diem-du-lich`.
 
 ## 7. Tài liệu cần cập nhật khi làm
