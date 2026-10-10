@@ -3,21 +3,30 @@ import { computed, onUnmounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import axios from 'axios'
 
+import PresentationGallery from '@/components/products/PresentationGallery.vue'
 import ProductCard from '@/components/products/ProductCard.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
 import { getApiErrorMessage } from '@/services/api-error'
 import { getProduct, getProducts } from '@/services/products'
 import type { ProductDetail, ProductListItem } from '@/types/product'
+import { safeExternalUrl } from '@/utils/location'
 
 const route = useRoute()
 
 const product = ref<ProductDetail | null>(null)
-const selectedImageUrl = ref<string | null>(null)
-const activeImageFailed = ref(false)
 const relatedProducts = ref<ProductListItem[]>([])
 const isLoading = ref(true)
 const errorMessage = ref('')
 const errorTitle = ref('Không thể tải sản phẩm')
+
+const storyPresentation = computed(() => {
+  const story = product.value?.story ?? ''
+  const source = story.match(/\s*Nguồn sản phẩm:\s*(\S+)\s*$/u)
+  return {
+    text: source ? story.slice(0, source.index).trim() : story,
+    sourceUrl: safeExternalUrl(source?.[1]),
+  }
+})
 
 const formattedPrice = computed(() => {
   if (!product.value) return ''
@@ -29,18 +38,9 @@ const formattedPrice = computed(() => {
   }).format(product.value.price)
 })
 
-const activeImage = computed(
-  () => selectedImageUrl.value || product.value?.primary_image_url || null,
-)
-
 function formatDate(value: string | null): string {
   if (!value) return 'Chưa cập nhật'
   return new Intl.DateTimeFormat('vi-VN').format(new Date(`${value}T00:00:00`))
-}
-
-function selectImage(imageUrl: string): void {
-  selectedImageUrl.value = imageUrl
-  activeImageFailed.value = false
 }
 
 let latestRequestId = 0
@@ -50,14 +50,11 @@ async function loadProduct(slug: string): Promise<void> {
   isLoading.value = true
   errorMessage.value = ''
   product.value = null
-  selectedImageUrl.value = null
-  activeImageFailed.value = false
   relatedProducts.value = []
   try {
     const loadedProduct = await getProduct(slug)
     if (requestId !== latestRequestId) return
     product.value = loadedProduct
-    selectedImageUrl.value = product.value.images[0]?.image_url ?? null
     document.title = `${product.value.name} | OCOP Lâm Đồng`
 
     try {
@@ -137,29 +134,7 @@ onUnmounted(() => {
 
       <template v-else-if="product">
         <section class="product-overview">
-          <div class="gallery">
-            <div class="main-image">
-              <img
-                v-if="activeImage && !activeImageFailed"
-                :src="activeImage"
-                :alt="product.name"
-                @error="activeImageFailed = true"
-              />
-              <div v-else class="image-placeholder" aria-hidden="true">OCOP</div>
-            </div>
-            <div v-if="product.images.length > 1" class="thumbnail-list" aria-label="Ảnh sản phẩm">
-              <button
-                v-for="image in product.images"
-                :key="image.id"
-                class="thumbnail"
-                :class="{ active: activeImage === image.image_url }"
-                type="button"
-                @click="selectImage(image.image_url)"
-              >
-                <img :src="image.image_url" :alt="`Ảnh ${product.name}`" />
-              </button>
-            </div>
-          </div>
+          <PresentationGallery :images="product.images" :primary-url="product.primary_image_url" :name="product.name" />
 
           <div class="product-info">
             <div class="badge-row">
@@ -173,13 +148,7 @@ onUnmounted(() => {
             </div>
 
             <h1>{{ product.name }}</h1>
-            <RouterLink
-              class="btn btn-success my-3"
-              data-test="experience-cta"
-              :to="{ name: 'product-experience', params: { slug: product.slug } }"
-            >
-              Tìm nơi mua &amp; trải nghiệm
-            </RouterLink>
+            <p class="product-producer">{{ product.subject.name }} · {{ product.subject.district }}, Lâm Đồng</p>
             <div v-if="product.rating_avg > 0 || product.views > 0" class="rating-row">
               <span v-if="product.rating_avg > 0"><AppIcon name="star" :size="14" /> {{ product.rating_avg.toFixed(1) }}</span>
               <span v-if="product.views > 0">{{ product.views }} lượt xem</span>
@@ -191,37 +160,24 @@ onUnmounted(() => {
               <span v-if="product.price !== null && product.price > 0 && product.unit">/ {{ product.unit }}</span>
             </div>
 
-            <dl class="certification-list">
-              <div>
-                <dt>Số quyết định / chứng nhận</dt>
-                <dd>{{ product.cert_code || 'Chưa cập nhật' }}</dd>
-              </div>
-              <div>
-                <dt>Năm chứng nhận</dt>
-                <dd>{{ product.cert_year || 'Chưa cập nhật' }}</dd>
-              </div>
-              <div>
-                <dt>Ngày cấp</dt>
-                <dd>{{ formatDate(product.cert_issued_at) }}</dd>
-              </div>
-              <div>
-                <dt>Hiệu lực đến</dt>
-                <dd>{{ formatDate(product.cert_expires_at) }}</dd>
-              </div>
-              <div class="certification-authority">
-                <dt>Cơ quan công nhận</dt>
-                <dd>{{ product.issuing_authority || 'Chưa cập nhật' }}</dd>
-              </div>
-              <div v-if="product.vietgap_code">
-                <dt>Mã VietGAP</dt>
-                <dd>{{ product.vietgap_code }}</dd>
-              </div>
-            </dl>
-
-            <aside class="subject-card">
-              <span>Chủ thể sản xuất</span>
-              <strong>{{ product.subject.name }}</strong>
-              <small>{{ product.subject.district }}, Lâm Đồng</small>
+            <RouterLink
+              class="btn btn-success my-3"
+              data-test="experience-cta"
+              :to="{ name: 'product-experience', params: { slug: product.slug } }"
+            >
+              Tìm nơi mua &amp; trải nghiệm
+            </RouterLink>
+            <aside class="ocop-info" aria-labelledby="ocop-info-title">
+              <h2 id="ocop-info-title">Thông tin OCOP</h2>
+              <dl class="certification-list">
+                <div v-if="product.cert_code"><dt>Số quyết định / chứng nhận</dt><dd>{{ product.cert_code }}</dd></div>
+                <div v-if="product.cert_year"><dt>Năm chứng nhận</dt><dd>{{ product.cert_year }}</dd></div>
+                <div v-if="product.cert_issued_at"><dt>Ngày cấp</dt><dd>{{ formatDate(product.cert_issued_at) }}</dd></div>
+                <div v-if="product.cert_expires_at"><dt>Hiệu lực đến</dt><dd>{{ formatDate(product.cert_expires_at) }}</dd></div>
+                <div v-if="product.issuing_authority" class="certification-authority"><dt>Cơ quan công nhận</dt><dd>{{ product.issuing_authority }}</dd></div>
+                <div v-if="product.vietgap_code"><dt>Mã VietGAP</dt><dd>{{ product.vietgap_code }}</dd></div>
+              </dl>
+              <p v-if="!product.cert_code && !product.cert_year && !product.cert_issued_at && !product.cert_expires_at && !product.issuing_authority && !product.vietgap_code" class="metadata-note">Thông tin chứng nhận chi tiết đang cập nhật.</p>
             </aside>
           </div>
         </section>
@@ -229,13 +185,14 @@ onUnmounted(() => {
         <section class="content-section">
           <div v-if="product.story" class="content-block story-block">
             <span class="section-eyebrow">Câu chuyện sản phẩm</span>
-            <h2>Nguồn gốc và giá trị bản địa</h2>
-            <p>{{ product.story }}</p>
+            <h2>Câu chuyện sản phẩm</h2>
+            <p v-if="storyPresentation.text">{{ storyPresentation.text }}</p>
+            <a v-if="storyPresentation.sourceUrl" class="story-source" :href="storyPresentation.sourceUrl" target="_blank" rel="noopener noreferrer">Xem nguồn chính thức</a>
           </div>
 
           <div class="detail-columns">
             <article v-if="product.ingredients" class="content-block">
-              <h2>Thành phần</h2>
+              <h2>Nguồn gốc &amp; thành phần</h2>
               <p>{{ product.ingredients }}</p>
             </article>
             <article v-if="product.usage_instructions" class="content-block">
@@ -244,25 +201,13 @@ onUnmounted(() => {
             </article>
           </div>
 
-          <article v-if="product.related_locations?.length" class="content-block location-block">
-            <span class="section-eyebrow">Trải nghiệm tại điểm đến</span>
-            <h2>Điểm du lịch giới thiệu sản phẩm</h2>
-            <ul>
-              <li v-for="location in product.related_locations" :key="location.id">
-                <div>
-                  <strong>{{ location.name }}</strong>
-                  <span>{{ location.type_label }} · {{ location.district }}</span>
-                </div>
-                <RouterLink :to="{ name: 'location-detail', params: { slug: location.slug } }">
-                  Xem điểm đến
-                </RouterLink>
-              </li>
-            </ul>
-          </article>
+
+
+          <article class="content-block subject-card"><h2>Chủ thể sản xuất</h2><strong>{{ product.subject.name }}</strong><p>{{ product.subject.district }}, Lâm Đồng</p></article>
 
           <article v-if="product.recognition_sources.length" class="content-block source-block">
             <span class="section-eyebrow">Nguồn đối chiếu công khai</span>
-            <h2>Văn bản và nguồn công nhận</h2>
+            <h2>Nguồn thông tin &amp; minh chứng</h2>
             <ul>
               <li v-for="source in product.recognition_sources" :key="source.id">
                 <div>
@@ -277,6 +222,21 @@ onUnmounted(() => {
                 <a :href="source.source_url" target="_blank" rel="noopener noreferrer">
                   Mở nguồn
                 </a>
+              </li>
+            </ul>
+          </article>
+          <article v-if="product.related_locations?.length" class="content-block location-block">
+            <span class="section-eyebrow">Trải nghiệm tại điểm đến</span>
+            <h2>Nơi mua &amp; trải nghiệm</h2>
+            <ul>
+              <li v-for="location in product.related_locations" :key="location.id">
+                <div>
+                  <strong>{{ location.name }}</strong>
+                  <span>{{ location.type_label }} · {{ location.district }}</span>
+                </div>
+                <RouterLink :to="{ name: 'location-detail', params: { slug: location.slug } }">
+                  Xem điểm đến
+                </RouterLink>
               </li>
             </ul>
           </article>
@@ -302,6 +262,15 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
+.product-producer, .metadata-note { color: var(--ocop-text-secondary); }
+.ocop-info { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--ocop-border); }
+.ocop-info h2 { font-size: 1rem; font-weight: 750; }
+.ocop-info:has(.metadata-note) { padding-top: .65rem; }
+.ocop-info:has(.metadata-note) h2 { display: inline; margin-right: .5rem; font-size: .85rem; }
+.ocop-info .metadata-note { display: inline; margin: 0; font-size: .85rem; }
+.ocop-info:has(.metadata-note) .certification-list { display: none; }
+.story-source { display: inline-block; margin-top: .75rem; color: var(--ocop-primary-700); font-size: .9rem; font-weight: 650; }
+
 .detail-page {
   min-height: calc(100vh - 4.5rem);
   background: var(--ocop-surface);
@@ -324,63 +293,6 @@ onUnmounted(() => {
 .detail-loading {
   display: grid;
   gap: 2.5rem;
-}
-
-.main-image {
-  overflow: hidden;
-  aspect-ratio: 1 / 0.78;
-  border-radius: 1.4rem;
-  background: var(--ocop-sage-50);
-}
-
-.main-image img,
-.image-placeholder {
-  width: 100%;
-  height: 100%;
-}
-
-.main-image img {
-  object-fit: cover;
-}
-
-.image-placeholder {
-  display: grid;
-  place-items: center;
-  background:
-    radial-gradient(circle at 68% 25%, color-mix(in srgb, var(--ocop-lime-100) 90%, transparent), transparent 12rem),
-    linear-gradient(145deg, var(--ocop-sage-50), var(--ocop-sage-200));
-  color: var(--ocop-primary-700);
-  font-size: 1.6rem;
-  font-weight: 800;
-  letter-spacing: 0.2em;
-}
-
-.thumbnail-list {
-  display: flex;
-  gap: 0.75rem;
-  margin-top: 0.85rem;
-  overflow-x: auto;
-}
-
-.thumbnail {
-  width: 4.5rem;
-  height: 4.5rem;
-  flex: 0 0 auto;
-  overflow: hidden;
-  padding: 0;
-  border: 2px solid transparent;
-  border-radius: 0.75rem;
-  background: var(--ocop-card);
-}
-
-.thumbnail.active {
-  border-color: var(--ocop-primary-700);
-}
-
-.thumbnail img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
 }
 
 .badge-row,
@@ -406,6 +318,8 @@ onUnmounted(() => {
 }
 
 .ocop-badge {
+  border: 1px solid var(--ocop-warning-strong);
+  font-size: .95rem;
   background: var(--ocop-warning-surface);
   color: var(--ocop-warning-strong);
 }
@@ -456,15 +370,8 @@ onUnmounted(() => {
 .certification-list {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
-  gap: 0.75rem;
-  margin: 1.25rem 0;
-}
-
-.certification-list div {
-  padding: 0.75rem;
-  border: 1px solid var(--ocop-border);
-  border-radius: 0.75rem;
-  background: var(--ocop-card);
+  gap: .5rem 1rem;
+  margin: .5rem 0;
 }
 
 .certification-list .certification-authority {

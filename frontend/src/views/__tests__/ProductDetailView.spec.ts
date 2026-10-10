@@ -75,6 +75,59 @@ const product: ProductDetail = {
 }
 
 describe('ProductDetailView', () => {
+  it.each(['https://dehavi.com/valley', 'javascript:alert(1)'])('separates story source and validates %s', async (url) => {
+    vi.mocked(getProduct).mockResolvedValue({ ...product, story: `Câu chuyện sản phẩm. Nguồn sản phẩm: ${url}` })
+    const wrapper = mountDetail()
+    await flushPromises()
+    expect(wrapper.get('.story-block p').text()).toBe('Câu chuyện sản phẩm.')
+    expect(wrapper.get('.story-block').text()).not.toContain(url)
+    if (url.startsWith('https:')) {
+      expect(wrapper.get('.story-source').attributes('href')).toBe(url)
+      expect(wrapper.get('.story-source').attributes('target')).toBe('_blank')
+      expect(wrapper.get('.story-source').attributes('rel')).toBe('noopener noreferrer')
+    } else {
+      expect(wrapper.find('.story-source').exists()).toBe(false)
+    }
+  })
+  it('prioritizes primary image, changes gallery and attributes the selected image', async () => {
+    vi.mocked(getProduct).mockResolvedValue({ ...product, images: [
+      { id: 2, image_url: 'https://example.com/secondary.jpg', is_primary: false, sort_order: 0 },
+      { ...product.images[0]!, sort_order: 1, source_url: 'https://example.com/image-source', credit: 'Chủ thể', license: 'Được cho phép' },
+    ] })
+    const wrapper = mountDetail()
+    await flushPromises()
+    expect(wrapper.get('.main-image img').attributes('src')).toBe(product.images[0]!.image_url)
+    expect(wrapper.get('.main-image img').attributes('alt')).toBe(product.name)
+    expect(wrapper.get('.image-credit').text()).toContain('Được cho phép')
+    expect(wrapper.get('.image-credit a').attributes('rel')).toBe('noopener noreferrer')
+    const thumbnails = wrapper.findAll('.thumbnail')
+    expect(thumbnails[0]!.attributes('aria-pressed')).toBe('true')
+    await thumbnails[1]!.trigger('click')
+    expect(wrapper.get('.main-image img').attributes('src')).toBe('https://example.com/secondary.jpg')
+    expect(wrapper.find('.image-credit').exists()).toBe(false)
+  })
+  it('keeps missing image and certification information compact without invented values', async () => {
+    vi.mocked(getProduct).mockResolvedValue({ ...product, images: [], primary_image_url: null,
+      cert_code: null, cert_year: null, cert_issued_at: null, cert_expires_at: null, issuing_authority: null,
+      recognition_sources: [], related_locations: [],
+    })
+    const wrapper = mountDetail()
+    await flushPromises()
+    expect(wrapper.get('.gallery').classes()).toContain('without-image')
+    expect(wrapper.get('.image-placeholder').text()).toBe('Ảnh sản phẩm đang cập nhật')
+    expect(wrapper.find('.main-image img').exists()).toBe(false)
+    expect(wrapper.get('.ocop-info h2').text()).toBe('Thông tin OCOP')
+    expect(wrapper.findAll('.certification-list div')).toHaveLength(0)
+    expect(wrapper.get('.metadata-note').text()).toContain('đang cập nhật')
+    expect(wrapper.find('.source-block').exists()).toBe(false)
+    expect(wrapper.text()).not.toContain('Chưa cập nhật')
+  })
+  it('uses primary_image_url when the image collection is empty', async () => {
+    vi.mocked(getProduct).mockResolvedValue({ ...product, images: [] })
+    const wrapper = mountDetail()
+    await flushPromises()
+    expect(wrapper.get('.main-image img').attributes('src')).toBe(product.primary_image_url)
+  })
   it('links to experience finder for the current product even without locations', async () => {
     vi.mocked(getProduct).mockResolvedValue({ ...product, related_locations: [] })
     const wrapper = mountDetail()

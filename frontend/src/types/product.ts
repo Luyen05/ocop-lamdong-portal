@@ -11,6 +11,9 @@ export interface ProductSubject {
 }
 
 export interface ProductImage {
+  source_url?: string | null
+  credit?: string | null
+  license?: string | null
   id: number
   image_url: string
   is_primary: boolean

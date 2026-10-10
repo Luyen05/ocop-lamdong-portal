@@ -1,12 +1,14 @@
 // @vitest-environment jsdom
 import { AxiosError, AxiosHeaders } from 'axios'
-import { flushPromises, mount } from '@vue/test-utils'
+import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils'
 import { defineComponent, reactive } from 'vue'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import LocationDetailView from '@/views/LocationDetailView.vue'
 import { getLocation } from '@/services/locations'
 import type { LocationDetail } from '@/types/location'
+
+enableAutoUnmount(afterEach)
 
 const route = reactive({ params: { slug: 'cau-dat-farm' } })
 
@@ -50,11 +52,13 @@ const LeafletMapStub = defineComponent({
   template: '<div class="map-stub" />',
 })
 
+const RouterLinkStub = defineComponent({ name: 'RouterLink', props: ['to'], template: '<a><slot /></a>' })
+
 const mountView = () =>
   mount(LocationDetailView, {
     global: {
       stubs: {
-        RouterLink: { props: ['to'], template: '<a><slot /></a>' },
+        RouterLink: RouterLinkStub,
         LeafletMap: LeafletMapStub,
         ProductCard: true,
       },
@@ -97,5 +101,42 @@ describe('LocationDetailView', () => {
 
     expect(wrapper.get('h1').text()).toBe('Không tìm thấy điểm du lịch')
     expect(wrapper.text()).toContain('Không tìm thấy điểm du lịch.')
+  })
+  it('keeps missing imagery compact and separates selected map from external directions', async () => {
+    vi.mocked(getLocation).mockResolvedValue(detail)
+    const wrapper = mountView()
+    await flushPromises()
+    expect(wrapper.get('.gallery').classes()).toContain('without-image')
+    expect(wrapper.get('.image-placeholder').text()).toBe('Ảnh điểm đến đang cập nhật')
+    expect(wrapper.find('.main-image img').exists()).toBe(false)
+    const mapLink = wrapper.findAllComponents(RouterLinkStub).find(link => link.props('to')?.name === 'map')
+    expect(mapLink?.props('to')).toEqual({ name: 'map', query: { diem: detail.slug } })
+    expect(wrapper.get('a[href*="google.com/maps/dir"]').attributes('target')).toBe('_blank')
+  })
+  it('renders real gallery attribution and product relations supplied by API', async () => {
+    const related = {
+      id: 7, name: 'Sản phẩm tại điểm đến', slug: 'san-pham-tai-diem-den', star: 4,
+      price: null, unit: null, description: '', rating_avg: 0, vietgap_code: null, primary_image_url: null,
+      category: { id: 1, name: 'Đồ uống', slug: 'do-uong' },
+      subject: { id: 1, name: 'Chủ thể', district: 'Đà Lạt' }, created_at: '',
+    }
+    vi.mocked(getLocation).mockResolvedValue({ ...detail, products: [related], images: [
+      { id: 1, image_url: 'https://example.com/farm.jpg', is_primary: true, sort_order: 0,
+        source_url: 'https://example.com/source', credit: 'Chủ điểm đến', license: 'Được cho phép' },
+    ] })
+    const wrapper = mountView()
+    await flushPromises()
+    expect(wrapper.get('.main-image img').attributes('src')).toBe('https://example.com/farm.jpg')
+    expect(wrapper.get('.main-image img').attributes('alt')).toBe(detail.name)
+    expect(wrapper.get('.image-credit').text()).toContain('Chủ điểm đến')
+    expect(wrapper.get('#location-products-title').text()).toBe('Sản phẩm OCOP tại điểm này')
+    expect(wrapper.getComponent({ name: 'ProductCard' }).props('product')).toEqual(related)
+    expect(wrapper.get('.product-grid').classes()).toContain('product-grid-spacious')
+    expect(wrapper.get('.related-product-cta').text()).toBe('Xem sản phẩm')
+    const productLink = wrapper.findAllComponents(RouterLinkStub).find(link => link.classes().includes('related-product-cta'))
+    expect(productLink?.props('to')).toEqual({ name: 'product-detail', params: { slug: related.slug } })
+    await wrapper.get('.main-image img').trigger('error')
+    expect(wrapper.find('.image-placeholder').exists()).toBe(true)
+    expect(wrapper.find('.image-credit').exists()).toBe(false)
   })
 })
