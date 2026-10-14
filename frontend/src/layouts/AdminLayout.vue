@@ -65,6 +65,10 @@ watch(() => route.fullPath, loadNotifications)
     :page-subtitle="pageSubtitle"
     :notifications="notifications"
   >
-    <RouterView />
+    <RouterView v-slot="{ Component, route: childRoute }">
+      <Transition name="ocop-rise" mode="out-in">
+        <component :is="Component" :key="childRoute.path" />
+      </Transition>
+    </RouterView>
   </PortalShell>
 </template>

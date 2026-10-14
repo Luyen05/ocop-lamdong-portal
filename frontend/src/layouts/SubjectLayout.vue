@@ -49,6 +49,10 @@ const pageSubtitle = computed(() => subtitles[String(route.name)] ?? '')
     :page-title="pageTitle"
     :page-subtitle="pageSubtitle"
   >
-    <RouterView />
+    <RouterView v-slot="{ Component, route: childRoute }">
+      <Transition name="ocop-rise" mode="out-in">
+        <component :is="Component" :key="childRoute.path" />
+      </Transition>
+    </RouterView>
   </PortalShell>
 </template>

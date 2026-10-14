@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useRoute } from 'vue-router'
+import { useRoute, type RouteLocationNormalizedLoaded } from 'vue-router'
 
 import AppHeader from '@/components/AppHeader.vue'
 import MobileTabBar from '@/components/MobileTabBar.vue'
@@ -7,6 +7,14 @@ import SiteFooter from '@/components/SiteFooter.vue'
 import ScrollToTop from '@/components/ui/ScrollToTop.vue'
 
 const route = useRoute()
+
+// Khu quản trị và chủ thể giữ nguyên khung (thanh bên, đầu trang) khi đổi trang con;
+// chỉ phần nội dung bên trong chuyển cảnh. Trang công khai vẫn dựng lại theo đường dẫn.
+function routeKey(current: RouteLocationNormalizedLoaded): string {
+  const layout = current.meta.layout
+  if ((layout === 'admin' || layout === 'subject') && current.matched[0]) return current.matched[0].path
+  return current.path
+}
 </script>
 
 <template>
@@ -15,7 +23,7 @@ const route = useRoute()
   />
   <RouterView v-slot="{ Component, route: currentRoute }">
     <Transition name="route" mode="out-in">
-      <component :is="Component" :key="currentRoute.path" />
+      <component :is="Component" :key="routeKey(currentRoute)" />
     </Transition>
   </RouterView>
   <SiteFooter
