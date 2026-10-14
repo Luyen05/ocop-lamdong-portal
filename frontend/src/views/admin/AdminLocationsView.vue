@@ -590,10 +590,10 @@ onMounted(loadList)
   font-size: var(--admin-font-sm);
   font-weight: 500;
 }
-.notice.is-success { background: var(--admin-success-soft); color: var(--admin-success-text); border: 1px solid #A7F3D0; }
-.notice.is-error   { background: var(--admin-danger-soft); color: var(--admin-danger-text); border: 1px solid #FECACA; }
-.notice.is-info    { background: var(--admin-info-soft); color: var(--admin-info-text); border: 1px solid #BFDBFE; }
-.notice.is-warning { background: var(--admin-warning-soft); color: var(--admin-warning-text); border: 1px solid #FDE68A; }
+.notice.is-success { background: var(--admin-success-soft); color: var(--admin-success-text); border: 1px solid var(--admin-success-border); }
+.notice.is-error   { background: var(--admin-danger-soft); color: var(--admin-danger-text); border: 1px solid var(--admin-danger-border); }
+.notice.is-info    { background: var(--admin-info-soft); color: var(--admin-info-text); border: 1px solid var(--admin-info-border); }
+.notice.is-warning { background: var(--admin-warning-soft); color: var(--admin-warning-text); border: 1px solid var(--admin-warning-border); }
 
 /* ── Tabs ── */
 .tabs {
@@ -619,7 +619,7 @@ onMounted(loadList)
 .tabs button[aria-pressed='true'] {
   border-color: var(--admin-primary);
   background: var(--admin-primary);
-  color: #fff;
+  color: var(--ocop-white);
 }
 .count {
   display: inline-flex;
@@ -629,7 +629,7 @@ onMounted(loadList)
   height: 20px;
   padding: 0 5px;
   border-radius: var(--admin-radius-pill);
-  background: rgba(255,255,255,0.22);
+  background: color-mix(in srgb, var(--ocop-white) 22%, transparent);
   font-size: 11px;
   font-weight: 800;
 }
@@ -689,9 +689,9 @@ onMounted(loadList)
   font-weight: 700;
   border: 1px solid var(--admin-border);
 }
-.tag.is-warning { background: var(--admin-warning-soft); color: var(--admin-warning-text); border-color: #FDE68A; }
-.tag.is-danger  { background: var(--admin-danger-soft); color: var(--admin-danger-text); border-color: #FECACA; }
-.tag.is-sky     { background: var(--admin-info-soft); color: var(--admin-info-text); border-color: #BFDBFE; }
+.tag.is-warning { background: var(--admin-warning-soft); color: var(--admin-warning-text); border-color: var(--admin-warning-border); }
+.tag.is-danger  { background: var(--admin-danger-soft); color: var(--admin-danger-text); border-color: var(--admin-danger-border); }
+.tag.is-sky     { background: var(--admin-info-soft); color: var(--admin-info-text); border-color: var(--admin-info-border); }
 
 /* ── State messages ── */
 .state {
@@ -815,7 +815,7 @@ onMounted(loadList)
 .compare thead th { padding: 9px 14px; background: var(--admin-bg); color: var(--admin-muted); font-size: var(--admin-font-xs); font-weight: 700; text-align: left; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 1px solid var(--admin-border); }
 .compare tbody tr { border-bottom: 1px solid var(--admin-border-soft); }
 .compare tbody tr:last-child { border-bottom: 0; }
-.compare tbody tr.changed { background: #FEF9C3; }
+.compare tbody tr.changed { background: var(--admin-highlight); }
 .compare th[scope='row'] { padding: 9px 14px; color: var(--admin-muted); font-weight: 700; white-space: nowrap; }
 .compare td { padding: 9px 14px; color: var(--admin-text); overflow-wrap: anywhere; }
 
@@ -851,10 +851,10 @@ onMounted(loadList)
 .decision-option.active { border-color: var(--admin-primary); background: var(--admin-primary-soft); }
 .decision-option.active strong { color: var(--admin-primary); }
 .decision-option.is-rejected.active,
-.decision-option.is-suspended.active { border-color: #FECACA; background: var(--admin-danger-soft); }
+.decision-option.is-suspended.active { border-color: var(--admin-danger-border); background: var(--admin-danger-soft); }
 .decision-option.is-rejected.active strong,
 .decision-option.is-suspended.active strong { color: var(--admin-danger-text); }
-.decision-option.is-needs_revision.active { border-color: #FDE68A; background: var(--admin-warning-soft); }
+.decision-option.is-needs_revision.active { border-color: var(--admin-warning-border); background: var(--admin-warning-soft); }
 .decision-option.is-needs_revision.active strong { color: var(--admin-warning-text); }
 
 .decision label { display: grid; gap: 5px; font-size: var(--admin-font-xs); font-weight: 700; color: var(--admin-muted); text-transform: uppercase; }
@@ -871,7 +871,7 @@ onMounted(loadList)
   border: 0;
   border-radius: var(--admin-radius-sm);
   background: var(--admin-primary);
-  color: #fff;
+  color: var(--ocop-white);
   font-size: var(--admin-font-sm);
   font-weight: 700;
   cursor: pointer;
@@ -879,9 +879,9 @@ onMounted(loadList)
 }
 .btn-submit:hover { background: var(--admin-primary-dark); }
 .btn-submit.is-rejected, .btn-submit.is-suspended { background: var(--admin-danger); }
-.btn-submit.is-rejected:hover, .btn-submit.is-suspended:hover { background: #DC2626; }
+.btn-submit.is-rejected:hover, .btn-submit.is-suspended:hover { background: var(--admin-danger-hover); }
 .btn-submit.is-needs_revision { background: var(--admin-warning); }
-.btn-submit.is-needs_revision:hover { background: #D97706; }
+.btn-submit.is-needs_revision:hover { background: var(--admin-warning-hover); }
 .btn-submit:disabled { cursor: not-allowed; opacity: 0.6; }
 
 /* Focus ring */
