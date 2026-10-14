@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 
 import ProductEvidenceManager from '@/components/admin/ProductEvidenceManager.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
+import StatusPanel from '@/components/ui/StatusPanel.vue'
 import { useDialogFocus } from '@/composables/useDialogFocus'
 import { getApiErrorMessage } from '@/services/api-error'
 import {
@@ -50,6 +51,7 @@ const pageSize = 20
 const requests = ref<ProductChangeRequest[]>([])
 const loading = ref(true)
 const errorMessage = ref('')
+const loadError = ref('')
 const successMessage = ref('')
 const activeTab = ref<'products' | 'changes'>('products')
 const selectedProduct = ref<ManagedProduct | null>(null)
@@ -114,7 +116,7 @@ function buildProductFilters(): AdminProductFilters {
 
 async function loadData(): Promise<void> {
   loading.value = true
-  errorMessage.value = ''
+  loadError.value = ''
   try {
     const [productData, requestData] = await Promise.all([
       listAdminProducts(buildProductFilters()),
@@ -124,7 +126,7 @@ async function loadData(): Promise<void> {
     productTotal.value = productData.total
     requests.value = requestData.items
   } catch (error) {
-    errorMessage.value = getApiErrorMessage(error, 'Không thể tải dữ liệu quản lý sản phẩm.')
+    loadError.value = getApiErrorMessage(error, 'Không thể tải dữ liệu quản lý sản phẩm.')
   } finally {
     loading.value = false
   }
@@ -321,8 +323,12 @@ onMounted(loadData)
       <div class="summary-badge">{{ pendingProducts.length + pendingRequests.length }} yêu cầu chờ xử lý</div>
     </header>
 
-    <div v-if="errorMessage" class="alert alert-danger" role="alert">{{ errorMessage }}</div>
-    <div v-if="successMessage" class="alert alert-success" role="status">{{ successMessage }}</div>
+    <Transition name="ocop-rise">
+      <div v-if="errorMessage" class="alert alert-danger" role="alert">{{ errorMessage }}</div>
+    </Transition>
+    <Transition name="ocop-rise">
+      <div v-if="successMessage" class="alert alert-success" role="status">{{ successMessage }}</div>
+    </Transition>
 
     <nav class="tab-list" aria-label="Loại dữ liệu sản phẩm">
       <button :class="{ active: activeTab === 'products' }" type="button" @click="activeTab = 'products'">
@@ -386,10 +392,11 @@ onMounted(loadData)
       </div>
     </form>
 
-    <section class="queue-panel">
-      <p v-if="loading" class="empty-state">Đang tải dữ liệu...</p>
+    <section class="queue-panel stagger-in">
+      <StatusPanel v-if="loading" kind="loading" :rows="4" message="Đang tải dữ liệu sản phẩm…" />
+      <StatusPanel v-else-if="loadError" kind="error" :message="loadError" @retry="loadData" />
       <template v-else-if="activeTab === 'products'">
-        <p v-if="!products.length" class="empty-state">Không tìm thấy sản phẩm phù hợp bộ lọc.</p>
+        <StatusPanel v-if="!products.length" kind="empty" title="Không tìm thấy sản phẩm phù hợp bộ lọc" message="Thử bỏ bớt điều kiện lọc hoặc đổi trạng thái." />
         <article v-for="product in products" v-else :key="product.id">
           <img
             v-if="product.images.find((image) => image.is_primary)?.image_url && !brokenProductImages.has(product.id)"
@@ -423,7 +430,7 @@ onMounted(loadData)
         </nav>
       </template>
       <template v-else>
-        <p v-if="!requests.length" class="empty-state">Chưa có yêu cầu thay đổi sản phẩm.</p>
+        <StatusPanel v-if="!requests.length" kind="empty" title="Chưa có yêu cầu thay đổi sản phẩm" />
         <article v-for="request in requests" v-else :key="request.id">
           <span class="request-symbol"><AppIcon :name="request.request_type === 'update' ? 'refresh' : 'close'" :size="16" /></span>
           <div>
@@ -439,6 +446,7 @@ onMounted(loadData)
       </template>
     </section>
 
+    <Transition name="ocop-fade">
     <div v-if="selectedProduct || selectedRequest" class="modal-backdrop" role="presentation" @click.self="closeModal()">
       <form
         ref="reviewDialog"
@@ -582,6 +590,7 @@ onMounted(loadData)
         </footer>
       </form>
     </div>
+    </Transition>
   </main>
 </template>
 
@@ -777,7 +786,6 @@ onMounted(loadData)
 .level-chip { background: var(--admin-primary-soft); color: var(--admin-primary); }
 
 /* ── Empty ── */
-.empty-state { padding: 60px 20px; color: var(--admin-muted); text-align: center; font-size: var(--admin-font-base); }
 
 /* ══════════ MODAL ══════════ */
 .modal-backdrop {
