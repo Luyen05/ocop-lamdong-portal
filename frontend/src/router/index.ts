@@ -4,6 +4,7 @@ import { AUTH_SESSION_EXPIRED_EVENT } from '@/services/token'
 import { authStore } from '@/stores/auth'
 import HomeView from '@/views/HomeView.vue'
 import { resolveRouteAccess } from '@/router/access'
+import { scrollBehavior } from '@/utils/motion'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -173,8 +174,11 @@ const router = createRouter({
       component: () => import('@/views/NotFoundView.vue'),
     },
   ],
-  scrollBehavior: (to) =>
-    to.hash ? { el: to.hash, behavior: 'smooth' } : { top: 0 },
+  // Quay lại trang trước thì giữ vị trí cuộn cũ; cuộn tới #neo thì mượt trừ khi người dùng giảm chuyển động.
+  scrollBehavior: (to, _from, savedPosition) => {
+    if (savedPosition) return savedPosition
+    return to.hash ? { el: to.hash, behavior: scrollBehavior() } : { top: 0 }
+  },
 })
 
 router.beforeEach(async (to) => {

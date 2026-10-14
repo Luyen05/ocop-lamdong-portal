@@ -15,6 +15,7 @@ import type {
   LocationTypeOption,
 } from '@/types/location'
 import { isLocationType, sortVietnamese } from '@/utils/location'
+import { scrollBehavior } from '@/utils/motion'
 
 const route = useRoute()
 const router = useRouter()
@@ -126,7 +127,7 @@ async function clearFilters(): Promise<void> {
 async function goToPage(page: number): Promise<void> {
   if (page < 1 || page > totalPages.value || page === currentPage.value) return
   await router.push({ name: 'locations', query: filterQuery(page) })
-  window.scrollTo({ top: 0, behavior: 'smooth' })
+  window.scrollTo({ top: 0, behavior: scrollBehavior() })
 }
 
 watch(
