@@ -2,6 +2,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 
 import AppIcon from '@/components/ui/AppIcon.vue'
+import StatusPanel from '@/components/ui/StatusPanel.vue'
 import { useDialogFocus } from '@/composables/useDialogFocus'
 import { getApiErrorMessage } from '@/services/api-error'
 import {
@@ -160,21 +161,15 @@ onMounted(loadApplications)
       <button class="btn btn-success" type="submit">Tìm kiếm</button>
     </form>
 
-    <div v-if="errorMessage" class="alert alert-danger" role="alert">
-      {{ errorMessage }}
-      <button class="btn btn-sm btn-outline-danger ms-2" type="button" @click="loadApplications">
-        Thử lại
-      </button>
-    </div>
-
     <section class="table-card">
-      <div v-if="isLoading" class="state-row" aria-live="polite">
-        <span class="spinner-border spinner-border-sm" aria-hidden="true" />
-        Đang tải hồ sơ...
-      </div>
-      <div v-else-if="applications.length === 0" class="state-row">
-        Không có hồ sơ phù hợp với bộ lọc.
-      </div>
+      <StatusPanel v-if="isLoading" kind="loading" :rows="3" message="Đang tải hồ sơ…" />
+      <StatusPanel v-else-if="errorMessage" kind="error" :message="errorMessage" @retry="loadApplications" />
+      <StatusPanel
+        v-else-if="applications.length === 0"
+        kind="empty"
+        title="Không có hồ sơ phù hợp với bộ lọc"
+        message="Đổi trạng thái hoặc từ khóa để xem hồ sơ khác."
+      />
       <div v-else class="table-responsive">
         <table class="table align-middle mb-0">
           <thead>
@@ -429,10 +424,6 @@ onMounted(loadApplications)
 .btn-sm { height: 32px; padding: 0 12px; font-size: var(--admin-font-xs); }
 
 /* ── State row ── */
-.state-row { display: flex; min-height: 200px; align-items: center; justify-content: center; gap: 10px; color: var(--admin-muted); font-size: var(--admin-font-base); }
-.spinner-border { display: inline-block; width: 20px; height: 20px; border: 3px solid var(--admin-border); border-top-color: var(--admin-primary); border-radius: 50%; animation: spin 0.7s linear infinite; }
-.spinner-border-sm { width: 16px; height: 16px; border-width: 2px; }
-@keyframes spin { to { transform: rotate(360deg); } }
 
 /* ── Pagination ── */
 .pagination-bar { display: flex; align-items: center; justify-content: flex-end; gap: var(--admin-space-3); padding: var(--admin-space-3) 0; color: var(--admin-muted); font-size: var(--admin-font-sm); font-weight: 600; }
