@@ -19,7 +19,7 @@ defineProps<{
         </span>
       </RouterLink>
 
-      <section class="auth-card mt-4 mt-lg-5">
+      <section class="auth-card ocop-enter mt-4 mt-lg-5">
         <div class="auth-intro d-none d-lg-flex">
           <div>
             <span class="eyebrow">Đặc sản từ cao nguyên</span>

@@ -427,6 +427,11 @@ img {
   opacity: 0;
 }
 
+/* Khối chính của trang đơn (đăng nhập, 404, không có quyền) trượt lên khi mở trang. */
+.ocop-enter {
+  animation: ocop-rise-in var(--ocop-duration-slow) var(--ocop-ease-out) both;
+}
+
 /* Khung xương khi đang tải: dải sáng chạy ngang, tắt khi giảm chuyển động. */
 .ocop-skeleton {
   display: block;
