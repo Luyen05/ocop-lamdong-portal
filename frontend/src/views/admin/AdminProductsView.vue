@@ -624,7 +624,7 @@ onMounted(loadData)
 .tab-list button.active {
   border-color: var(--admin-primary);
   background: var(--admin-primary);
-  color: #fff;
+  color: var(--ocop-white);
 }
 .tab-list span {
   display: inline-flex;
@@ -634,7 +634,7 @@ onMounted(loadData)
   height: 20px;
   padding: 0 5px;
   border-radius: var(--admin-radius-pill);
-  background: rgba(255,255,255,0.22);
+  background: color-mix(in srgb, var(--ocop-white) 22%, transparent);
   font-size: 11px;
   font-weight: 800;
 }
@@ -683,7 +683,7 @@ onMounted(loadData)
 .filter-actions .primary-button {
   border-color: var(--admin-primary);
   background: var(--admin-primary);
-  color: #fff;
+  color: var(--ocop-white);
 }
 .filter-actions .primary-button:hover { background: var(--admin-primary-dark); }
 
@@ -698,8 +698,8 @@ onMounted(loadData)
   font-size: var(--admin-font-sm);
   font-weight: 500;
 }
-.alert-danger { background: var(--admin-danger-soft); color: var(--admin-danger-text); border: 1px solid #FECACA; }
-.alert-success { background: var(--admin-success-soft); color: var(--admin-success-text); border: 1px solid #A7F3D0; }
+.alert-danger { background: var(--admin-danger-soft); color: var(--admin-danger-text); border: 1px solid var(--admin-danger-border); }
+.alert-success { background: var(--admin-success-soft); color: var(--admin-success-text); border: 1px solid var(--admin-success-border); }
 
 /* ── Queue panel ── */
 .queue-panel {
@@ -796,7 +796,7 @@ onMounted(loadData)
   padding: var(--admin-space-5);
   place-items: center;
   overflow-y: auto;
-  background: rgba(30, 42, 71, 0.55);
+  background: var(--admin-scrim);
   backdrop-filter: blur(4px);
 }
 .review-modal {
@@ -856,9 +856,9 @@ onMounted(loadData)
 
 .document-links { display: flex; margin-top: var(--admin-space-3); gap: var(--admin-space-2); flex-wrap: wrap; }
 .document-links a, .document-links button { padding: 8px 12px; border-radius: var(--admin-radius-sm); background: var(--admin-info-soft); color: var(--admin-info-text); font-size: var(--admin-font-sm); font-weight: 700; text-decoration: none; border: 0; cursor: pointer; }
-.document-links a:hover, .document-links button:hover { background: #DBEAFE; }
+.document-links a:hover, .document-links button:hover { background: var(--admin-info-soft); }
 
-.review-warnings { margin-top: var(--admin-space-3); padding: var(--admin-space-3) var(--admin-space-4); border: 1px solid #FED7AA; border-radius: var(--admin-radius-md); background: #FFF7ED; color: #9A3412; font-size: var(--admin-font-sm); }
+.review-warnings { margin-top: var(--admin-space-3); padding: var(--admin-space-3) var(--admin-space-4); border: 1px solid var(--admin-warning-border); border-radius: var(--admin-radius-md); background: var(--admin-warning-soft); color: var(--admin-warning-text); font-size: var(--admin-font-sm); }
 .review-warnings ul { margin: 6px 0 0; padding-left: 18px; }
 .workflow-guide { margin: var(--admin-space-4) 0 0; padding: var(--admin-space-3) var(--admin-space-4); border: 1px solid var(--admin-info-soft); border-radius: var(--admin-radius-md); background: var(--admin-info-soft); color: var(--admin-info-text); font-size: var(--admin-font-sm); line-height: 1.55; }
 
@@ -892,8 +892,8 @@ onMounted(loadData)
 .comparison-row:last-child { border-bottom: 0; }
 .comparison-row > span { overflow-wrap: anywhere; color: var(--admin-text); }
 .comparison-header { background: var(--admin-bg); color: var(--admin-muted); font-weight: 700; font-size: var(--admin-font-xs); text-transform: uppercase; letter-spacing: 0.04em; }
-.comparison-row.changed { background: #FEF9C3; }
-.comparison-row.changed > strong { color: #713F12; }
+.comparison-row.changed { background: var(--admin-highlight); }
+.comparison-row.changed > strong { color: var(--admin-warning-text); }
 
 /* Decision box */
 .decision-box { display: grid; margin-top: var(--admin-space-4); gap: var(--admin-space-3); }
@@ -901,13 +901,13 @@ onMounted(loadData)
 .decision-options button { padding: 11px var(--admin-space-3); }
 .decision-options button.active { border-color: var(--admin-primary); background: var(--admin-primary-soft); color: var(--admin-primary); }
 .exception-toggle { justify-self: start; border: 0 !important; color: var(--admin-muted) !important; text-decoration: underline; font-size: var(--admin-font-sm) !important; }
-.reject-option { justify-self: start; border-color: #FECACA !important; color: var(--admin-danger-text) !important; }
+.reject-option { justify-self: start; border-color: var(--admin-danger-border) !important; color: var(--admin-danger-text) !important; }
 .reject-option.active { background: var(--admin-danger-soft) !important; }
 .decision-box label { display: grid; gap: 5px; color: var(--admin-muted); font-size: var(--admin-font-xs); font-weight: 700; }
 .decision-box select, .decision-box textarea { padding: 9px 12px; border: 1px solid var(--admin-border); border-radius: var(--admin-radius-sm); font-size: var(--admin-font-sm); color: var(--admin-text); }
 .decision-box textarea { resize: vertical; }
 .review-modal footer { display: flex; margin-top: var(--admin-space-4); justify-content: flex-end; gap: var(--admin-space-2); padding-top: var(--admin-space-4); border-top: 1px solid var(--admin-border-soft); }
-.review-modal .submit-button { border-color: var(--admin-primary) !important; background: var(--admin-primary) !important; color: #fff !important; }
+.review-modal .submit-button { border-color: var(--admin-primary) !important; background: var(--admin-primary) !important; color: var(--ocop-white) !important; }
 .review-modal .submit-button:hover { background: var(--admin-primary-dark) !important; }
 
 /* ── Responsive ── */
