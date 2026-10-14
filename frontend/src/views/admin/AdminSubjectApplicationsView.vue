@@ -361,19 +361,19 @@ onMounted(loadApplications)
   background: var(--admin-card);
   color: var(--admin-text);
 }
-.btn-success { border-color: var(--admin-success); background: var(--admin-success); color: #fff; }
-.btn-success:hover { background: #059669; }
-.btn-danger { border-color: var(--admin-danger); background: var(--admin-danger); color: #fff; }
-.btn-danger:hover { background: #DC2626; }
+.btn-success { border-color: var(--admin-success); background: var(--admin-success); color: var(--ocop-white); }
+.btn-success:hover { background: var(--admin-success-hover); }
+.btn-danger { border-color: var(--admin-danger); background: var(--admin-danger); color: var(--ocop-white); }
+.btn-danger:hover { background: var(--admin-danger-hover); }
 .btn-light, .btn-sm { background: var(--admin-bg); color: var(--admin-muted); }
 .btn-light:hover { border-color: var(--admin-primary); color: var(--admin-primary); }
-.btn-outline-danger { border-color: #FECACA; background: transparent; color: var(--admin-danger-text); }
+.btn-outline-danger { border-color: var(--admin-danger-border); background: transparent; color: var(--admin-danger-text); }
 .btn-outline-danger:hover { background: var(--admin-danger-soft); }
 .btn:disabled { cursor: not-allowed; opacity: 0.5; }
 
 /* ── Alert ── */
 .alert { display: flex; align-items: center; gap: var(--admin-space-3); padding: var(--admin-space-3) var(--admin-space-4); border-radius: var(--admin-radius-md); font-size: var(--admin-font-sm); }
-.alert-danger { background: var(--admin-danger-soft); color: var(--admin-danger-text); border: 1px solid #FECACA; }
+.alert-danger { background: var(--admin-danger-soft); color: var(--admin-danger-text); border: 1px solid var(--admin-danger-border); }
 
 /* ── Table card ── */
 .table-card {
@@ -429,7 +429,7 @@ onMounted(loadApplications)
 .pagination-bar { display: flex; align-items: center; justify-content: flex-end; gap: var(--admin-space-3); padding: var(--admin-space-3) 0; color: var(--admin-muted); font-size: var(--admin-font-sm); font-weight: 600; }
 
 /* ── Modal ── */
-.modal-layer { position: fixed; z-index: 200; inset: 0; display: grid; padding: var(--admin-space-5); place-items: center; overflow-y: auto; background: rgba(30, 42, 71, 0.55); backdrop-filter: blur(4px); }
+.modal-layer { position: fixed; z-index: 200; inset: 0; display: grid; padding: var(--admin-space-5); place-items: center; overflow-y: auto; background: var(--admin-scrim); backdrop-filter: blur(4px); }
 .moderation-dialog {
   width: min(100%, 720px);
   max-height: calc(100vh - 40px);
