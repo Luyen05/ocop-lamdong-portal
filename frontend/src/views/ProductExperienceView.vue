@@ -132,7 +132,6 @@ watch(() => route.params.slug, (slug) => {
 
 onUnmounted(() => {
   generation++
-  document.title = 'OCOP Lâm Đồng'
 })
 </script>
 

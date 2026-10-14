@@ -96,7 +96,6 @@ watch(
 
 onUnmounted(() => {
   latestRequestId++
-  document.title = 'OCOP Lâm Đồng'
 })
 </script>
 

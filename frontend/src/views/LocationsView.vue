@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import LocationCard from '@/components/locations/LocationCard.vue'
@@ -144,9 +144,6 @@ onMounted(() => {
   document.title = 'Điểm du lịch nông nghiệp | OCOP Lâm Đồng'
 })
 
-onUnmounted(() => {
-  document.title = 'OCOP Lâm Đồng'
-})
 </script>
 
 <template>

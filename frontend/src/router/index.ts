@@ -4,6 +4,7 @@ import { AUTH_SESSION_EXPIRED_EVENT } from '@/services/token'
 import { authStore } from '@/stores/auth'
 import HomeView from '@/views/HomeView.vue'
 import { resolveRouteAccess } from '@/router/access'
+import { documentTitleFor } from '@/router/titles'
 import { scrollBehavior } from '@/utils/motion'
 
 const router = createRouter({
@@ -203,6 +204,10 @@ router.beforeEach(async (to) => {
     return { name: 'home' }
   }
   return true
+})
+
+router.afterEach((to) => {
+  document.title = documentTitleFor(to.name, to.meta.title)
 })
 
 window.addEventListener(AUTH_SESSION_EXPIRED_EVENT, () => {

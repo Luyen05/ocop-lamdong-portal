@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import ProductCard from '@/components/products/ProductCard.vue'
@@ -254,9 +254,6 @@ onMounted(() => {
   document.title = 'Sản phẩm OCOP | OCOP Lâm Đồng'
 })
 
-onUnmounted(() => {
-  document.title = 'OCOP Lâm Đồng'
-})
 </script>
 
 <template>

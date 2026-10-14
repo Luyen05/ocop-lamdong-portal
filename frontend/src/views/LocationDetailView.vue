@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import axios from 'axios'
-import { computed, onUnmounted, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
 import LeafletMap from '@/components/map/LeafletMap.vue'
@@ -86,9 +86,6 @@ watch(
   { immediate: true },
 )
 
-onUnmounted(() => {
-  document.title = 'OCOP Lâm Đồng'
-})
 </script>
 
 <template>
