@@ -2,6 +2,7 @@
 import axios from 'axios'
 import { computed, onMounted, reactive, ref } from 'vue'
 
+import StatusPanel from '@/components/ui/StatusPanel.vue'
 import { getApiErrorMessage } from '@/services/api-error'
 import {
   createSubjectApplication,
@@ -21,6 +22,7 @@ const isLoading = ref(true)
 const isSubmitting = ref(false)
 const isEditing = ref(false)
 const errorMessage = ref('')
+const loadError = ref('')
 const successMessage = ref('')
 
 const form = reactive<SubjectApplicationPayload>({
@@ -74,7 +76,7 @@ function startEditing(): void {
 
 async function loadApplication(): Promise<void> {
   isLoading.value = true
-  errorMessage.value = ''
+  loadError.value = ''
   try {
     application.value = await getMySubjectApplication()
     fillForm(application.value)
@@ -82,7 +84,7 @@ async function loadApplication(): Promise<void> {
     if (axios.isAxiosError(error) && error.response?.status === 404) {
       application.value = null
     } else {
-      errorMessage.value = getApiErrorMessage(error, 'Không thể tải hồ sơ chủ thể.')
+      loadError.value = getApiErrorMessage(error, 'Không thể tải hồ sơ chủ thể.')
     }
   } finally {
     isLoading.value = false
@@ -127,17 +129,26 @@ onMounted(loadApplication)
         <RouterLink to="/tai-khoan">Quay lại tài khoản</RouterLink>
       </header>
 
-      <div v-if="errorMessage" class="alert alert-danger" role="alert">
-        {{ errorMessage }}
-      </div>
-      <div v-if="successMessage" class="alert alert-success" role="status">
-        {{ successMessage }}
-      </div>
+      <Transition name="ocop-rise">
+        <div v-if="errorMessage" class="alert alert-danger" role="alert">
+          {{ errorMessage }}
+        </div>
+      </Transition>
+      <Transition name="ocop-rise">
+        <div v-if="successMessage" class="alert alert-success" role="status">
+          {{ successMessage }}
+        </div>
+      </Transition>
 
-      <section v-if="isLoading" class="state-card" aria-live="polite">
-        <span class="spinner-border spinner-border-sm" aria-hidden="true" />
-        Đang tải hồ sơ...
-      </section>
+      <StatusPanel v-if="isLoading" class="state-card" kind="loading" :rows="2" message="Đang tải hồ sơ…" />
+      <StatusPanel
+        v-else-if="loadError"
+        class="state-card"
+        kind="error"
+        title="Chưa tải được hồ sơ chủ thể"
+        :message="loadError"
+        @retry="loadApplication"
+      />
 
       <template v-else>
         <section v-if="application && !isEditing" class="application-summary">
