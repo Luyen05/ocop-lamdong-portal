@@ -115,7 +115,7 @@ onBeforeUnmount(() => {
 
     <div class="main-header">
       <div class="site-container header-inner">
-        <RouterLink class="site-brand" to="/" aria-label="Lâm Đồng OCOP - Trang chủ">
+        <RouterLink class="site-brand" to="/">
           <span class="brand-symbol">
             <img :src="asset('icon-brand.svg')" alt="" />
           </span>
@@ -124,6 +124,7 @@ onBeforeUnmount(() => {
               <strong>LÂM ĐỒNG OCOP</strong>
             </span>
             <span>Nông sản OCOP và du lịch nông nghiệp</span>
+            <span class="visually-hidden">Về trang chủ</span>
           </span>
         </RouterLink>
 
