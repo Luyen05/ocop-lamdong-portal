@@ -269,7 +269,7 @@ onMounted(() => {
           </div>
           <span class="task-count-badge">{{ loading ? '...' : `${openTaskCount} việc` }}</span>
         </div>
-        <ul class="task-list">
+        <ul class="task-list stagger-in">
           <li v-for="task in tasks" :key="task.title">
             <RouterLink class="task-item" :class="{ 'is-open': task.count > 0 }" :to="task.to">
               <span class="task-num">{{ loading ? '–' : task.count }}</span>

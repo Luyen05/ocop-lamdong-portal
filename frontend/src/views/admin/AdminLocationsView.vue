@@ -326,7 +326,7 @@ onMounted(loadList)
         <p v-else-if="!listItems.length" class="state">
           {{ isRequestTab ? 'Không có yêu cầu cập nhật nào đang chờ.' : 'Không có điểm nào ở mục này.' }}
         </p>
-        <ul v-else>
+        <ul v-else class="stagger-in">
           <template v-if="isRequestTab">
             <li v-for="request in requests" :key="request.id">
               <button type="button" :class="['queue-item', { active: selectedId === request.id }]" :aria-current="selectedId === request.id" @click="select(request.id, true)">

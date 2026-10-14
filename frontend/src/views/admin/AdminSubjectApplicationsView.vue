@@ -182,7 +182,7 @@ onMounted(loadApplications)
               <th class="text-end">Thao tác</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody class="stagger-in">
             <tr v-for="application in applications" :key="application.id">
               <td>
                 <strong>{{ application.name }}</strong>
@@ -241,6 +241,7 @@ onMounted(loadApplications)
       </button>
     </nav>
 
+    <Transition name="ocop-fade">
     <div v-if="selectedApplication" class="modal-layer" role="presentation" @click.self="closeModeration">
       <section
         ref="moderationDialog"
@@ -306,6 +307,7 @@ onMounted(loadApplications)
         </form>
       </section>
     </div>
+    </Transition>
   </main>
 </template>
 
