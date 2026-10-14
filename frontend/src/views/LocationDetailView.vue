@@ -97,7 +97,7 @@ function retryLoad(): void {
 
 <template>
   <main class="location-detail-page">
-    <div class="container py-4 py-lg-5">
+    <div class="container py-4 py-lg-5 stagger-in">
       <nav class="breadcrumb-nav mb-4" aria-label="Đường dẫn">
         <RouterLink to="/">Trang chủ</RouterLink>
         <span>/</span>
