@@ -183,6 +183,9 @@ def replace_product_images(
     attribution = {
         image.image_url: (image.source_url, image.credit, image.license) for image in product.images
     }
+    # Ảnh đã gắn với sản phẩm thì không kiểm tra lại nơi lưu: sau khi đổi IMAGE_STORAGE (cục bộ ↔ Cloudinary)
+    # ảnh cũ vẫn nằm ở nơi lưu cũ, kiểm tra theo nơi lưu mới sẽ báo nhầm "không tìm thấy" và chặn mọi lần lưu.
+    attached_paths = {image.storage_path for image in product.images if image.storage_path}
     if product.images:
         product.images.clear()
         # Xóa ảnh cũ trước khi thêm ảnh mới: nếu không, SQLAlchemy chèn ảnh mới trước rồi mới xóa,
@@ -203,7 +206,7 @@ def replace_product_images(
                     "PRODUCT_IMAGE_NOT_OWNED",
                     "Ảnh tải lên không thuộc chủ thể hiện tại.",
                 )
-            if not uploaded_file_exists(image.storage_path):
+            if image.storage_path not in attached_paths and not uploaded_file_exists(image.storage_path):
                 raise workflow_error(
                     status.HTTP_422_UNPROCESSABLE_ENTITY,
                     "PRODUCT_IMAGE_NOT_FOUND",

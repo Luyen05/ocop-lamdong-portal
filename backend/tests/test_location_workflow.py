@@ -793,3 +793,21 @@ def test_admin_origin_filter_uses_owner_not_position_source(workflow_context) ->
 
     assert subject_drafts.json()["total"] == 1
     assert imported_drafts.json()["total"] == 0
+
+
+def test_saving_location_keeps_attached_image_after_storage_moved(workflow_context, tmp_path) -> None:
+    """Ảnh đã gắn với điểm không bị kiểm tra lại khi nơi lưu ảnh đổi (cục bộ ↔ Cloudinary)."""
+
+    client, _ = workflow_context
+    first = upload_image(client)
+    image = {"image_url": first["image_url"], "storage_path": first["storage_path"], "is_primary": True}
+    draft = create_draft(client, images=[image])
+    (tmp_path / first["storage_path"]).unlink()
+
+    saved = client.patch(
+        f"/api/v1/subject/locations/{draft['id']}",
+        headers=SUBJECT,
+        json={"opening_hours": "07:00 - 17:00", "images": [image]},
+    )
+    assert saved.status_code == 200, saved.text
+

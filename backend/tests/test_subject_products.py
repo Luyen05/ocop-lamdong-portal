@@ -897,3 +897,51 @@ def test_subject_can_replace_primary_image_of_editable_product(subject_product_c
         "https://example.com/images/moi.jpg",
         old_url,
     ]
+
+
+def test_saving_draft_keeps_attached_image_after_storage_moved(
+    subject_product_context,
+    tmp_path,
+    monkeypatch,
+) -> None:
+    """Đổi IMAGE_STORAGE sau khi đã gắn ảnh: lưu lại bản nháp không được báo "không tìm thấy file ảnh"."""
+
+    client, _ = subject_product_context
+    monkeypatch.setattr(subject_product_images.settings, "upload_directory", tmp_path)
+    png_content = b"\x89PNG\r\n\x1a\n" + b"test-image"
+    uploaded = client.post(
+        "/api/v1/subject/product-images",
+        headers=auth_header(1, "subject"),
+        files={"file": ("product.png", png_content, "image/png")},
+    ).json()
+    image = {
+        "image_url": uploaded["image_url"],
+        "storage_path": uploaded["storage_path"],
+        "is_primary": True,
+        "sort_order": 0,
+    }
+    payload = product_payload("OCOP-LD-MOVED")
+    payload["images"] = [image]
+    created = client.post("/api/v1/subject/products", headers=auth_header(1, "subject"), json=payload)
+    assert created.status_code == 201, created.text
+
+    # Giả lập ảnh không còn ở nơi lưu hiện tại (ví dụ vừa chuyển sang Cloudinary).
+    (tmp_path / uploaded["storage_path"]).unlink()
+
+    saved = client.patch(
+        f"/api/v1/subject/products/{created.json()['id']}",
+        headers=auth_header(1, "subject"),
+        json={"description": "Mô tả đã sửa sau khi đổi nơi lưu ảnh.", "images": [image]},
+    )
+    assert saved.status_code == 200, saved.text
+
+    # Ảnh mới chưa gắn thì vẫn phải tồn tại ở nơi lưu hiện tại.
+    missing = dict(image, storage_path="products/1/" + "0" * 32 + ".png", is_primary=False, sort_order=1)
+    rejected = client.patch(
+        f"/api/v1/subject/products/{created.json()['id']}",
+        headers=auth_header(1, "subject"),
+        json={"images": [image, missing]},
+    )
+    assert rejected.status_code == 422
+    assert rejected.json()["code"] == "PRODUCT_IMAGE_NOT_FOUND"
+
