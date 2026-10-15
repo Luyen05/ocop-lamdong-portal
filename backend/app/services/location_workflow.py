@@ -290,7 +290,10 @@ def validate_location_images(
                 "LOCATION_IMAGE_NOT_OWNED",
                 "Ảnh tải lên không thuộc chủ thể hiện tại.",
             )
-        if not uploaded_file_exists(image.storage_path):
+        # Ảnh đã gắn với điểm này thì không kiểm tra lại nơi lưu (xem replace_product_images).
+        if not image_attached_to_location(db, image.storage_path, location_id) and not uploaded_file_exists(
+            image.storage_path
+        ):
             raise workflow_error(
                 status.HTTP_422_UNPROCESSABLE_ENTITY,
                 "LOCATION_IMAGE_NOT_FOUND",
@@ -303,6 +306,20 @@ def validate_location_images(
                 "Ảnh này đang dùng cho một điểm du lịch khác. Hãy tải ảnh riêng cho điểm này.",
                 {"storage_path": image.storage_path},
             )
+
+
+def image_attached_to_location(db: Session, storage_path: str, location_id: int | None) -> bool:
+    if location_id is None:
+        return False
+    return (
+        db.scalar(
+            select(LocationImage.id).where(
+                LocationImage.location_id == location_id,
+                LocationImage.storage_path == storage_path,
+            )
+        )
+        is not None
+    )
 
 
 def image_used_by_other_location(
