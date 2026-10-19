@@ -26,6 +26,13 @@ const router = createRouter({
       meta: { layout: 'auth', guestOnly: true },
     },
     {
+      // Google/Facebook trả người dùng về đây (FRONTEND_BASE_URL/dang-nhap/mang-xa-hoi/<google|facebook>).
+      path: '/dang-nhap/mang-xa-hoi/:provider(google|facebook)',
+      name: 'social-login-callback',
+      component: () => import('@/views/SocialLoginCallbackView.vue'),
+      meta: { layout: 'auth' },
+    },
+    {
       path: '/tai-khoan',
       name: 'profile',
       component: () => import('@/views/ProfileView.vue'),
