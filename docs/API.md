@@ -16,6 +16,8 @@ Base URL: `/api/v1`. Tất cả endpoint có biểu tượng khóa trong Swagger
 |---|---|---|
 | Auth | `POST /auth/register`, `POST /auth/login` | Public |
 | Auth | `GET/PATCH /auth/me` | Đã đăng nhập |
+| Auth | `GET /auth/social/providers`, `POST /auth/social/{google\|facebook}/authorize`, `POST /auth/social/{google\|facebook}/callback` | Public (đã triển khai) |
+| Auth | `POST /auth/social/{google\|facebook}/link`, `DELETE /auth/social/{google\|facebook}` | Đã đăng nhập, trừ admin (đã triển khai) |
 | Subject application | `POST /subject-applications` | User |
 | Subject application | `GET/PUT /subject-applications/me` | User hoặc subject |
 | Public | `GET /categories`, `GET /products`, `GET /products/filter-options`, `GET /products/{slug}` | Public |
@@ -37,6 +39,28 @@ Base URL: `/api/v1`. Tất cả endpoint có biểu tượng khóa trong Swagger
 
 Swagger tại `/docs` là nguồn chi tiết cho query parameter, request body và response
 của từng endpoint.
+
+### Đăng nhập bằng Google, Facebook đã triển khai
+
+Chi tiết cách tạo khóa và quy tắc tài khoản: `docs/DANG_NHAP_MANG_XA_HOI.md`.
+
+- `GET /auth/social/providers` → `{"providers": ["google", "facebook"]}`: chỉ gồm nhà cung cấp đã khai báo
+  khóa trong `.env`.
+- `POST /auth/social/{provider}/authorize` body `{state, code_challenge?}` → `{authorization_url}`.
+  `state`: 32–128 ký tự `[A-Za-z0-9_-]` do frontend tạo. Google bắt buộc `code_challenge`
+  (PKCE S256, 43–128 ký tự base64url); Facebook bỏ qua. Nhà cung cấp chưa bật: 404 `SOCIAL_PROVIDER_DISABLED`.
+- `POST /auth/social/{provider}/callback` body `{code, code_verifier?}` → như `/auth/login` cộng
+  `is_new_user`. Không tự liên kết theo email: email đã có tài khoản thì 409 `SOCIAL_EMAIL_EXISTS`.
+  Lỗi khác: 400 `SOCIAL_AUTH_FAILED` (mã sai/hết hạn), 403 `SOCIAL_LOGIN_NOT_ALLOWED` (quản trị viên) hoặc
+  `ACCOUNT_INACTIVE`, 422 `SOCIAL_EMAIL_REQUIRED`, `SOCIAL_EMAIL_UNVERIFIED`, `SOCIAL_PKCE_REQUIRED`,
+  502 `SOCIAL_PROVIDER_UNAVAILABLE`.
+- `POST /auth/social/{provider}/link` (cần JWT) body như `/callback` → `UserRead`: liên kết vào tài khoản
+  đang đăng nhập. 409 `SOCIAL_ACCOUNT_IN_USE` (đã liên kết với người khác), `SOCIAL_ACCOUNT_CONFLICT`
+  (tài khoản đã liên kết một tài khoản khác của cùng nhà cung cấp); 403 với quản trị viên.
+- `DELETE /auth/social/{provider}` (cần JWT) → `UserRead`. 404 `SOCIAL_ACCOUNT_NOT_LINKED`;
+  409 `SOCIAL_UNLINK_LAST_METHOD` khi đó là cách đăng nhập duy nhất (tài khoản chưa có mật khẩu).
+- `GET /auth/me` trả thêm `has_password` (false với tài khoản tạo bằng Google/Facebook) và
+  `social_providers` (danh sách nhà cung cấp đã liên kết).
 
 ### Quy trình sản phẩm đã triển khai
 

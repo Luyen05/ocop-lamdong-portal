@@ -3,7 +3,7 @@
 Đề tài: **Xây dựng Cổng thông tin quảng bá nông sản OCOP và bản đồ số du lịch nông nghiệp tỉnh Lâm Đồng**
 Nhóm trưởng: Liêng Hót Ha Luyến (2312682). GVHD: Trần Ngô Như Khánh.
 
-- Cập nhật lần cuối: **10/10/2026**.
+- Cập nhật lần cuối: **19/10/2026**.
 - Căn cứ: đề cương ngày 10/08/2026 (lộ trình 14 tuần), tài liệu hướng dẫn nhóm 25/08/2026, mã nguồn và lịch sử commit.
 - Mốc đã chốt (27/09/2026):
   - **Thứ Năm 15/10/2026: báo cáo tiến độ đợt 2** (giữa tuần 10).
@@ -48,7 +48,7 @@ Tiến độ ước lượng theo khối lượng các hạng mục trong đề 
 | Chi tiết sản phẩm | 🟡 | Chạy đúng, giao diện cũ |
 | Danh sách, chi tiết địa điểm | 🟡 | Chạy đúng, giao diện cũ; tiêu đề còn "Điểm đến trải nghiệm" |
 | Bản đồ: clustering, định vị, điểm gần nhất, tuyến đường | ✅ | Ảnh nền OpenStreetMap (bỏ CARTO 26/09) |
-| Đăng ký, đăng nhập, hồ sơ | ✅ | Giao diện cũ |
+| Đăng ký, đăng nhập, hồ sơ | ✅ | Giao diện cũ; có thêm đăng nhập bằng Google/Facebook (19/10, chờ khóa thật để thử) |
 | Đánh giá sản phẩm/địa điểm | ⬜ | Bảng `reviews` đã có, chưa có API và giao diện |
 | Tin tức | 🟡 | Lấy RSS từ cổng OCOP tỉnh; chưa có tin do admin đăng (xem quyết định Q3) |
 
@@ -197,6 +197,7 @@ Chốt ngày 03/10: dùng **Cloudinary** (gói Free, không cần thẻ) thay ch
 | 11.3 | Giao diện mới: danh sách và chi tiết điểm du lịch, chi tiết sản phẩm | Thái, Thuận | 🟡 | PR #12 (Thuận) làm mới chi tiết sản phẩm, chi tiết điểm và trang tìm điểm trải nghiệm; còn danh sách điểm du lịch. Theo design token; axe 0 lỗi; không tràn ngang |
 | 11.4 | Giao diện mới: trang quản trị con (duyệt sản phẩm, hồ sơ chủ thể), khu chủ thể | Luyến | ⬜ | Sửa QT-01, QT-04 |
 | 11.5 | Giao diện mới: đăng nhập, đăng ký, hồ sơ, tin tức, trang lỗi | Luyến (đăng nhập, đăng ký, hồ sơ); Thái, Thuận (tin tức, trang lỗi) | ⬜ | |
+| 11.8 | Đăng nhập bằng Google, Facebook cho người dùng (nhóm trưởng yêu cầu 19/10, ngoài đề cương) | Luyến | 🟡 | Code và test xong trên nhánh `2312682_HaLuyen_DangNhapMangXaHoi` (migration 013); còn tạo khóa Google/Facebook và thử bằng tài khoản thật (`docs/DANG_NHAP_MANG_XA_HOI.md`) |
 | 11.6 | Admin quản lý tin tức (Q3 đã chốt): soạn, lưu nháp, đăng, gỡ tin; ảnh tin lưu Cloudinary | Luyến | ⬜ | Thiết kế canvas trước; test. Nếu thiếu thời gian, đây là việc đầu tiên bị dời hoặc cắt |
 | 11.7 | Trang tin tức công khai đọc tin admin đăng (có thể giữ RSS làm nguồn bổ sung) | Thái, Thuận | ⬜ | Thống nhất API với Luyến |
 
@@ -280,3 +281,5 @@ Chốt ngày 03/10: dùng **Cloudinary** (gói Free, không cần thẻ) thay ch
 | 06/10/2026 | B1 xong (tải ảnh lên Cloudinary thành công); PR #11 (lưu ảnh Cloudinary, migration 012) gộp vào main; rà lỗi dữ liệu và lập hồ sơ dữ liệu dâu tây (Claude Doc "Hồ sơ dữ liệu dâu tây và rà lỗi dữ liệu OCOP") | 0068ccc |
 | 07/10/2026 | Viết lại README: chạy lần đầu, chọn dữ liệu demo hoặc nhập tay, tạo tài khoản quản trị, cập nhật code mới, chạy không dùng Docker, xử lý sự cố pgAdmin; số test mới (148 backend, 154 frontend). Ngoài repo: script làm sạch dữ liệu demo (`04-database`), hồ sơ 4 chủ thể dâu tây và danh sách ảnh (`02-bao-cao-thuyet-trinh/du-lieu-demo-dau-tay`) | commit này |
 | 10/10/2026 | Gộp PR #12 của Thuận (trải nghiệm sản phẩm OCOP, ảnh Dehavi có ghi nguồn) vào main: đặt lại 5 commit lên main mới vì main bị force-push 08/10, xung đột ưu tiên bản main. Sửa seed ảnh Dehavi lỗi trùng ảnh chính khi chạy sau `seed_public_reference.sql`; ảnh nhỏ lỗi tự ẩn; bỏ tham chiếu Firebase còn sót. README: GVHD Trần Ngô Như Khánh, cách A là nhập tay (quyết định 07/10), số test mới (backend 148 + 9 bỏ qua, frontend 166). Chưa xử lý: lỗi chỉ đường và tải tin tức nhóm trưởng báo 09/10 (đang chờ ảnh chụp lỗi) | commit này |
+| 15/10/2026 | Sửa lỗi lưu sản phẩm, điểm du lịch báo nhầm "Không tìm thấy file ảnh đã tải lên" sau khi đổi nơi lưu ảnh (PR #14) | 59fde4a |
+| 19/10/2026 | Đăng nhập bằng Google/Facebook (việc 11.8): luồng OAuth authorization code gọi bằng httpx, PKCE cho Google, không tự liên kết theo email (tránh chiếm tài khoản vì đăng ký không xác minh email), liên kết và bỏ liên kết trong trang Tài khoản, quản trị viên không dùng mạng xã hội; migration 013 `user_social_accounts`; trang hoàn tất đăng nhập; hồ sơ hiện cách đăng nhập; hướng dẫn tạo khóa `docs/DANG_NHAP_MANG_XA_HOI.md`. Test: backend 176 + 9 bỏ qua, frontend 192 | nhánh `2312682_HaLuyen_DangNhapMangXaHoi` |

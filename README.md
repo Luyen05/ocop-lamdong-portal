@@ -22,6 +22,7 @@
 - ✅ Bản đồ số: gom cụm điểm, lọc, định vị người dùng, tìm điểm gần nhất (PostGIS), gợi ý tuyến đường (OSRM).
 - ✅ Tin tức lấy từ RSS của cổng OCOP tỉnh.
 - ✅ Đăng ký, đăng nhập (JWT), cập nhật hồ sơ; đăng ký trở thành chủ thể.
+- ✅ Đăng nhập, đăng ký nhanh bằng Google hoặc Facebook (tùy chọn, bật bằng khóa trong `.env`; xem [`docs/DANG_NHAP_MANG_XA_HOI.md`](docs/DANG_NHAP_MANG_XA_HOI.md)).
 - ⬜ Đánh giá sản phẩm, điểm du lịch.
 
 Tìm kiếm hiện phân biệt dấu: gõ "dâu tây" sẽ tìm thấy, gõ "dau tay" thì không. Trang công khai chỉ hiện sản phẩm đã duyệt và có chứng nhận còn hạn hoặc nguồn công nhận (xem [`docs/QUY_TRINH_KIEM_DUYET_SAN_PHAM.md`](docs/QUY_TRINH_KIEM_DUYET_SAN_PHAM.md)).
@@ -188,7 +189,12 @@ Sau khi đổi `.env`, chạy `docker compose up -d backend` để nạp lại. 
 
 File giấy chứng nhận sản phẩm luôn lưu cục bộ và chỉ tải được qua API có kiểm tra quyền. Ảnh đã lưu cục bộ trước đó vẫn dùng được.
 
-### 4.7. Chạy không dùng Docker (tùy chọn)
+### 4.7. Đăng nhập bằng Google, Facebook (tùy chọn)
+
+Điền `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` và/hoặc `FACEBOOK_APP_ID`, `FACEBOOK_APP_SECRET` vào `.env`, rồi chạy `docker compose up -d backend`. Để trống thì nút tương ứng không hiện.
+Cách tạo khóa, địa chỉ trả về cần khai báo (`http://localhost:5173/dang-nhap/mang-xa-hoi/google`, `.../facebook`) và lỗi thường gặp: [`docs/DANG_NHAP_MANG_XA_HOI.md`](docs/DANG_NHAP_MANG_XA_HOI.md).
+
+### 4.8. Chạy không dùng Docker (tùy chọn)
 
 Vẫn cần PostgreSQL 16 + PostGIS. Cách đơn giản nhất là chỉ chạy database bằng Docker: `docker compose up -d postgres`.
 
@@ -208,7 +214,7 @@ npm run dev
 
 Backend đọc `.env` ở thư mục gốc repo; khi chạy ngoài Docker nó dùng `DATABASE_URL` trong file đó (trỏ tới `localhost:5432`).
 
-### 4.8. Lệnh thường dùng
+### 4.9. Lệnh thường dùng
 
 ```powershell
 docker compose ps                     # xem trạng thái các container
@@ -219,7 +225,7 @@ docker compose down                   # dừng, giữ nguyên dữ liệu
 
 Không dùng `docker compose down -v`: lệnh này xóa cả database và ảnh đã tải lên (khi `IMAGE_STORAGE=local`).
 
-### 4.9. Xử lý sự cố thường gặp
+### 4.10. Xử lý sự cố thường gặp
 
 | Hiện tượng | Nguyên nhân và cách xử lý |
 |---|---|
@@ -235,11 +241,12 @@ Không dùng `docker compose down -v`: lệnh này xóa cả database và ảnh 
 ## 5. Database và migration
 
 - Database mới tạo từ `database/schema.sql` luôn là phiên bản mới nhất, không cần chạy migration.
-- Database đã có dữ liệu: sau mỗi lần `git pull`, chạy các migration chưa chạy theo thứ tự (từ file đầu tiên chưa chạy tới 012). Mọi migration chạy lặp lại an toàn. Ví dụ:
+- Database đã có dữ liệu: sau mỗi lần `git pull`, chạy các migration chưa chạy theo thứ tự (từ file đầu tiên chưa chạy tới 013). Mọi migration chạy lặp lại an toàn. Ví dụ:
 
   ```powershell
   Get-Content .\database\migrations\011_tourism_location_drafts.sql -Raw -Encoding UTF8 | docker compose exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
   Get-Content .\database\migrations\012_image_attribution.sql -Raw -Encoding UTF8 | docker compose exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+  Get-Content .\database\migrations\013_social_login.sql -Raw -Encoding UTF8 | docker compose exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
   ```
 
 | Migration | Nội dung |
@@ -256,6 +263,7 @@ Không dùng `docker compose down -v`: lệnh này xóa cả database và ảnh 
 | 010_normalize_constraint_names | Chuẩn hóa tên ràng buộc để database nâng cấp giống hệt database tạo mới |
 | 011_tourism_location_drafts | Bản nháp điểm du lịch được thiếu vị trí/địa chỉ; trạng thái ngừng hiển thị (archived) |
 | 012_image_attribution | Ghi nguồn, tác giả, giấy phép cho ảnh sản phẩm và ảnh điểm du lịch |
+| 013_social_login | Đăng nhập bằng Google/Facebook: bảng `user_social_accounts`, mật khẩu được phép trống |
 
 **Kiểm tra database khớp repo:** mở `tools/kiem-tra-database.sql` trong Query Tool của pgAdmin và chạy.
 Kết quả rỗng là khớp; dòng `thieu_so_voi_repo` là migration chưa chạy; dòng `thua_ngoai_repo` là thay đổi làm thẳng trên database mà repo không có.

@@ -4,6 +4,7 @@
 erDiagram
   roles ||--o{ users : assigns
   users ||--o| subjects : applies
+  users ||--o{ user_social_accounts : links
   users ||--o{ reviews : writes
   users ||--o{ news : authors
   subjects ||--o{ ocop_products : owns
@@ -42,3 +43,8 @@ Migration 011 cho phép bản nháp (`draft`) và điểm đang bổ sung (`need
 trống `geom`, `district`, `address` vì chủ thể lưu dần từng phần biểu mẫu; các trạng thái
 khác bắt buộc đủ (ràng buộc `tourism_locations_required_fields_check`). Yêu cầu ngừng
 hiển thị được duyệt chuyển điểm sang `archived` (không xóa dữ liệu).
+
+Migration 013 thêm `user_social_accounts` cho đăng nhập bằng Google/Facebook: mỗi dòng gắn một
+tài khoản của nhà cung cấp (`provider`, `provider_user_id` là mã người dùng do Google/Facebook cấp)
+với một người dùng; unique `(provider, provider_user_id)` và `(user_id, provider)`.
+`users.hashed_password` được phép trống cho tài khoản tạo bằng Google/Facebook.
