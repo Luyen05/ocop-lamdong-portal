@@ -64,6 +64,8 @@ const iconNames: Record<string, string> = {
   table: 'table',
   alert: 'exclamation-triangle',
   bell: 'bell',
+  google: 'google',
+  facebook: 'facebook',
 }
 
 const iconName = computed(() => iconNames[props.name] ?? 'check-circle')

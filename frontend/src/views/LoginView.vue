@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import AuthLayout from '@/components/auth/AuthLayout.vue'
+import SocialLoginButtons from '@/components/auth/SocialLoginButtons.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
 import { resolvePostLoginTarget } from '@/router/access'
 import { getApiErrorMessage } from '@/services/api-error'
@@ -97,6 +98,8 @@ async function submit(): Promise<void> {
         />
         {{ isSubmitting ? 'Đang đăng nhập...' : 'Đăng nhập' }}
       </button>
+
+      <SocialLoginButtons class="mt-2" :redirect="route.query.redirect" />
 
       <p class="mb-0 mt-2 text-center text-secondary">
         Chưa có tài khoản?

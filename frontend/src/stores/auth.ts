@@ -40,8 +40,13 @@ async function initialize(): Promise<void> {
 
 async function login(payload: LoginPayload): Promise<User> {
   const token = await authService.login(payload)
-  saveAccessToken(token.access_token)
-  accessToken.value = token.access_token
+  return loginWithToken(token.access_token)
+}
+
+/** Lưu token (đăng nhập mật khẩu hoặc Google/Facebook) rồi tải thông tin người dùng. */
+async function loginWithToken(token: string): Promise<User> {
+  saveAccessToken(token)
+  accessToken.value = token
 
   try {
     currentUser.value = await authService.getMe()
@@ -62,6 +67,11 @@ async function updateProfile(payload: UpdateProfilePayload): Promise<User> {
   return user
 }
 
+/** Cập nhật người dùng hiện tại từ kết quả API (ví dụ sau khi liên kết Google/Facebook). */
+function setCurrentUser(user: User): void {
+  currentUser.value = user
+}
+
 function clearSession(): void {
   removeAccessToken()
   accessToken.value = null
@@ -79,7 +89,9 @@ export const authStore = {
   isInitializing: readonly(isInitializing),
   initialize,
   login,
+  loginWithToken,
   register,
   updateProfile,
+  setCurrentUser,
   logout: clearSession,
 }

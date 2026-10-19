@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import AuthLayout from '@/components/auth/AuthLayout.vue'
+import SocialLoginButtons from '@/components/auth/SocialLoginButtons.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
 import { getApiErrorMessage } from '@/services/api-error'
 import { authStore } from '@/stores/auth'
@@ -208,6 +209,11 @@ async function submit(): Promise<void> {
         />
         {{ isSubmitting ? 'Đang tạo tài khoản...' : 'Đăng ký' }}
       </button>
+
+      <SocialLoginButtons
+        heading="hoặc đăng ký nhanh bằng"
+        note="Khi tiếp tục, bạn đồng ý dùng tên và email của tài khoản Google/Facebook để tạo tài khoản. Hệ thống không đăng gì lên trang cá nhân của bạn."
+      />
 
       <p class="mb-0 text-center text-secondary">
         Đã có tài khoản?
