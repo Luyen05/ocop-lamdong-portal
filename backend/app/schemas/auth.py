@@ -87,6 +87,9 @@ class UserRead(BaseModel):
     avatar_url: str | None
     is_active: bool
     role: RoleName
+    # Tài khoản tạo bằng Google/Facebook chưa có mật khẩu.
+    has_password: bool = True
+    social_providers: list[str] = Field(default_factory=list)
     created_at: datetime
     updated_at: datetime
 
@@ -95,3 +98,31 @@ class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     expires_in: int
+
+
+class SocialProvidersResponse(BaseModel):
+    providers: list[str]
+
+
+class SocialAuthorizeRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    # Chuỗi ngẫu nhiên do frontend tạo và giữ lại để so khi Google/Facebook trả người dùng về.
+    state: str = Field(min_length=32, max_length=128, pattern=r"^[A-Za-z0-9_-]+$")
+    # PKCE (bắt buộc với Google): base64url(SHA-256(code_verifier)).
+    code_challenge: str | None = Field(default=None, min_length=43, max_length=128, pattern=r"^[A-Za-z0-9_-]+$")
+
+
+class SocialAuthorizeResponse(BaseModel):
+    authorization_url: str
+
+
+class SocialCallbackRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    code: str = Field(min_length=1, max_length=2048)
+    code_verifier: str | None = Field(default=None, min_length=43, max_length=128, pattern=r"^[A-Za-z0-9._~-]+$")
+
+
+class SocialLoginResponse(TokenResponse):
+    is_new_user: bool = False
