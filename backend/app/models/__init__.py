@@ -9,7 +9,7 @@ from app.models.location import (
 from app.models.product import Product, ProductChangeRequest, ProductImage
 from app.models.role import Role
 from app.models.subject import Subject
-from app.models.user import User
+from app.models.user import SocialAccount, User
 
 __all__ = [
     "Category",
@@ -20,6 +20,7 @@ __all__ = [
     "ProductImage",
     "ProductSource",
     "Role",
+    "SocialAccount",
     "Subject",
     "TourismLocation",
     "TourismLocationChangeRequest",
