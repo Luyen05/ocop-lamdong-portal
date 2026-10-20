@@ -39,9 +39,16 @@ class _TextExtractor(HTMLParser):
             self.parts.append(text)
 
 
+# _cache_lock chỉ giữ trong lúc đọc/ghi bộ nhớ đệm (rất ngắn). _refresh_lock bảo đảm tại một thời điểm chỉ
+# một request gọi nguồn RSS; các request khác dùng bản cũ nếu có, hoặc chờ kết quả của lần gọi đang chạy.
 _cache_lock = Lock()
+_refresh_lock = Lock()
 _cached_items: list[NewsItem] = []
 _cache_expires_at = 0.0
+# Tăng sau mỗi lần gọi nguồn xong (thành công hay lỗi), để request đang chờ biết đã có kết quả mới.
+_fetch_attempts = 0
+# Nguồn lỗi mà còn bản cũ: dùng tiếp bản cũ thêm chừng này giây rồi mới thử gọi lại.
+STALE_RETRY_SECONDS = 60
 
 
 def _clean_text(value: str | None, *, max_length: int) -> str:
@@ -148,26 +155,66 @@ def _fetch_news_items() -> list[NewsItem]:
     return parse_news_feed(content, settings.news_rss_url)
 
 
-def get_news_items() -> list[NewsItem]:
-    global _cache_expires_at, _cached_items
+def _refresh_cache() -> list[NewsItem]:
+    """Gọi nguồn RSS (người gọi phải đang giữ _refresh_lock) và cập nhật bộ nhớ đệm."""
 
-    now = monotonic()
-    with _cache_lock:
-        if _cached_items and now < _cache_expires_at:
-            return list(_cached_items)
-        try:
-            fresh_items = _fetch_news_items()
-        except NewsFeedUnavailableError:
+    global _cache_expires_at, _cached_items, _fetch_attempts
+
+    try:
+        fresh_items = _fetch_news_items()
+    except NewsFeedUnavailableError:
+        with _cache_lock:
+            _fetch_attempts += 1
             if _cached_items:
+                # Gia hạn bản cũ để các request sau không gọi lại nguồn đang lỗi liên tục.
+                _cache_expires_at = monotonic() + STALE_RETRY_SECONDS
                 return list(_cached_items)
-            raise
+        raise
+    with _cache_lock:
+        _fetch_attempts += 1
         _cached_items = fresh_items
-        _cache_expires_at = now + get_settings().news_cache_ttl_seconds
+        _cache_expires_at = monotonic() + get_settings().news_cache_ttl_seconds
         return list(_cached_items)
 
 
+def get_news_items() -> list[NewsItem]:
+    with _cache_lock:
+        if _cached_items and monotonic() < _cache_expires_at:
+            return list(_cached_items)
+        stale_items = list(_cached_items)
+        attempts_before = _fetch_attempts
+
+    if _refresh_lock.acquire(blocking=False):
+        try:
+            with _cache_lock:
+                # Request khác vừa làm mới xong trước khi ta lấy được khóa.
+                if _cached_items and monotonic() < _cache_expires_at:
+                    return list(_cached_items)
+            return _refresh_cache()
+        finally:
+            _refresh_lock.release()
+
+    # Đang có request khác gọi nguồn.
+    if stale_items:
+        return stale_items
+    wait_seconds = get_settings().news_rss_timeout_seconds + 5
+    if not _refresh_lock.acquire(timeout=wait_seconds):
+        raise NewsFeedUnavailableError("Nguồn RSS phản hồi quá chậm.")
+    try:
+        with _cache_lock:
+            if _fetch_attempts != attempts_before:
+                # Dùng luôn kết quả của lần gọi vừa xong thay vì gọi lại nguồn.
+                if _cached_items:
+                    return list(_cached_items)
+                raise NewsFeedUnavailableError("Không thể kết nối nguồn RSS.")
+        return _refresh_cache()
+    finally:
+        _refresh_lock.release()
+
+
 def clear_news_cache() -> None:
-    global _cache_expires_at, _cached_items
+    global _cache_expires_at, _cached_items, _fetch_attempts
     with _cache_lock:
         _cached_items = []
         _cache_expires_at = 0.0
+        _fetch_attempts = 0
