@@ -6,6 +6,7 @@ import { useRoute } from 'vue-router'
 import LeafletMap from '@/components/map/LeafletMap.vue'
 import PresentationGallery from '@/components/products/PresentationGallery.vue'
 import ProductCard from '@/components/products/ProductCard.vue'
+import ReviewSection from '@/components/reviews/ReviewSection.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
 import { getApiErrorMessage } from '@/services/api-error'
 import { getLocation } from '@/services/locations'
@@ -221,6 +222,7 @@ function retryLoad(): void {
           </template>
           Vui lòng liên hệ điểm đến trước khi tham quan.
         </p>
+        <ReviewSection target-type="location" :target-id="location.id" :owner-subject-id="location.subject?.id ?? null" />
       </template>
     </div>
   </main>

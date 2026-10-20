@@ -5,6 +5,7 @@ import axios from 'axios'
 
 import PresentationGallery from '@/components/products/PresentationGallery.vue'
 import ProductCard from '@/components/products/ProductCard.vue'
+import ReviewSection from '@/components/reviews/ReviewSection.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
 import { getApiErrorMessage } from '@/services/api-error'
 import { getProduct, getProducts } from '@/services/products'
@@ -263,6 +264,7 @@ function retryLoad(): void {
             <ProductCard v-for="item in relatedProducts" :key="item.id" :product="item" />
           </div>
         </section>
+        <ReviewSection target-type="product" :target-id="product.id" :owner-subject-id="product.subject.id" />
       </template>
     </div>
   </main>
