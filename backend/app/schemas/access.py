@@ -19,3 +19,4 @@ class AdminDashboardResponse(BaseModel):
     products_missing_decision: int
     pending_locations: int = 0
     pending_location_change_requests: int = 0
+    pending_reviews: int = 0
