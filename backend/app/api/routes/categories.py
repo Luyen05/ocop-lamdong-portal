@@ -12,7 +12,8 @@ from app.schemas.error import ErrorResponse
 
 router = APIRouter(prefix="/categories", tags=["Categories"])
 
-SortOption = Literal["name", "-name", "id", "-id"]
+# "order": thứ tự admin sắp (sort_order), cùng thứ tự thì theo tên.
+SortOption = Literal["order", "name", "-name", "id", "-id"]
 
 
 @router.get("", response_model=CategoryListResponse)
@@ -20,25 +21,27 @@ def list_categories(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100),
     search: str | None = Query(default=None, min_length=1, max_length=150),
-    sort: SortOption = Query(default="name"),
+    sort: SortOption = Query(default="order"),
     db: Session = Depends(get_db),
 ) -> CategoryListResponse:
-    filters = []
+    # Danh mục ẩn không xuất hiện trong bộ lọc công khai và ô chọn khi tạo sản phẩm mới.
+    filters = [Category.is_visible.is_(True)]
     if search:
         filters.append(Category.name.ilike(f"%{search.strip()}%"))
 
     total = db.scalar(select(func.count(Category.id)).where(*filters)) or 0
 
     sort_columns = {
-        "name": Category.name.asc(),
-        "-name": Category.name.desc(),
-        "id": Category.id.asc(),
-        "-id": Category.id.desc(),
+        "order": (Category.sort_order.asc(), Category.name.asc()),
+        "name": (Category.name.asc(),),
+        "-name": (Category.name.desc(),),
+        "id": (Category.id.asc(),),
+        "-id": (Category.id.desc(),),
     }
     statement = (
         select(Category)
         .where(*filters)
-        .order_by(sort_columns[sort])
+        .order_by(*sort_columns[sort], Category.id.asc())
         .offset((page - 1) * page_size)
         .limit(page_size)
     )
