@@ -7,6 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import CurrentUser
+from app.api.routes.subject_product_images import active_product_proposals
 from app.core.config import get_settings
 from app.core.database import get_db
 from app.models.product import Product
@@ -21,6 +22,7 @@ ALLOWED_CERTIFICATES = {
     "image/jpeg": ("jpg", lambda header: header.startswith(b"\xff\xd8\xff")),
     "image/png": ("png", lambda header: header.startswith(b"\x89PNG\r\n\x1a\n")),
 }
+CERTIFICATE_MEDIA_TYPES = {".pdf": "application/pdf", ".jpg": "image/jpeg", ".png": "image/png"}
 
 
 def subject_certificate_directory(subject_id: int) -> FilePath:
@@ -43,16 +45,28 @@ def certificate_response(product: Product) -> FileResponse:
             "PRODUCT_CERTIFICATE_FILE_MISSING",
             "File chứng nhận không còn tồn tại trên máy chủ.",
         )
-    media_types = {".pdf": "application/pdf", ".jpg": "image/jpeg", ".png": "image/png"}
-    return FileResponse(target, media_type=media_types[target.suffix.lower()], filename=target.name)
+    media_type = CERTIFICATE_MEDIA_TYPES.get(target.suffix.lower(), "application/octet-stream")
+    return FileResponse(target, media_type=media_type, filename=target.name)
+
+
+def certificate_in_use(db: Session, subject_id: int, storage_path: str) -> bool:
+    """Chứng nhận đang gắn vào sản phẩm, hoặc nằm trong yêu cầu cập nhật chưa xử lý, không được xóa."""
+
+    if db.scalar(select(Product.id).where(Product.certificate_storage_path == storage_path)) is not None:
+        return True
+    return any(
+        proposal.get("certificate_storage_path") == storage_path
+        for proposal in active_product_proposals(db, subject_id)
+    )
 
 
 @router.post("", response_model=ProductCertificateUploadResponse, status_code=status.HTTP_201_CREATED)
-async def upload_product_certificate(
+def upload_product_certificate(
     current_user: CurrentUser,
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
 ) -> ProductCertificateUploadResponse:
+    # Hàm đồng bộ (đọc file.file, truy vấn DB đồng bộ): FastAPI chạy trong threadpool, không chặn event loop.
     subject = get_approved_subject(db, current_user)
     content_type = (file.content_type or "").lower()
     config = ALLOWED_CERTIFICATES.get(content_type)
@@ -63,7 +77,7 @@ async def upload_product_certificate(
             "Chỉ chấp nhận chứng nhận PDF, JPEG hoặc PNG.",
         )
     extension, signature_matches = config
-    header = await file.read(16)
+    header = file.file.read(16)
     if not signature_matches(header):
         raise workflow_error(
             status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -87,12 +101,12 @@ async def upload_product_certificate(
                         {"max_bytes": settings.certificate_upload_max_bytes},
                     )
                 output.write(chunk)
-                chunk = await file.read(1024 * 1024)
+                chunk = file.file.read(1024 * 1024)
     except Exception:
         target.unlink(missing_ok=True)
         raise
     finally:
-        await file.close()
+        file.file.close()
     return ProductCertificateUploadResponse(
         storage_path=storage_path,
         content_type=content_type,
@@ -109,11 +123,11 @@ def delete_unlinked_product_certificate(
 ) -> Response:
     subject = get_approved_subject(db, current_user)
     storage_path = f"certificates/{subject.id}/{file_name}"
-    if db.scalar(select(Product.id).where(Product.certificate_storage_path == storage_path)) is not None:
+    if certificate_in_use(db, subject.id, storage_path):
         raise workflow_error(
             status.HTTP_409_CONFLICT,
             "PRODUCT_CERTIFICATE_IN_USE",
-            "File chứng nhận đã được liên kết với sản phẩm.",
+            "File chứng nhận đang được dùng cho sản phẩm hoặc yêu cầu cập nhật đang chờ duyệt.",
         )
     target = subject_certificate_directory(subject.id) / file_name
     if not target.is_file():

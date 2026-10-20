@@ -32,6 +32,9 @@ class Settings(BaseSettings):
     upload_directory: Path = BACKEND_ROOT / "uploads"
     upload_max_bytes: int = Field(default=5 * 1024 * 1024, ge=1024)
     certificate_upload_max_bytes: int = Field(default=10 * 1024 * 1024, ge=1024)
+    # Địa chỉ công khai của backend (ví dụ https://ocop.example.vn) dùng để tạo đường dẫn ảnh lưu cục bộ.
+    # Để trống thì lấy theo địa chỉ của request (có thể sai khi chạy sau proxy hoặc trong Docker).
+    public_base_url: str = ""
     # Nơi lưu ảnh sản phẩm và ảnh điểm du lịch: "local" (thư mục uploads) hoặc "cloudinary".
     image_storage: Literal["local", "cloudinary"] = "local"
     cloudinary_cloud_name: str = ""
@@ -79,6 +82,17 @@ class Settings(BaseSettings):
         parsed = urlparse(normalized)
         if parsed.scheme not in {"http", "https"} or not parsed.netloc:
             raise ValueError("OSRM_BASE_URL phải là đường dẫn http:// hoặc https://.")
+        return normalized
+
+    @field_validator("public_base_url")
+    @classmethod
+    def validate_public_base_url(cls, value: str) -> str:
+        normalized = value.strip().strip("\"'").strip().rstrip("/")
+        if not normalized:
+            return ""
+        parsed = urlparse(normalized)
+        if parsed.scheme not in {"http", "https"} or not parsed.netloc or parsed.query or parsed.fragment:
+            raise ValueError("PUBLIC_BASE_URL phải có dạng http(s)://tên-miền[:cổng][/đường-dẫn] hoặc để trống.")
         return normalized
 
     @field_validator("frontend_base_url")

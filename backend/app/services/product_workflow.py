@@ -30,6 +30,10 @@ from app.schemas.product_management import (
 from app.core.config import get_settings
 
 
+# Yêu cầu sửa/ngừng hiển thị sản phẩm còn đang xử lý.
+ACTIVE_CHANGE_REQUEST_STATUSES = frozenset({"pending", "needs_revision"})
+
+
 def workflow_error(
     status_code: int,
     code: str,
