@@ -3,6 +3,7 @@ from fastapi import APIRouter
 from app.api.routes import (
     admin,
     auth,
+    auth_social,
     categories,
     locations,
     maps,
@@ -17,6 +18,7 @@ from app.api.routes import (
 api_router = APIRouter()
 api_router.include_router(system.router)
 api_router.include_router(auth.router)
+api_router.include_router(auth_social.router)
 api_router.include_router(subject_applications.router)
 api_router.include_router(admin.router)
 api_router.include_router(subject.router)

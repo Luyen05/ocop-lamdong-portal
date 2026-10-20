@@ -40,6 +40,8 @@ def to_user_read(user: User) -> UserRead:
         avatar_url=user.avatar_url,
         is_active=user.is_active,
         role=user.role.name,
+        has_password=user.hashed_password is not None,
+        social_providers=[account.provider for account in user.social_accounts],
         created_at=user.created_at,
         updated_at=user.updated_at,
     )
@@ -124,10 +126,13 @@ def login(
         .options(joinedload(User.role))
         .where(func.lower(User.email) == payload.email)
     )
+    # Vẫn băm với tài khoản không tồn tại hoặc chưa có mật khẩu (tạo bằng Google/Facebook)
+    # để thời gian phản hồi như nhau, không lộ email nào đã đăng ký.
+    stored_hash = user.hashed_password if user is not None else None
     password_matches = verify_password(
         payload.password.get_secret_value(),
-        user.hashed_password if user is not None else DUMMY_PASSWORD_HASH,
-    )
+        stored_hash or DUMMY_PASSWORD_HASH,
+    ) and stored_hash is not None
     if user is None or not password_matches:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

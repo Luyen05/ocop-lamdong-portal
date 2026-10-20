@@ -38,6 +38,16 @@ class Settings(BaseSettings):
     news_cache_ttl_seconds: int = Field(default=900, ge=60, le=86400)
     osrm_base_url: str = "https://router.project-osrm.org"
     osrm_timeout_seconds: float = Field(default=8.0, ge=1.0, le=30.0)
+    # Đăng nhập bằng Google/Facebook. Để trống khóa của nhà cung cấp nào thì nút của nhà cung cấp đó bị ẩn.
+    # Google/Facebook trả người dùng về {FRONTEND_BASE_URL}/dang-nhap/mang-xa-hoi/<google|facebook>,
+    # địa chỉ này phải được khai báo đúng trong trang quản lý ứng dụng của Google/Facebook.
+    frontend_base_url: str = "http://localhost:5173"
+    google_client_id: str = ""
+    google_client_secret: SecretStr = SecretStr("")
+    facebook_app_id: str = ""
+    facebook_app_secret: SecretStr = SecretStr("")
+    facebook_graph_version: str = Field(default="v26.0", pattern=r"^v\d+\.\d+$")
+    social_login_timeout_seconds: float = Field(default=10.0, ge=1.0, le=30.0)
 
     model_config = SettingsConfigDict(
         env_file=PROJECT_ROOT / ".env",
@@ -54,10 +64,28 @@ class Settings(BaseSettings):
             raise ValueError("OSRM_BASE_URL phải là đường dẫn http:// hoặc https://.")
         return normalized
 
-    @field_validator("cloudinary_cloud_name", "cloudinary_api_key", "cloudinary_api_secret", mode="before")
+    @field_validator("frontend_base_url")
+    @classmethod
+    def validate_frontend_base_url(cls, value: str) -> str:
+        normalized = value.strip().rstrip("/")
+        parsed = urlparse(normalized)
+        if parsed.scheme not in {"http", "https"} or not parsed.netloc or parsed.path:
+            raise ValueError("FRONTEND_BASE_URL phải có dạng http(s)://tên-miền[:cổng], không có đường dẫn.")
+        return normalized
+
+    @field_validator(
+        "cloudinary_cloud_name",
+        "cloudinary_api_key",
+        "cloudinary_api_secret",
+        "google_client_id",
+        "google_client_secret",
+        "facebook_app_id",
+        "facebook_app_secret",
+        mode="before",
+    )
     @classmethod
     def clean_cloudinary_value(cls, value: object) -> object:
-        """Bỏ khoảng trắng và dấu ngoặc kép thừa khi dán giá trị vào .env."""
+        """Bỏ khoảng trắng và dấu ngoặc kép thừa khi dán khóa vào .env."""
 
         if isinstance(value, SecretStr):
             value = value.get_secret_value()
@@ -80,6 +108,17 @@ class Settings(BaseSettings):
             if missing:
                 raise ValueError(f"IMAGE_STORAGE=cloudinary cần khai báo: {', '.join(missing)}.")
         return self
+
+    @property
+    def social_providers(self) -> list[str]:
+        """Nhà cung cấp đăng nhập đã khai báo đủ khóa, theo thứ tự hiển thị nút."""
+
+        providers = []
+        if self.google_client_id and self.google_client_secret.get_secret_value():
+            providers.append("google")
+        if self.facebook_app_id and self.facebook_app_secret.get_secret_value():
+            providers.append("facebook")
+        return providers
 
     @property
     def cors_origin_list(self) -> list[str]:

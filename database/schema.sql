@@ -20,13 +20,26 @@ CREATE TABLE users (
   id BIGSERIAL PRIMARY KEY,
   role_id BIGINT NOT NULL REFERENCES roles(id) ON DELETE RESTRICT,
   email VARCHAR(150) NOT NULL UNIQUE,
-  hashed_password VARCHAR(255) NOT NULL,
+  hashed_password VARCHAR(255),
   full_name VARCHAR(150) NOT NULL,
   phone VARCHAR(20),
   avatar_url VARCHAR(500),
   is_active BOOLEAN NOT NULL DEFAULT TRUE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE user_social_accounts (
+  id BIGSERIAL PRIMARY KEY,
+  user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  provider VARCHAR(20) NOT NULL,
+  provider_user_id VARCHAR(255) NOT NULL,
+  email VARCHAR(150),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  last_login_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT user_social_accounts_provider_check CHECK (provider IN ('google', 'facebook')),
+  CONSTRAINT uq_social_account_provider_user UNIQUE (provider, provider_user_id),
+  CONSTRAINT uq_social_account_user_provider UNIQUE (user_id, provider)
 );
 
 CREATE TABLE subjects (

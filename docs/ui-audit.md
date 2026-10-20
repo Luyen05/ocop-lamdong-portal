@@ -266,6 +266,13 @@ Lần 3: đánh giá lại dưới góc nhìn người dùng (du khách tìm đ�
 - Tắt hết khi hệ điều hành đặt giảm chuyển động (`prefers-reduced-motion`); không có IntersectionObserver thì nội dung hiện bình thường; in ấn luôn hiện đủ.
 - Thêm 14 test (directive, `PhotoBanner`, `LocationCard`, `NewsCard`). Frontend 39 file, 137 test qua; type-check và build qua; axe 0 lỗi và không tràn ngang ở 375/768/1024/1440px cho 10 trang công khai, 4 trang quản trị, 5 trang chủ thể.
 
+### Nút đăng nhập Google/Facebook và trang hoàn tất đăng nhập (19/10/2026)
+
+- Trang đăng nhập, đăng ký: thêm vạch "hoặc tiếp tục với" và nút "Tiếp tục với Google/Facebook" (`.ocop-btn-ghost`, cao `--ocop-control-lg`, xếp một cột ở mọi kích thước vì khung form chỉ rộng khoảng 365px), kèm ghi chú hệ thống chỉ nhận tên và email. Nút chỉ hiện khi backend đã khai báo khóa.
+- Trang mới `/dang-nhap/mang-xa-hoi/:provider`: trạng thái đang xử lý (`role="status"`), lỗi có nút "Thử lại" và "Về trang chủ".
+- Hồ sơ: mục "Đăng nhập bằng" và khung "Liên kết đăng nhập" (liên kết / bỏ liên kết; nút bỏ liên kết bị khóa kèm lời giải thích khi đó là cách đăng nhập duy nhất).
+- Kiểm tra ở 375, 1024, 1440px (390px và 1440px cho trang Tài khoản; luồng đầy đủ đăng nhập, liên kết, đăng nhập lại với Google/Facebook giả lập): không tràn ngang, axe chỉ còn `label-content-name-mismatch` ở logo của `AuthLayout` (lỗi có từ trước, đã sửa trên nhánh `2312682_HaLuyen_DongBoGiaoDien`).
+
 ## 6. Ngoài phạm vi giao diện (ghi nhận, không sửa trong nhánh này)
 
 - Quản trị chưa có module quản lý điểm du lịch (mục "Sắp phát triển" ở sidebar).
