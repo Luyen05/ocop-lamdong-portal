@@ -287,11 +287,19 @@ CREATE TABLE reviews (
   comment TEXT NOT NULL,
   status VARCHAR(20) NOT NULL DEFAULT 'pending'
     CHECK (status IN ('pending', 'approved', 'rejected')),
+  -- Admin kiểm duyệt gần nhất; tài khoản admin bị xóa thì giữ lại đánh giá.
+  reviewed_by BIGINT REFERENCES users(id) ON DELETE SET NULL,
+  reviewed_at TIMESTAMPTZ,
+  rejection_reason TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT review_exactly_one_target CHECK (
     (product_id IS NOT NULL AND location_id IS NULL) OR
     (product_id IS NULL AND location_id IS NOT NULL)
+  ),
+  CONSTRAINT reviews_rejection_reason_check CHECK (
+    status <> 'rejected'
+    OR (rejection_reason IS NOT NULL AND length(trim(rejection_reason)) > 0)
   )
 );
 
