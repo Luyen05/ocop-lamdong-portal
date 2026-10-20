@@ -5,6 +5,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.core.search import ilike_contains
 from app.models.category import Category
 from app.schemas.category import CategoryListResponse, CategoryRead
 from app.schemas.error import ErrorResponse
@@ -27,7 +28,7 @@ def list_categories(
     # Danh mục ẩn không xuất hiện trong bộ lọc công khai và ô chọn khi tạo sản phẩm mới.
     filters = [Category.is_visible.is_(True)]
     if search:
-        filters.append(Category.name.ilike(f"%{search.strip()}%"))
+        filters.append(ilike_contains(Category.name, search))
 
     total = db.scalar(select(func.count(Category.id)).where(*filters)) or 0
 

@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.api.dependencies import CurrentUser
 from app.core.database import get_db
+from app.core.search import LIKE_ESCAPE, contains_pattern
 from app.models.product import Product, ProductChangeRequest
 from app.models.subject import Subject
 from app.schemas.product_management import (
@@ -46,8 +47,13 @@ def list_product_change_requests(
     if request_type:
         filters.append(ProductChangeRequest.request_type == request_type)
     if search:
-        keyword = f"%{search.strip()}%"
-        filters.append(or_(Product.name.ilike(keyword), Subject.name.ilike(keyword)))
+        keyword = contains_pattern(search)
+        filters.append(
+            or_(
+                Product.name.ilike(keyword, escape=LIKE_ESCAPE),
+                Subject.name.ilike(keyword, escape=LIKE_ESCAPE),
+            )
+        )
 
     base = (
         select(ProductChangeRequest)

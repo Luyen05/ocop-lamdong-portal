@@ -3,10 +3,11 @@ from decimal import Decimal
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import and_, case, func, or_, select
+from sqlalchemy import and_, case, func, or_, select, update
 from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.core.database import get_db
+from app.core.search import LIKE_ESCAPE, contains_pattern
 from app.models.category import Category
 from app.models.data_source import ProductSource
 from app.models.location import TourismLocation, location_ocop_products
@@ -80,6 +81,23 @@ def public_product_filters():
     )
 
 
+def increment_views(db: Session, model, row_id: int, current_views: int) -> int:
+    """Tăng lượt xem 1 đơn vị (UPDATE ... SET views = views + 1) cho trang chi tiết công khai.
+
+    Giữ nguyên updated_at ở phía ứng dụng; trên PostgreSQL trigger set_updated_at vẫn đặt lại
+    updated_at vì trigger chạy với mọi câu UPDATE.
+    """
+
+    db.execute(
+        update(model)
+        .where(model.id == row_id)
+        .values(views=model.views + 1, updated_at=model.updated_at)
+        .execution_options(synchronize_session=False)
+    )
+    db.commit()
+    return current_views + 1
+
+
 def to_product_list_item(product: Product) -> ProductListItem:
     primary_image = product.images[0].image_url if product.images else None
     return ProductListItem(
@@ -136,12 +154,12 @@ def list_products(
 
     filters = list(public_product_filters())
     if search:
-        keyword = f"%{search.strip()}%"
+        keyword = contains_pattern(search)
         filters.append(
             or_(
-                Product.name.ilike(keyword),
-                Product.description.ilike(keyword),
-                Subject.name.ilike(keyword),
+                Product.name.ilike(keyword, escape=LIKE_ESCAPE),
+                Product.description.ilike(keyword, escape=LIKE_ESCAPE),
+                Subject.name.ilike(keyword, escape=LIKE_ESCAPE),
             )
         )
     if category:
@@ -245,6 +263,7 @@ def get_product(slug: str, db: Session = Depends(get_db)) -> ProductDetail:
                 "details": {"slug": slug},
             },
         )
+    views = increment_views(db, Product, product.id, product.views)
 
     # Chỉ chọn các cột có từ schema gốc để trang sản phẩm không phụ thuộc migration 008.
     related_locations = db.execute(
@@ -277,7 +296,7 @@ def get_product(slug: str, db: Session = Depends(get_db)) -> ProductDetail:
         story=product.story,
         ingredients=product.ingredients,
         usage_instructions=product.usage_instructions,
-        views=product.views,
+        views=views,
         images=[
             ProductImageRead(
                 id=image.id,

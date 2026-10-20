@@ -7,6 +7,7 @@ from typing import Literal
 from sqlalchemy import func, or_, select
 
 from app.core.geometry import GeoPoint
+from app.core.search import LIKE_ESCAPE, contains_pattern
 from app.models.location import TourismLocation
 from app.models.subject import Subject
 from app.models.user import User
@@ -71,12 +72,12 @@ def public_location_filters(
         or_(TourismLocation.subject_id.is_(None), subject_account_active),
     ]
     if search and search.strip():
-        keyword = f"%{search.strip()}%"
+        keyword = contains_pattern(search)
         filters.append(
             or_(
-                TourismLocation.name.ilike(keyword),
-                TourismLocation.description.ilike(keyword),
-                TourismLocation.address.ilike(keyword),
+                TourismLocation.name.ilike(keyword, escape=LIKE_ESCAPE),
+                TourismLocation.description.ilike(keyword, escape=LIKE_ESCAPE),
+                TourismLocation.address.ilike(keyword, escape=LIKE_ESCAPE),
             )
         )
     if location_type:
