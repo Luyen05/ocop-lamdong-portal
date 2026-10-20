@@ -50,7 +50,7 @@ def seeded_dehavi():
             SELECT id,'unrelated-' || name || '@local.invalid','!disabled','Unrelated',FALSE
             FROM roles WHERE name IN ('admin','subject');
             INSERT INTO subjects (user_id,name,type,representative,phone,address,district,status,reviewed_by,reviewed_at)
-            SELECT owner.id,'Unrelated company','company','Unknown','Unknown','Other address','Other district',
+            SELECT owner.id,'Unrelated company','enterprise','Unknown','Unknown','Other address','Other district',
                    'approved',admin.id,CURRENT_TIMESTAMP
             FROM users owner CROSS JOIN users admin
             WHERE owner.email='unrelated-subject@local.invalid' AND admin.email='unrelated-admin@local.invalid';

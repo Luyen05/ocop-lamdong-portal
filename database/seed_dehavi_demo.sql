@@ -33,7 +33,7 @@ INSERT INTO subjects (
   user_id, name, type, representative, phone, email, address, district,
   status, reviewed_by, reviewed_at
 )
-SELECT owner.id, 'Công ty TNHH Cà phê Hân Vinh', 'company',
+SELECT owner.id, 'Công ty TNHH Cà phê Hân Vinh', 'enterprise',
        'Chưa xác minh người đại diện', '0973336060', 'cafehanvinh@gmail.com',
        'Khu Đông Anh 2, Nam Ban, Lâm Hà, Lâm Đồng', 'Lâm Hà',
        'approved', admin.id, CURRENT_TIMESTAMP
