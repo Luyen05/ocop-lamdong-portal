@@ -3,6 +3,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import AppIcon from '@/components/ui/AppIcon.vue'
+import StatusPanel from '@/components/ui/StatusPanel.vue'
 import { getCategories } from '@/services/categories'
 import { getApiErrorMessage } from '@/services/api-error'
 import {
@@ -36,6 +37,9 @@ const saving = ref(false)
 const uploadingImage = ref(false)
 const uploadingCertificate = ref(false)
 const errorMessage = ref('')
+// Lỗi khi mở biểu mẫu: không hiện form để tránh sửa trên dữ liệu rỗng hoặc hồ sơ đang khóa.
+const loadError = ref('')
+const loadRetryable = ref(true)
 const imageErrorMessage = ref('')
 const certificateErrorMessage = ref('')
 const certificateFileName = ref('')
@@ -234,6 +238,8 @@ function submissionPayload(): ProductWritePayload {
 
 async function load(): Promise<void> {
   loading.value = true
+  loadError.value = ''
+  loadRetryable.value = true
   try {
     const categoryData = await getCategories()
     categories.value = categoryData.items
@@ -241,7 +247,8 @@ async function load(): Promise<void> {
     if (requestId.value) {
       const request = await getProductChangeRequest('subject', requestId.value)
       if (request.status !== 'needs_revision' || request.request_type !== 'update' || !request.proposed_data) {
-        errorMessage.value = 'Chỉ yêu cầu cập nhật cần bổ sung mới có thể chỉnh sửa.'
+        loadError.value = 'Chỉ yêu cầu cập nhật cần bổ sung mới có thể chỉnh sửa.'
+        loadRetryable.value = false
         return
       }
       currentRequest.value = request
@@ -250,14 +257,15 @@ async function load(): Promise<void> {
     } else if (productId.value) {
       const product = await getMyProduct(productId.value)
       if (!['draft', 'needs_revision', 'rejected', 'approved'].includes(product.status)) {
-        errorMessage.value = 'Sản phẩm đang chờ xử lý và không thể chỉnh sửa.'
+        loadError.value = 'Sản phẩm đang chờ xử lý và không thể chỉnh sửa.'
+        loadRetryable.value = false
         return
       }
       currentProduct.value = product
       fillForm(product)
     }
   } catch (error) {
-    errorMessage.value = getApiErrorMessage(error, 'Không thể tải biểu mẫu sản phẩm.')
+    loadError.value = getApiErrorMessage(error, 'Không thể tải biểu mẫu sản phẩm.')
   } finally {
     loading.value = false
   }
@@ -328,8 +336,21 @@ onMounted(load)
       </p>
     </header>
 
-    <div v-if="errorMessage" class="alert alert-danger" role="alert">{{ errorMessage }}</div>
-    <p v-if="loading" class="loading-card">Đang tải biểu mẫu...</p>
+    <Transition name="ocop-rise">
+      <div v-if="errorMessage" class="alert alert-danger" role="alert">{{ errorMessage }}</div>
+    </Transition>
+    <StatusPanel v-if="loading" class="loading-card" kind="loading" :rows="4" message="Đang tải biểu mẫu…" />
+    <StatusPanel
+      v-else-if="loadError"
+      class="loading-card"
+      kind="error"
+      :title="loadRetryable ? 'Chưa mở được biểu mẫu' : 'Không thể chỉnh sửa lúc này'"
+      :message="loadError"
+      :retryable="loadRetryable"
+      @retry="load"
+    >
+      <RouterLink class="back-to-list" to="/chu-the/san-pham">Về danh sách sản phẩm</RouterLink>
+    </StatusPanel>
 
     <form v-else class="product-form" @submit.prevent="save(true)">
       <aside class="completion-card" aria-label="Mức độ hoàn thiện hồ sơ">
@@ -459,6 +480,7 @@ header > a { color: var(--ocop-primary-700); font-size: var(--ocop-font-size-cap
 header > span { display: block; margin-top: var(--ocop-space-4); color: var(--ocop-primary-700); font-size: var(--ocop-font-size-caption); font-weight: 800; text-transform: uppercase; }
 header h1 { margin: var(--ocop-space-1) 0; font-size: 30px; }
 header p { margin: 0; color: var(--ocop-slate); font-size: var(--ocop-font-size-small); }
+.back-to-list { color: var(--ocop-mist-800); font-weight: 600; }
 .loading-card, .product-form section { padding: 22px; border: 1px solid var(--ocop-border); border-radius: 14px; background: var(--ocop-card); }
 .product-form { display: grid; gap: var(--ocop-space-4); }
 .completion-card { padding: var(--ocop-space-4) var(--ocop-space-5); border: 1px solid var(--ocop-mint-border); border-radius: 14px; background: var(--ocop-surface-muted); }

@@ -45,7 +45,7 @@ onMounted(loadProfile)
 </script>
 
 <template>
-  <main class="profile-page">
+  <main class="profile-page stagger-in">
     <header class="page-heading">
       <div>
         <span>THÔNG TIN ĐƠN VỊ</span>

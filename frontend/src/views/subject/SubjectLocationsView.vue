@@ -234,7 +234,7 @@ onMounted(loadData)
             <th scope="col"><span class="visually-hidden">Thao tác</span></th>
           </tr>
         </thead>
-        <tbody>
+        <tbody class="stagger-in">
           <tr v-for="location in visibleLocations" :key="location.id">
             <td class="cell-name">
               <strong>{{ location.name }}</strong>

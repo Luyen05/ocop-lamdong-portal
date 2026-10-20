@@ -243,4 +243,23 @@ describe('AdminProductsView', () => {
       status: 'pending',
     }))
   })
+
+  it('tải danh sách lỗi thì hiện trạng thái lỗi riêng và nút Thử lại tải lại', async () => {
+    vi.mocked(listAdminProducts)
+      .mockRejectedValueOnce(new Error('mất mạng'))
+      .mockResolvedValueOnce({ items: [pendingProduct], page: 1, page_size: 20, total: 1 })
+    vi.mocked(listProductChangeRequests).mockResolvedValue({ items: [], page: 1, page_size: 100, total: 0 })
+
+    const wrapper = mount(AdminProductsView, { global: { stubs: { RouterLink: true } } })
+    await flushPromises()
+
+    const alert = wrapper.get('.status-panel[role="alert"]')
+    expect(alert.text()).toContain('Chưa tải được dữ liệu')
+    expect(wrapper.text()).not.toContain('Không tìm thấy sản phẩm phù hợp')
+
+    await alert.get('button').trigger('click')
+    await flushPromises()
+    expect(listAdminProducts).toHaveBeenCalledTimes(2)
+    expect(wrapper.text()).toContain(pendingProduct.name)
+  })
 })

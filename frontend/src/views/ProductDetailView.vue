@@ -96,13 +96,19 @@ watch(
 
 onUnmounted(() => {
   latestRequestId++
-  document.title = 'OCOP Lâm Đồng'
 })
+
+// Lỗi mạng hoặc máy chủ thì cho thử lại; không tìm thấy (404) thì chỉ quay lại danh sách.
+const canRetry = computed(() => errorTitle.value === 'Không thể tải sản phẩm')
+
+function retryLoad(): void {
+  void loadProduct(String(route.params.slug))
+}
 </script>
 
 <template>
   <main class="detail-page">
-    <div class="container py-4 py-lg-5">
+    <div class="container py-4 py-lg-5 stagger-in">
       <nav class="breadcrumb-nav mb-4" aria-label="Đường dẫn">
         <RouterLink to="/">Trang chủ</RouterLink>
         <span>/</span>
@@ -127,9 +133,10 @@ onUnmounted(() => {
         <span class="error-symbol">!</span>
         <h1>{{ errorTitle }}</h1>
         <p>{{ errorMessage }}</p>
-        <RouterLink class="btn btn-success" to="/san-pham">
-          Quay lại danh sách
-        </RouterLink>
+        <div class="error-actions">
+          <button v-if="canRetry" class="btn btn-success" type="button" @click="retryLoad">Thử lại</button>
+          <RouterLink class="btn btn-outline-secondary" to="/san-pham">Quay lại danh sách</RouterLink>
+        </div>
       </section>
 
       <template v-else-if="product">
@@ -513,6 +520,13 @@ onUnmounted(() => {
   color: var(--ocop-danger-strong);
   font-size: 1.4rem;
   font-weight: 800;
+}
+
+.error-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--ocop-space-3);
 }
 
 .error-state p {

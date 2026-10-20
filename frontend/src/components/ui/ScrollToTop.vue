@@ -2,6 +2,7 @@
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 
 import AppIcon from '@/components/ui/AppIcon.vue'
+import { scrollToTop as scrollPageToTop } from '@/utils/motion'
 
 const isVisible = ref(false)
 
@@ -10,7 +11,7 @@ function updateVisibility(): void {
 }
 
 function scrollToTop(): void {
-  window.scrollTo({ top: 0, behavior: 'smooth' })
+  scrollPageToTop()
 }
 
 onMounted(() => {

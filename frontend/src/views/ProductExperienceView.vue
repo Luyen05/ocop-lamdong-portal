@@ -132,7 +132,6 @@ watch(() => route.params.slug, (slug) => {
 
 onUnmounted(() => {
   generation++
-  document.title = 'OCOP Lâm Đồng'
 })
 </script>
 
@@ -169,7 +168,7 @@ onUnmounted(() => {
             <p v-else class="gps-hint">Vị trí chỉ được yêu cầu khi bạn bấm “Tìm điểm gần tôi”.</p>
             <p v-if="isLoadingDetails" role="status">Đang tải địa chỉ và dịch vụ...</p>
             <p v-if="detailError" role="status">Chưa tải được thông tin bổ sung của một số điểm. Bạn vẫn có thể xem chi tiết hoặc bản đồ.</p>
-            <div class="experience-grid">
+            <div class="experience-grid stagger-in">
               <article v-for="location in locations" :key="location.id" class="experience-location">
                 <div class="location-media">
                   <PresentationGallery v-if="details[location.slug]" :images="details[location.slug]!.images" :primary-url="details[location.slug]!.primary_image_url" :name="location.name" landscape />

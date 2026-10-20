@@ -210,6 +210,12 @@
   --ocop-shadow-card: 0 12px 32px color-mix(in srgb, var(--ocop-mist-950) 12%, transparent);
   --ocop-shadow-overlay: 0 30px 70px color-mix(in srgb, var(--ocop-mist-950) 24%, transparent);
   --ocop-transition: 180ms ease;
+  /* Nhịp chuyển động: ngắn cho phản hồi thao tác, vừa cho vào/ra, dài chỉ cho khối lớn. */
+  --ocop-duration-fast: 140ms;
+  --ocop-duration-base: 220ms;
+  --ocop-duration-slow: 360ms;
+  --ocop-ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --ocop-ease-in: cubic-bezier(0.4, 0, 1, 1);
 
   /* Kính mờ (glassmorphism): chỉ dùng trên nền ảnh/minh họa nhiều màu, luôn có phương án nền đặc */
   --ocop-glass-bg: color-mix(in srgb, var(--ocop-white) 74%, transparent);

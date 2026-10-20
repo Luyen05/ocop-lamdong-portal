@@ -77,7 +77,7 @@ async function submit(): Promise<void> {
         </div>
       </div>
 
-      <div v-if="user" class="profile-grid">
+      <div v-if="user" class="profile-grid stagger-in">
         <aside class="profile-summary">
           <img
             v-if="user.avatar_url"

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import LeafletMap from '@/components/map/LeafletMap.vue'
@@ -241,9 +241,6 @@ onMounted(() => {
   void loadFeatures()
 })
 
-onUnmounted(() => {
-  document.title = 'OCOP Lâm Đồng'
-})
 </script>
 
 <template>

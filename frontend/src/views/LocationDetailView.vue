@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import axios from 'axios'
-import { computed, onUnmounted, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
 import LeafletMap from '@/components/map/LeafletMap.vue'
@@ -86,14 +86,18 @@ watch(
   { immediate: true },
 )
 
-onUnmounted(() => {
-  document.title = 'OCOP Lâm Đồng'
-})
+
+// Lỗi mạng hoặc máy chủ thì cho thử lại; không tìm thấy (404) thì chỉ quay lại danh sách.
+const canRetry = computed(() => errorTitle.value === 'Không thể tải điểm du lịch')
+
+function retryLoad(): void {
+  void loadLocation(String(route.params.slug))
+}
 </script>
 
 <template>
   <main class="location-detail-page">
-    <div class="container py-4 py-lg-5">
+    <div class="container py-4 py-lg-5 stagger-in">
       <nav class="breadcrumb-nav mb-4" aria-label="Đường dẫn">
         <RouterLink to="/">Trang chủ</RouterLink>
         <span>/</span>
@@ -117,7 +121,10 @@ onUnmounted(() => {
         <span class="error-symbol">!</span>
         <h1>{{ errorTitle }}</h1>
         <p>{{ errorMessage }}</p>
-        <RouterLink class="btn btn-success" :to="{ name: 'locations' }">Quay lại danh sách</RouterLink>
+        <div class="error-actions">
+          <button v-if="canRetry" class="btn btn-success" type="button" @click="retryLoad">Thử lại</button>
+          <RouterLink class="btn btn-outline-secondary" :to="{ name: 'locations' }">Quay lại danh sách</RouterLink>
+        </div>
       </section>
 
       <template v-else-if="location">
@@ -272,6 +279,13 @@ onUnmounted(() => {
 .error-state h1 {
   margin: 1rem 0 0.5rem;
   font-size: 1.6rem;
+}
+
+.error-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--ocop-space-3);
 }
 
 .error-state p {

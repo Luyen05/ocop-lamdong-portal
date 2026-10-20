@@ -1,3 +1,4 @@
+import axios from 'axios'
 import { computed, readonly, ref } from 'vue'
 
 import * as authService from '@/services/auth'
@@ -30,12 +31,22 @@ async function initialize(): Promise<void> {
   isInitializing.value = true
   try {
     currentUser.value = await authService.getMe()
-  } catch {
-    clearSession()
-  } finally {
     initialized = true
+  } catch (error) {
+    if (isRejectedToken(error)) {
+      // Token hết hạn hoặc không hợp lệ: xóa phiên.
+      clearSession()
+      initialized = true
+    }
+    // Lỗi mạng hoặc máy chủ tạm lỗi: giữ token, lần chuyển trang sau thử lại thay vì đăng xuất người dùng.
+  } finally {
     isInitializing.value = false
   }
+}
+
+function isRejectedToken(error: unknown): boolean {
+  const status = axios.isAxiosError(error) ? error.response?.status : undefined
+  return status === 401 || status === 403
 }
 
 async function login(payload: LoginPayload): Promise<User> {

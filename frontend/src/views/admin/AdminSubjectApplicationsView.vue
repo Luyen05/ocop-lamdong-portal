@@ -2,6 +2,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 
 import AppIcon from '@/components/ui/AppIcon.vue'
+import StatusPanel from '@/components/ui/StatusPanel.vue'
 import { useDialogFocus } from '@/composables/useDialogFocus'
 import { getApiErrorMessage } from '@/services/api-error'
 import {
@@ -160,21 +161,15 @@ onMounted(loadApplications)
       <button class="btn btn-success" type="submit">Tìm kiếm</button>
     </form>
 
-    <div v-if="errorMessage" class="alert alert-danger" role="alert">
-      {{ errorMessage }}
-      <button class="btn btn-sm btn-outline-danger ms-2" type="button" @click="loadApplications">
-        Thử lại
-      </button>
-    </div>
-
     <section class="table-card">
-      <div v-if="isLoading" class="state-row" aria-live="polite">
-        <span class="spinner-border spinner-border-sm" aria-hidden="true" />
-        Đang tải hồ sơ...
-      </div>
-      <div v-else-if="applications.length === 0" class="state-row">
-        Không có hồ sơ phù hợp với bộ lọc.
-      </div>
+      <StatusPanel v-if="isLoading" kind="loading" :rows="3" message="Đang tải hồ sơ…" />
+      <StatusPanel v-else-if="errorMessage" kind="error" :message="errorMessage" @retry="loadApplications" />
+      <StatusPanel
+        v-else-if="applications.length === 0"
+        kind="empty"
+        title="Không có hồ sơ phù hợp với bộ lọc"
+        message="Đổi trạng thái hoặc từ khóa để xem hồ sơ khác."
+      />
       <div v-else class="table-responsive">
         <table class="table align-middle mb-0">
           <thead>
@@ -187,7 +182,7 @@ onMounted(loadApplications)
               <th class="text-end">Thao tác</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody class="stagger-in">
             <tr v-for="application in applications" :key="application.id">
               <td>
                 <strong>{{ application.name }}</strong>
@@ -246,6 +241,7 @@ onMounted(loadApplications)
       </button>
     </nav>
 
+    <Transition name="ocop-fade">
     <div v-if="selectedApplication" class="modal-layer" role="presentation" @click.self="closeModeration">
       <section
         ref="moderationDialog"
@@ -311,6 +307,7 @@ onMounted(loadApplications)
         </form>
       </section>
     </div>
+    </Transition>
   </main>
 </template>
 
@@ -366,19 +363,19 @@ onMounted(loadApplications)
   background: var(--admin-card);
   color: var(--admin-text);
 }
-.btn-success { border-color: var(--admin-success); background: var(--admin-success); color: #fff; }
-.btn-success:hover { background: #059669; }
-.btn-danger { border-color: var(--admin-danger); background: var(--admin-danger); color: #fff; }
-.btn-danger:hover { background: #DC2626; }
+.btn-success { border-color: var(--admin-success); background: var(--admin-success); color: var(--ocop-white); }
+.btn-success:hover { background: var(--admin-success-hover); }
+.btn-danger { border-color: var(--admin-danger); background: var(--admin-danger); color: var(--ocop-white); }
+.btn-danger:hover { background: var(--admin-danger-hover); }
 .btn-light, .btn-sm { background: var(--admin-bg); color: var(--admin-muted); }
 .btn-light:hover { border-color: var(--admin-primary); color: var(--admin-primary); }
-.btn-outline-danger { border-color: #FECACA; background: transparent; color: var(--admin-danger-text); }
+.btn-outline-danger { border-color: var(--admin-danger-border); background: transparent; color: var(--admin-danger-text); }
 .btn-outline-danger:hover { background: var(--admin-danger-soft); }
 .btn:disabled { cursor: not-allowed; opacity: 0.5; }
 
 /* ── Alert ── */
 .alert { display: flex; align-items: center; gap: var(--admin-space-3); padding: var(--admin-space-3) var(--admin-space-4); border-radius: var(--admin-radius-md); font-size: var(--admin-font-sm); }
-.alert-danger { background: var(--admin-danger-soft); color: var(--admin-danger-text); border: 1px solid #FECACA; }
+.alert-danger { background: var(--admin-danger-soft); color: var(--admin-danger-text); border: 1px solid var(--admin-danger-border); }
 
 /* ── Table card ── */
 .table-card {
@@ -429,16 +426,12 @@ onMounted(loadApplications)
 .btn-sm { height: 32px; padding: 0 12px; font-size: var(--admin-font-xs); }
 
 /* ── State row ── */
-.state-row { display: flex; min-height: 200px; align-items: center; justify-content: center; gap: 10px; color: var(--admin-muted); font-size: var(--admin-font-base); }
-.spinner-border { display: inline-block; width: 20px; height: 20px; border: 3px solid var(--admin-border); border-top-color: var(--admin-primary); border-radius: 50%; animation: spin 0.7s linear infinite; }
-.spinner-border-sm { width: 16px; height: 16px; border-width: 2px; }
-@keyframes spin { to { transform: rotate(360deg); } }
 
 /* ── Pagination ── */
 .pagination-bar { display: flex; align-items: center; justify-content: flex-end; gap: var(--admin-space-3); padding: var(--admin-space-3) 0; color: var(--admin-muted); font-size: var(--admin-font-sm); font-weight: 600; }
 
 /* ── Modal ── */
-.modal-layer { position: fixed; z-index: 200; inset: 0; display: grid; padding: var(--admin-space-5); place-items: center; overflow-y: auto; background: rgba(30, 42, 71, 0.55); backdrop-filter: blur(4px); }
+.modal-layer { position: fixed; z-index: 200; inset: 0; display: grid; padding: var(--admin-space-5); place-items: center; overflow-y: auto; background: var(--admin-scrim); backdrop-filter: blur(4px); }
 .moderation-dialog {
   width: min(100%, 720px);
   max-height: calc(100vh - 40px);
