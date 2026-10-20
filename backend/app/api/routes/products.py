@@ -12,6 +12,7 @@ from app.models.data_source import ProductSource
 from app.models.location import TourismLocation, location_ocop_products
 from app.models.product import Product
 from app.models.subject import Subject
+from app.models.user import User
 from app.schemas.error import ErrorResponse
 from app.schemas.product import (
     ProductCategoryRead,
@@ -54,11 +55,25 @@ def public_eligibility_filter():
     return or_(has_recognition_source, has_current_certificate)
 
 
+def subject_account_active_filter():
+    """Tài khoản của chủ thể còn hoạt động: admin khóa tài khoản thì sản phẩm ngừng hiện công khai."""
+
+    return (
+        select(User.id)
+        .where(User.id == Subject.user_id, User.is_active.is_(True))
+        .correlate(Subject)
+        .exists()
+    )
+
+
 def public_product_filters():
+    """Cần join Product.subject trong câu truy vấn dùng các điều kiện này."""
+
     return (
         Product.status == "approved",
         Product.is_demo.is_(False),
         Subject.status == "approved",
+        subject_account_active_filter(),
         Product.star.is_not(None),
         Product.description.is_not(None),
         public_eligibility_filter(),

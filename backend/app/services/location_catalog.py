@@ -4,10 +4,12 @@ from __future__ import annotations
 
 from typing import Literal
 
-from sqlalchemy import func, or_
+from sqlalchemy import func, or_, select
 
 from app.core.geometry import GeoPoint
 from app.models.location import TourismLocation
+from app.models.subject import Subject
+from app.models.user import User
 from app.schemas.location import (
     LocationListItem,
     MapFeature,
@@ -51,9 +53,23 @@ def public_location_filters(
     location_type: str | None = None,
     district: str | None = None,
 ) -> list:
-    """Điều kiện chung cho danh sách, bản đồ và tìm điểm gần: chỉ điểm đã duyệt."""
+    """Điều kiện chung cho danh sách, bản đồ và tìm điểm gần: chỉ điểm đã duyệt.
 
-    filters: list = [TourismLocation.status == PUBLIC_LOCATION_STATUS]
+    Điểm của chủ thể có tài khoản bị khóa không hiện công khai; điểm admin nhập sẵn
+    (không gắn chủ thể) vẫn hiện.
+    """
+
+    subject_account_active = (
+        select(User.id)
+        .join(Subject, Subject.user_id == User.id)
+        .where(Subject.id == TourismLocation.subject_id, User.is_active.is_(True))
+        .correlate(TourismLocation)
+        .exists()
+    )
+    filters: list = [
+        TourismLocation.status == PUBLIC_LOCATION_STATUS,
+        or_(TourismLocation.subject_id.is_(None), subject_account_active),
+    ]
     if search and search.strip():
         keyword = f"%{search.strip()}%"
         filters.append(
