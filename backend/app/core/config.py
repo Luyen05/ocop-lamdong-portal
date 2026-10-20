@@ -1,3 +1,4 @@
+import logging
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal
@@ -9,6 +10,12 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 BACKEND_ROOT = Path(__file__).resolve().parents[2]
+logger = logging.getLogger(__name__)
+
+# Giá trị mẫu trong .env.example: ai cũng biết nên không được dùng để ký JWT.
+JWT_SECRET_PLACEHOLDER = "replace-with-a-random-value-at-least-32-characters"
+# Mặc định chỉ để chạy kiểm thử và phát triển trên máy cá nhân.
+DEV_JWT_SECRET = "development-only-secret-change-me-123456"
 
 
 class Settings(BaseSettings):
@@ -17,7 +24,7 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:5173"
     database_url: str = "postgresql+psycopg://postgres:change-me@localhost:5432/lamdong_ocop"
     jwt_secret_key: SecretStr = Field(
-        default=SecretStr("development-only-secret-change-me-123456"),
+        default=SecretStr(DEV_JWT_SECRET),
         min_length=32,
     )
     jwt_algorithm: str = "HS256"
@@ -54,6 +61,16 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         extra="ignore",
     )
+
+    @field_validator("jwt_secret_key")
+    @classmethod
+    def reject_placeholder_jwt_secret(cls, value: SecretStr) -> SecretStr:
+        if value.get_secret_value().strip() == JWT_SECRET_PLACEHOLDER:
+            raise ValueError(
+                "JWT_SECRET_KEY đang là giá trị mẫu trong .env.example. Hãy đặt một chuỗi ngẫu nhiên riêng, "
+                'ví dụ tạo bằng: python -c "import secrets; print(secrets.token_urlsafe(48))"'
+            )
+        return value
 
     @field_validator("osrm_base_url")
     @classmethod
@@ -107,6 +124,15 @@ class Settings(BaseSettings):
             ]
             if missing:
                 raise ValueError(f"IMAGE_STORAGE=cloudinary cần khai báo: {', '.join(missing)}.")
+        return self
+
+    @model_validator(mode="after")
+    def warn_development_jwt_secret(self) -> "Settings":
+        if self.jwt_secret_key.get_secret_value() == DEV_JWT_SECRET:
+            logger.warning(
+                "JWT_SECRET_KEY đang dùng giá trị mặc định chỉ dành cho phát triển. "
+                "Đặt JWT_SECRET_KEY riêng trong .env trước khi triển khai."
+            )
         return self
 
     @property

@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session, joinedload
 from app.api.dependencies import CurrentUser
 from app.core.config import get_settings
 from app.core.database import get_db
+from app.core.rate_limit import password_attempts
 from app.core.roles import RoleName
 from app.core.security import (
     DUMMY_PASSWORD_HASH,
@@ -29,6 +30,27 @@ from app.schemas.error import ErrorResponse
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 settings = get_settings()
+
+
+def client_ip(request: Request) -> str:
+    return request.client.host if request.client else "unknown"
+
+
+def ensure_password_attempts_allowed(*, email: str, ip: str) -> None:
+    """429 khi email hoặc địa chỉ IP đã nhập sai mật khẩu quá nhiều lần gần đây."""
+
+    retry_after = password_attempts.retry_after(email=email, ip=ip)
+    if retry_after > 0:
+        minutes = max(1, -(-retry_after // 60))
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail={
+                "code": "TOO_MANY_LOGIN_ATTEMPTS",
+                "message": f"Bạn đã nhập sai mật khẩu quá nhiều lần. Vui lòng thử lại sau khoảng {minutes} phút.",
+                "details": {"retry_after_seconds": retry_after},
+            },
+            headers={"Retry-After": str(retry_after)},
+        )
 
 
 def to_user_read(user: User) -> UserRead:
@@ -115,12 +137,16 @@ def register(
     responses={
         status.HTTP_401_UNAUTHORIZED: {"model": ErrorResponse},
         status.HTTP_403_FORBIDDEN: {"model": ErrorResponse},
+        status.HTTP_429_TOO_MANY_REQUESTS: {"model": ErrorResponse},
     },
 )
 def login(
     payload: LoginRequest,
+    request: Request,
     db: Annotated[Session, Depends(get_db)],
 ) -> TokenResponse:
+    ip = client_ip(request)
+    ensure_password_attempts_allowed(email=payload.email, ip=ip)
     user = db.scalar(
         select(User)
         .options(joinedload(User.role))
@@ -134,6 +160,7 @@ def login(
         stored_hash or DUMMY_PASSWORD_HASH,
     ) and stored_hash is not None
     if user is None or not password_matches:
+        password_attempts.record_failure(email=payload.email, ip=ip)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail={
@@ -143,6 +170,7 @@ def login(
             },
             headers={"WWW-Authenticate": "Bearer"},
         )
+    password_attempts.record_success(email=payload.email)
     if not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
