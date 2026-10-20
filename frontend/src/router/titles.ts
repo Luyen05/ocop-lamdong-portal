@@ -7,6 +7,7 @@ export const SITE_NAME = 'OCOP Lâm Đồng'
 const ROUTE_TITLES: Record<string, string> = {
   login: 'Đăng nhập',
   register: 'Đăng ký tài khoản',
+  'social-login-callback': 'Đăng nhập bằng Google/Facebook',
   profile: 'Tài khoản của tôi',
   'subject-application': 'Đăng ký chủ thể OCOP',
   products: 'Sản phẩm OCOP',
