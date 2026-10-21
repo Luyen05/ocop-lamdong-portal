@@ -10,7 +10,7 @@ services:
       POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}"
 
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"  # chỉ máy này truy cập được database
 
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -36,7 +36,7 @@ services:
       PGADMIN_SERVER_JSON_FILE: /pgadmin4/servers.json
 
     ports:
-      - "5050:80"
+      - "127.0.0.1:5050:80"  # pgAdmin chỉ mở trên máy này
 
     # Giữ tài khoản, kết nối đã lưu và lịch sử truy vấn khi container bị tạo lại.
     volumes:
