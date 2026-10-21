@@ -107,6 +107,9 @@ async function submit(): Promise<void> {
               <dd class="text-success fw-semibold">Đang hoạt động</dd>
             </div>
           </dl>
+          <RouterLink class="ocop-btn-ghost profile-reviews-link" to="/tai-khoan/danh-gia">
+            Đánh giá của tôi
+          </RouterLink>
         </aside>
 
         <div class="profile-main">
@@ -296,6 +299,12 @@ async function submit(): Promise<void> {
 
 .profile-summary dd {
   text-align: right;
+}
+
+.profile-reviews-link {
+  width: 100%;
+  min-height: var(--ocop-control-md);
+  margin-top: 1.5rem;
 }
 
 .profile-form-card {
