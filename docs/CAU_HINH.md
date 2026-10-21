@@ -82,14 +82,54 @@ Lỡ để lộ khóa bí mật: Google tạo secret mới rồi xóa secret cũ
 
 ## 4. Triển khai thật
 
-Docker Compose trong repo dành cho **môi trường phát triển** (backend `--reload`, frontend chạy Vite dev server). Trước khi đưa lên máy chủ công khai:
+Docker Compose gốc (`docker-compose.yml`) dành cho **môi trường phát triển** (backend `--reload`, Vite dev server, cổng database mở trên máy). Bản chạy thật nằm ở `docker-compose.prod.yml`: PostgreSQL + PostGIS (không mở cổng), backend (`backend/Dockerfile.prod`, người dùng thường, 2 tiến trình, `--proxy-headers`) và Nginx (`frontend/Dockerfile.prod`) phục vụ bản build Vue, chuyển `/api/`, `/uploads/` về backend và trả `robots.txt`, `sitemap.xml`.
 
-- [ ] Đặt `JWT_SECRET_KEY`, `POSTGRES_PASSWORD`, `PGADMIN_DEFAULT_PASSWORD` mạnh, riêng cho máy chủ.
-- [ ] Không nạp seed demo (`seed_dev.sql`, `seed_product_workflow.sql` có mật khẩu công khai); dùng dữ liệu nhập tay.
-- [ ] Frontend: `npm run build`, phục vụ thư mục `dist/` bằng Nginx (cấu hình chuyển mọi đường dẫn về `index.html` cho Vue Router).
-- [ ] Backend: chạy `uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2 --proxy-headers` (không `--reload`) sau Nginx; đặt `PUBLIC_BASE_URL`, `FRONTEND_BASE_URL`, `CORS_ORIGINS`, `VITE_API_BASE_URL` theo tên miền thật.
-- [ ] HTTPS (ví dụ Let's Encrypt); thêm địa chỉ `https` vào Google/Facebook.
-- [ ] Nginx: `client_max_body_size 12m` (ảnh 5 MB, chứng nhận 10 MB); giới hạn tần suất cho `/api/v1/auth/login` nếu chạy nhiều tiến trình backend (bộ đếm đăng nhập sai nằm trong bộ nhớ từng tiến trình).
-- [ ] Không mở cổng PostgreSQL (5432) và pgAdmin ra Internet (Compose đã chỉ mở trên `127.0.0.1`).
-- [ ] Sao lưu database định kỳ: `pg_dump -Fc` (lệnh mẫu trong README), lưu ngoài máy chủ; giữ volume `backend_uploads` nếu lưu ảnh cục bộ hoặc dùng Cloudinary.
-- [ ] Database đã có dữ liệu: chạy `database/migrations/014_hoan_thien.sql`, rồi `tools/kiem-tra-database.sql` phải trả rỗng.
+```mermaid
+flowchart LR
+  user["Người dùng / bot"] -->|"80 (HTTPS do lớp ngoài xử lý)"| web["Nginx + bản build Vue"]
+  web -->|"/api/, /uploads/, /robots.txt, /sitemap.xml"| api["Backend FastAPI"]
+  web -->|"bot Facebook, Zalo: /, /san-pham/*, /diem-du-lich/*"| api
+  api --> db[("PostgreSQL + PostGIS")]
+  api --> cloud["Cloudinary"]
+```
+
+### Các bước (máy chủ Linux có Docker)
+
+1. Lấy mã nguồn: `git clone <repo> /opt/ocop && cd /opt/ocop`.
+2. `cp .env.production.example .env.production`, điền `SITE_URL` (địa chỉ công khai, không có `/` cuối), `POSTGRES_PASSWORD`, `JWT_SECRET_KEY` (chuỗi ngẫu nhiên ≥ 32 ký tự), khóa Cloudinary nếu dùng. File này không commit.
+3. `scripts/deploy/trien-khai.sh` (sao lưu, build, khởi động, chờ website phản hồi). Lần đầu, volume database trống nên Docker tự tạo cấu trúc từ `database/schema.sql`; **không nạp seed demo** (`seed_dev.sql`, `seed_product_workflow.sql` có mật khẩu công khai).
+4. Tạo tài khoản quản trị: đăng ký trên website rồi nâng quyền bằng lệnh `UPDATE` trong README (mục "Tạo tài khoản quản trị"), dùng `docker compose --env-file .env.production -f docker-compose.prod.yml exec -T postgres …`.
+5. Nạp dữ liệu OCOP thật đã kiểm chứng: seed tham chiếu công khai (`seed_public_reference.sql`, `seed_ocop_2025_2026.sql`) hoặc nhập qua giao diện chủ thể và duyệt ở khu quản trị.
+6. Database đã có dữ liệu cũ: chạy `database/migrations/014_hoan_thien.sql`, rồi `tools/kiem-tra-database.sql` phải trả rỗng.
+
+### HTTPS
+
+Nginx trong repo chỉ nghe cổng 80. Chọn một cách để có HTTPS (Google/Facebook yêu cầu HTTPS khi chạy thật):
+
+- **Cloudflare** (gói Free): trỏ tên miền về Cloudflare, bật "Full" và proxy; Cloudflare cấp chứng chỉ. Nên giới hạn máy chủ chỉ nhận kết nối từ IP của Cloudflare.
+- **Caddy** trước Nginx: `ocop.example.vn { reverse_proxy 127.0.0.1:8080 }` rồi đặt `WEB_PORT=8080` (Caddy tự xin chứng chỉ Let's Encrypt).
+- **certbot** trên máy chủ với Nginx của hệ điều hành làm lớp ngoài, chuyển tiếp về `127.0.0.1:WEB_PORT`.
+
+Lớp HTTPS phải gửi header `X-Forwarded-Proto` và `X-Forwarded-For`. Nếu có lớp proxy phía trước, đặt thêm `set_real_ip_from <IP proxy>; real_ip_header X-Forwarded-For;` trong `frontend/nginx/default.conf` để giới hạn đăng nhập tính theo IP người dùng thật. Sau khi có HTTPS: đổi `SITE_URL` thành `https://…`, thêm địa chỉ `https` vào Google/Facebook (mục 3).
+
+### Danh sách kiểm tra
+
+- [ ] `JWT_SECRET_KEY`, `POSTGRES_PASSWORD` mạnh, riêng cho máy chủ; `.env.production` không nằm trong git.
+- [ ] Không nạp seed demo. Đổi mật khẩu mọi tài khoản quản trị nếu từng nạp seed demo.
+- [ ] HTTPS hoạt động; `SITE_URL` là địa chỉ `https`.
+- [ ] Cổng 5432 không mở ra Internet (compose chạy thật không có `ports` cho database).
+- [ ] Sao lưu định kỳ: `scripts/deploy/sao-luu.sh` (`pg_dump -Fc` + nén ảnh, giữ 14 bản) chạy bằng cron, chép `backups/` sang nơi khác. Ảnh lưu Cloudinary thì không cần sao lưu ảnh.
+- [ ] Giới hạn đăng nhập sai: bộ đếm trong ứng dụng nằm trong bộ nhớ từng tiến trình; Nginx bổ sung `limit_req` 30 lần/phút/IP cho `/api/v1/auth/login`.
+- [ ] Tài liệu API (`/docs`) bị Nginx ẩn trên máy chủ thật.
+
+### SEO
+
+- `robots.txt` chặn `/quan-tri`, `/chu-the`, `/tai-khoan`, `/dang-nhap`, `/dang-ky`; `sitemap.xml` liệt kê trang tĩnh, mọi sản phẩm và điểm du lịch công khai (cùng điều kiện hiển thị với API). Cả hai do backend sinh theo `FRONTEND_BASE_URL`.
+- Mỗi trang có tiêu đề, mô tả, canonical, Open Graph, Twitter Card; trang cần đăng nhập và trang lỗi gắn `noindex`; trang sản phẩm và điểm du lịch có JSON-LD (`Product`, `TouristAttraction`).
+- Bot không chạy JavaScript (Facebook, Zalo, Telegram…) được Nginx chuyển tới HTML tĩnh của backend để thẻ xem trước khi chia sẻ link hiện đúng ảnh, tiêu đề, mô tả. Googlebot chạy JavaScript nên đọc thẳng bản Vue.
+- Sau khi có tên miền: gửi `https://<tên-miền>/sitemap.xml` vào Google Search Console; kiểm tra thẻ chia sẻ bằng Sharing Debugger của Facebook.
+
+### CI/CD
+
+- `.github/workflows/ci.yml` (xem README mục Kiểm thử) chạy khi push vào `main` và mọi pull request. Nên bật **branch protection** cho `main`: bắt buộc các job `backend`, `frontend`, `database` đạt trước khi merge.
+- `.github/workflows/deploy.yml` triển khai tay (Actions → Deploy → Run workflow) qua SSH bằng `scripts/deploy/trien-khai.sh`. Cần tạo môi trường `production` và các secret `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_KEY` (khóa riêng chỉ dùng triển khai), tùy chọn `DEPLOY_PATH`. Chỉ dùng khi đã có máy chủ.

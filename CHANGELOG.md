@@ -6,6 +6,9 @@ Các thay đổi đáng chú ý của dự án. Định dạng theo [Keep a Chan
 
 ### Thêm
 
+- SEO: `robots.txt`, `sitemap.xml` (trang tĩnh + sản phẩm + điểm du lịch công khai), thẻ meta/Open Graph/Twitter Card/canonical theo từng trang, `noindex` cho khu riêng tư, dữ liệu có cấu trúc JSON-LD (`Product`, `TouristAttraction`); trang HTML tĩnh cho bot Facebook/Zalo không chạy JavaScript.
+- CI GitHub Actions (backend + PostGIS, dữ liệu, frontend, database khớp repo, tài liệu API, build image) và workflow triển khai tay qua SSH.
+- Bản chạy thật: `docker-compose.prod.yml`, `backend/Dockerfile.prod`, `frontend/Dockerfile.prod`, cấu hình Nginx (proxy API, cache, header bảo mật, giới hạn đăng nhập), `.env.production.example`, script triển khai và sao lưu.
 - Đánh giá sản phẩm và điểm du lịch: viết, sửa, xóa; quản trị viên duyệt/từ chối có lý do; điểm trung bình tự tính lại; trang "Đánh giá của tôi".
 - Quản trị viên quản lý người dùng (tìm kiếm, lọc, khóa/mở khóa) và danh mục (thêm, sửa, ẩn/hiện, sắp xếp, xóa danh mục rỗng).
 - Đăng nhập, đăng ký nhanh bằng Google và Facebook; liên kết/bỏ liên kết trong trang Tài khoản.
@@ -20,6 +23,7 @@ Các thay đổi đáng chú ý của dự án. Định dạng theo [Keep a Chan
 
 ### Sửa
 
+- Test seed ảnh Dehavi (chỉ chạy với PostGIS tạm) lệch vì lượt xem tăng giữa hai lần chạy.
 - Trang duyệt hồ sơ chủ thể lỗi 500 với dữ liệu loại chủ thể `company`; lỗi 500 trả JSON có CORS.
 - Backend từ chối khởi động khi `JWT_SECRET_KEY` là giá trị mẫu.
 - Tin tức: không giữ khóa khi gọi mạng, dùng bản cũ khi nguồn lỗi.

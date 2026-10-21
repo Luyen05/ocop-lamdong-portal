@@ -33,7 +33,8 @@ backend/app/
   main.py            Tạo ứng dụng, CORS, xử lý lỗi thống nhất, phục vụ ảnh /uploads
   api/router.py      Gom các router dưới /api/v1
   api/routes/        Endpoint theo nhóm: auth, auth_social, products, locations, maps, news, reviews,
-                     subject_*, admin_* (mỗi file một nhóm chức năng)
+                     subject_*, admin_* (mỗi file một nhóm chức năng); seo.py (robots, sitemap, trang cho bot,
+                     nằm ngoài /api/v1)
   api/dependencies.py  Lấy người dùng từ JWT, kiểm tra vai trò
   core/              Cấu hình (.env), kết nối database, bảo mật (JWT, băm mật khẩu Argon2),
                      giới hạn đăng nhập sai, tìm kiếm
@@ -132,11 +133,11 @@ Quy ước chung: khóa chính `BIGSERIAL`; thời gian `TIMESTAMPTZ`; trigger `
 
 | Phần | Lệnh | Số test |
 |---|---|---|
-| Backend | `cd backend && python -m pytest -q` | 272 đạt, 9 bỏ qua (test seed Dehavi chỉ chạy với PostGIS tạm) |
-| Frontend | `cd frontend && npm test` | 272 (59 file) |
+| Backend | `cd backend && python -m pytest -q` | 279 đạt, 9 bỏ qua (test seed Dehavi chỉ chạy với PostGIS tạm; CI chạy đủ) |
+| Frontend | `cd frontend && npm test` | 281 (60 file) |
 | Kiểm tra kiểu | `cd frontend && npm run type-check` | |
-| Dữ liệu gốc | `python -m pytest -q tests/data` (thư mục gốc) | 10 |
+| Dữ liệu gốc | `python -m pytest -q tests/data` (thư mục gốc) | 9 đạt, 1 bỏ qua |
 
 - Backend test chạy trên SQLite trong bộ nhớ (đăng ký hàm khoảng cách thay PostGIS), gọi API thật qua `TestClient`; dịch vụ ngoài (Google, Facebook, Cloudinary, OSRM, RSS) được giả lập bằng `httpx.MockTransport`.
 - Frontend test dùng Vitest + Vue Test Utils (jsdom), giả lập service API.
-- Kiểm thử luồng đầy đủ trên trình duyệt (khách, người dùng, chủ thể, quản trị viên) và kiểm tra trợ năng bằng axe (WCAG 2.2 AA), tràn ngang ở 375/1280 px được chạy thủ công bằng Playwright trước khi phát hành.
+- CI (GitHub Actions) chạy toàn bộ các lệnh trên cùng kiểm tra database khớp repo và build image production (`docs/CAU_HINH.md` mục 4). Kiểm thử luồng đầy đủ trên trình duyệt (khách, người dùng, chủ thể, quản trị viên) và kiểm tra trợ năng bằng axe (WCAG 2.2 AA), tràn ngang ở 375/1280 px được chạy thủ công bằng Playwright trước khi phát hành.

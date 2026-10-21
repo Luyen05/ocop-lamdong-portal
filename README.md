@@ -221,25 +221,31 @@ Mọi cấu hình nằm trong `.env`; danh sách đầy đủ ở [`docs/CAU_HIN
 ## Kiểm thử
 
 ```powershell
-docker compose exec backend python -m pytest -q    # backend: 272 đạt, 9 bỏ qua
-docker compose exec frontend npm test              # frontend: 272 test trong 59 file
+docker compose exec backend python -m pytest -q    # backend: 279 đạt, 9 bỏ qua
+docker compose exec frontend npm test              # frontend: 281 test trong 60 file
 docker compose exec frontend npm run type-check
 docker compose exec frontend npm run build
 python -m pytest -q tests/data                     # dữ liệu OCOP gốc (cần Python trên máy)
 .\scripts\verify-mvp.ps1                           # kiểm tra nhanh toàn hệ thống đang chạy (chỉ đọc)
 ```
 
-9 test backend bỏ qua là test seed Dehavi, chỉ chạy với PostGIS tạm riêng ([`docs/DU_LIEU.md`](docs/DU_LIEU.md) mục 7). Dịch vụ ngoài (Google, Facebook, Cloudinary, OSRM, RSS) đều được giả lập trong test.
+9 test backend bỏ qua là test seed Dehavi, chỉ chạy với PostGIS tạm riêng ([`docs/DU_LIEU.md`](docs/DU_LIEU.md) mục 7); CI chạy cả 9 test này. Dịch vụ ngoài (Google, Facebook, Cloudinary, OSRM, RSS) đều được giả lập trong test.
+
+**CI** (GitHub Actions, `.github/workflows/ci.yml`) chạy mỗi lần push vào `main` và mỗi pull request: backend + PostGIS, dữ liệu gốc, frontend (type-check, test, build), database khớp repo (`scripts/ci/kiem-tra-database.sh`: schema + seed + migration 014 chạy 2 lần, rồi `tools/kiem-tra-database.sql` phải rỗng), tài liệu API sinh lại không lệch, và build + chạy thử image production. Chạy tay script database trên máy có PostgreSQL + PostGIS: `PGHOST=localhost PGUSER=postgres PGPASSWORD=... scripts/ci/kiem-tra-database.sh`.
 
 ## Cấu trúc thư mục
 
 ```text
 .
+├── .github/workflows/    CI (ci.yml) và triển khai tay (deploy.yml)
 ├── backend/              API FastAPI
 │   ├── app/              api/routes, core, models, schemas, services, main.py
-│   └── tests/            Test pytest
+│   ├── tests/            Test pytest
+│   └── Dockerfile(.prod) Image phát triển / image chạy thật
 ├── frontend/             Ứng dụng Vue 3
-│   └── src/              views, layouts, components, services, stores, router, styles…
+│   ├── src/              views, layouts, components, services, stores, router, styles…
+│   ├── nginx/            Cấu hình Nginx bản chạy thật
+│   └── Dockerfile(.prod)
 ├── database/
 │   ├── schema.sql        Cấu trúc database đầy đủ (dùng khi tạo mới)
 │   ├── migrations/       014_hoan_thien.sql (nâng cấp database cũ), archive/ 001–013
@@ -248,8 +254,9 @@ python -m pytest -q tests/data                     # dữ liệu OCOP gốc (c�
 ├── tools/                Sinh seed, sinh tài liệu API, kiểm tra database
 ├── tests/data/           Test dữ liệu gốc
 ├── docs/                 Tài liệu, Postman, văn bản nguồn OCOP
-├── scripts/              verify-mvp.ps1
-├── docker-compose.yml
+├── scripts/              verify-mvp.ps1, ci/ (kiểm tra database), deploy/ (triển khai, sao lưu)
+├── docker-compose.yml    Môi trường phát triển
+├── docker-compose.prod.yml  Bản chạy thật (.env.production.example)
 ├── CHANGELOG.md
 └── CLAUDE.md             Quy tắc làm việc của nhóm khi dùng Claude
 ```
@@ -273,7 +280,7 @@ API REST dưới `/api/v1` (103 endpoint): danh sách đầy đủ, quyền, mã
 | [`docs/API.md`](docs/API.md) | REST API: quy ước, mã lỗi, toàn bộ endpoint |
 | [`docs/KIEN_TRUC.md`](docs/KIEN_TRUC.md) | Kiến trúc, cấu trúc mã nguồn, xác thực, lưu file, sơ đồ dữ liệu, migration, kiểm thử |
 | [`docs/DU_LIEU.md`](docs/DU_LIEU.md) | Dữ liệu, file seed, nguồn và mức xác minh, tài khoản demo, tái tạo dữ liệu |
-| [`docs/CAU_HINH.md`](docs/CAU_HINH.md) | Biến môi trường, Cloudinary, khóa Google/Facebook, danh sách kiểm tra khi triển khai |
+| [`docs/CAU_HINH.md`](docs/CAU_HINH.md) | Biến môi trường, Cloudinary, khóa Google/Facebook, triển khai thật (Docker, Nginx, HTTPS, sao lưu, CI/CD), SEO |
 | [`docs/sources/ocop/`](docs/sources/ocop/README.md) | Văn bản hành chính dùng kiểm chứng dữ liệu OCOP |
 | [`CHANGELOG.md`](CHANGELOG.md) | Các thay đổi chính theo phiên bản |
 
