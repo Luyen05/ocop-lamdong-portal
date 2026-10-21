@@ -369,3 +369,28 @@ def test_get_product_hides_unapproved_content(
 
     assert response.status_code == 404
     assert response.json()["code"] == "PRODUCT_NOT_FOUND"
+
+
+@pytest.mark.parametrize("keyword", ["%", "_", "\\", "Cà phê%"])
+def test_list_products_search_treats_wildcards_literally(
+    product_client: TestClient,
+    keyword: str,
+) -> None:
+    response = product_client.get("/api/v1/products", params={"search": keyword})
+
+    assert response.status_code == 200
+    assert response.json()["total"] == 0
+
+
+def test_get_product_counts_views_without_touching_updated_at(product_client: TestClient) -> None:
+    first = product_client.get("/api/v1/products/mut-dau-da-lat")
+    second = product_client.get("/api/v1/products/mut-dau-da-lat")
+
+    assert first.json()["views"] == 1
+    assert second.json()["views"] == 2
+    assert second.json()["updated_at"] == first.json()["updated_at"]
+    # Danh sách và trang không công khai không tính lượt xem.
+    product_client.get("/api/v1/products")
+    product_client.get("/api/v1/products/san-pham-chua-duyet")
+    assert product_client.get("/api/v1/products/mut-dau-da-lat").json()["views"] == 3
+    assert product_client.get("/api/v1/products/ca-phe-arabica-cau-dat").json()["views"] == 1

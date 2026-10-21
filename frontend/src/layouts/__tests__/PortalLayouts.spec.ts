@@ -73,6 +73,8 @@ describe('AdminLayout', () => {
       'Sản phẩm',
       'Điểm du lịch',
       'Chủ thể / HTX',
+      'Người dùng',
+      'Danh mục',
     ])
     expect(wrapper.text()).not.toContain('Sắp có')
     expect(wrapper.find('.ps-topbar__name').text()).toBe('Duyệt sản phẩm')

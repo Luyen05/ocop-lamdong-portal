@@ -537,3 +537,27 @@ def test_outdated_schema_returns_json_error_with_cors_and_keeps_product_detail(
     assert locations.headers["access-control-allow-origin"] == "http://localhost:5173"
     assert product.status_code == 200
     assert product.json()["related_locations"][0]["slug"] == "cau-dat-farm"
+
+
+@pytest.mark.parametrize("keyword", ["%", "_", "\\"])
+def test_location_search_treats_wildcards_literally(
+    location_client: TestClient,
+    keyword: str,
+) -> None:
+    listing = location_client.get("/api/v1/locations", params={"search": keyword})
+    features = location_client.get("/api/v1/map/locations", params={"search": keyword})
+
+    assert listing.status_code == 200
+    assert listing.json()["total"] == 0
+    assert features.json()["features"] == []
+
+
+def test_location_detail_counts_views(location_client: TestClient) -> None:
+    first = location_client.get("/api/v1/locations/cau-dat-farm")
+    second = location_client.get("/api/v1/locations/cau-dat-farm")
+    hidden = location_client.get("/api/v1/locations/vuon-cho-duyet")
+
+    assert first.json()["views"] == 1
+    assert second.json()["views"] == 2
+    assert second.json()["updated_at"] == first.json()["updated_at"]
+    assert hidden.status_code == 404

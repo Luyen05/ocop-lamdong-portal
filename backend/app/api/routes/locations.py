@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, joinedload, selectinload
 
-from app.api.routes.products import public_product_filters, to_product_list_item
+from app.api.routes.products import increment_views, public_product_filters, to_product_list_item
 from app.core.database import get_db
 from app.models.location import TourismLocation, location_ocop_products
 from app.models.product import Product
@@ -117,6 +117,7 @@ def get_location(slug: str, db: Session = Depends(get_db)) -> LocationDetail:
                 "details": {"slug": slug},
             },
         )
+    views = increment_views(db, TourismLocation, location.id, location.views)
 
     products = db.scalars(
         select(Product)
@@ -136,7 +137,7 @@ def get_location(slug: str, db: Session = Depends(get_db)) -> LocationDetail:
         contact_phone=location.contact_phone,
         website=location.website,
         source_url=location.source_url,
-        views=location.views,
+        views=views,
         images=[
             LocationImageRead(
                 id=image.id,

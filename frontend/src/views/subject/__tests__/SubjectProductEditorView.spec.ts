@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { getCategories } from '@/services/categories'
 import {
   createProductDraft,
+  getMyProduct,
   submitProduct,
   updateProductDraft,
   uploadProductCertificate,
@@ -14,9 +15,10 @@ import type { ManagedProduct } from '@/types/product-management'
 import SubjectProductEditorView from '@/views/subject/SubjectProductEditorView.vue'
 
 const router = vi.hoisted(() => ({ push: vi.fn(), replace: vi.fn() }))
+const routeState = vi.hoisted(() => ({ params: {} as Record<string, string> }))
 
 vi.mock('vue-router', () => ({
-  useRoute: () => ({ params: {} }),
+  useRoute: () => routeState,
   useRouter: () => router,
 }))
 
@@ -41,6 +43,7 @@ vi.mock('@/services/product-management', () => ({
 describe('SubjectProductEditorView', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    routeState.params = {}
     vi.mocked(getCategories).mockResolvedValue({
       items: [{ id: 1, name: 'Đồ uống', slug: 'do-uong', description: null, icon: null }],
       page: 1,
@@ -185,5 +188,52 @@ describe('SubjectProductEditorView', () => {
     expect(updateProductDraft).toHaveBeenCalledWith(42, expect.objectContaining({ name: 'Trà atiso Đà Lạt' }))
     expect(submitProduct).toHaveBeenLastCalledWith(42)
     expect(router.push).toHaveBeenCalledWith({ name: 'subject-products', query: { saved: 'submitted' } })
+  })
+
+  it('tao moi chi chon duoc danh muc dang hien', async () => {
+    const wrapper = mount(SubjectProductEditorView, {
+      global: { stubs: { RouterLink: { template: '<a><slot /></a>' } } },
+    })
+    await flushPromises()
+
+    const options = wrapper.get('select').findAll('option').map((option) => option.text())
+    expect(options).toEqual(['Đồ uống'])
+  })
+
+  it('sua san pham thuoc danh muc dang an van giu nguyen danh muc', async () => {
+    routeState.params = { id: '7' }
+    vi.mocked(getMyProduct).mockResolvedValue({
+      id: 7,
+      category_id: 9,
+      category: { id: 9, name: 'Sinh vật cảnh', slug: 'sinh-vat-canh' },
+      name: 'Lan hồ điệp',
+      star: null,
+      price: null,
+      unit: null,
+      cert_code: null,
+      cert_issued_at: null,
+      cert_expires_at: null,
+      issuing_authority: null,
+      certificate_url: null,
+      certificate_storage_path: null,
+      vietgap_code: null,
+      description: null,
+      story: null,
+      ingredients: null,
+      usage_instructions: null,
+      images: [],
+      status: 'draft',
+    } as unknown as ManagedProduct)
+    const wrapper = mount(SubjectProductEditorView, {
+      global: { stubs: { RouterLink: { template: '<a><slot /></a>' } } },
+    })
+    await flushPromises()
+
+    const select = wrapper.get('select').element as HTMLSelectElement
+    expect(Array.from(select.options).map((option) => option.text)).toEqual([
+      'Đồ uống',
+      'Sinh vật cảnh (đang tạm ẩn)',
+    ])
+    expect(select.value).toBe('9')
   })
 })

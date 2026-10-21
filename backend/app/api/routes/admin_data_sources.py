@@ -4,6 +4,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.core.search import LIKE_ESCAPE, contains_pattern
 from app.models.data_source import DataSource
 from app.schemas.error import ErrorResponse
 from app.schemas.product_management import (
@@ -71,12 +72,12 @@ def list_data_sources(
 ) -> DataSourceListResponse:
     filters = []
     if search:
-        keyword = f"%{search.strip()}%"
+        keyword = contains_pattern(search)
         filters.append(
             or_(
-                DataSource.title.ilike(keyword),
-                DataSource.document_number.ilike(keyword),
-                DataSource.issuing_body.ilike(keyword),
+                DataSource.title.ilike(keyword, escape=LIKE_ESCAPE),
+                DataSource.document_number.ilike(keyword, escape=LIKE_ESCAPE),
+                DataSource.issuing_body.ilike(keyword, escape=LIKE_ESCAPE),
             )
         )
     if source_type:

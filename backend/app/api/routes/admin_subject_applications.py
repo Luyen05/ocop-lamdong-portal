@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session, joinedload, selectinload
 from app.api.dependencies import CurrentUser
 from app.core.database import get_db
 from app.core.roles import RoleName
+from app.core.search import LIKE_ESCAPE, contains_pattern
 from app.models.role import Role
 from app.models.subject import Subject
 from app.models.user import User
@@ -66,13 +67,13 @@ def list_subject_applications(
     if application_status:
         filters.append(Subject.status == application_status)
     if search:
-        keyword = f"%{search.strip()}%"
+        keyword = contains_pattern(search)
         filters.append(
             or_(
-                Subject.name.ilike(keyword),
-                Subject.tax_code.ilike(keyword),
-                User.email.ilike(keyword),
-                User.full_name.ilike(keyword),
+                Subject.name.ilike(keyword, escape=LIKE_ESCAPE),
+                Subject.tax_code.ilike(keyword, escape=LIKE_ESCAPE),
+                User.email.ilike(keyword, escape=LIKE_ESCAPE),
+                User.full_name.ilike(keyword, escape=LIKE_ESCAPE),
             )
         )
 

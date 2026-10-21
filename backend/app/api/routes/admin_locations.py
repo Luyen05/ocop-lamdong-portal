@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from app.api.dependencies import CurrentUser
 from app.core.database import get_db
 from app.core.geometry import GeoPoint
+from app.core.search import LIKE_ESCAPE, contains_pattern
 from app.models.location import TourismLocation
 from app.models.subject import Subject
 from app.models.user import User
@@ -74,13 +75,13 @@ def list_locations_for_moderation(
     if location_source:
         filters.append(TourismLocation.location_source == location_source)
     if search:
-        keyword = f"%{search.strip()}%"
+        keyword = contains_pattern(search)
         filters.append(
             or_(
-                TourismLocation.name.ilike(keyword),
-                TourismLocation.address.ilike(keyword),
-                TourismLocation.district.ilike(keyword),
-                Subject.name.ilike(keyword),
+                TourismLocation.name.ilike(keyword, escape=LIKE_ESCAPE),
+                TourismLocation.address.ilike(keyword, escape=LIKE_ESCAPE),
+                TourismLocation.district.ilike(keyword, escape=LIKE_ESCAPE),
+                Subject.name.ilike(keyword, escape=LIKE_ESCAPE),
             )
         )
     # Bản nháp là việc riêng của chủ thể nên admin không thấy, trừ khi lọc đúng trạng thái này.

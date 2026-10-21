@@ -12,6 +12,7 @@ from app.models.subject import Subject
 from app.schemas.access import AdminAccessResponse, AdminDashboardResponse
 from app.schemas.error import ErrorResponse
 from app.api.routes import (
+    admin_categories,
     admin_data_sources,
     admin_location_changes,
     admin_locations,
@@ -19,6 +20,7 @@ from app.api.routes import (
     admin_products,
     admin_statistics,
     admin_subject_applications,
+    admin_users,
 )
 
 
@@ -93,3 +95,5 @@ router.include_router(admin_data_sources.router)
 router.include_router(admin_statistics.router)
 router.include_router(admin_locations.router)
 router.include_router(admin_location_changes.router)
+router.include_router(admin_users.router)
+router.include_router(admin_categories.router)

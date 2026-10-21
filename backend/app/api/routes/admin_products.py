@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.api.dependencies import CurrentUser
 from app.core.database import get_db
+from app.core.search import LIKE_ESCAPE, contains_pattern
 from app.models.data_source import DataSource, ProductSource
 from app.models.product import Product
 from app.models.subject import Subject
@@ -78,12 +79,12 @@ def list_products_for_moderation(
     if product_status:
         filters.append(Product.status == product_status)
     if search:
-        keyword = f"%{search.strip()}%"
+        keyword = contains_pattern(search)
         filters.append(
             or_(
-                Product.name.ilike(keyword),
-                Product.cert_code.ilike(keyword),
-                Subject.name.ilike(keyword),
+                Product.name.ilike(keyword, escape=LIKE_ESCAPE),
+                Product.cert_code.ilike(keyword, escape=LIKE_ESCAPE),
+                Subject.name.ilike(keyword, escape=LIKE_ESCAPE),
             )
         )
     if verification_level:

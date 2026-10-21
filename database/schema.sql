@@ -79,7 +79,11 @@ CREATE TABLE categories (
   name VARCHAR(150) NOT NULL UNIQUE,
   slug VARCHAR(150) NOT NULL UNIQUE,
   description TEXT,
-  icon VARCHAR(100)
+  icon VARCHAR(100),
+  -- Danh mục ẩn không còn trong bộ lọc công khai và ô chọn khi tạo sản phẩm mới;
+  -- sản phẩm đã thuộc danh mục vẫn hiển thị bình thường.
+  is_visible BOOLEAN NOT NULL DEFAULT TRUE,
+  sort_order INTEGER NOT NULL DEFAULT 0 CONSTRAINT categories_sort_order_check CHECK (sort_order >= 0)
 );
 
 CREATE TABLE data_sources (

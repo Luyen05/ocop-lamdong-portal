@@ -236,6 +236,24 @@ function submissionPayload(): ProductWritePayload {
   return normalizedDraftPayload() as ProductWritePayload
 }
 
+/**
+ * Danh sách danh mục công khai không có danh mục đang ẩn. Sản phẩm đã thuộc danh mục ẩn vẫn
+ * được sửa và giữ nguyên danh mục, nên thêm riêng danh mục đó vào ô chọn (chỉ khi sửa).
+ */
+function keepCurrentCategory(categoryId: number, category?: { name: string; slug: string }): void {
+  if (form.category_id !== categoryId || categories.value.some((item) => item.id === categoryId)) return
+  categories.value = [
+    ...categories.value,
+    {
+      id: categoryId,
+      name: `${category?.name ?? 'Danh mục hiện tại'} (đang tạm ẩn)`,
+      slug: category?.slug ?? '',
+      description: null,
+      icon: null,
+    },
+  ]
+}
+
 async function load(): Promise<void> {
   loading.value = true
   loadError.value = ''
@@ -254,6 +272,7 @@ async function load(): Promise<void> {
       currentRequest.value = request
       updateReason.value = request.reason || ''
       fillForm(request.proposed_data)
+      keepCurrentCategory(request.current_data.category_id)
     } else if (productId.value) {
       const product = await getMyProduct(productId.value)
       if (!['draft', 'needs_revision', 'rejected', 'approved'].includes(product.status)) {
@@ -263,6 +282,7 @@ async function load(): Promise<void> {
       }
       currentProduct.value = product
       fillForm(product)
+      keepCurrentCategory(product.category.id, product.category)
       const carriedError = takeSaveErrorFromHistory()
       if (carriedError) errorMessage.value = carriedError
     }
