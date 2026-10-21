@@ -121,6 +121,12 @@ const router = createRouter({
           component: () => import('@/views/admin/AdminUsersView.vue'),
           meta: { title: 'Quản lý người dùng' },
         },
+        {
+          path: 'danh-muc',
+          name: 'admin-categories',
+          component: () => import('@/views/admin/AdminCategoriesView.vue'),
+          meta: { title: 'Quản lý danh mục' },
+        },
       ],
     },
     {

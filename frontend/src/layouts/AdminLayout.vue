@@ -13,6 +13,7 @@ const navItems: PortalNavItem[] = [
   { label: 'Điểm du lịch', icon: 'map-pin', to: '/quan-tri/diem-du-lich' },
   { label: 'Chủ thể / HTX', icon: 'building', to: '/quan-tri/ho-so-chu-the' },
   { label: 'Người dùng', icon: 'users', to: '/quan-tri/nguoi-dung' },
+  { label: 'Danh mục', icon: 'tags', to: '/quan-tri/danh-muc' },
 ]
 
 const subtitles: Record<string, string> = {
@@ -21,6 +22,7 @@ const subtitles: Record<string, string> = {
   'admin-subject-applications': 'Duyệt hồ sơ đơn vị đăng ký chủ thể',
   'admin-locations': 'Duyệt điểm du lịch và yêu cầu cập nhật',
   'admin-users': 'Tìm kiếm, khóa và mở khóa tài khoản',
+  'admin-categories': 'Thêm, sửa, ẩn và sắp xếp danh mục sản phẩm',
 }
 
 const pageTitle = computed(() =>

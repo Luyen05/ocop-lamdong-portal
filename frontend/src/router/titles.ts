@@ -23,6 +23,7 @@ const ROUTE_TITLES: Record<string, string> = {
   'subject-product-edit': 'Sửa sản phẩm',
   'subject-product-request-edit': 'Sửa yêu cầu cập nhật sản phẩm',
   'admin-users': 'Quản lý người dùng',
+  'admin-categories': 'Quản lý danh mục',
 }
 
 export function documentTitleFor(routeName: unknown, metaTitle?: string): string {
