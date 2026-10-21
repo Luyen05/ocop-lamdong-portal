@@ -74,12 +74,27 @@ function startEditing(): void {
   successMessage.value = ''
 }
 
+/**
+ * Hồ sơ vừa được duyệt nhưng thông tin tài khoản đang giữ vẫn là vai trò cũ: tải lại /auth/me để
+ * đầu trang và quyền vào khu chủ thể cập nhật ngay, không cần đăng nhập lại.
+ */
+async function syncApprovedRole(): Promise<void> {
+  const user = authStore.currentUser.value
+  if (!user || user.role === 'subject') return
+  try {
+    await authStore.refreshUser()
+  } catch {
+    // Không tải lại được thì giữ nguyên; lần đăng nhập sau sẽ có vai trò mới.
+  }
+}
+
 async function loadApplication(): Promise<void> {
   isLoading.value = true
   loadError.value = ''
   try {
     application.value = await getMySubjectApplication()
     fillForm(application.value)
+    if (application.value.status === 'approved') void syncApprovedRole()
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status === 404) {
       application.value = null
