@@ -241,9 +241,12 @@ router.afterEach((to) => {
   document.title = documentTitleFor(to.name, to.meta.title)
 })
 
-window.addEventListener(AUTH_SESSION_EXPIRED_EVENT, () => {
+window.addEventListener(AUTH_SESSION_EXPIRED_EVENT, (event) => {
   const currentRoute = router.currentRoute.value
-  if (currentRoute.meta.requiresAuth) {
+  const locked = (event as CustomEvent<string>).detail === 'locked'
+  if (locked) {
+    void router.push({ name: 'login', query: { locked: '1' } })
+  } else if (currentRoute.meta.requiresAuth) {
     void router.push({
       name: 'login',
       query: { redirect: currentRoute.fullPath, expired: '1' },

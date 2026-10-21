@@ -13,7 +13,10 @@ export function removeAccessToken(): void {
   window.localStorage.removeItem(ACCESS_TOKEN_KEY)
 }
 
-export function expireAccessToken(): void {
+/** Lý do kết thúc phiên: hết hạn token, hoặc tài khoản bị quản trị viên khóa. */
+export type SessionEndReason = 'expired' | 'locked'
+
+export function expireAccessToken(reason: SessionEndReason = 'expired'): void {
   removeAccessToken()
-  window.dispatchEvent(new Event(AUTH_SESSION_EXPIRED_EVENT))
+  window.dispatchEvent(new CustomEvent<SessionEndReason>(AUTH_SESSION_EXPIRED_EVENT, { detail: reason }))
 }

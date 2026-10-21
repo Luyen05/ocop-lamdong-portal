@@ -27,8 +27,15 @@ http.interceptors.request.use((config) => {
 http.interceptors.response.use(
   (response) => response,
   (error: unknown) => {
-    if (axios.isAxiosError(error) && error.response?.status === 401 && getAccessToken()) {
-      expireAccessToken()
+    if (axios.isAxiosError(error) && getAccessToken()) {
+      const status = error.response?.status
+      const code = (error.response?.data as { code?: string } | undefined)?.code
+      if (status === 401) {
+        expireAccessToken()
+      } else if (status === 403 && code === 'ACCOUNT_INACTIVE') {
+        // Quản trị viên vừa khóa tài khoản: kết thúc phiên ngay, không để người dùng ở lại trang cũ.
+        expireAccessToken('locked')
+      }
     }
     return Promise.reject(error)
   },
