@@ -93,7 +93,7 @@ async def database_exception_handler(request: Request, exc: SQLAlchemyError) -> 
         code = "DATABASE_SCHEMA_OUTDATED"
         message = (
             "Cơ sở dữ liệu chưa được cập nhật theo phiên bản mã nguồn hiện tại. "
-            "Hãy chạy các migration còn thiếu trong thư mục database/migrations."
+            "Hãy chạy database/migrations/014_hoan_thien.sql để cập nhật database."
         )
     elif isinstance(exc, OperationalError):
         status_code = 503

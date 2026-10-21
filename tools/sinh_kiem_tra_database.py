@@ -16,14 +16,17 @@ from pathlib import Path
 
 import psycopg
 
-# Liệt kê bảng, cột, ràng buộc, index, trigger trong schema public (bỏ bảng của PostGIS).
-ACTUAL_OBJECTS_SQL = """select 'column', table_name||'.'||column_name from information_schema.columns where table_schema='public' and table_name not in ('spatial_ref_sys','geometry_columns','geography_columns')
-union all select 'constraint', conrelid::regclass::text||'.'||conname from pg_constraint c join pg_namespace n on n.oid=c.connamespace where n.nspname='public' and conrelid<>0 and conrelid::regclass::text<>'spatial_ref_sys'
-union all select 'index', tablename||'.'||indexname from pg_indexes where schemaname='public' and tablename<>'spatial_ref_sys'
-union all select 'trigger', event_object_table||'.'||trigger_name from information_schema.triggers where trigger_schema='public'
-union all select 'table', table_name from information_schema.tables where table_schema='public' and table_type='BASE TABLE' and table_name<>'spatial_ref_sys'"""
+# Liệt kê bảng, cột (kèm kiểu, NOT NULL, mặc định), ràng buộc (kèm định nghĩa), index (kèm định nghĩa),
+# trigger và hàm set_updated_at trong schema public (bỏ bảng của PostGIS).
+ACTUAL_OBJECTS_SQL = """select 'table', table_name from information_schema.tables where table_schema='public' and table_type='BASE TABLE' and table_name<>'spatial_ref_sys'
+union all select 'column', table_name||'.'||column_name||' '||case when data_type='USER-DEFINED' then udt_name else data_type end||coalesce('('||character_maximum_length||')','')||case when data_type='numeric' then coalesce('('||numeric_precision||','||numeric_scale||')','') else '' end||case when is_nullable='NO' then ' not null' else '' end||coalesce(' default '||column_default,'') from information_schema.columns where table_schema='public' and table_name not in ('spatial_ref_sys','geometry_columns','geography_columns')
+union all select 'constraint', conrelid::regclass::text||'.'||conname||' '||pg_get_constraintdef(c.oid) from pg_constraint c join pg_namespace n on n.oid=c.connamespace where n.nspname='public' and conrelid<>0 and conrelid::regclass::text<>'spatial_ref_sys'
+union all select 'index', tablename||'.'||indexname||' '||regexp_replace(indexdef,'^CREATE (UNIQUE )?INDEX \\S+ ON public\\.\\S+ ','\\1') from pg_indexes where schemaname='public' and tablename<>'spatial_ref_sys'
+union all select 'trigger', event_object_table||'.'||trigger_name||' '||action_timing||' '||event_manipulation from information_schema.triggers where trigger_schema='public'
+union all select 'function', p.proname||' '||md5(regexp_replace(pg_get_functiondef(p.oid),'\\s+',' ','g')) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname='set_updated_at'"""
 
-HEADER = """-- So sánh database đang chạy với cấu trúc chuẩn của repo (schema.sql + migration mới nhất).
+HEADER = """-- So sánh database đang chạy với cấu trúc chuẩn của repo (schema.sql + migration mới nhất):
+-- bảng, cột (kiểu, NOT NULL, giá trị mặc định), ràng buộc (cả nội dung CHECK), index, trigger, hàm set_updated_at.
 -- Cách dùng: mở file trong Query Tool của pgAdmin rồi chạy.
 -- Kết quả:
 --   'thua_ngoai_repo'   = có trong database nhưng repo không có (sửa tay hoặc công cụ khác tạo);

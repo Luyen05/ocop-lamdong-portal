@@ -2,10 +2,15 @@ BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS postgis;
 
+-- Cập nhật updated_at khi sửa dòng; giữ nguyên nếu chỉ tăng lượt xem (views).
 CREATE OR REPLACE FUNCTION set_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
-  NEW.updated_at = CURRENT_TIMESTAMP;
+  IF (to_jsonb(NEW) - 'views' - 'updated_at') = (to_jsonb(OLD) - 'views' - 'updated_at') THEN
+    NEW.updated_at = OLD.updated_at;
+  ELSE
+    NEW.updated_at = CURRENT_TIMESTAMP;
+  END IF;
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
