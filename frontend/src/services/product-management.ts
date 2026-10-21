@@ -1,4 +1,4 @@
-import http from '@/services/http'
+import http, { UPLOAD_TIMEOUT_MS } from '@/services/http'
 import type {
   AdminProductFilters,
   DataSourceListResponse,
@@ -26,7 +26,9 @@ import type {
 export async function uploadProductImage(file: File): Promise<ProductImageUpload> {
   const formData = new FormData()
   formData.append('file', file)
-  const response = await http.post<ProductImageUpload>('/subject/product-images', formData)
+  const response = await http.post<ProductImageUpload>('/subject/product-images', formData, {
+    timeout: UPLOAD_TIMEOUT_MS,
+  })
   return response.data
 }
 
@@ -39,7 +41,9 @@ export async function deleteTemporaryProductImage(storagePath: string): Promise<
 export async function uploadProductCertificate(file: File): Promise<ProductCertificateUpload> {
   const formData = new FormData()
   formData.append('file', file)
-  const response = await http.post<ProductCertificateUpload>('/subject/product-certificates', formData)
+  const response = await http.post<ProductCertificateUpload>('/subject/product-certificates', formData, {
+    timeout: UPLOAD_TIMEOUT_MS,
+  })
   return response.data
 }
 
@@ -56,7 +60,7 @@ export async function downloadProductCertificate(
   const path = scope === 'subject'
     ? `/subject/product-certificates/products/${productId}`
     : `/admin/products/${productId}/certificate`
-  const response = await http.get<Blob>(path, { responseType: 'blob' })
+  const response = await http.get<Blob>(path, { responseType: 'blob', timeout: UPLOAD_TIMEOUT_MS })
   return response.data
 }
 

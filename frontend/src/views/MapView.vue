@@ -390,7 +390,7 @@ onMounted(() => {
       </section>
 
       <p class="panel-note">
-        Dữ liệu điểm đến mang tính tham khảo. Tuyến đường do dịch vụ OSRM (OpenStreetMap) gợi ý.
+        Dữ liệu điểm đến mang tính tham khảo. Tuyến đường do dịch vụ chỉ đường gợi ý (dữ liệu OpenStreetMap).
       </p>
     </aside>
 

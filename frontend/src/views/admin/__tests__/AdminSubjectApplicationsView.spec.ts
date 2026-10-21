@@ -67,4 +67,32 @@ describe('AdminSubjectApplicationsView', () => {
       note: null,
     })
   })
+
+  it('loc nhanh lien tiep chi hien ket qua cua lan tai moi nhat', async () => {
+    const page = (name: string) => ({
+      items: [{ ...pendingApplication, id: name.length, name }],
+      page: 1,
+      page_size: 10,
+      total: 1,
+    })
+    let resolveSlow!: (value: ReturnType<typeof page>) => void
+    vi.mocked(listSubjectApplications)
+      .mockReset()
+      .mockResolvedValueOnce(page('Ban đầu'))
+      .mockImplementationOnce(() => new Promise((resolve) => { resolveSlow = resolve }))
+      .mockResolvedValueOnce(page('Kết quả mới nhất'))
+
+    const wrapper = mount(AdminSubjectApplicationsView)
+    await flushPromises()
+    await wrapper.get('form.filter-bar').trigger('submit')
+    await wrapper.get('form.filter-bar').trigger('submit')
+    await flushPromises()
+    expect(wrapper.text()).toContain('Kết quả mới nhất')
+
+    resolveSlow(page('Kết quả cũ trả về muộn'))
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('Kết quả mới nhất')
+    expect(wrapper.text()).not.toContain('Kết quả cũ trả về muộn')
+  })
 })

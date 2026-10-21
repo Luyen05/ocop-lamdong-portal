@@ -17,6 +17,7 @@ from app.schemas.product_management import (
     ProductUpdateRequestCreate,
 )
 from app.services.product_workflow import (
+    ACTIVE_CHANGE_REQUEST_STATUSES,
     change_request_load_options,
     get_approved_subject,
     get_change_request,
@@ -28,7 +29,7 @@ from app.services.product_workflow import (
 
 
 router = APIRouter()
-ACTIVE_REQUEST_STATUSES = {"pending", "needs_revision"}
+ACTIVE_REQUEST_STATUSES = ACTIVE_CHANGE_REQUEST_STATUSES
 
 
 def ensure_product_accepts_request(db: Session, product_id: int, subject_id: int):

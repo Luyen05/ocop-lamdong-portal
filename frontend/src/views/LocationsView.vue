@@ -150,7 +150,7 @@ onMounted(() => {
   <main class="locations-page">
     <PhotoBanner :photo="heroPhoto">
       <span class="banner-eyebrow">Du lịch nông nghiệp Lâm Đồng</span>
-      <h1>Điểm đến trải nghiệm</h1>
+      <h1>Điểm du lịch nông nghiệp</h1>
       <p>Đồi chè, vườn cà phê, vườn dâu, vườn hoa và nông trại mở cửa đón khách tham quan.</p>
       <RouterLink class="ocop-btn-accent banner-action" :to="{ name: 'map' }">
         <AppIcon name="map" :size="16" /> Mở bản đồ số

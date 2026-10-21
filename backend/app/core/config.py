@@ -1,3 +1,4 @@
+import logging
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal
@@ -9,6 +10,12 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 BACKEND_ROOT = Path(__file__).resolve().parents[2]
+logger = logging.getLogger(__name__)
+
+# Giá trị mẫu trong .env.example: ai cũng biết nên không được dùng để ký JWT.
+JWT_SECRET_PLACEHOLDER = "replace-with-a-random-value-at-least-32-characters"
+# Mặc định chỉ để chạy kiểm thử và phát triển trên máy cá nhân.
+DEV_JWT_SECRET = "development-only-secret-change-me-123456"
 
 
 class Settings(BaseSettings):
@@ -17,7 +24,7 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:5173"
     database_url: str = "postgresql+psycopg://postgres:change-me@localhost:5432/lamdong_ocop"
     jwt_secret_key: SecretStr = Field(
-        default=SecretStr("development-only-secret-change-me-123456"),
+        default=SecretStr(DEV_JWT_SECRET),
         min_length=32,
     )
     jwt_algorithm: str = "HS256"
@@ -25,6 +32,9 @@ class Settings(BaseSettings):
     upload_directory: Path = BACKEND_ROOT / "uploads"
     upload_max_bytes: int = Field(default=5 * 1024 * 1024, ge=1024)
     certificate_upload_max_bytes: int = Field(default=10 * 1024 * 1024, ge=1024)
+    # Địa chỉ công khai của backend (ví dụ https://ocop.example.vn) dùng để tạo đường dẫn ảnh lưu cục bộ.
+    # Để trống thì lấy theo địa chỉ của request (có thể sai khi chạy sau proxy hoặc trong Docker).
+    public_base_url: str = ""
     # Nơi lưu ảnh sản phẩm và ảnh điểm du lịch: "local" (thư mục uploads) hoặc "cloudinary".
     image_storage: Literal["local", "cloudinary"] = "local"
     cloudinary_cloud_name: str = ""
@@ -55,6 +65,16 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
+    @field_validator("jwt_secret_key")
+    @classmethod
+    def reject_placeholder_jwt_secret(cls, value: SecretStr) -> SecretStr:
+        if value.get_secret_value().strip() == JWT_SECRET_PLACEHOLDER:
+            raise ValueError(
+                "JWT_SECRET_KEY đang là giá trị mẫu trong .env.example. Hãy đặt một chuỗi ngẫu nhiên riêng, "
+                'ví dụ tạo bằng: python -c "import secrets; print(secrets.token_urlsafe(48))"'
+            )
+        return value
+
     @field_validator("osrm_base_url")
     @classmethod
     def validate_osrm_base_url(cls, value: str) -> str:
@@ -62,6 +82,17 @@ class Settings(BaseSettings):
         parsed = urlparse(normalized)
         if parsed.scheme not in {"http", "https"} or not parsed.netloc:
             raise ValueError("OSRM_BASE_URL phải là đường dẫn http:// hoặc https://.")
+        return normalized
+
+    @field_validator("public_base_url")
+    @classmethod
+    def validate_public_base_url(cls, value: str) -> str:
+        normalized = value.strip().strip("\"'").strip().rstrip("/")
+        if not normalized:
+            return ""
+        parsed = urlparse(normalized)
+        if parsed.scheme not in {"http", "https"} or not parsed.netloc or parsed.query or parsed.fragment:
+            raise ValueError("PUBLIC_BASE_URL phải có dạng http(s)://tên-miền[:cổng][/đường-dẫn] hoặc để trống.")
         return normalized
 
     @field_validator("frontend_base_url")
@@ -107,6 +138,15 @@ class Settings(BaseSettings):
             ]
             if missing:
                 raise ValueError(f"IMAGE_STORAGE=cloudinary cần khai báo: {', '.join(missing)}.")
+        return self
+
+    @model_validator(mode="after")
+    def warn_development_jwt_secret(self) -> "Settings":
+        if self.jwt_secret_key.get_secret_value() == DEV_JWT_SECRET:
+            logger.warning(
+                "JWT_SECRET_KEY đang dùng giá trị mặc định chỉ dành cho phát triển. "
+                "Đặt JWT_SECRET_KEY riêng trong .env trước khi triển khai."
+            )
         return self
 
     @property

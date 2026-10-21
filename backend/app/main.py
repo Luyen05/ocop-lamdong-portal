@@ -10,6 +10,7 @@ from sqlalchemy.exc import OperationalError, ProgrammingError, SQLAlchemyError
 
 from app.api.router import api_router
 from app.core.config import get_settings
+from app.core.errors import UnhandledErrorMiddleware
 
 
 settings = get_settings()
@@ -21,6 +22,8 @@ app = FastAPI(
     description="REST API cho cổng thông tin OCOP và du lịch nông nghiệp Lâm Đồng.",
 )
 
+# Thêm trước CORSMiddleware để nằm bên trong nó: phản hồi lỗi 500 vẫn có header CORS.
+app.add_middleware(UnhandledErrorMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origin_list,

@@ -7,6 +7,7 @@ import SocialLoginButtons from '@/components/auth/SocialLoginButtons.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
 import { getApiErrorMessage } from '@/services/api-error'
 import { authStore } from '@/stores/auth'
+import { getPasswordScore, getPasswordStrength } from '@/utils/password'
 
 const router = useRouter()
 
@@ -21,21 +22,8 @@ const acceptedTerms = ref(false)
 const isSubmitting = ref(false)
 const errorMessage = ref('')
 
-const passwordScore = computed(() => {
-  let score = 0
-  if (password.value.length >= 8) score += 1
-  if (/[a-z]/.test(password.value) && /[A-Z]/.test(password.value)) score += 1
-  if (/\d/.test(password.value)) score += 1
-  if (/[^A-Za-z0-9]/.test(password.value)) score += 1
-  return score
-})
-
-const passwordStrength = computed(() => {
-  if (!password.value) return { label: 'Chưa nhập', tone: 'muted' }
-  if (passwordScore.value <= 1) return { label: 'Yếu', tone: 'danger' }
-  if (passwordScore.value <= 2) return { label: 'Trung bình', tone: 'warning' }
-  return { label: 'Tốt', tone: 'success' }
-})
+const passwordScore = computed(() => getPasswordScore(password.value))
+const passwordStrength = computed(() => getPasswordStrength(password.value))
 
 const confirmationMismatch = computed(() =>
   Boolean(passwordConfirmation.value && password.value !== passwordConfirmation.value),

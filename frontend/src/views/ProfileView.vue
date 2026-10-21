@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
 
+import PasswordSettings from '@/components/auth/PasswordSettings.vue'
 import SocialAccountLinks from '@/components/auth/SocialAccountLinks.vue'
 
 import { getApiErrorMessage } from '@/services/api-error'
@@ -187,6 +188,8 @@ async function submit(): Promise<void> {
             </div>
           </form>
         </section>
+
+        <PasswordSettings class="profile-form-card" />
 
         <SocialAccountLinks class="profile-form-card" :just-linked="justLinked" />
         </div>
