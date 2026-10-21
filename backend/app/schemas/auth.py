@@ -13,6 +13,9 @@ from pydantic import (
 
 from app.core.roles import RoleName
 
+# Số điện thoại: chữ số, có thể có +, khoảng trắng, dấu chấm, gạch ngang, ngoặc (giống số liên hệ điểm du lịch).
+PHONE_PATTERN = r"^[0-9+][0-9 ().-]{7,19}$"
+
 
 class RegisterRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -20,7 +23,7 @@ class RegisterRequest(BaseModel):
     email: EmailStr
     password: SecretStr = Field(min_length=8, max_length=128)
     full_name: str = Field(min_length=2, max_length=150)
-    phone: str | None = Field(default=None, min_length=8, max_length=20)
+    phone: str | None = Field(default=None, min_length=8, max_length=20, pattern=PHONE_PATTERN)
 
     @field_validator("email")
     @classmethod
@@ -58,7 +61,7 @@ class UpdateMeRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     full_name: str | None = Field(default=None, min_length=2, max_length=150)
-    phone: str | None = Field(default=None, min_length=8, max_length=20)
+    phone: str | None = Field(default=None, min_length=8, max_length=20, pattern=PHONE_PATTERN)
     avatar_url: AnyHttpUrl | None = Field(default=None, max_length=500)
 
     @field_validator("full_name", "phone", mode="before")

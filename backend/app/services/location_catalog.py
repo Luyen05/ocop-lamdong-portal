@@ -11,6 +11,7 @@ from app.core.search import LIKE_ESCAPE, contains_pattern
 from app.models.location import TourismLocation
 from app.models.subject import Subject
 from app.models.user import User
+from app.services.visibility import account_allows_public_content
 from app.schemas.location import (
     LocationListItem,
     MapFeature,
@@ -63,7 +64,7 @@ def public_location_filters(
     subject_account_active = (
         select(User.id)
         .join(Subject, Subject.user_id == User.id)
-        .where(Subject.id == TourismLocation.subject_id, User.is_active.is_(True))
+        .where(Subject.id == TourismLocation.subject_id, account_allows_public_content())
         .correlate(TourismLocation)
         .exists()
     )

@@ -379,3 +379,27 @@ def test_admin_or_subject_guard_uses_role_matrix() -> None:
         content_manager(current_user=user)
 
     assert exc_info.value.status_code == 403
+
+
+def test_phone_must_look_like_a_phone_number(auth_context) -> None:
+    client, _ = auth_context
+    response = client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "sdt@example.com",
+            "password": "MatKhauAnToan123",
+            "full_name": "Nguyễn Văn B",
+            "phone": "abcdefgh",
+        },
+    )
+    assert response.status_code == 422
+    ok = client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "sdt@example.com",
+            "password": "MatKhauAnToan123",
+            "full_name": "Nguyễn Văn B",
+            "phone": "0263 3822 000",
+        },
+    )
+    assert ok.status_code == 201

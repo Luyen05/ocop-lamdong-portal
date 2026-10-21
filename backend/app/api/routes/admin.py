@@ -10,6 +10,7 @@ from app.models.location import TourismLocation, TourismLocationChangeRequest
 from app.models.product import Product, ProductChangeRequest
 from app.models.review import Review
 from app.models.subject import Subject
+from app.api.routes.products import public_product_filters
 from app.schemas.access import AdminAccessResponse, AdminDashboardResponse
 from app.schemas.error import ErrorResponse
 from app.api.routes import (
@@ -66,6 +67,9 @@ def get_admin_dashboard(db: Session = Depends(get_db)) -> AdminDashboardResponse
     return AdminDashboardResponse(
         total_products=count_products(),
         approved_products=count_products(Product.status == "approved"),
+        public_products=db.scalar(
+            select(func.count(Product.id)).join(Product.subject).where(*public_product_filters())
+        ) or 0,
         pending_products=count_products(Product.status == "pending"),
         pending_subject_applications=db.scalar(
             select(func.count(Subject.id)).where(Subject.status == "pending")

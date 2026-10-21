@@ -357,3 +357,18 @@ def test_locking_subject_hides_products_and_locations_from_public(admin_context)
     )
     assert client.get("/api/v1/products").json()["total"] == 1
     assert client.get("/api/v1/locations/cau-dat-farm").status_code == 200
+
+
+def test_reference_data_account_stays_public_while_locked(admin_context) -> None:
+    """Tài khoản kỹ thuật @local.invalid của dữ liệu nguồn công khai luôn khóa nhưng sản phẩm vẫn hiện."""
+
+    client, testing_session = admin_context
+    with testing_session() as session:
+        user = session.get(User, SUBJECT_USER_ID)
+        user.email = "ocop-source-abc@local.invalid"
+        user.is_active = False
+        session.commit()
+
+    assert client.get("/api/v1/products").json()["total"] == 1
+    assert client.get("/api/v1/products/tra-xanh-cau-dat").status_code == 200
+    assert client.get("/api/v1/locations/cau-dat-farm").status_code == 200

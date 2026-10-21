@@ -14,6 +14,7 @@ from app.models.location import TourismLocation, location_ocop_products
 from app.models.product import Product
 from app.models.subject import Subject
 from app.models.user import User
+from app.services.visibility import account_allows_public_content
 from app.schemas.error import ErrorResponse
 from app.schemas.product import (
     ProductCategoryRead,
@@ -57,11 +58,12 @@ def public_eligibility_filter():
 
 
 def subject_account_active_filter():
-    """Tài khoản của chủ thể còn hoạt động: admin khóa tài khoản thì sản phẩm ngừng hiện công khai."""
+    """Tài khoản của chủ thể còn hoạt động (hoặc là tài khoản dữ liệu nguồn công khai):
+    admin khóa tài khoản thì sản phẩm ngừng hiện công khai."""
 
     return (
         select(User.id)
-        .where(User.id == Subject.user_id, User.is_active.is_(True))
+        .where(User.id == Subject.user_id, account_allows_public_content())
         .correlate(Subject)
         .exists()
     )

@@ -533,6 +533,7 @@ def test_admin_dashboard_uses_database_counts(subject_product_context) -> None:
     assert dashboard.json()["total_products"] == 1
     assert dashboard.json()["pending_products"] == 1
     assert dashboard.json()["approved_products"] == 0
+    assert dashboard.json()["public_products"] == 0
     assert dashboard.json()["products_missing_decision"] == 1
     assert forbidden.status_code == 403
 
@@ -945,3 +946,15 @@ def test_saving_draft_keeps_attached_image_after_storage_moved(
     assert rejected.status_code == 422
     assert rejected.json()["code"] == "PRODUCT_IMAGE_NOT_FOUND"
 
+
+
+def test_admin_dashboard_counts_products_visible_on_public_pages(subject_product_context) -> None:
+    client, _ = subject_product_context
+    create_approved_product(client, "OCOP-LD-PUBLIC-COUNT")
+
+    dashboard = client.get("/api/v1/admin/dashboard", headers=auth_header(4, "admin")).json()
+    public_total = client.get("/api/v1/products").json()["total"]
+
+    assert dashboard["approved_products"] >= 1
+    assert public_total == 1
+    assert dashboard["public_products"] == public_total
