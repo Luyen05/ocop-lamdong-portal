@@ -283,3 +283,22 @@ def location_share_page(slug: str, db: Session = Depends(get_db)) -> HTMLRespons
             f"Giờ mở cửa: {location.opening_hours}" if location.opening_hours else "",
         ],
     )
+
+
+@router.get("/", response_class=HTMLResponse)
+def home_share_page() -> HTMLResponse:
+    return render_share_page(
+        title="Nông sản OCOP và du lịch nông nghiệp",
+        description=DEFAULT_DESCRIPTION,
+        path="/",
+        image=site_url("/assets/images/og-default.jpg"),
+        json_ld={
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            "name": SITE_NAME,
+            "url": site_url("/"),
+            "inLanguage": "vi-VN",
+        },
+        heading=SITE_NAME,
+        details=["Sản phẩm OCOP đạt 3 đến 5 sao", "Điểm du lịch nông nghiệp", "Bản đồ số và chỉ đường"],
+    )

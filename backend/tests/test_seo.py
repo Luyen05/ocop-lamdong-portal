@@ -94,3 +94,10 @@ def test_trang_chia_se_thoat_ky_tu_dac_biet(location_client: TestClient) -> None
     assert "</script><b>" not in html
     assert "<b>x</b>" not in html
     assert "&lt;/script&gt;" in html
+
+
+def test_trang_chia_se_trang_chu_co_anh_tuyet_doi(location_client: TestClient) -> None:
+    html = location_client.get("/").text
+
+    assert 'property="og:image" content="http://localhost:5173/assets/images/og-default.jpg"' in html
+    assert '"@type": "WebSite"' in html
