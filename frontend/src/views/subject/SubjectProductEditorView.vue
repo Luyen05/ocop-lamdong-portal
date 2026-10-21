@@ -263,12 +263,46 @@ async function load(): Promise<void> {
       }
       currentProduct.value = product
       fillForm(product)
+      const carriedError = takeSaveErrorFromHistory()
+      if (carriedError) errorMessage.value = carriedError
     }
   } catch (error) {
     loadError.value = getApiErrorMessage(error, 'Không thể tải biểu mẫu sản phẩm.')
   } finally {
     loading.value = false
   }
+}
+
+const SAVE_ERROR_STATE_KEY = 'productEditorError'
+
+/**
+ * Bản nháp mới đã tạo nhưng gửi duyệt lỗi: chuyển sang URL chỉnh sửa để tải lại trang hay bấm lưu lần nữa
+ * đều sửa đúng bản nháp này. Đổi URL làm khung chủ thể dựng lại trang, nên thông báo lỗi được chuyển kèm
+ * qua history state để trang mới hiện lại.
+ */
+async function moveToEditUrl(id: number, error: unknown): Promise<void> {
+  const message = `Đã lưu bản nháp nhưng chưa gửi duyệt được: ${getApiErrorMessage(error, 'Vui lòng thử lại.')}`
+  try {
+    await router.replace({
+      name: 'subject-product-edit',
+      params: { id: String(id) },
+      state: { [SAVE_ERROR_STATE_KEY]: message },
+    })
+  } catch {
+    // Không đổi được URL vẫn giữ currentProduct, lần lưu sau không tạo bản nháp trùng.
+  }
+}
+
+function takeSaveErrorFromHistory(): string {
+  const state = typeof window !== 'undefined' ? window.history.state : null
+  const message = state?.[SAVE_ERROR_STATE_KEY]
+  if (typeof message !== 'string') return ''
+  try {
+    window.history.replaceState({ ...state, [SAVE_ERROR_STATE_KEY]: undefined }, '')
+  } catch {
+    // Bỏ qua: chỉ để tải lại trang không hiện lại lỗi cũ.
+  }
+  return message
 }
 
 async function save(submitAfterSave = false): Promise<void> {
@@ -292,10 +326,20 @@ async function save(submitAfterSave = false): Promise<void> {
     } else if (isApprovedUpdate.value && currentProduct.value) {
       await requestProductUpdate(currentProduct.value.id, submissionPayload(), updateReason.value)
     } else {
+      const isNewDraft = !currentProduct.value
       const saved = currentProduct.value
         ? await updateProductDraft(currentProduct.value.id, draftPayload)
         : await createProductDraft(draftPayload)
-      if (submitAfterSave) await submitProduct(saved.id)
+      // Từ đây sản phẩm đã có trên máy chủ: lần lưu sau phải sửa bản nháp này, không tạo bản mới.
+      currentProduct.value = saved
+      if (submitAfterSave) {
+        try {
+          await submitProduct(saved.id)
+        } catch (error) {
+          if (isNewDraft) await moveToEditUrl(saved.id, error)
+          throw error
+        }
+      }
     }
     await router.push({
       name: 'subject-products',
