@@ -37,6 +37,7 @@ const savedMessages: Record<string, string> = {
   draft: 'Đã lưu bản nháp sản phẩm.',
   submitted: 'Đã gửi sản phẩm để quản trị viên duyệt hiển thị.',
   requested: 'Đã gửi yêu cầu cập nhật. Sản phẩm vẫn hiển thị nội dung cũ cho đến khi được duyệt.',
+  resubmitted: 'Đã sửa và gửi lại yêu cầu cập nhật để quản trị viên duyệt.',
 }
 const deletingProduct = ref<ManagedProduct | null>(null)
 const revisingDeletionRequest = ref<ProductChangeRequest | null>(null)
