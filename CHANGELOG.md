@@ -23,6 +23,7 @@ Các thay đổi đáng chú ý của dự án. Định dạng theo [Keep a Chan
 
 ### Sửa
 
+- Chân trang không còn nhảy xuống khi nội dung trang công khai tải xong (CLS từ 0,8 về 0); font Google nạp không chặn hiển thị.
 - Test seed ảnh Dehavi (chỉ chạy với PostGIS tạm) lệch vì lượt xem tăng giữa hai lần chạy.
 - Trang duyệt hồ sơ chủ thể lỗi 500 với dữ liệu loại chủ thể `company`; lỗi 500 trả JSON có CORS.
 - Backend từ chối khởi động khi `JWT_SECRET_KEY` là giá trị mẫu.
