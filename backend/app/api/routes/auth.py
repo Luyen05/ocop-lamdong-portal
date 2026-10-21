@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
@@ -19,6 +19,7 @@ from app.core.security import (
 from app.models.role import Role
 from app.models.user import User
 from app.schemas.auth import (
+    ChangePasswordRequest,
     LoginRequest,
     RegisterRequest,
     TokenResponse,
@@ -228,3 +229,62 @@ def update_me(
     db.commit()
     db.refresh(current_user)
     return to_user_read(current_user)
+
+
+def password_error(status_code: int, code: str, message: str, field: str) -> HTTPException:
+    return HTTPException(
+        status_code=status_code,
+        detail={"code": code, "message": message, "details": {"field": field}},
+    )
+
+
+@router.post(
+    "/change-password",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses={
+        status.HTTP_400_BAD_REQUEST: {"model": ErrorResponse},
+        status.HTTP_401_UNAUTHORIZED: {"model": ErrorResponse},
+        status.HTTP_422_UNPROCESSABLE_ENTITY: {"model": ErrorResponse},
+        status.HTTP_429_TOO_MANY_REQUESTS: {"model": ErrorResponse},
+    },
+)
+def change_password(
+    payload: ChangePasswordRequest,
+    request: Request,
+    current_user: CurrentUser,
+    db: Annotated[Session, Depends(get_db)],
+) -> Response:
+    """Đổi mật khẩu; tài khoản tạo bằng Google/Facebook (chưa có mật khẩu) thì đặt mật khẩu lần đầu."""
+
+    new_password = payload.new_password.get_secret_value()
+    if current_user.hashed_password is not None:
+        if payload.current_password is None:
+            raise password_error(
+                status.HTTP_422_UNPROCESSABLE_ENTITY,
+                "CURRENT_PASSWORD_REQUIRED",
+                "Vui lòng nhập mật khẩu hiện tại.",
+                "current_password",
+            )
+        ip = client_ip(request)
+        ensure_password_attempts_allowed(email=current_user.email, ip=ip)
+        if not verify_password(payload.current_password.get_secret_value(), current_user.hashed_password):
+            password_attempts.record_failure(email=current_user.email, ip=ip)
+            raise password_error(
+                status.HTTP_400_BAD_REQUEST,
+                "INVALID_CURRENT_PASSWORD",
+                "Mật khẩu hiện tại không đúng.",
+                "current_password",
+            )
+        password_attempts.record_success(email=current_user.email)
+        if verify_password(new_password, current_user.hashed_password):
+            raise password_error(
+                status.HTTP_422_UNPROCESSABLE_ENTITY,
+                "PASSWORD_UNCHANGED",
+                "Mật khẩu mới phải khác mật khẩu hiện tại.",
+                "new_password",
+            )
+
+    current_user.hashed_password = hash_password(new_password)
+    db.add(current_user)
+    db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

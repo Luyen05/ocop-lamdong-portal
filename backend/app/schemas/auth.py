@@ -45,6 +45,15 @@ class LoginRequest(BaseModel):
         return str(value).strip().lower()
 
 
+class ChangePasswordRequest(BaseModel):
+    """Đổi mật khẩu (cần mật khẩu hiện tại) hoặc đặt mật khẩu lần đầu cho tài khoản Google/Facebook."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    current_password: SecretStr | None = Field(default=None, min_length=1, max_length=128)
+    new_password: SecretStr = Field(min_length=8, max_length=128)
+
+
 class UpdateMeRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
