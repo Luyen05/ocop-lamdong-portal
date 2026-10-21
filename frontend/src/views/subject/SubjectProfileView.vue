@@ -123,7 +123,7 @@ onMounted(loadProfile)
 </script>
 
 <template>
-  <main class="profile-page stagger-in">
+  <div class="profile-page stagger-in">
     <header class="page-heading">
       <div>
         <span>THÔNG TIN ĐƠN VỊ</span>
@@ -282,7 +282,7 @@ onMounted(loadProfile)
         <RouterLink to="/">Về trang công khai</RouterLink>
       </aside>
     </template>
-  </main>
+  </div>
 </template>
 
 <style scoped>

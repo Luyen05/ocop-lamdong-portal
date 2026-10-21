@@ -135,7 +135,7 @@ onMounted(loadApplications)
 </script>
 
 <template>
-  <main class="applications-page">
+  <div class="applications-page">
     <header class="page-heading">
       <div>
         <span>Kiểm duyệt chủ thể</span>
@@ -314,7 +314,7 @@ onMounted(loadApplications)
       </section>
     </div>
     </Transition>
-  </main>
+  </div>
 </template>
 
 <style scoped>

@@ -149,7 +149,7 @@ onBeforeUnmount(() => clearTimeout(searchTimer))
 </script>
 
 <template>
-  <main class="users-page">
+  <div class="users-page">
     <header class="page-heading">
       <div>
         <span>Tài khoản</span>
@@ -304,7 +304,7 @@ onBeforeUnmount(() => clearTimeout(searchTimer))
         </section>
       </div>
     </Transition>
-  </main>
+  </div>
 </template>
 
 <style scoped>

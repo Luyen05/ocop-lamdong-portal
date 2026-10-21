@@ -191,7 +191,7 @@ onMounted(loadCategories)
 </script>
 
 <template>
-  <main class="categories-page">
+  <div class="categories-page">
     <header class="page-heading">
       <div>
         <span>Danh mục sản phẩm</span>
@@ -385,7 +385,7 @@ onMounted(loadCategories)
         </section>
       </div>
     </Transition>
-  </main>
+  </div>
 </template>
 
 <style scoped>

@@ -323,7 +323,7 @@ onMounted(loadData)
 </script>
 
 <template>
-  <main class="admin-products-page">
+  <div class="admin-products-page">
     <header class="page-heading">
       <div>
         <span>Kiểm duyệt dữ liệu OCOP</span>
@@ -601,7 +601,7 @@ onMounted(loadData)
       </form>
     </div>
     </Transition>
-  </main>
+  </div>
 </template>
 
 <style scoped>

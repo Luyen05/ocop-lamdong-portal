@@ -384,7 +384,7 @@ onMounted(load)
 </script>
 
 <template>
-  <main class="editor-page">
+  <div class="editor-page">
     <header>
       <RouterLink to="/chu-the/san-pham"><AppIcon name="arrowLeft" :size="14" /> Danh sách sản phẩm</RouterLink>
       <span>{{ isApprovedUpdate || isRequestRevision ? 'Yêu cầu thay đổi' : 'Hồ sơ sản phẩm OCOP' }}</span>
@@ -535,7 +535,7 @@ onMounted(load)
         </button>
       </footer>
     </form>
-  </main>
+  </div>
 </template>
 
 <style scoped>
