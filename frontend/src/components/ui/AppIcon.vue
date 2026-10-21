@@ -23,6 +23,7 @@ const iconNames: Record<string, string> = {
   'map-pin': 'geo-alt',
   building: 'buildings',
   users: 'people',
+  unlock: 'unlock',
   star: 'star-fill',
   newspaper: 'newspaper',
   user: 'person-circle',

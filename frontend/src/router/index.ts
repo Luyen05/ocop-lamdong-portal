@@ -115,6 +115,12 @@ const router = createRouter({
           component: () => import('@/views/admin/AdminLocationsView.vue'),
           meta: { title: 'Duyệt điểm du lịch' },
         },
+        {
+          path: 'nguoi-dung',
+          name: 'admin-users',
+          component: () => import('@/views/admin/AdminUsersView.vue'),
+          meta: { title: 'Quản lý người dùng' },
+        },
       ],
     },
     {
