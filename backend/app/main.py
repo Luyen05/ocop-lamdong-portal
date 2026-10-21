@@ -9,6 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy.exc import OperationalError, ProgrammingError, SQLAlchemyError
 
 from app.api.router import api_router
+from app.api.routes import seo
 from app.core.config import get_settings
 from app.core.errors import UnhandledErrorMiddleware
 
@@ -40,6 +41,8 @@ for folder, mount_name in (("products", "product-uploads"), ("locations", "locat
     app.mount(f"/uploads/{folder}", StaticFiles(directory=public_uploads), name=mount_name)
 
 app.include_router(api_router, prefix=settings.api_v1_prefix)
+# robots.txt, sitemap.xml và trang HTML cho bot (ngoài /api/v1, xem routes/seo.py).
+app.include_router(seo.router)
 
 
 @app.exception_handler(HTTPException)
