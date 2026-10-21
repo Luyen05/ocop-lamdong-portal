@@ -8,6 +8,8 @@ import { locationTypeStyle } from '@/utils/location'
 
 const features = ref<MapFeature[]>([])
 const isLoading = ref(true)
+// Tải lỗi khác với chưa có điểm: không hiện "0 điểm đến" mà báo lỗi kèm nút "Thử lại".
+const loadFailed = ref(false)
 
 // Ảnh xem trước dùng phép chiếu tuyến tính trong khung bao các điểm thật;
 // bản đồ tương tác đầy đủ nằm ở trang /ban-do.
@@ -75,15 +77,20 @@ const legend = computed(() => {
   return [...seen.values()]
 })
 
-onMounted(async () => {
+async function load(): Promise<void> {
+  isLoading.value = true
+  loadFailed.value = false
   try {
     features.value = (await getMapLocations()).features
   } catch {
     features.value = []
+    loadFailed.value = true
   } finally {
     isLoading.value = false
   }
-})
+}
+
+onMounted(load)
 </script>
 
 <template>
@@ -93,7 +100,7 @@ onMounted(async () => {
         <p class="ocop-eyebrow">Bản đồ số</p>
         <h2 id="map-title">Du lịch nông nghiệp Lâm Đồng</h2>
       </div>
-      <span class="count-badge">
+      <span v-if="!isLoading && !loadFailed" class="count-badge">
         <AppIcon name="map-pin" :size="14" />
         {{ features.length }} điểm đến
       </span>
@@ -110,6 +117,13 @@ onMounted(async () => {
         <ellipse class="lake" cx="410" cy="150" rx="26" ry="14" />
       </svg>
       <p v-if="isLoading" class="map-empty" role="status">Đang tải điểm đến...</p>
+      <div v-else-if="loadFailed" class="map-empty map-error" role="alert">
+        <p>Chưa tải được các điểm du lịch trên bản đồ.</p>
+        <button class="ocop-btn-ghost retry-button" type="button" @click="load">
+          <AppIcon name="refresh" :size="16" />
+          Thử lại
+        </button>
+      </div>
       <p v-else-if="!markers.length" class="map-empty" role="status">Chưa có điểm đến được công bố.</p>
 
       <RouterLink
@@ -256,6 +270,14 @@ h2 {
   color: var(--ocop-white);
 }
 
+/* Vùng chạm 44px quanh marker 32px, không đổi hình dáng marker. */
+.map-marker::before {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  content: '';
+}
+
 .map-marker :deep(.app-icon) {
   transform: rotate(45deg);
 }
@@ -317,6 +339,25 @@ h2 {
   place-items: center;
   color: var(--ocop-slate);
   font-size: var(--ocop-font-size-small);
+}
+
+.map-error {
+  align-content: center;
+  gap: var(--ocop-space-2);
+  padding: var(--ocop-space-4);
+  text-align: center;
+}
+
+.map-error p {
+  margin: 0;
+}
+
+.retry-button {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-self: center;
+  gap: var(--ocop-space-2);
 }
 
 @media (max-width: 575.98px) {
