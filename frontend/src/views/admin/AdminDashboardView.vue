@@ -56,6 +56,12 @@ const tasks = computed(() => [
     count: stats.value?.pending_subject_applications ?? 0,
     to: '/quan-tri/ho-so-chu-the',
   },
+  {
+    title: 'Đánh giá chờ duyệt',
+    description: 'Đọc nhận xét của người dùng trước khi hiển thị công khai.',
+    count: stats.value?.pending_reviews ?? 0,
+    to: '/quan-tri/danh-gia',
+  },
 ])
 
 const openTaskCount = computed(() => tasks.value.reduce((sum, task) => sum + task.count, 0))

@@ -9,6 +9,8 @@ export interface AdminDashboardStats {
   products_missing_decision: number
   pending_locations: number
   pending_location_change_requests: number
+  /** Đánh giá sản phẩm/điểm du lịch chờ duyệt (backend mặc định 0). */
+  pending_reviews?: number
 }
 
 export async function getAdminDashboard(): Promise<AdminDashboardStats> {

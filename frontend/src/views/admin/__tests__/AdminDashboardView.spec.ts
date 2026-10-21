@@ -90,6 +90,25 @@ describe('AdminDashboardView', () => {
     expect(wrapper.text()).toContain('Điểm du lịch4')
   })
 
+  it('dem danh gia cho duyet vao hang doi viec', async () => {
+    vi.mocked(getAdminDashboard).mockResolvedValueOnce({
+      total_products: 60,
+      approved_products: 45,
+      pending_products: 5,
+      pending_subject_applications: 3,
+      pending_change_requests: 2,
+      products_missing_decision: 8,
+      pending_locations: 1,
+      pending_location_change_requests: 0,
+      pending_reviews: 4,
+    })
+    const wrapper = mountView()
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('Có 15 việc đang chờ bạn xử lý')
+    expect(wrapper.text()).toContain('Đánh giá chờ duyệt')
+  })
+
   it('hien thi cac bieu do thong ke voi nhan tieng Viet', async () => {
     const wrapper = mountView()
     await flushPromises()
