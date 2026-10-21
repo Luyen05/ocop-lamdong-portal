@@ -126,6 +126,8 @@ services:
 
     environment:
       VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8000/api/v1}
+      # Vite chuyển /robots.txt và /sitemap.xml sang backend (trong mạng Docker).
+      VITE_BACKEND_ORIGIN: http://backend:8000
       CHOKIDAR_USEPOLLING: "true"
 
     volumes:

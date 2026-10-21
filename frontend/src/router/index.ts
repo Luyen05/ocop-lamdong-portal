@@ -6,6 +6,7 @@ import HomeView from '@/views/HomeView.vue'
 import { resolveRouteAccess } from '@/router/access'
 import { documentTitleFor } from '@/router/titles'
 import { scrollBehavior } from '@/utils/motion'
+import { applyPageSeo, ROUTE_DESCRIPTIONS } from '@/utils/seo'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -237,8 +238,18 @@ router.beforeEach(async (to) => {
   return true
 })
 
+// Trang không có nội dung cho tìm kiếm: cần đăng nhập, đăng nhập/đăng ký, lỗi.
+const NOINDEX_ROUTES = new Set(['forbidden', 'not-found', 'social-login-callback'])
+
 router.afterEach((to) => {
-  document.title = documentTitleFor(to.name, to.meta.title)
+  const name = typeof to.name === 'string' ? to.name : ''
+  applyPageSeo({
+    fullTitle: documentTitleFor(to.name, to.meta.title),
+    description: ROUTE_DESCRIPTIONS[name],
+    path: to.path,
+    noindex: Boolean(to.meta.requiresAuth) || to.meta.layout === 'auth' || NOINDEX_ROUTES.has(name) || !name,
+    // Trang chi tiết tự đặt lại thẻ SEO có tên cụ thể sau khi tải xong dữ liệu.
+  })
 })
 
 window.addEventListener(AUTH_SESSION_EXPIRED_EVENT, (event) => {

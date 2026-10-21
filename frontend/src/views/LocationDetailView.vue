@@ -10,6 +10,7 @@ import ReviewSection from '@/components/reviews/ReviewSection.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
 import { getApiErrorMessage } from '@/services/api-error'
 import { getLocation } from '@/services/locations'
+import { absoluteUrl, applyPageSeo, clipDescription, locationJsonLd } from '@/utils/seo'
 import type { LocationDetail, MapFeature } from '@/types/location'
 import {
   externalDirectionsUrl,
@@ -68,7 +69,17 @@ async function loadLocation(slug: string): Promise<void> {
   location.value = null
   try {
     location.value = await getLocation(slug)
-    document.title = `${location.value.name} | Du lịch nông nghiệp Lâm Đồng`
+    const loaded = location.value
+    const canonicalPath = `/diem-du-lich/${loaded.slug}`
+    applyPageSeo({
+      title: `${loaded.name} – Du lịch nông nghiệp Lâm Đồng`,
+      description:
+        clipDescription(loaded.description) ||
+        clipDescription(`${loaded.type_label} tại ${loaded.district || 'Lâm Đồng'}. ${loaded.address}`),
+      image: loaded.primary_image_url ?? loaded.images[0]?.image_url,
+      path: canonicalPath,
+      jsonLd: locationJsonLd(loaded, absoluteUrl(canonicalPath)),
+    })
   } catch (error) {
     errorTitle.value = axios.isAxiosError(error) && error.response?.status === 404
       ? 'Không tìm thấy điểm du lịch'

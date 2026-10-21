@@ -11,6 +11,7 @@ import { getApiErrorMessage } from '@/services/api-error'
 import { getProduct, getProducts } from '@/services/products'
 import type { ProductDetail, ProductListItem } from '@/types/product'
 import { safeExternalUrl } from '@/utils/location'
+import { absoluteUrl, applyPageSeo, clipDescription, productJsonLd } from '@/utils/seo'
 
 const route = useRoute()
 
@@ -56,7 +57,14 @@ async function loadProduct(slug: string): Promise<void> {
     const loadedProduct = await getProduct(slug)
     if (requestId !== latestRequestId) return
     product.value = loadedProduct
-    document.title = `${product.value.name} | OCOP Lâm Đồng`
+    const canonicalPath = `/san-pham/${loadedProduct.slug}`
+    applyPageSeo({
+      title: loadedProduct.star ? `${loadedProduct.name} – OCOP ${loadedProduct.star} sao` : loadedProduct.name,
+      description: clipDescription(loadedProduct.description),
+      image: loadedProduct.primary_image_url ?? loadedProduct.images[0]?.image_url,
+      path: canonicalPath,
+      jsonLd: productJsonLd(loadedProduct, absoluteUrl(canonicalPath)),
+    })
 
     try {
       const related = await getProducts({
