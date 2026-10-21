@@ -3,7 +3,7 @@
 Đồ án: **Cổng thông tin quảng bá nông sản OCOP và bản đồ số du lịch nông nghiệp tỉnh Lâm Đồng**.
 Người giao việc: Liêng Hót Ha Luyến (MSSV 2312682). Trao đổi và báo cáo bằng **tiếng Việt**, ngắn gọn.
 
-**Trước khi làm việc: đọc `docs/KE_HOACH_HOAN_THANH_DO_AN.md`** (kế hoạch tới khi hoàn thành đồ án, tự đánh giá tiến độ, quyết định đang chờ). Làm tiếp theo đúng việc của tuần hiện tại; xong việc nào thì cập nhật trạng thái và nhật ký trong file đó, cùng commit với phần việc.
+**Trước khi làm việc: đọc kế hoạch đồ án** `D:\DO_AN_CHUYEN_NGANH\01-tai-lieu-du-an\KE_HOACH_HOAN_THANH_DO_AN.md` (bản sao trong Project trên claude.ai): kế hoạch tới khi hoàn thành, tự đánh giá tiến độ, quyết định đang chờ. Làm tiếp theo đúng việc của tuần hiện tại; xong việc nào thì cập nhật trạng thái và nhật ký trong file đó. Quy tắc nghiệp vụ của hệ thống ở `docs/NGHIEP_VU.md`.
 
 File này là quy tắc chung cho mọi lần phát triển tiếp theo. Khi quy tắc ở đây mâu thuẫn với yêu cầu mới trong chat, làm theo yêu cầu mới và đề xuất cập nhật file này.
 
@@ -26,9 +26,9 @@ File này là quy tắc chung cho mọi lần phát triển tiếp theo. Khi quy
 - Khi việc được giao là **giao diện**: chỉ sửa phần trình bày (template, style, component hiển thị). Không đổi logic gọi API, router, store, tên props/emit, kiểu dữ liệu, trừ khi được cho phép rõ ràng. Mỗi lần được cho phép thì ghi lại trong báo cáo.
 - **Không thêm thư viện mới khi chưa hỏi.** Đã được duyệt: Bootstrap 5, Bootstrap Icons, Leaflet + leaflet.markercluster, Chart.js 4 (chỉ đăng ký thành phần cần dùng), font Be Vietnam Pro (Google Fonts). vue-i18n đã bị bỏ, không tự thêm lại.
 - Việc lớn về giao diện: **thiết kế trước trên canvas Claude Design, chờ duyệt, rồi mới code**; có backend thì làm backend sau khi giao diện được duyệt.
-- **Mọi thay đổi database phải đi qua file trong repo**: migration mới trong `database/migrations/` (chạy lặp lại an toàn), cập nhật cùng lúc `database/schema.sql`, model SQLAlchemy và `tools/kiem-tra-database.sql` (sinh lại bằng `tools/sinh_kiem_tra_database.py`). Không sửa thẳng database bằng pgAdmin, Codex hay công cụ khác mà không ghi lại thành migration. Lý do: 27/09/2026 database của nhóm trưởng lệch khoảng 100 chỗ so với repo vì thay đổi làm ngoài repo, phải tạo lại từ đầu.
+- **Mọi thay đổi database phải đi qua file trong repo**: migration mới `database/migrations/015_*.sql` trở đi (chạy lặp lại an toàn; `014_hoan_thien.sql` là migration tổng hợp mọi thay đổi trước đó, 001–013 nằm trong `archive/`), cập nhật cùng lúc `database/schema.sql`, model SQLAlchemy và `tools/kiem-tra-database.sql` (sinh lại bằng `tools/sinh_kiem_tra_database.py`). Không sửa thẳng database bằng pgAdmin, Codex hay công cụ khác mà không ghi lại thành migration. Lý do: 27/09/2026 database của nhóm trưởng lệch khoảng 100 chỗ so với repo vì thay đổi làm ngoài repo, phải tạo lại từ đầu.
 - Lưu ảnh trên cloud: đã chốt **Cloudinary** (03/10/2026, thay Firebase trong đề cương), gọi bằng `httpx`, không thêm thư viện.
-- Không tự quyết các vấn đề ngoài phạm vi (bảo mật ảnh chưa duyệt…): ghi nhận vào `docs/ui-audit.md` mục 6 và hỏi.
+- Không tự quyết các vấn đề ngoài phạm vi (bảo mật ảnh chưa duyệt…): ghi nhận vào nhật ký giao diện `D:\DO_AN_CHUYEN_NGANH\02-bao-cao-thuyet-trinh\ui-audit.md` mục 6 và hỏi.
 
 ## 3. Điểm dừng
 
@@ -78,19 +78,21 @@ Backend (khi có sửa backend): `python -m pytest -q` trong `backend/`, hoặc 
 
 ## 6. Kiến trúc và lệnh hữu ích
 
-- Frontend Vue 3 + Vite + TypeScript (`frontend/`). Backend FastAPI + SQLAlchemy + JWT (`backend/`). PostgreSQL 16 + PostGIS (`database/`: `schema.sql`, `migrations/00x_*.sql`, các file seed).
+- Frontend Vue 3 + Vite + TypeScript (`frontend/`). Backend FastAPI + SQLAlchemy + JWT (`backend/`). PostgreSQL 16 + PostGIS (`database/`: `schema.sql`, `migrations/014_hoan_thien.sql` và migration mới, các file seed). Kiến trúc chi tiết: `docs/KIEN_TRUC.md`.
 - Chạy toàn bộ bằng Docker: `docker compose up -d` gồm các service `postgres`, `pgadmin`, `backend` (uvicorn `--reload`, gắn `backend/app`) và `frontend` (Vite dev, cổng 5173).
-- Database đã có dữ liệu thì chạy migration mới bằng lệnh trong README (mục "Migration cho database đã có dữ liệu"), rồi chạy `tools/kiem-tra-database.sql` trong pgAdmin để xác nhận khớp repo. Không dùng `docker compose down -v` nếu chưa được đồng ý (lệnh này xóa cả ảnh đã tải lên).
+- Database đã có dữ liệu thì chạy migration bằng lệnh trong README (mục "Database và migration"), rồi chạy `tools/kiem-tra-database.sql` trong pgAdmin để xác nhận khớp repo. Không dùng `docker compose down -v` nếu chưa được đồng ý (lệnh này xóa cả ảnh đã tải lên).
 - Lệnh PowerShell gửi cho người dùng: Windows PowerShell 5.1 làm mất dấu ngoặc kép bên trong tham số truyền cho chương trình ngoài (docker, psql), nên tránh truyền chuỗi có `"` lồng bên trong; gửi SQL qua stdin (`Get-Content … -Raw | docker compose exec -T postgres …`).
-- API quản trị nằm dưới `/api/v1/admin/*` và chỉ role `admin` gọi được. Hiện có: `access`, `dashboard`, `statistics`, `products`, `subject-applications`, `data-sources`, `product-change-requests`, `locations`, `location-change-requests`.
+- API quản trị nằm dưới `/api/v1/admin/*` và chỉ role `admin` gọi được. Hiện có: `access`, `dashboard`, `statistics`, `products`, `subject-applications`, `data-sources`, `product-change-requests`, `locations`, `location-change-requests`, `users`, `categories`, `reviews` (danh sách đầy đủ ở `docs/API.md`).
 - Bản đồ: `/api/v1/locations`, `/api/v1/map/locations` (GeoJSON), `/map/nearby`, `/map/route` (OSRM). Frontend ở `/ban-do`, `/diem-du-lich`.
 
 ## 7. Tài liệu cần cập nhật khi làm
 
-- `docs/ui-audit.md`:
-  - Bảng lỗi theo mã: G-, TC-, SP-, QT-…
-  - Mục 5 là nhật ký xử lý. Mỗi đợt thêm một mục ghi ngày, việc đã làm và số liệu kiểm thử.
-  - Mục 6 ghi những việc ngoài phạm vi.
+- Tài liệu trong repo (giữ gọn, không thêm file `.md` mới nếu nội dung thuộc một file có sẵn):
+  - `README.md`: cách chạy, cấu hình, kiểm thử; số test khi đổi.
+  - `CHANGELOG.md`: thêm dòng cho mỗi thay đổi đáng chú ý.
+  - `docs/NGHIEP_VU.md` (quy tắc), `docs/KIEN_TRUC.md` (kiến trúc, database), `docs/DU_LIEU.md` (dữ liệu, seed), `docs/CAU_HINH.md` (biến môi trường, dịch vụ ngoài).
+  - `docs/API.md` và Postman: sinh lại bằng `cd backend; python ../tools/sinh_tai_lieu_api.py` khi thêm/sửa endpoint, không sửa tay.
+- Nhật ký giao diện (`D:\DO_AN_CHUYEN_NGANH\02-bao-cao-thuyet-trinh\ui-audit.md`): mỗi đợt sửa giao diện thêm một mục ghi ngày, việc đã làm và số liệu kiểm thử.
 - Tài liệu dự án trên claude.ai (Project) ghi tiến độ từng nhánh. Cập nhật sau mỗi điểm dừng quan trọng.
 
 ## 8. Thư mục đồ án ngoài repo (`D:\DO_AN_CHUYEN_NGANH`)

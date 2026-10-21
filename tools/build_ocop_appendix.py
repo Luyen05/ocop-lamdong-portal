@@ -17,7 +17,7 @@ from docx.shared import Inches, Pt, RGBColor
 ROOT = Path(__file__).resolve().parents[1]
 DATA_PATH = ROOT / "data" / "ocop" / "ocop_records.json"
 MANIFEST_PATH = ROOT / "data" / "ocop" / "source_manifest.csv"
-OUTPUT_PATH = ROOT / "docs" / "PHU_LUC_NGUON_DU_LIEU_OCOP_2025_2026.docx"
+OUTPUT_PATH = ROOT / "artifacts" / "PHU_LUC_NGUON_DU_LIEU_OCOP_2025_2026.docx"  # không commit (artifacts/ bị gitignore)
 
 GREEN = "006045"
 GREEN_DARK = "004F3B"

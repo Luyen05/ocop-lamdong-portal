@@ -1,6 +1,6 @@
 """Opt-in integration tests against a disposable, isolated PostGIS container.
 
-Never uses DATABASE_URL or the demo database. See docs/DEHAVI_DEMO_DATA.md.
+Never uses DATABASE_URL or the demo database. See docs/DU_LIEU.md (mục 7).
 """
 from __future__ import annotations
 

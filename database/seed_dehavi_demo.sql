@@ -1,4 +1,4 @@
--- Narrow Dehavi demo seed. See docs/DEHAVI_DEMO_DATA.md.
+-- Narrow Dehavi demo seed. See docs/DU_LIEU.md (mục 7).
 -- Requires current schema, including migrations 009/011 on older databases.
 -- No existing record is updated. Review conflicts rather than overwriting them.
 BEGIN;

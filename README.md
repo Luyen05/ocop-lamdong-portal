@@ -1,345 +1,311 @@
+<div align="center">
+
 # Cổng thông tin OCOP và bản đồ số du lịch nông nghiệp Lâm Đồng
 
-Đồ án chuyên ngành: **Xây dựng Cổng thông tin quảng bá nông sản OCOP và bản đồ số du lịch nông nghiệp tỉnh Lâm Đồng**.
+**Quảng bá sản phẩm OCOP đã được kiểm duyệt và dẫn đường tới các điểm du lịch nông nghiệp của tỉnh Lâm Đồng.**
 
-- Nhóm: Liêng Hót Ha Luyến (nhóm trưởng), Nguyễn Quốc Thái, Nguyễn Khiêm Thuận. GVHD: Trần Ngô Như Khánh.
-- Mốc: báo cáo tiến độ đợt 2 ngày **15/10/2026**, hạn nộp đồ án **15/11/2026**.
-- Kế hoạch chi tiết và tự đánh giá tiến độ: [`docs/KE_HOACH_HOAN_THANH_DO_AN.md`](docs/KE_HOACH_HOAN_THANH_DO_AN.md).
-- README cập nhật lần cuối: **10/10/2026** (theo `main` sau khi gộp PR #12 và #13).
+Vue 3 · FastAPI · PostgreSQL + PostGIS · Docker
+
+[Tính năng](#tính-năng) · [Bắt đầu nhanh](#bắt-đầu-nhanh) · [Cấu hình](#cấu-hình) · [Database](#database-và-migration) · [Kiểm thử](#kiểm-thử) · [Tài liệu](#tài-liệu)
+
+</div>
 
 ---
 
-## 1. Chức năng hiện có
+Đồ án chuyên ngành **"Xây dựng Cổng thông tin quảng bá nông sản OCOP và bản đồ số du lịch nông nghiệp tỉnh Lâm Đồng"**, Trường Đại học Đà Lạt.
 
-✅ đã xong · 🟡 làm một phần · ⬜ chưa làm (xem kế hoạch để biết tuần thực hiện).
+- **Nhóm:** Liêng Hót Ha Luyến (nhóm trưởng), Nguyễn Quốc Thái, Nguyễn Khiêm Thuận.
+- **Giảng viên hướng dẫn:** Trần Ngô Như Khánh.
 
-**Người dùng, khách du lịch**
+## Mục lục
 
-- ✅ Trang chủ: ảnh thật, tìm kiếm sản phẩm hoặc điểm du lịch, bản đồ xem trước, nhóm sản phẩm, sản phẩm nổi bật.
-- ✅ Danh sách sản phẩm OCOP: tìm kiếm, lọc theo nhóm, hạng sao, địa bàn; chi tiết sản phẩm có thư viện ảnh (ghi nguồn ảnh), thông tin công nhận OCOP và điểm du lịch liên quan.
-- ✅ Tìm điểm trải nghiệm của một sản phẩm (`/san-pham/:slug/diem-trai-nghiem`): sắp xếp theo khoảng cách khi có vị trí người dùng, mở chỉ đường trên bản đồ (xem [`docs/PRODUCT_EXPERIENCE_FINDER.md`](docs/PRODUCT_EXPERIENCE_FINDER.md)).
-- ✅ Danh sách và chi tiết điểm du lịch nông nghiệp (ảnh, dịch vụ, giờ mở cửa, sản phẩm OCOP bán tại điểm).
-- ✅ Bản đồ số: gom cụm điểm, lọc, định vị người dùng, tìm điểm gần nhất (PostGIS), gợi ý tuyến đường (OSRM).
-- ✅ Tin tức lấy từ RSS của cổng OCOP tỉnh.
-- ✅ Đăng ký, đăng nhập (JWT), cập nhật hồ sơ; đăng ký trở thành chủ thể.
-- ✅ Đăng nhập, đăng ký nhanh bằng Google hoặc Facebook (tùy chọn, bật bằng khóa trong `.env`; xem [`docs/DANG_NHAP_MANG_XA_HOI.md`](docs/DANG_NHAP_MANG_XA_HOI.md)).
-- ⬜ Đánh giá sản phẩm, điểm du lịch.
+- [Tính năng](#tính-năng)
+- [Công nghệ](#công-nghệ)
+- [Bắt đầu nhanh](#bắt-đầu-nhanh)
+- [Dữ liệu ban đầu](#dữ-liệu-ban-đầu)
+- [Cấu hình](#cấu-hình)
+- [Database và migration](#database-và-migration)
+- [Kiểm thử](#kiểm-thử)
+- [Cấu trúc thư mục](#cấu-trúc-thư-mục)
+- [Trang và API](#trang-và-api)
+- [Tài liệu](#tài-liệu)
+- [Xử lý sự cố](#xử-lý-sự-cố)
+- [Quy trình đóng góp](#quy-trình-đóng-góp)
+- [Giới hạn đã biết](#giới-hạn-đã-biết)
 
-Tìm kiếm hiện phân biệt dấu: gõ "dâu tây" sẽ tìm thấy, gõ "dau tay" thì không. Trang công khai chỉ hiện sản phẩm đã duyệt và có chứng nhận còn hạn hoặc nguồn công nhận (xem [`docs/QUY_TRINH_KIEM_DUYET_SAN_PHAM.md`](docs/QUY_TRINH_KIEM_DUYET_SAN_PHAM.md)).
+## Tính năng
 
-**Chủ thể OCOP (hợp tác xã, doanh nghiệp, hộ sản xuất)**
+**Khách và người dùng**
 
-- ✅ Quản lý sản phẩm: bản nháp, gửi duyệt, yêu cầu sửa hoặc ngừng hiển thị sau khi duyệt, ảnh, giấy chứng nhận.
-- ✅ Khai báo điểm du lịch: bản nháp, lấy vị trí bằng ghim bản đồ / GPS / tọa độ / link Google Maps, ảnh, gắn sản phẩm OCOP, gửi duyệt, yêu cầu cập nhật hoặc ngừng hiển thị.
-- ✅ Ảnh lưu cục bộ hoặc trên Cloudinary; mỗi ảnh có thể ghi nguồn, tác giả, giấy phép.
-- 🟡 Cập nhật thông tin đơn vị: hiện sửa bằng cách gửi lại hồ sơ.
+- Trang chủ với tìm kiếm sản phẩm/điểm du lịch, bản đồ xem trước, nhóm sản phẩm, sản phẩm nổi bật.
+- Danh sách sản phẩm OCOP: tìm kiếm, lọc theo nhóm, hạng sao, địa bàn, giá; chi tiết có thư viện ảnh (ghi nguồn), thông tin công nhận OCOP, điểm du lịch liên quan.
+- Tìm điểm mua và trải nghiệm của một sản phẩm, sắp theo khoảng cách tới người dùng.
+- Danh sách và chi tiết điểm du lịch nông nghiệp (dịch vụ, giờ mở cửa, giá vé, sản phẩm bán tại điểm).
+- Bản đồ số: gom cụm, lọc, định vị, điểm gần nhất (PostGIS), chỉ đường (OSRM, dự phòng Google Maps).
+- Đánh giá sản phẩm và điểm du lịch (chờ duyệt trước khi hiển thị), trang "Đánh giá của tôi".
+- Tin tức từ RSS cổng OCOP tỉnh.
+- Tài khoản: đăng ký, đăng nhập (giới hạn sai mật khẩu), đăng nhập Google/Facebook, liên kết tài khoản, đổi/đặt mật khẩu, hồ sơ cá nhân, đăng ký trở thành chủ thể.
+
+**Chủ thể OCOP** (hợp tác xã, doanh nghiệp, hộ sản xuất)
+
+- Sửa thông tin liên hệ của đơn vị.
+- Quản lý sản phẩm: bản nháp, gửi duyệt, ảnh, giấy chứng nhận riêng tư, yêu cầu sửa hoặc ngừng hiển thị sau khi duyệt.
+- Khai báo điểm du lịch: ghim bản đồ, GPS, tọa độ hoặc link Google Maps; kiểm tra vị trí trong tỉnh, cảnh báo trùng điểm; ảnh; gắn sản phẩm; yêu cầu cập nhật.
 
 **Quản trị viên**
 
-- ✅ Tổng quan: hàng đợi việc cần xử lý, số liệu chính, thống kê và biểu đồ (Chart.js).
-- ✅ Kiểm duyệt sản phẩm, yêu cầu sửa sản phẩm, nguồn chứng cứ công nhận OCOP.
-- ✅ Duyệt hồ sơ đăng ký chủ thể.
-- ✅ Duyệt điểm du lịch: kiểm tra vị trí trong tỉnh, cảnh báo trùng điểm trong 200 m, chỉnh ghim khi duyệt, so sánh và duyệt yêu cầu cập nhật.
-- ⬜ Quản lý danh mục, quản lý người dùng, kiểm duyệt đánh giá. Chưa có trang tạo tài khoản quản trị (xem mục 4.4).
+- Tổng quan: hàng đợi việc cần duyệt, số liệu, biểu đồ thống kê (Chart.js).
+- Duyệt hồ sơ chủ thể, sản phẩm, yêu cầu thay đổi, điểm du lịch (chỉnh ghim khi duyệt), đánh giá.
+- Quản lý người dùng (tìm kiếm, khóa/mở khóa), danh mục (thêm, sửa, ẩn, sắp xếp), nguồn dữ liệu và chứng cứ công nhận.
 
-Giao diện dùng bộ design token chung (font Be Vietnam Pro, tông xanh trời Đà Lạt cho khu công khai và quản trị) và đạt WCAG 2.2 AA trên các trang đã làm mới.
+Giao diện đáp ứng từ điện thoại đến máy tính, dùng bộ design token chung, hướng tới WCAG 2.2 AA. Quy tắc nghiệp vụ chi tiết: [`docs/NGHIEP_VU.md`](docs/NGHIEP_VU.md).
 
-## 2. Công nghệ
+## Công nghệ
 
 | Phần | Công nghệ |
 |---|---|
-| Backend | Python 3.12, FastAPI, SQLAlchemy, JWT, httpx, pytest |
-| Frontend | Vue 3, TypeScript, Vite, Vue Router, Axios, Bootstrap 5, Leaflet + markercluster, Chart.js, Vitest |
+| Frontend | Vue 3, TypeScript, Vite, Vue Router, Axios, Bootstrap 5, Bootstrap Icons, Leaflet + markercluster, Chart.js |
+| Backend | Python 3.12, FastAPI, SQLAlchemy 2, Pydantic 2, PyJWT, pwdlib (Argon2), httpx |
 | Database | PostgreSQL 16 + PostGIS 3.4 |
-| Dịch vụ ngoài | Cloudinary (lưu ảnh, tùy chọn), ảnh nền OpenStreetMap, định tuyến OSRM, RSS cổng OCOP Lâm Đồng |
-| Môi trường | Docker Compose (postgres, pgadmin, backend, frontend) |
+| Kiểm thử | pytest, Vitest, Vue Test Utils |
+| Dịch vụ ngoài | Cloudinary (tùy chọn), OpenStreetMap, OSRM, RSS cổng OCOP Lâm Đồng, Google/Facebook OAuth (tùy chọn) |
+| Môi trường | Docker Compose: `postgres`, `pgadmin`, `backend`, `frontend` |
 
-## 3. Cấu trúc thư mục
+Kiến trúc, cấu trúc mã nguồn, sơ đồ dữ liệu: [`docs/KIEN_TRUC.md`](docs/KIEN_TRUC.md).
 
-```text
-backend/     API FastAPI: app/api/routes (route), app/models (model), app/schemas, app/services, tests/
-frontend/    Giao diện Vue: src/views (trang), src/components, src/services (gọi API), src/styles (token)
-database/    schema.sql, migrations/0xx_*.sql, file seed, ERD.md, pgadmin/servers.json
-data/        Dữ liệu gốc: danh sách OCOP, điểm du lịch (CSV)
-docs/        Tài liệu: API, dữ liệu, quy trình kiểm duyệt, audit giao diện, kế hoạch, Postman, nguồn OCOP
-tools/       Script sinh seed và bảng tổng hợp từ dữ liệu gốc, tải văn bản nguồn OCOP, kiểm tra database
-tests/data/  Test kiểm tra bộ dữ liệu OCOP gốc
-scripts/     verify-mvp.ps1 (kiểm tra nhanh toàn hệ thống)
-CLAUDE.md    Quy tắc làm việc của nhóm khi dùng Claude
-```
+## Bắt đầu nhanh
 
-## 4. Chạy dự án
+### Yêu cầu
 
-Các lệnh dưới đây chạy trong PowerShell, tại thư mục gốc của repo.
+- Git và Docker Desktop (Windows: bật WSL 2) đang chạy.
+- Các cổng còn trống: `5173` (web), `8000` (API), `5432` (PostgreSQL), `5050` (pgAdmin).
+- Không cần cài Python, Node trên máy khi chạy bằng Docker.
 
-### 4.1. Cần cài
+Các lệnh dưới đây chạy trong PowerShell tại thư mục gốc repo (Linux/macOS dùng lệnh tương đương).
 
-- Git và Docker Desktop (bật WSL 2, đang chạy).
-- Các cổng còn trống: `5173` (web), `8000` (API), `5432` (PostgreSQL), `5050` (pgAdmin). Nếu máy đã có PostgreSQL chạy ở cổng 5432, tắt nó trước.
-- Không cần cài Python hay Node trên máy nếu chạy bằng Docker.
-
-### 4.2. Chạy lần đầu
-
-1. Lấy mã nguồn:
-
-   ```powershell
-   git clone https://github.com/Luyen05/ocop-lamdong-portal.git
-   cd ocop-lamdong-portal
-   ```
-
-2. Tạo file cấu hình: sao chép `.env.example` thành `.env` rồi sửa:
-   - Thay mọi giá trị `change-me` (mật khẩu PostgreSQL, mật khẩu pgAdmin).
-   - `JWT_SECRET_KEY`: chuỗi ngẫu nhiên dài ít nhất 32 ký tự.
-   - `PGADMIN_DEFAULT_EMAIL`: email có đuôi bình thường như `admin@example.com`. pgAdmin từ chối đuôi `.local`, `.invalid` và email có dấu chấm ngay trước `@`.
-   - Không commit `.env`.
-
-   ```powershell
-   Copy-Item .env.example .env
-   notepad .env
-   ```
-
-3. Khởi động toàn bộ:
-
-   ```powershell
-   docker compose up -d --build
-   docker compose ps
-   ```
-
-   Đợi đến khi `lamdong-postgres` báo `healthy`. Lần đầu mất vài phút vì phải tải image và cài thư viện.
-
-4. Mở:
-
-   | Dịch vụ | Địa chỉ |
-   |---|---|
-   | Trang web | http://localhost:5173 |
-   | API và Swagger | http://localhost:8000/docs |
-   | pgAdmin | http://localhost:5050 |
-
-   pgAdmin đăng nhập bằng `PGADMIN_DEFAULT_EMAIL` / `PGADMIN_DEFAULT_PASSWORD` trong `.env`. Server "LamDong PostgreSQL" có sẵn; mật khẩu kết nối là `POSTGRES_PASSWORD`.
-
-Lần đầu (volume PostgreSQL trống), Docker tự chạy `database/schema.sql`, `seed_dev.sql` (6 nhóm sản phẩm, 4 sản phẩm demo bị ẩn khỏi trang công khai, 2 tài khoản demo bị khóa) và `seed_tourism_locations.sql` (9 điểm du lịch đã duyệt). Sau đó chọn một trong hai cách ở mục 4.3.
-
-### 4.3. Dữ liệu: nhập tay hoặc nạp dữ liệu mẫu
-
-**Cách A: nhập tay qua giao diện (dùng cho bản demo và báo cáo).** Từ 07/10/2026 nhóm không dùng dữ liệu demo cho bản nộp mà tự nhập toàn bộ: 1 tài khoản quản trị, 4 chủ thể, 1 người dùng thường. Quy ước email: tên chủ thể + vai trò + `@gmail.com`; tài khoản quản trị là `admin.ocop@gmail.com`. Không chạy các seed ở cách B. Tạo tài khoản quản trị theo mục 4.4, sau đó:
-
-1. Đăng ký tài khoản ở `/dang-ky` (mỗi chủ thể một tài khoản, vì một tài khoản chỉ gắn với một hồ sơ chủ thể).
-2. Gửi hồ sơ chủ thể ở `/dang-ky-chu-the`.
-3. Admin duyệt ở `/quan-tri/ho-so-chu-the`. Tài khoản chủ thể đăng nhập lại để nhận quyền mới.
-4. Chủ thể thêm sản phẩm ở `/chu-the/san-pham/them`, lưu nháp rồi gửi duyệt; khai báo điểm du lịch ở `/chu-the/diem-du-lich/khai-bao`.
-5. Admin duyệt ở `/quan-tri/san-pham` và `/quan-tri/diem-du-lich`.
-
-Lưu nháp sản phẩm chỉ cần tên và nhóm sản phẩm. Gửi duyệt cần đủ mô tả, hạng sao 3 đến 5, mã chứng nhận, ngày cấp, ngày hết hạn còn hiệu lực, cơ quan công nhận, file hoặc đường dẫn giấy chứng nhận và đúng một ảnh chính.
-
-**Cách B: nạp dữ liệu mẫu (chỉ để phát triển và kiểm thử).** Sản phẩm OCOP tham khảo có nguồn, sản phẩm ở đủ các trạng thái kiểm duyệt, tài khoản demo:
+### 1. Lấy mã nguồn
 
 ```powershell
-Get-Content .\database\seed_public_reference.sql -Raw -Encoding UTF8 | docker compose exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
-Get-Content .\database\seed_ocop_2025_2026.sql -Raw -Encoding UTF8 | docker compose exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
-Get-Content .\database\seed_product_workflow.sql -Raw -Encoding UTF8 | docker compose exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
-# Tùy chọn: chuỗi Dehavi Valley → Hân Vinh → Dehavi Showroom và ảnh chính thức (xem docs/DEHAVI_DEMO_DATA.md, docs/DEHAVI_MEDIA.md)
-Get-Content .\database\seed_dehavi_demo.sql -Raw -Encoding UTF8 | docker compose exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
-Get-Content .\database\seed_dehavi_media.sql -Raw -Encoding UTF8 | docker compose exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+git clone https://github.com/Luyen05/ocop-lamdong-portal.git
+cd ocop-lamdong-portal
 ```
 
-Tài khoản demo (chỉ dùng khi phát triển, mật khẩu `DemoOCOP@2026`):
+### 2. Tạo file cấu hình
 
-| Tài khoản | Vai trò |
+```powershell
+Copy-Item .env.example .env
+notepad .env
+```
+
+Trong `.env`, bắt buộc sửa:
+
+- Mọi giá trị `change-me` (mật khẩu PostgreSQL, mật khẩu pgAdmin).
+- `JWT_SECRET_KEY`: chuỗi ngẫu nhiên ≥ 32 ký tự. Backend **từ chối khởi động** nếu giữ giá trị mẫu. Tạo nhanh: `python -c "import secrets; print(secrets.token_urlsafe(48))"`.
+- `PGADMIN_DEFAULT_EMAIL`: email bình thường (pgAdmin từ chối đuôi `.local`, `.invalid`).
+
+Không commit `.env`.
+
+### 3. Khởi động
+
+```powershell
+docker compose up -d --build
+docker compose ps
+```
+
+Đợi `lamdong-postgres` và `lamdong-backend` báo `healthy` (lần đầu vài phút để tải image và cài thư viện).
+
+| Dịch vụ | Địa chỉ |
 |---|---|
-| `admin.ocop.demo@example.com` | Quản trị viên |
-| `chuthe.ocop.demo@example.com` | Chủ thể đã duyệt, có sản phẩm ở đủ các trạng thái |
-| `ungvien.ocop.demo@example.com` | Người dùng đang chờ duyệt hồ sơ chủ thể |
+| Trang web | <http://localhost:5173> |
+| API (Swagger) | <http://localhost:8000/docs> |
+| pgAdmin | <http://127.0.0.1:5050> (đăng nhập bằng `PGADMIN_DEFAULT_EMAIL`/`PGADMIN_DEFAULT_PASSWORD`; server "LamDong PostgreSQL" có sẵn, mật khẩu là `POSTGRES_PASSWORD`) |
 
-Chi tiết dữ liệu kiểm thử: [`docs/DU_LIEU_KIEM_THU_SAN_PHAM.md`](docs/DU_LIEU_KIEM_THU_SAN_PHAM.md).
+Lần đầu (volume trống), Docker tự tạo database từ `database/schema.sql` và nạp `seed_dev.sql` (6 nhóm sản phẩm, vài sản phẩm demo bị ẩn) cùng `seed_tourism_locations.sql` (9 điểm du lịch).
 
-### 4.4. Tạo tài khoản quản trị
+### 4. Tạo tài khoản quản trị
 
-Trang đăng ký chỉ tạo tài khoản người dùng thường. Để có tài khoản quản trị:
+Trang đăng ký chỉ tạo tài khoản người dùng. Đăng ký một tài khoản ở `/dang-ky` (ví dụ `admin.ocop@gmail.com`), rồi nâng quyền:
 
-1. Đăng ký một tài khoản ở `/dang-ky`, ví dụ `admin.ocop@gmail.com`.
-2. Nâng quyền bằng lệnh dưới đây (đổi email nếu cần), rồi đăng xuất và đăng nhập lại:
+```powershell
+"UPDATE users SET role_id = (SELECT id FROM roles WHERE name = 'admin') WHERE email = 'admin.ocop@gmail.com';" | docker compose exec -T postgres sh -lc 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+```
 
-   ```powershell
-   "UPDATE users SET role_id = (SELECT id FROM roles WHERE name = 'admin') WHERE email = 'admin.ocop@gmail.com';" | docker compose exec -T postgres sh -lc 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
-   ```
+`UPDATE 1` là thành công. Đăng xuất rồi đăng nhập lại để vào `/quan-tri`.
 
-   Kết quả `UPDATE 1` là thành công; `UPDATE 0` nghĩa là email chưa đăng ký hoặc gõ sai.
-
-### 4.5. Cập nhật lên code mới nhất
-
-Mỗi lần lấy code mới từ GitHub:
+### Cập nhật lên code mới
 
 ```powershell
 git switch main
 git pull
-docker compose up -d --build     # build lại backend khi requirements.txt hoặc Dockerfile đổi
-docker compose restart frontend  # khi frontend/package.json đổi: container tự npm install lúc khởi động
+docker compose up -d --build      # build lại khi requirements.txt, Dockerfile hoặc docker-compose.yml đổi
+docker compose restart frontend   # khi frontend/package.json đổi (container tự npm install)
 ```
 
-Sau đó chạy các migration mới (nếu có) theo mục 5 và chạy `tools/kiem-tra-database.sql` để chắc database khớp repo.
+Database đã có dữ liệu thì chạy migration (mục [Database và migration](#database-và-migration)).
 
-### 4.6. Lưu ảnh: cục bộ hoặc Cloudinary
+### Chạy không dùng Docker
 
-Ảnh sản phẩm và ảnh điểm du lịch do chủ thể tải lên được lưu theo biến `IMAGE_STORAGE` trong `.env`:
-
-- `local` (mặc định): lưu trong thư mục `backend/uploads`. Không cần cấu hình gì, dùng khi phát triển và chạy kiểm thử.
-- `cloudinary`: tải lên Cloudinary. Cần tài khoản Cloudinary (gói Free, không cần thẻ) và điền `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` lấy ở trang Dashboard của Cloudinary. Thiếu một biến thì backend báo lỗi khi khởi động.
-
-Sau khi đổi `.env`, chạy `docker compose up -d backend` để nạp lại. Không commit khóa Cloudinary; nếu lỡ để lộ, tạo khóa mới trên Cloudinary.
-
-File giấy chứng nhận sản phẩm luôn lưu cục bộ và chỉ tải được qua API có kiểm tra quyền. Ảnh đã lưu cục bộ trước đó vẫn dùng được.
-
-### 4.7. Đăng nhập bằng Google, Facebook (tùy chọn)
-
-Điền `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` và/hoặc `FACEBOOK_APP_ID`, `FACEBOOK_APP_SECRET` vào `.env`, rồi chạy `docker compose up -d backend`. Để trống thì nút tương ứng không hiện.
-Cách tạo khóa, địa chỉ trả về cần khai báo (`http://localhost:5173/dang-nhap/mang-xa-hoi/google`, `.../facebook`) và lỗi thường gặp: [`docs/DANG_NHAP_MANG_XA_HOI.md`](docs/DANG_NHAP_MANG_XA_HOI.md).
-
-### 4.8. Chạy không dùng Docker (tùy chọn)
-
-Vẫn cần PostgreSQL 16 + PostGIS. Cách đơn giản nhất là chỉ chạy database bằng Docker: `docker compose up -d postgres`.
+Vẫn cần PostgreSQL 16 + PostGIS (có thể chỉ chạy `docker compose up -d postgres`). Backend đọc `.env` ở thư mục gốc, dùng `DATABASE_URL` trỏ tới `localhost:5432`.
 
 ```powershell
-# Backend (Python 3.12), cửa sổ thứ nhất
+# Backend (Python 3.12)
 cd backend
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8000
 
-# Frontend (Node 22, giống image Docker), cửa sổ thứ hai
+# Frontend (Node 22), cửa sổ khác
 cd frontend
 npm install
 npm run dev
 ```
 
-Backend đọc `.env` ở thư mục gốc repo; khi chạy ngoài Docker nó dùng `DATABASE_URL` trong file đó (trỏ tới `localhost:5432`).
+## Dữ liệu ban đầu
 
-### 4.9. Lệnh thường dùng
+**Bản demo và báo cáo: nhập tay qua giao diện** (không dùng seed demo):
+
+1. Mỗi chủ thể đăng ký một tài khoản ở `/dang-ky` (quy ước email: tên chủ thể + vai trò + `@gmail.com`), rồi gửi hồ sơ ở `/dang-ky-chu-the`.
+2. Quản trị viên duyệt ở `/quan-tri/ho-so-chu-the`; trang của chủ thể tự chuyển sang quyền chủ thể.
+3. Chủ thể thêm sản phẩm ở `/chu-the/san-pham/them` (lưu nháp chỉ cần tên và nhóm; gửi duyệt cần mô tả, hạng sao 3–5, thông tin và bản chụp giấy chứng nhận còn hạn, đúng một ảnh chính), khai báo điểm ở `/chu-the/diem-du-lich/khai-bao`.
+4. Quản trị viên duyệt ở `/quan-tri/san-pham`, `/quan-tri/diem-du-lich`.
+
+**Phát triển và kiểm thử: nạp seed** (sản phẩm OCOP tham khảo có nguồn, sản phẩm ở đủ trạng thái, tài khoản demo):
 
 ```powershell
-docker compose ps                     # xem trạng thái các container
-docker compose logs -f backend        # xem log (backend, frontend, postgres, pgadmin)
-docker compose restart backend        # khởi động lại một dịch vụ
-docker compose down                   # dừng, giữ nguyên dữ liệu
+foreach ($seed in 'seed_public_reference','seed_ocop_2025_2026','seed_product_workflow','seed_dehavi_demo','seed_dehavi_media') {
+  Get-Content ".\database\$seed.sql" -Raw -Encoding UTF8 | docker compose exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+}
 ```
 
-Không dùng `docker compose down -v`: lệnh này xóa cả database và ảnh đã tải lên (khi `IMAGE_STORAGE=local`).
+Sau khi nạp: 61 sản phẩm và 10 điểm du lịch hiển thị công khai. Tài khoản demo (mật khẩu `DemoOCOP@2026`, **không dùng cho bản triển khai**): `admin.ocop.demo@example.com` (quản trị), `chuthe.ocop.demo@example.com` (chủ thể), `ungvien.ocop.demo@example.com` (người dùng có hồ sơ chủ thể đang chờ). Chi tiết: [`docs/DU_LIEU.md`](docs/DU_LIEU.md).
 
-### 4.10. Xử lý sự cố thường gặp
+## Cấu hình
 
-| Hiện tượng | Nguyên nhân và cách xử lý |
-|---|---|
-| pgAdmin báo "Incorrect username or password" dù `.env` đúng | pgAdmin chỉ tạo tài khoản ở lần chạy đầu và lưu trong volume; sửa `.env` sau đó không có tác dụng. Đăng nhập sai 3 lần thì bị khóa. Xóa riêng volume pgAdmin (không ảnh hưởng database): `docker compose stop pgadmin`, `docker compose rm -f pgadmin`, `docker volume ls --filter name=pgadmin` để xem tên, `docker volume rm <tên volume>`, rồi `docker compose up -d pgadmin` |
-| pgAdmin báo "The CSRF token is invalid" | Trình duyệt còn cookie cũ của `localhost` (cookie không phân biệt cổng, có thể của pgAdmin dự án khác). Mở `http://127.0.0.1:5050` hoặc cửa sổ ẩn danh |
-| Trình duyệt tự điền mật khẩu cũ | Xóa ô mật khẩu và gõ tay; kiểm tra số ký tự trước khi bấm Login |
-| Script `.ps1` báo lỗi lạ với chữ tiếng Việt bị vỡ (`Lá»—i…`) | Windows PowerShell 5.1 đọc file UTF-8 không có BOM theo bảng mã cũ. Lưu script dạng "UTF-8 with BOM" |
-| Lệnh `psql` truyền qua tham số bị mất dấu ngoặc kép | Windows PowerShell 5.1 làm mất `"` lồng trong tham số. Gửi SQL qua stdin như các lệnh trong README (`Get-Content … -Raw \| docker compose exec -T …`) |
-| Backend không khởi động sau khi bật Cloudinary | Thiếu một trong ba biến `CLOUDINARY_*`; xem `docker compose logs backend` |
-| Trang web không thấy sản phẩm vừa thêm | Sản phẩm nháp hoặc chờ duyệt không hiện ở trang công khai; xem điều kiện ở mục 1 |
-| Cổng 5432 hoặc 5050 đã bị dùng | Tắt PostgreSQL/pgAdmin khác trên máy, hoặc dừng container của dự án khác |
+Mọi cấu hình nằm trong `.env`; danh sách đầy đủ ở [`docs/CAU_HINH.md`](docs/CAU_HINH.md). Sau khi sửa, chạy `docker compose up -d`.
 
-## 5. Database và migration
+| Tính năng | Biến | Ghi chú |
+|---|---|---|
+| Lưu ảnh trên Cloudinary | `IMAGE_STORAGE=cloudinary`, `CLOUDINARY_*` | Mặc định `local` (thư mục `backend/uploads`) |
+| Đăng nhập Google | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Trống thì ẩn nút; địa chỉ trả về `http://localhost:5173/dang-nhap/mang-xa-hoi/google` |
+| Đăng nhập Facebook | `FACEBOOK_APP_ID`, `FACEBOOK_APP_SECRET` | Trống thì ẩn nút; địa chỉ trả về `.../dang-nhap/mang-xa-hoi/facebook` |
+| Chạy sau tên miền/proxy | `PUBLIC_BASE_URL`, `FRONTEND_BASE_URL`, `CORS_ORIGINS`, `VITE_API_BASE_URL` | Xem mục triển khai trong `docs/CAU_HINH.md` |
 
-- Database mới tạo từ `database/schema.sql` luôn là phiên bản mới nhất, không cần chạy migration.
-- Database đã có dữ liệu: sau mỗi lần `git pull`, chạy các migration chưa chạy theo thứ tự (từ file đầu tiên chưa chạy tới 013). Mọi migration chạy lặp lại an toàn. Ví dụ:
+## Database và migration
+
+- **Database mới:** tạo từ `database/schema.sql`, không cần migration.
+- **Database đã có dữ liệu** (sau mỗi lần cập nhật code): chạy migration tổng hợp. File chạy trong một transaction, chạy lặp lại an toàn, đưa database ở bất kỳ phiên bản cũ nào lên phiên bản hiện tại:
 
   ```powershell
-  Get-Content .\database\migrations\011_tourism_location_drafts.sql -Raw -Encoding UTF8 | docker compose exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
-  Get-Content .\database\migrations\012_image_attribution.sql -Raw -Encoding UTF8 | docker compose exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
-  Get-Content .\database\migrations\013_social_login.sql -Raw -Encoding UTF8 | docker compose exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+  Get-Content .\database\migrations\014_hoan_thien.sql -Raw -Encoding UTF8 | docker compose exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
   ```
 
-| Migration | Nội dung |
-|---|---|
-| 001_hardening | Ràng buộc, index, trigger cập nhật thời gian |
-| 002_subject_moderation | Kiểm duyệt hồ sơ chủ thể |
-| 003_sync_product_rating | Cột điểm đánh giá sản phẩm |
-| 004_product_moderation | Quy trình kiểm duyệt sản phẩm, yêu cầu sửa |
-| 005_add_product_sources | Nguồn chứng cứ công nhận OCOP |
-| 006_simplify_subject_product_flow | Bản nháp sản phẩm, giấy chứng nhận riêng tư |
-| 007_hide_demo_products | Ẩn dữ liệu demo khỏi trang công khai |
-| 008_tourism_location_map | Thông tin điểm du lịch cho bản đồ số |
-| 009_tourism_location_submissions | Chủ thể khai báo điểm du lịch, admin duyệt, yêu cầu cập nhật |
-| 010_normalize_constraint_names | Chuẩn hóa tên ràng buộc để database nâng cấp giống hệt database tạo mới |
-| 011_tourism_location_drafts | Bản nháp điểm du lịch được thiếu vị trí/địa chỉ; trạng thái ngừng hiển thị (archived) |
-| 012_image_attribution | Ghi nguồn, tác giả, giấy phép cho ảnh sản phẩm và ảnh điểm du lịch |
-| 013_social_login | Đăng nhập bằng Google/Facebook: bảng `user_social_accounts`, mật khẩu được phép trống |
+- **Kiểm tra database khớp repo:** chạy `tools/kiem-tra-database.sql` trong pgAdmin (Query Tool) hoặc:
 
-**Kiểm tra database khớp repo:** mở `tools/kiem-tra-database.sql` trong Query Tool của pgAdmin và chạy.
-Kết quả rỗng là khớp; dòng `thieu_so_voi_repo` là migration chưa chạy; dòng `thua_ngoai_repo` là thay đổi làm thẳng trên database mà repo không có.
+  ```powershell
+  Get-Content .\tools\kiem-tra-database.sql -Raw -Encoding UTF8 | docker compose exec -T postgres sh -lc 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+  ```
 
-**Sao lưu trước khi làm việc lớn với dữ liệu:**
+  Kết quả rỗng là khớp; `thieu_so_voi_repo` là chưa chạy migration; `thua_ngoai_repo` là thay đổi làm ngoài repo.
 
-```powershell
-docker compose exec -T postgres sh -lc 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Fc -f /tmp/backup.dump'
-docker compose cp postgres:/tmp/backup.dump .\backup.dump
-```
+- **Sao lưu** trước khi thao tác lớn (không commit file `.dump`):
 
-Không commit file `.dump`; lưu ngoài repo.
+  ```powershell
+  docker compose exec -T postgres sh -lc 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Fc -f /tmp/backup.dump'
+  docker compose cp postgres:/tmp/backup.dump .\backup.dump
+  ```
 
-**Quy tắc:** mọi thay đổi database phải là một migration mới trong repo, cập nhật cùng lúc `schema.sql`, model và `tools/kiem-tra-database.sql` (sinh lại bằng `tools/sinh_kiem_tra_database.py`). Không sửa thẳng database bằng pgAdmin hay công cụ khác.
+- **Quy tắc:** mọi thay đổi database là một migration mới trong `database/migrations/`, cập nhật cùng lúc `schema.sql`, model và file kiểm tra (`tools/sinh_kiem_tra_database.py`). Không sửa thẳng database bằng pgAdmin. Các migration cũ 001–013 lưu ở `database/migrations/archive/`.
+- Không dùng `docker compose down -v`: lệnh này xóa database và ảnh đã tải lên.
 
-## 6. Kiểm thử
+## Kiểm thử
 
 ```powershell
-docker compose exec backend python -m pytest -q      # backend: 148 test chạy, 9 test bỏ qua
-docker compose exec frontend npm test                # frontend: 166 test trong 40 file
+docker compose exec backend python -m pytest -q    # backend: 272 đạt, 9 bỏ qua
+docker compose exec frontend npm test              # frontend: 272 test trong 59 file
 docker compose exec frontend npm run type-check
 docker compose exec frontend npm run build
-.\scripts\verify-mvp.ps1                             # kiểm tra nhanh toàn hệ thống, chỉ đọc dữ liệu
+python -m pytest -q tests/data                     # dữ liệu OCOP gốc (cần Python trên máy)
+.\scripts\verify-mvp.ps1                           # kiểm tra nhanh toàn hệ thống đang chạy (chỉ đọc)
 ```
 
-Số test đo ngày 10/10/2026 trên `main`. 9 test backend bị bỏ qua là test seed Dehavi (dữ liệu và ảnh), chỉ chạy với một PostGIS tạm riêng qua biến `DEHAVI_SEED_TEST_DATABASE_URL` (xem `docs/DEHAVI_DEMO_DATA.md`), không bao giờ chạy trên database demo; khi bật đủ thì backend có 157 test, đều qua. Dữ liệu OCOP gốc có thêm 10 test: `python -m pytest -q tests/data` ở thư mục gốc repo.
+9 test backend bỏ qua là test seed Dehavi, chỉ chạy với PostGIS tạm riêng ([`docs/DU_LIEU.md`](docs/DU_LIEU.md) mục 7). Dịch vụ ngoài (Google, Facebook, Cloudinary, OSRM, RSS) đều được giả lập trong test.
 
-Pull Request phải qua đủ test, type-check và build. Thay đổi giao diện kiểm tra thêm trợ năng (axe, WCAG 2.2 AA) và không tràn ngang ở màn 375px.
+## Cấu trúc thư mục
 
-## 7. Trang giao diện và API
+```text
+.
+├── backend/              API FastAPI
+│   ├── app/              api/routes, core, models, schemas, services, main.py
+│   └── tests/            Test pytest
+├── frontend/             Ứng dụng Vue 3
+│   └── src/              views, layouts, components, services, stores, router, styles…
+├── database/
+│   ├── schema.sql        Cấu trúc database đầy đủ (dùng khi tạo mới)
+│   ├── migrations/       014_hoan_thien.sql (nâng cấp database cũ), archive/ 001–013
+│   └── seed_*.sql        Dữ liệu ban đầu và dữ liệu mẫu
+├── data/                 Dữ liệu gốc OCOP, điểm du lịch (để sinh seed)
+├── tools/                Sinh seed, sinh tài liệu API, kiểm tra database
+├── tests/data/           Test dữ liệu gốc
+├── docs/                 Tài liệu, Postman, văn bản nguồn OCOP
+├── scripts/              verify-mvp.ps1
+├── docker-compose.yml
+├── CHANGELOG.md
+└── CLAUDE.md             Quy tắc làm việc của nhóm khi dùng Claude
+```
 
-**Trang chính**
+## Trang và API
 
 | Khu vực | Đường dẫn |
 |---|---|
 | Công khai | `/`, `/san-pham`, `/san-pham/:slug`, `/san-pham/:slug/diem-trai-nghiem`, `/diem-du-lich`, `/diem-du-lich/:slug`, `/ban-do`, `/tin-tuc` |
-| Tài khoản | `/dang-nhap`, `/dang-ky`, `/tai-khoan`, `/dang-ky-chu-the` |
+| Tài khoản | `/dang-nhap`, `/dang-ky`, `/dang-nhap/mang-xa-hoi/:provider`, `/tai-khoan`, `/tai-khoan/danh-gia`, `/dang-ky-chu-the` |
 | Chủ thể | `/chu-the/ho-so`, `/chu-the/san-pham`, `/chu-the/san-pham/them`, `/chu-the/diem-du-lich`, `/chu-the/diem-du-lich/khai-bao` |
-| Quản trị | `/quan-tri`, `/quan-tri/ho-so-chu-the`, `/quan-tri/san-pham`, `/quan-tri/diem-du-lich` |
+| Quản trị | `/quan-tri`, `/quan-tri/ho-so-chu-the`, `/quan-tri/san-pham`, `/quan-tri/diem-du-lich`, `/quan-tri/danh-gia`, `/quan-tri/nguoi-dung`, `/quan-tri/danh-muc` |
 
-**API** (tài liệu đầy đủ ở Swagger `/docs` và [`docs/API.md`](docs/API.md)), các nhóm endpoint dưới `/api/v1`:
+API REST dưới `/api/v1` (103 endpoint): danh sách đầy đủ, quyền, mã lỗi ở [`docs/API.md`](docs/API.md) (sinh tự động từ OpenAPI bằng `tools/sinh_tai_lieu_api.py`), Swagger tại `/docs`, bộ Postman ở [`docs/postman/`](docs/postman/). Backend kiểm tra vai trò từ database ở mỗi request; sửa JWT hay hiện nút trên giao diện không làm tăng quyền.
 
-| Nhóm | Endpoint chính | Quyền |
-|---|---|---|
-| Tài khoản | `POST /auth/register`, `POST /auth/login`, `GET/PATCH /auth/me` | Công khai / đăng nhập |
-| Công khai | `GET /categories`, `/products`, `/products/{slug}`, `/locations`, `/locations/{slug}`, `/news` | Công khai |
-| Bản đồ | `GET /map/locations` (GeoJSON), `/map/nearby`, `/map/route` | Công khai |
-| Hồ sơ chủ thể | `POST /subject-applications`, `GET/PUT /subject-applications/me` | Người dùng |
-| Chủ thể | `/subject/products` (CRUD, `submit`, `change-requests`, `deletion-requests`), `/subject/product-images`, `/subject/product-certificates`, `/subject/product-change-requests` | Chủ thể |
-| Chủ thể – điểm du lịch | `/subject/locations` (CRUD, `submit`, `position-check`, `parse-coordinates`, `change-requests`, `deletion-requests`), `/subject/location-images`, `/subject/location-change-requests` | Chủ thể |
-| Quản trị | `/admin/dashboard`, `/admin/statistics`, `/admin/products` (duyệt, chứng cứ), `/admin/product-change-requests`, `/admin/subject-applications`, `/admin/data-sources`, `/admin/locations` (duyệt, chỉnh ghim), `/admin/location-change-requests` | Admin |
-
-Backend kiểm tra vai trò trong database ở mỗi lần gọi; sửa JWT hay hiện nút trên giao diện không làm tăng quyền.
-
-## 8. Quy trình làm việc nhóm
-
-- Mỗi chức năng một nhánh `2312682_HaLuyen_<TenChucNang>` (hoặc tên theo người làm), tạo từ `main` mới nhất (`git fetch` trước).
-- Không sửa trực tiếp `main`. Code lên `main` qua Pull Request, có người review.
-- Commit dạng `loại(phạm vi): mô tả tiếng Việt`, ví dụ `feat(api): …`, `fix(ui): …`, `docs: …`. Backend và giao diện là các commit riêng.
-- Trên Windows dùng `git -c core.autocrlf=true …` nếu thấy mọi file đều báo "modified" vì khác kiểu xuống dòng.
-- Không commit `.env`, file sao lưu `.dump`, `node_modules`, khóa Cloudinary.
-- Khi làm cùng Claude: quy tắc chi tiết trong [`CLAUDE.md`](CLAUDE.md).
-
-## 9. Tài liệu
+## Tài liệu
 
 | Tài liệu | Nội dung |
 |---|---|
-| [`docs/KE_HOACH_HOAN_THANH_DO_AN.md`](docs/KE_HOACH_HOAN_THANH_DO_AN.md) | Kế hoạch tới khi nộp, tự đánh giá tiến độ, phân công |
-| [`database/ERD.md`](database/ERD.md) | Sơ đồ quan hệ dữ liệu |
-| [`docs/API.md`](docs/API.md), [`docs/postman/`](docs/postman/) | Hợp đồng API, bộ Postman |
-| [`docs/QUY_TRINH_KIEM_DUYET_SAN_PHAM.md`](docs/QUY_TRINH_KIEM_DUYET_SAN_PHAM.md) | Quy trình kiểm duyệt sản phẩm, điều kiện hiển thị công khai |
-| [`docs/DU_LIEU_THAM_KHAO_CONG_KHAI.md`](docs/DU_LIEU_THAM_KHAO_CONG_KHAI.md) | Nguồn dữ liệu sản phẩm OCOP |
-| [`docs/sources/ocop/README.md`](docs/sources/ocop/README.md) | Văn bản hành chính dùng kiểm chứng dữ liệu, mức xác minh A/B1/B2/C |
-| [`docs/DU_LIEU_DIEM_DU_LICH.md`](docs/DU_LIEU_DIEM_DU_LICH.md) | Dữ liệu điểm du lịch, bản đồ, định tuyến |
-| [`docs/DU_LIEU_KIEM_THU_SAN_PHAM.md`](docs/DU_LIEU_KIEM_THU_SAN_PHAM.md) | Tài khoản và dữ liệu kiểm thử |
-| [`docs/DEHAVI_DEMO_DATA.md`](docs/DEHAVI_DEMO_DATA.md), [`docs/DEHAVI_MEDIA.md`](docs/DEHAVI_MEDIA.md) | Dữ liệu demo chuỗi Dehavi Valley → Dehavi Showroom và ảnh chính thức có ghi nguồn |
-| [`docs/PRODUCT_EXPERIENCE_FINDER.md`](docs/PRODUCT_EXPERIENCE_FINDER.md) | Trang tìm điểm trải nghiệm sản phẩm: luồng, trạng thái, kiểm thử |
-| [`docs/ui-audit.md`](docs/ui-audit.md) | Đánh giá và nhật ký cải thiện giao diện |
-| `docs/*.docx` | Phân tích yêu cầu, phụ lục nguồn dữ liệu, hướng dẫn nhóm |
+| [`docs/NGHIEP_VU.md`](docs/NGHIEP_VU.md) | Quy tắc nghiệp vụ: vai trò, tài khoản, kiểm duyệt sản phẩm/điểm/đánh giá, danh mục, điều kiện hiển thị công khai |
+| [`docs/API.md`](docs/API.md) | REST API: quy ước, mã lỗi, toàn bộ endpoint |
+| [`docs/KIEN_TRUC.md`](docs/KIEN_TRUC.md) | Kiến trúc, cấu trúc mã nguồn, xác thực, lưu file, sơ đồ dữ liệu, migration, kiểm thử |
+| [`docs/DU_LIEU.md`](docs/DU_LIEU.md) | Dữ liệu, file seed, nguồn và mức xác minh, tài khoản demo, tái tạo dữ liệu |
+| [`docs/CAU_HINH.md`](docs/CAU_HINH.md) | Biến môi trường, Cloudinary, khóa Google/Facebook, danh sách kiểm tra khi triển khai |
+| [`docs/sources/ocop/`](docs/sources/ocop/README.md) | Văn bản hành chính dùng kiểm chứng dữ liệu OCOP |
+| [`CHANGELOG.md`](CHANGELOG.md) | Các thay đổi chính theo phiên bản |
+
+## Xử lý sự cố
+
+| Hiện tượng | Cách xử lý |
+|---|---|
+| Backend không khởi động, log báo `JWT_SECRET_KEY` | Đổi `JWT_SECRET_KEY` khác giá trị mẫu (mục Bắt đầu nhanh, bước 2) rồi `docker compose up -d backend` |
+| Backend không khởi động sau khi bật Cloudinary | Thiếu một trong ba biến `CLOUDINARY_*`; xem `docker compose logs backend` |
+| API trả `DATABASE_SCHEMA_OUTDATED` | Chạy `database/migrations/014_hoan_thien.sql` |
+| Sản phẩm vừa thêm không thấy ở trang công khai | Chưa được duyệt hoặc chưa đủ điều kiện hiển thị (`docs/NGHIEP_VU.md` mục 5) |
+| pgAdmin báo sai mật khẩu dù `.env` đúng | pgAdmin chỉ tạo tài khoản ở lần chạy đầu. Xóa riêng volume pgAdmin: `docker compose stop pgadmin`, `docker compose rm -f pgadmin`, `docker volume ls --filter name=pgadmin`, `docker volume rm <tên>`, `docker compose up -d pgadmin` |
+| pgAdmin báo "The CSRF token is invalid" | Mở `http://127.0.0.1:5050` hoặc cửa sổ ẩn danh (cookie cũ của `localhost`) |
+| Lệnh `psql` truyền qua tham số bị mất dấu ngoặc kép | Windows PowerShell 5.1 làm mất `"` lồng trong tham số; gửi SQL qua stdin như các lệnh trong README |
+| Script `.ps1` vỡ chữ tiếng Việt | Lưu script dạng "UTF-8 with BOM" (PowerShell 5.1) |
+| Mọi file báo "modified" sau khi clone trên Windows | Dùng `git -c core.autocrlf=true …` |
+| Cổng 5432 hoặc 5050 đã bị dùng | Tắt PostgreSQL/pgAdmin khác hoặc container của dự án khác |
+
+## Quy trình đóng góp
+
+- Mỗi chức năng một nhánh `2312682_HaLuyen_<TenChucNang>` (hoặc theo tên người làm) tạo từ `main` mới nhất. Không sửa trực tiếp `main`; code vào `main` qua Pull Request có người review.
+- Commit dạng `loại(phạm vi): mô tả tiếng Việt`, ví dụ `feat(api): …`, `fix(ui): …`, `docs: …`; backend và giao diện là các commit riêng.
+- Pull Request phải qua đủ test, type-check, build. Thay đổi giao diện kiểm tra thêm trợ năng (axe, WCAG 2.2 AA) và không tràn ngang ở 375/1024/1440 px.
+- Thêm hoặc sửa endpoint: chạy lại `cd backend; python ../tools/sinh_tai_lieu_api.py` để cập nhật `docs/API.md` và Postman.
+- Không commit `.env`, `.dump`, `node_modules`, khóa bí mật.
+- Làm việc cùng Claude: quy tắc chi tiết trong [`CLAUDE.md`](CLAUDE.md).
+
+## Giới hạn đã biết
+
+- Chưa có quên mật khẩu qua email; tin tức do quản trị viên tự đăng chưa làm (đang dùng RSS).
+- Ảnh chưa duyệt vẫn mở được nếu biết đường dẫn (đường dẫn ngẫu nhiên 32 ký tự).
+- Tìm kiếm phân biệt dấu ("dâu tây" tìm thấy, "dau tay" thì không).
+- Docker Compose trong repo dành cho môi trường phát triển; triển khai thật xem `docs/CAU_HINH.md` mục 4.
+
+Dữ liệu sản phẩm, điểm du lịch trong repo chỉ phục vụ học tập, không thay thế cơ sở dữ liệu OCOP chính thức.
