@@ -141,12 +141,12 @@ const router = createRouter({
           component: () => import('@/views/subject/SubjectProductEditorView.vue'),
         },
         {
-          path: 'san-pham/:id/chinh-sua',
+          path: 'san-pham/:id(\\d+)/chinh-sua',
           name: 'subject-product-edit',
           component: () => import('@/views/subject/SubjectProductEditorView.vue'),
         },
         {
-          path: 'yeu-cau/:requestId/chinh-sua',
+          path: 'yeu-cau/:requestId(\\d+)/chinh-sua',
           name: 'subject-product-request-edit',
           component: () => import('@/views/subject/SubjectProductEditorView.vue'),
         },
