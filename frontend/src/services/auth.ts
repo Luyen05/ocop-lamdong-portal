@@ -1,5 +1,6 @@
 import http from '@/services/http'
 import type {
+  ChangePasswordPayload,
   LoginPayload,
   RegisterPayload,
   SocialAuthorizePayload,
@@ -30,6 +31,11 @@ export async function getMe(): Promise<User> {
 export async function updateMe(payload: UpdateProfilePayload): Promise<User> {
   const response = await http.patch<User>('/auth/me', payload)
   return response.data
+}
+
+/** Đổi mật khẩu, hoặc đặt mật khẩu lần đầu cho tài khoản tạo bằng Google/Facebook. */
+export async function changePassword(payload: ChangePasswordPayload): Promise<void> {
+  await http.post('/auth/change-password', payload)
 }
 
 export async function getSocialProviders(): Promise<SocialProvider[]> {

@@ -78,6 +78,16 @@ async function updateProfile(payload: UpdateProfilePayload): Promise<User> {
   return user
 }
 
+/**
+ * Tải lại người dùng hiện tại từ /auth/me, ví dụ sau khi đặt mật khẩu (has_password đổi) hoặc
+ * khi hồ sơ chủ thể vừa được duyệt (vai trò đổi từ user sang subject).
+ */
+async function refreshUser(): Promise<User | null> {
+  if (!accessToken.value) return null
+  currentUser.value = await authService.getMe()
+  return currentUser.value
+}
+
 /** Cập nhật người dùng hiện tại từ kết quả API (ví dụ sau khi liên kết Google/Facebook). */
 function setCurrentUser(user: User): void {
   currentUser.value = user
@@ -103,6 +113,7 @@ export const authStore = {
   loginWithToken,
   register,
   updateProfile,
+  refreshUser,
   setCurrentUser,
   logout: clearSession,
 }

@@ -40,6 +40,12 @@ export interface UpdateProfilePayload {
   avatar_url?: string | null
 }
 
+/** Đổi mật khẩu; tài khoản chưa có mật khẩu (Google/Facebook) không gửi current_password. */
+export interface ChangePasswordPayload {
+  current_password?: string
+  new_password: string
+}
+
 export interface SocialProvidersResponse {
   providers: SocialProvider[]
 }
