@@ -262,4 +262,32 @@ describe('AdminProductsView', () => {
     expect(listAdminProducts).toHaveBeenCalledTimes(2)
     expect(wrapper.text()).toContain(pendingProduct.name)
   })
+
+  it('loc nhanh lien tiep chi hien ket qua cua lan tai moi nhat', async () => {
+    const productPage = (name: string) => ({
+      items: [{ ...pendingProduct, id: name.length, name }],
+      page: 1,
+      page_size: 20,
+      total: 1,
+    })
+    let resolveSlow!: (value: ReturnType<typeof productPage>) => void
+    vi.mocked(listProductChangeRequests).mockResolvedValue({ items: [], page: 1, page_size: 100, total: 0 })
+    vi.mocked(listAdminProducts)
+      .mockResolvedValueOnce(productPage('Sản phẩm ban đầu'))
+      .mockImplementationOnce(() => new Promise((resolve) => { resolveSlow = resolve }))
+      .mockResolvedValueOnce(productPage('Sản phẩm mới nhất'))
+
+    const wrapper = mount(AdminProductsView)
+    await flushPromises()
+    await wrapper.get('form.filter-panel').trigger('submit')
+    await wrapper.get('form.filter-panel').trigger('submit')
+    await flushPromises()
+    expect(wrapper.text()).toContain('Sản phẩm mới nhất')
+
+    resolveSlow(productPage('Sản phẩm cũ trả về muộn'))
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('Sản phẩm mới nhất')
+    expect(wrapper.text()).not.toContain('Sản phẩm cũ trả về muộn')
+  })
 })

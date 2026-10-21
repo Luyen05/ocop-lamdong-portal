@@ -56,7 +56,11 @@ function formatDate(value: string): string {
   }).format(new Date(value))
 }
 
+// Đếm lượt tải: chuyển trang/lọc nhanh thì chỉ kết quả của lượt mới nhất được hiển thị.
+let loadSequence = 0
+
 async function loadApplications(): Promise<void> {
+  const sequence = ++loadSequence
   isLoading.value = true
   errorMessage.value = ''
   try {
@@ -66,12 +70,14 @@ async function loadApplications(): Promise<void> {
       search: filters.search.trim() || undefined,
       status: filters.status || undefined,
     })
+    if (sequence !== loadSequence) return
     applications.value = response.items
     total.value = response.total
   } catch (error) {
+    if (sequence !== loadSequence) return
     errorMessage.value = getApiErrorMessage(error, 'Không thể tải danh sách hồ sơ.')
   } finally {
-    isLoading.value = false
+    if (sequence === loadSequence) isLoading.value = false
   }
 }
 

@@ -114,7 +114,11 @@ function buildProductFilters(): AdminProductFilters {
   return filters
 }
 
+// Đếm lượt tải: chuyển trang/lọc nhanh thì chỉ kết quả của lượt mới nhất được hiển thị.
+let loadSequence = 0
+
 async function loadData(): Promise<void> {
+  const sequence = ++loadSequence
   loading.value = true
   loadError.value = ''
   try {
@@ -122,13 +126,15 @@ async function loadData(): Promise<void> {
       listAdminProducts(buildProductFilters()),
       listProductChangeRequests('admin'),
     ])
+    if (sequence !== loadSequence) return
     products.value = productData.items
     productTotal.value = productData.total
     requests.value = requestData.items
   } catch (error) {
+    if (sequence !== loadSequence) return
     loadError.value = getApiErrorMessage(error, 'Không thể tải dữ liệu quản lý sản phẩm.')
   } finally {
-    loading.value = false
+    if (sequence === loadSequence) loading.value = false
   }
 }
 
@@ -165,11 +171,15 @@ async function openProduct(product: ManagedProduct): Promise<void> {
   showExceptionalAction.value = false
   evidenceLoading.value = true
   try {
-    evidence.value = await getProductEvidence(product.id)
+    const result = await getProductEvidence(product.id)
+    // Đã mở sản phẩm khác trong lúc chờ thì bỏ kết quả cũ.
+    if (selectedProduct.value?.id === product.id) evidence.value = result
   } catch (error) {
-    evidenceError.value = getApiErrorMessage(error, 'Không thể tải chứng cứ của sản phẩm.')
+    if (selectedProduct.value?.id === product.id) {
+      evidenceError.value = getApiErrorMessage(error, 'Không thể tải chứng cứ của sản phẩm.')
+    }
   } finally {
-    evidenceLoading.value = false
+    if (selectedProduct.value?.id === product.id || !selectedProduct.value) evidenceLoading.value = false
   }
 }
 
