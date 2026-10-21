@@ -12,6 +12,7 @@ const navItems: PortalNavItem[] = [
   { label: 'Sản phẩm', icon: 'package', to: '/quan-tri/san-pham' },
   { label: 'Điểm du lịch', icon: 'map-pin', to: '/quan-tri/diem-du-lich' },
   { label: 'Chủ thể / HTX', icon: 'building', to: '/quan-tri/ho-so-chu-the' },
+  { label: 'Đánh giá', icon: 'star', to: '/quan-tri/danh-gia' },
   { label: 'Người dùng', icon: 'users', to: '/quan-tri/nguoi-dung' },
   { label: 'Danh mục', icon: 'tags', to: '/quan-tri/danh-muc' },
 ]
@@ -21,6 +22,7 @@ const subtitles: Record<string, string> = {
   'admin-products': 'Duyệt sản phẩm và yêu cầu chỉnh sửa',
   'admin-subject-applications': 'Duyệt hồ sơ đơn vị đăng ký chủ thể',
   'admin-locations': 'Duyệt điểm du lịch và yêu cầu cập nhật',
+  'admin-reviews': 'Duyệt đánh giá trước khi hiển thị công khai',
   'admin-users': 'Tìm kiếm, khóa và mở khóa tài khoản',
   'admin-categories': 'Thêm, sửa, ẩn và sắp xếp danh mục sản phẩm',
 }
@@ -41,6 +43,7 @@ const notifications = computed<PortalNotification[] | null>(() => {
     { key: 'product-changes', label: 'Yêu cầu chỉnh sửa sản phẩm', count: stats.value.pending_change_requests, to: '/quan-tri/san-pham' },
     { key: 'locations', label: 'Điểm du lịch chờ duyệt', count: stats.value.pending_locations, to: '/quan-tri/diem-du-lich' },
     { key: 'location-changes', label: 'Yêu cầu cập nhật điểm', count: stats.value.pending_location_change_requests, to: '/quan-tri/diem-du-lich' },
+    { key: 'reviews', label: 'Đánh giá chờ duyệt', count: stats.value.pending_reviews ?? 0, to: '/quan-tri/danh-gia' },
   ]
 })
 

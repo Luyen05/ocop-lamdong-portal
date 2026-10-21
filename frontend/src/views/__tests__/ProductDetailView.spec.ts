@@ -21,6 +21,11 @@ vi.mock('@/services/products', () => ({
   getProducts: vi.fn(),
 }))
 
+// Khối đánh giá có test riêng (components/reviews/__tests__); ở đây chỉ kiểm tra được gắn đúng đối tượng.
+vi.mock('@/components/reviews/ReviewSection.vue', () => ({
+  default: { name: 'ReviewSection', props: ['targetType', 'targetId', 'ownerSubjectId'], template: '<section class="review-section-stub" />' },
+}))
+
 const relatedProduct: ProductListItem = {
   id: 2,
   name: 'Cao atiso Lâm Đồng',
@@ -80,6 +85,8 @@ describe('ProductDetailView', () => {
     const wrapper = mountDetail()
     await flushPromises()
     expect(wrapper.get('.story-block p').text()).toBe('Câu chuyện sản phẩm.')
+    const reviewSection = wrapper.getComponent({ name: 'ReviewSection' })
+    expect(reviewSection.props()).toMatchObject({ targetType: 'product', targetId: product.id, ownerSubjectId: product.subject.id })
     expect(wrapper.get('.story-block').text()).not.toContain(url)
     if (url.startsWith('https:')) {
       expect(wrapper.get('.story-source').attributes('href')).toBe(url)

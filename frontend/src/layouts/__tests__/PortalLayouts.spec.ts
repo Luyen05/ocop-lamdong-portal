@@ -62,6 +62,7 @@ describe('AdminLayout', () => {
       products_missing_decision: 0,
       pending_locations: 3,
       pending_location_change_requests: 0,
+      pending_reviews: 4,
     })
   })
 
@@ -73,6 +74,7 @@ describe('AdminLayout', () => {
       'Sản phẩm',
       'Điểm du lịch',
       'Chủ thể / HTX',
+      'Đánh giá',
       'Người dùng',
       'Danh mục',
     ])
@@ -86,13 +88,14 @@ describe('AdminLayout', () => {
     const wrapper = await mountLayout(AdminLayout, '/quan-tri')
 
     expect(getAdminDashboard).toHaveBeenCalled()
-    expect(wrapper.find('.ps-bell__badge').text()).toBe('7')
+    expect(wrapper.find('.ps-bell__badge').text()).toBe('11')
     await wrapper.find('.ps-bell__button').trigger('click')
     expect(wrapper.findAll('.ps-bell__list li').map((row) => row.text())).toEqual([
       'Hồ sơ chủ thể chờ duyệt1',
       'Sản phẩm chờ duyệt2',
       'Yêu cầu chỉnh sửa sản phẩm1',
       'Điểm du lịch chờ duyệt3',
+      'Đánh giá chờ duyệt4',
     ])
   })
 

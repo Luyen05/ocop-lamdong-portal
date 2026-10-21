@@ -41,6 +41,12 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/tai-khoan/danh-gia',
+      name: 'my-reviews',
+      component: () => import('@/views/MyReviewsView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/dang-ky-chu-the',
       name: 'subject-application',
       component: () => import('@/views/SubjectApplicationView.vue'),
@@ -114,6 +120,12 @@ const router = createRouter({
           name: 'admin-locations',
           component: () => import('@/views/admin/AdminLocationsView.vue'),
           meta: { title: 'Duyệt điểm du lịch' },
+        },
+        {
+          path: 'danh-gia',
+          name: 'admin-reviews',
+          component: () => import('@/views/admin/AdminReviewsView.vue'),
+          meta: { title: 'Duyệt đánh giá' },
         },
         {
           path: 'nguoi-dung',
