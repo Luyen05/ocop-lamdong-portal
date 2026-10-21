@@ -145,7 +145,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <main class="reviews-page">
+  <div class="reviews-page">
     <header class="page-heading">
       <div>
         <span>Kiểm duyệt nội dung</span>
@@ -304,7 +304,6 @@ onUnmounted(() => {
               class="form-control"
               rows="3"
               maxlength="1000"
-              required
               aria-describedby="reject-hint"
               placeholder="Ví dụ: Nội dung không liên quan tới sản phẩm, có thông tin quảng cáo..."
             />
@@ -319,7 +318,7 @@ onUnmounted(() => {
         </section>
       </div>
     </Transition>
-  </main>
+  </div>
 </template>
 
 <style scoped>
