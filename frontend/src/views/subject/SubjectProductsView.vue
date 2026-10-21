@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
 import StatusPanel from '@/components/ui/StatusPanel.vue'
 import { useDialogFocus } from '@/composables/useDialogFocus'
@@ -28,6 +29,15 @@ const actionId = ref<number | null>(null)
 const errorMessage = ref('')
 const loadError = ref('')
 const successMessage = ref('')
+const route = useRoute()
+const router = useRouter()
+
+/** Thông báo khi quay về từ trang soạn sản phẩm (?saved=draft|submitted|requested). */
+const savedMessages: Record<string, string> = {
+  draft: 'Đã lưu bản nháp sản phẩm.',
+  submitted: 'Đã gửi sản phẩm để quản trị viên duyệt hiển thị.',
+  requested: 'Đã gửi yêu cầu cập nhật. Sản phẩm vẫn hiển thị nội dung cũ cho đến khi được duyệt.',
+}
 const deletingProduct = ref<ManagedProduct | null>(null)
 const revisingDeletionRequest = ref<ProductChangeRequest | null>(null)
 const deletionReason = ref('')
@@ -185,11 +195,18 @@ function markImageBroken(productId: number): void {
   brokenProductImages.value = new Set([...brokenProductImages.value, productId])
 }
 
-onMounted(loadData)
+onMounted(() => {
+  const saved = route.query.saved
+  if (typeof saved === 'string' && savedMessages[saved]) {
+    successMessage.value = savedMessages[saved]
+    void router.replace({ query: { ...route.query, saved: undefined } })
+  }
+  void loadData()
+})
 </script>
 
 <template>
-  <main class="subject-products-page">
+  <div class="subject-products-page">
     <header class="page-heading">
       <div>
         <span>Quản lý sản phẩm OCOP</span>
@@ -294,7 +311,7 @@ onMounted(loadData)
               type="button"
               @click="removeDraft(product)"
             >
-              Xóa bản nháp
+              {{ product.status === 'draft' ? 'Xóa bản nháp' : 'Xóa hồ sơ' }}
             </button>
             <button
               v-if="product.status === 'approved' && !activeRequest(product.id)"
@@ -340,7 +357,7 @@ onMounted(loadData)
         </div>
       </form>
     </div>
-  </main>
+  </div>
 </template>
 
 <style scoped>
