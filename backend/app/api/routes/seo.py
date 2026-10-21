@@ -2,7 +2,7 @@
 
 Frontend là ứng dụng một trang (SPA) nên trình thu thập không chạy JavaScript (Facebook, Zalo, một số bot)
 chỉ thấy khung rỗng. Các route ở đây không nằm dưới ``/api/v1``: Nginx chuyển ``/robots.txt``,
-``/sitemap.xml`` và (với bot) ``/san-pham/<slug>``, ``/diem-du-lich/<slug>`` về đây (xem ``deploy/nginx``).
+``/sitemap.xml`` và (với bot) ``/san-pham/<slug>``, ``/diem-du-lich/<slug>`` về đây (xem ``frontend/nginx/default.conf``).
 Chỉ nội dung công khai (cùng điều kiện với API công khai) mới xuất hiện.
 """
 

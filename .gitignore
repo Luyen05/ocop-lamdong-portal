@@ -1,6 +1,7 @@
 .env
 .env.*
 !.env.example
+!.env.production.example
 .venv/
 __pycache__/
 *.py[cod]
@@ -21,3 +22,4 @@ backend/uploads/
 .codex-*/
 artifacts/
 *.dump
+backups/

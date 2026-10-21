@@ -1,0 +1,84 @@
+# Chạy thật (một máy chủ): PostgreSQL + backend + Nginx (bản build Vue và proxy API).
+# Khác docker-compose.yml (môi trường phát triển): không --reload, không mở cổng database/pgAdmin,
+# không nạp seed demo, backend chạy bằng người dùng thường. Hướng dẫn: docs/CAU_HINH.md mục 4.
+#
+#   cp .env.production.example .env.production   # rồi điền giá trị thật
+#   docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build
+services:
+  postgres:
+    image: postgis/postgis:16-3.4
+    container_name: ocop-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: "${POSTGRES_DB:?Set POSTGRES_DB}"
+      POSTGRES_USER: "${POSTGRES_USER:?Set POSTGRES_USER}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # Chỉ tạo cấu trúc ở lần chạy đầu (volume trống). Dữ liệu thật nhập qua giao diện hoặc nạp riêng.
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/001-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    # Không có "ports": database chỉ truy cập được từ các container cùng mạng.
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    image: "${BACKEND_IMAGE:-ocop-backend:latest}"
+    container_name: ocop-backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: "postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}"
+      JWT_SECRET_KEY: "${JWT_SECRET_KEY:?Set JWT_SECRET_KEY}"
+      JWT_ACCESS_TOKEN_EXPIRE_MINUTES: ${JWT_ACCESS_TOKEN_EXPIRE_MINUTES:-60}
+      # Giao diện và API cùng một tên miền (Nginx chuyển /api/): CORS_ORIGINS chỉ là dự phòng.
+      CORS_ORIGINS: "${SITE_URL:?Set SITE_URL}"
+      FRONTEND_BASE_URL: "${SITE_URL}"
+      PUBLIC_BASE_URL: "${SITE_URL}"
+      UPLOAD_DIRECTORY: /app/uploads
+      IMAGE_STORAGE: ${IMAGE_STORAGE:-local}
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME:-}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY:-}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET:-}
+      CLOUDINARY_FOLDER: ${CLOUDINARY_FOLDER:-ocop}
+      NEWS_RSS_URL: ${NEWS_RSS_URL:-https://ocoplamdong.gov.vn/rssChanel/tin-tuc-su-kien.rss}
+      OSRM_BASE_URL: ${OSRM_BASE_URL:-https://router.project-osrm.org}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      FACEBOOK_APP_ID: ${FACEBOOK_APP_ID:-}
+      FACEBOOK_APP_SECRET: ${FACEBOOK_APP_SECRET:-}
+    volumes:
+      - backend_uploads:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 15s
+
+  web:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+      args:
+        VITE_API_BASE_URL: /api/v1
+    image: "${WEB_IMAGE:-ocop-web:latest}"
+    container_name: ocop-web
+    restart: unless-stopped
+    ports:
+      # HTTP. HTTPS: đặt Caddy/Cloudflare Tunnel hoặc certbot trước cổng này (docs/CAU_HINH.md mục 4).
+      - "${WEB_PORT:-80}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  backend_uploads:
