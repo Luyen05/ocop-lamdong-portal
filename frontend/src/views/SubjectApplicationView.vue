@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import axios from 'axios'
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 
 import StatusPanel from '@/components/ui/StatusPanel.vue'
 import { getApiErrorMessage } from '@/services/api-error'
@@ -129,7 +129,40 @@ async function submit(): Promise<void> {
   }
 }
 
-onMounted(loadApplication)
+/**
+ * Hồ sơ đang chờ duyệt: kiểm tra lại khi người dùng quay lại tab và mỗi phút, để trang và thanh
+ * đầu trang chuyển sang quyền chủ thể ngay khi quản trị viên duyệt, không cần tải lại trang.
+ */
+async function refreshPendingApplication(): Promise<void> {
+  if (application.value?.status !== 'pending' || isEditing.value || document.visibilityState === 'hidden') return
+  try {
+    const latest = await getMySubjectApplication()
+    if (latest.status === application.value?.status) return
+    application.value = latest
+    fillForm(latest)
+    if (latest.status === 'approved') await syncApprovedRole()
+  } catch {
+    // Lỗi mạng tạm thời: lần kiểm tra sau sẽ thử lại.
+  }
+}
+
+let refreshTimer: ReturnType<typeof setInterval> | undefined
+function onVisibilityChange(): void {
+  if (document.visibilityState === 'visible') void refreshPendingApplication()
+}
+
+onMounted(() => {
+  void loadApplication()
+  refreshTimer = setInterval(() => void refreshPendingApplication(), 60_000)
+  document.addEventListener('visibilitychange', onVisibilityChange)
+  window.addEventListener('focus', onVisibilityChange)
+})
+
+onBeforeUnmount(() => {
+  if (refreshTimer) clearInterval(refreshTimer)
+  document.removeEventListener('visibilitychange', onVisibilityChange)
+  window.removeEventListener('focus', onVisibilityChange)
+})
 </script>
 
 <template>
