@@ -73,9 +73,14 @@ textarea {
   font: inherit;
 }
 
+/* Viền focus đặc, tương phản từ 3:1 với nền (WCAG 1.4.11). Trên nền tối dùng màu dã quỳ. */
 :where(a, button, input, select, textarea, [tabindex]):focus-visible {
-  outline: 3px solid color-mix(in srgb, var(--ocop-primary-500) 42%, transparent);
+  outline: 3px solid var(--ocop-primary-700);
   outline-offset: 2px;
+}
+
+:where(.announcement-bar, .auth-intro, .on-dark) :where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline-color: var(--ocop-daquy-300);
 }
 
 button:disabled,
