@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { flushPromises, mount } from '@vue/test-utils'
+import { defineComponent, onMounted } from 'vue'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createMemoryHistory, createRouter } from 'vue-router'
 
@@ -97,6 +98,17 @@ describe('AdminLayout', () => {
       'Điểm du lịch chờ duyệt3',
       'Đánh giá chờ duyệt4',
     ])
+    // Liên kết mở đúng danh sách: sản phẩm chờ duyệt và tab yêu cầu thay đổi.
+    const hrefs = wrapper.findAll('.ps-bell__list a').map((link) => link.attributes('href'))
+    expect(hrefs).toContain('/quan-tri/san-pham?status=pending')
+    expect(hrefs).toContain('/quan-tri/san-pham?tab=changes')
+  })
+
+  it('chi goi API dashboard mot lan khi khung va trang tong quan cung tai (C13)', async () => {
+    const { loadAdminDashboard } = await import('@/composables/useAdminDashboard')
+    vi.mocked(getAdminDashboard).mockClear()
+    await Promise.all([loadAdminDashboard(), loadAdminDashboard()])
+    expect(getAdminDashboard).toHaveBeenCalledTimes(1)
   })
 
   it('an chuong khi khong tai duoc du lieu dashboard', async () => {
@@ -131,5 +143,47 @@ describe('SubjectLayout', () => {
     expect(wrapper.find('.ps-nav__item.is-active').text()).toBe('Sản phẩm')
     expect(wrapper.find('.ps-topbar__name').text()).toBe('Thêm sản phẩm')
     expect(wrapper.find('.ps-topbar__sub').text()).toBe('Soạn sản phẩm mới và gửi duyệt')
+  })
+
+  it('wizard diem du lich khong dung lai khi router.replace tu khai-bao sang /:id (B14)', async () => {
+    const mountedCounter = { count: 0 }
+    const Counting = defineComponent({
+      setup() {
+        onMounted(() => (mountedCounter.count += 1))
+        return () => null
+      },
+    })
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        {
+          path: '/chu-the',
+          component: SubjectLayout,
+          children: [
+            { path: 'diem-du-lich/khai-bao', name: 'subject-location-create', component: Counting },
+            { path: 'diem-du-lich/:id(\\d+)', name: 'subject-location-edit', component: Counting },
+            { path: 'san-pham/:id(\\d+)/chinh-sua', name: 'subject-product-edit', component: Counting },
+          ],
+        },
+      ],
+    })
+    await router.push('/chu-the/diem-du-lich/khai-bao')
+    await router.isReady()
+    const wrapper = mount({ template: '<RouterView />' }, { global: { plugins: [router] }, attachTo: document.body })
+    await flushPromises()
+    expect(mountedCounter.count).toBe(1)
+
+    await router.replace('/chu-the/diem-du-lich/42')
+    await flushPromises()
+    expect(mountedCounter.count).toBe(1)
+
+    // Các route con khác vẫn dựng lại khi đổi tham số để không giữ dữ liệu của sản phẩm trước.
+    await router.push('/chu-the/san-pham/1/chinh-sua')
+    await flushPromises()
+    expect(mountedCounter.count).toBe(2)
+    await router.push('/chu-the/san-pham/2/chinh-sua')
+    await flushPromises()
+    expect(mountedCounter.count).toBe(3)
+    wrapper.unmount()
   })
 })

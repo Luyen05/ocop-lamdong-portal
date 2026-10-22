@@ -2,8 +2,11 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
+import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
 import StatusPanel from '@/components/ui/StatusPanel.vue'
+import { useConfirmDialog } from '@/composables/useConfirmDialog'
 import { useDialogFocus } from '@/composables/useDialogFocus'
+import { useFlashFocus } from '@/composables/useFlashFocus'
 import { getApiErrorMessage } from '@/services/api-error'
 import {
   cancelProductChangeRequest,
@@ -31,6 +34,9 @@ const loadError = ref('')
 const successMessage = ref('')
 const route = useRoute()
 const router = useRouter()
+const confirm = useConfirmDialog()
+// Thông báo lỗi/thành công nằm đầu trang: cuộn vào khung nhìn và focus để người dùng thấy ngay.
+const { revealFlash } = useFlashFocus({ error: errorMessage, success: successMessage })
 
 /** Thông báo khi quay về từ trang soạn sản phẩm (?saved=draft|submitted|requested). */
 const savedMessages: Record<string, string> = {
@@ -116,8 +122,16 @@ async function submit(product: ManagedProduct): Promise<void> {
 }
 
 async function removeDraft(product: ManagedProduct): Promise<void> {
-  if (!window.confirm('Xóa bản nháp “' + product.name + '”?')) return
+  const isDraft = product.status === 'draft'
+  const confirmed = await confirm.ask({
+    title: isDraft ? 'Xóa bản nháp?' : 'Xóa hồ sơ?',
+    message: `“${product.name}” sẽ bị xóa và không khôi phục được.`,
+    confirmLabel: isDraft ? 'Xóa bản nháp' : 'Xóa hồ sơ',
+    tone: 'danger',
+  })
+  if (!confirmed) return
   actionId.value = product.id
+  errorMessage.value = ''
   try {
     await deleteProductDraft(product.id)
     successMessage.value = 'Đã xóa bản nháp.'
@@ -132,7 +146,13 @@ async function removeDraft(product: ManagedProduct): Promise<void> {
 async function sendDeletionRequest(): Promise<void> {
   if (!deletingProduct.value) return
   const actionLabel = revisingDeletionRequest.value ? 'gửi lại yêu cầu' : 'đề nghị ngừng hiển thị'
-  if (!window.confirm(`Xác nhận ${actionLabel} sản phẩm “${deletingProduct.value.name}”?`)) return
+  const confirmed = await confirm.ask({
+    title: `Xác nhận ${actionLabel}?`,
+    message: `Sản phẩm “${deletingProduct.value.name}” vẫn công khai cho đến khi quản trị viên chấp thuận.`,
+    confirmLabel: revisingDeletionRequest.value ? 'Gửi lại yêu cầu' : 'Gửi đề nghị',
+    tone: 'danger',
+  })
+  if (!confirmed || !deletingProduct.value) return
   actionId.value = deletingProduct.value.id
   errorMessage.value = ''
   try {
@@ -174,7 +194,14 @@ useDialogFocus(isDeletionDialogOpen, deletionDialog, closeDeletionDialog)
 
 async function cancelRequest(request?: ProductChangeRequest): Promise<void> {
   if (!request) return
-  if (!window.confirm('Hủy yêu cầu đang chờ xử lý?')) return
+  const confirmed = await confirm.ask({
+    title: 'Hủy yêu cầu đang chờ xử lý?',
+    message: 'Sản phẩm giữ nguyên như hiện tại. Bạn có thể gửi yêu cầu mới sau.',
+    confirmLabel: 'Hủy yêu cầu',
+    cancelLabel: 'Giữ yêu cầu',
+    tone: 'danger',
+  })
+  if (!confirmed) return
   actionId.value = request.product_id
   errorMessage.value = ''
   try {
@@ -218,10 +245,10 @@ onMounted(() => {
     </header>
 
     <Transition name="ocop-rise">
-      <div v-if="errorMessage" class="alert alert-danger" role="alert">{{ errorMessage }}</div>
+      <div v-if="errorMessage" class="alert alert-danger" role="alert" data-flash="error" tabindex="-1">{{ errorMessage }}</div>
     </Transition>
     <Transition name="ocop-rise">
-      <div v-if="successMessage" class="alert alert-success" role="status">{{ successMessage }}</div>
+      <div v-if="successMessage" class="alert alert-success" role="status" data-flash="success" tabindex="-1">{{ successMessage }}</div>
     </Transition>
 
     <section class="filter-bar" aria-label="Lọc sản phẩm theo trạng thái">
@@ -358,6 +385,8 @@ onMounted(() => {
         </div>
       </form>
     </div>
+
+    <ConfirmDialog v-bind="confirm.props" @confirm="confirm.accept" @cancel="confirm.dismiss" />
   </div>
 </template>
 
@@ -367,9 +396,9 @@ onMounted(() => {
 .page-heading span { color: var(--ocop-primary-700); font-size: var(--ocop-font-size-caption); font-weight: 800; text-transform: uppercase; }
 .page-heading h1 { margin: var(--ocop-space-1) 0; color: var(--ocop-navy); font-size: 30px; }
 .page-heading p { margin: 0; color: var(--ocop-slate); font-size: var(--ocop-font-size-small); }
-.primary-button, .product-actions a { padding: 10px 14px; border-radius: 9px; background: var(--ocop-primary-700); color: var(--ocop-white); font-size: var(--ocop-font-size-caption); font-weight: 700; text-align: center; text-decoration: none; }
+.primary-button, .product-actions a { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; padding: 10px 14px; border-radius: 9px; background: var(--ocop-primary-700); color: var(--ocop-white); font-size: var(--ocop-font-size-caption); font-weight: 700; text-align: center; text-decoration: none; }
 .filter-bar { display: flex; padding: var(--ocop-space-2); flex-wrap: wrap; gap: 7px; border: 1px solid var(--ocop-border); border-radius: var(--ocop-radius-md); background: var(--ocop-card); }
-.filter-bar button { padding: var(--ocop-space-2) 11px; border: 1px solid transparent; border-radius: var(--ocop-radius-sm); background: transparent; color: var(--ocop-neutral-600); font-size: var(--ocop-font-size-caption); font-weight: 700; }
+.filter-bar button { min-height: 44px; padding: var(--ocop-space-2) 11px; border: 1px solid transparent; border-radius: var(--ocop-radius-sm); background: transparent; color: var(--ocop-neutral-600); font-size: var(--ocop-font-size-caption); font-weight: 700; }
 .filter-bar button span { margin-left: var(--ocop-space-1); padding: 2px 6px; border-radius: var(--ocop-radius-pill); background: var(--ocop-border-soft); font-size: var(--ocop-font-size-caption); }
 .filter-bar button.active { border-color: var(--ocop-mint-border); background: var(--ocop-mint-soft); color: var(--ocop-primary-700); }
 .dialog-card label { display: grid; gap: 5px; color: var(--ocop-neutral-600); font-size: var(--ocop-font-size-caption); font-weight: 700; }
@@ -388,7 +417,7 @@ onMounted(() => {
 .moderation-note, .request-note { margin-top: 7px !important; padding: 6px var(--ocop-space-2); border-radius: 6px; background: var(--ocop-warning-soft); color: var(--ocop-warning) !important; }
 .request-note { background: var(--ocop-info-soft); color: var(--ocop-info) !important; }
 .product-actions { display: grid; min-width: 140px; gap: 7px; }
-.product-actions button, .dialog-card button { padding: var(--ocop-space-2) 10px; border: 1px solid var(--ocop-border); border-radius: var(--ocop-radius-sm); background: var(--ocop-card); font-size: var(--ocop-font-size-caption); font-weight: 700; }
+.product-actions button, .dialog-card button { min-height: 44px; padding: var(--ocop-space-2) 10px; border: 1px solid var(--ocop-border); border-radius: var(--ocop-radius-sm); background: var(--ocop-card); font-size: var(--ocop-font-size-caption); font-weight: 700; }
 .approve-button { border-color: var(--ocop-primary-700) !important; color: var(--ocop-primary-700); }
 .danger-button { border-color: var(--ocop-danger-border) !important; color: var(--ocop-danger-strong); }
 .dialog-backdrop { position: fixed; z-index: 80; inset: 0; display: grid; padding: var(--ocop-space-5); place-items: center; background: color-mix(in srgb, var(--ocop-neutral-900) 55%, transparent); }

@@ -5,6 +5,9 @@ import AppIcon from '@/components/ui/AppIcon.vue'
 import ErrorPage from '@/components/ui/ErrorPage.vue'
 import { authStore } from '@/stores/auth'
 
+// Người dùng thường chưa là chủ thể: các khu vực của chủ thể sẽ mở sau khi hồ sơ đăng ký được duyệt.
+const canRegisterSubject = computed(() => authStore.currentUser.value?.role === 'user')
+
 const roleLabel = computed(() => {
   const labels = {
     admin: 'Quản trị viên',
@@ -23,8 +26,12 @@ const roleLabel = computed(() => {
     <p>
       Tài khoản hiện tại có vai trò <strong>{{ roleLabel }}</strong> và không được phép mở khu vực này.
     </p>
+    <p v-if="canRegisterSubject">
+      Nếu bạn đại diện cho hợp tác xã, doanh nghiệp hay cơ sở sản xuất, hãy đăng ký làm chủ thể để quản lý sản phẩm và điểm du lịch của đơn vị.
+    </p>
     <template #actions>
-      <RouterLink class="primary-action" to="/">Về trang chủ</RouterLink>
+      <RouterLink v-if="canRegisterSubject" class="primary-action" to="/dang-ky-chu-the">Đăng ký làm chủ thể</RouterLink>
+      <RouterLink :class="{ 'primary-action': !canRegisterSubject }" to="/">Về trang chủ</RouterLink>
       <RouterLink v-if="authStore.isAuthenticated.value" to="/tai-khoan">Xem tài khoản</RouterLink>
       <RouterLink v-else to="/dang-nhap">Đăng nhập</RouterLink>
     </template>

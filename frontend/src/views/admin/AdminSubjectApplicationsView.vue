@@ -4,6 +4,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
 import StatusPanel from '@/components/ui/StatusPanel.vue'
 import { useDialogFocus } from '@/composables/useDialogFocus'
+import { useFlashFocus } from '@/composables/useFlashFocus'
 import { getApiErrorMessage } from '@/services/api-error'
 import {
   listSubjectApplications,
@@ -21,6 +22,7 @@ const pageSize = 10
 const total = ref(0)
 const isLoading = ref(false)
 const errorMessage = ref('')
+const successMessage = ref('')
 const selectedApplication = ref<AdminSubjectApplication | null>(null)
 const moderationStatus = ref<'approved' | 'rejected'>('approved')
 const moderationNote = ref('')
@@ -33,10 +35,11 @@ const filters = reactive<{ search: string; status: SubjectStatus | '' }>({
   status: 'pending',
 })
 
+// Cùng một cách gọi ở cả hai phía: hồ sơ bị từ chối là hồ sơ "Cần bổ sung" (người đăng ký thấy lý do và gửi lại).
 const statusLabels: Record<SubjectStatus, string> = {
   pending: 'Chờ duyệt',
   approved: 'Đã duyệt',
-  rejected: 'Từ chối',
+  rejected: 'Cần bổ sung',
 }
 
 const typeLabels: Record<SubjectType, string> = {
@@ -81,7 +84,10 @@ async function loadApplications(): Promise<void> {
   }
 }
 
+const { revealFlash } = useFlashFocus()
+
 function applyFilters(): void {
+  successMessage.value = ''
   page.value = 1
   void loadApplications()
 }
@@ -118,11 +124,18 @@ async function submitModeration(): Promise<void> {
 
   isModerating.value = true
   try {
-    await moderateSubjectApplication(selectedApplication.value.id, {
-      status: moderationStatus.value,
+    const target = selectedApplication.value
+    const decided = moderationStatus.value
+    await moderateSubjectApplication(target.id, {
+      status: decided,
       note: moderationNote.value.trim() || null,
     })
     selectedApplication.value = null
+    successMessage.value =
+      decided === 'approved'
+        ? `Đã duyệt hồ sơ “${target.name}”. Người đăng ký đã trở thành chủ thể.`
+        : `Đã chuyển hồ sơ “${target.name}” sang “Cần bổ sung” và gửi lý do cho người đăng ký.`
+    void revealFlash('success')
     await loadApplications()
   } catch (error) {
     moderationError.value = getApiErrorMessage(error, 'Không thể cập nhật hồ sơ.')
@@ -145,6 +158,10 @@ onMounted(loadApplications)
       <strong>{{ total }} hồ sơ</strong>
     </header>
 
+    <Transition name="ocop-rise">
+      <div v-if="successMessage" class="alert alert-success" role="status" data-flash="success" tabindex="-1">{{ successMessage }}</div>
+    </Transition>
+
     <form class="filter-bar" @submit.prevent="applyFilters">
       <label>
         <span class="visually-hidden">Tìm hồ sơ</span>
@@ -161,7 +178,7 @@ onMounted(loadApplications)
           <option value="">Tất cả trạng thái</option>
           <option value="pending">Chờ duyệt</option>
           <option value="approved">Đã duyệt</option>
-          <option value="rejected">Đã từ chối</option>
+          <option value="rejected">Cần bổ sung (đã từ chối)</option>
         </select>
       </label>
       <button class="btn btn-success" type="submit">Tìm kiếm</button>
@@ -177,35 +194,37 @@ onMounted(loadApplications)
         message="Đổi trạng thái hoặc từ khóa để xem hồ sơ khác."
       />
       <div v-else class="table-responsive">
-        <table class="table align-middle mb-0">
+        <table class="table align-middle mb-0 applications-table">
           <thead>
             <tr>
-              <th>Đơn vị</th>
-              <th>Người đăng ký</th>
-              <th>Khu vực</th>
-              <th>Ngày gửi</th>
-              <th>Trạng thái</th>
-              <th class="text-end">Thao tác</th>
+              <th scope="col">Đơn vị</th>
+              <th scope="col">Người đăng ký</th>
+              <th scope="col">Khu vực</th>
+              <th scope="col">Ngày gửi</th>
+              <th scope="col">Trạng thái</th>
+              <th scope="col" class="text-end">Thao tác</th>
             </tr>
           </thead>
           <tbody class="stagger-in">
             <tr v-for="application in applications" :key="application.id">
-              <td>
+              <td data-label="Đơn vị" class="cell-main">
                 <strong>{{ application.name }}</strong>
                 <small>{{ typeLabels[application.type] }} · MST: {{ application.tax_code || '—' }}</small>
               </td>
-              <td>
-                <span>{{ application.applicant.full_name }}</span>
-                <small>{{ application.applicant.email }}</small>
+              <td data-label="Người đăng ký">
+                <div>
+                  <span>{{ application.applicant.full_name }}</span>
+                  <small>{{ application.applicant.email }}</small>
+                </div>
               </td>
-              <td>{{ application.district }}</td>
-              <td>{{ formatDate(application.created_at) }}</td>
-              <td>
+              <td data-label="Khu vực">{{ application.district }}</td>
+              <td data-label="Ngày gửi">{{ formatDate(application.created_at) }}</td>
+              <td data-label="Trạng thái">
                 <span class="status-badge" :class="`status-${application.status}`">
                   {{ statusLabels[application.status] }}
                 </span>
               </td>
-              <td>
+              <td data-label="Thao tác" class="cell-actions">
                 <div v-if="application.status === 'pending'" class="row-actions">
                   <button
                     class="btn btn-sm btn-outline-danger"
@@ -284,6 +303,9 @@ onMounted(loadApplications)
           <div v-if="moderationError" class="alert alert-danger py-2" role="alert">
             {{ moderationError }}
           </div>
+          <p v-if="moderationStatus === 'rejected'" class="reject-hint">
+            Hồ sơ sẽ chuyển sang “Cần bổ sung”. Người đăng ký thấy lý do này và có thể sửa rồi gửi lại.
+          </p>
           <label v-if="moderationStatus === 'rejected'">
             <span>Lý do từ chối *</span>
             <textarea
@@ -348,10 +370,9 @@ onMounted(loadApplications)
   background: var(--admin-card);
   color: var(--admin-text);
   font-size: var(--admin-font-sm);
-  outline: none;
   transition: border-color var(--admin-transition);
 }
-.form-control:focus, .form-select:focus { border-color: var(--admin-primary); }
+.form-control:focus, .form-select:focus { border-color: var(--admin-primary-dark); }
 .btn {
   display: inline-flex;
   align-items: center;
@@ -380,6 +401,8 @@ onMounted(loadApplications)
 .btn:disabled { cursor: not-allowed; opacity: 0.5; }
 
 /* ── Alert ── */
+.alert-success { background: var(--admin-success-soft); color: var(--admin-success-text); border: 1px solid var(--admin-success-border); }
+.reject-hint { margin: 0 0 var(--admin-space-3); padding: var(--admin-space-3); border-radius: var(--admin-radius-md); background: var(--admin-warning-soft); color: var(--admin-warning-text); font-size: var(--admin-font-sm); }
 .alert { display: flex; align-items: center; gap: var(--admin-space-3); padding: var(--admin-space-3) var(--admin-space-4); border-radius: var(--admin-radius-md); font-size: var(--admin-font-sm); }
 .alert-danger { background: var(--admin-danger-soft); color: var(--admin-danger-text); border: 1px solid var(--admin-danger-border); }
 
@@ -429,7 +452,7 @@ onMounted(loadApplications)
 
 /* ── Row actions ── */
 .row-actions { display: flex; justify-content: flex-end; gap: 6px; }
-.btn-sm { height: 32px; padding: 0 12px; font-size: var(--admin-font-xs); }
+.btn-sm { min-height: var(--admin-control-height); height: auto; padding: 0 12px; font-size: var(--admin-font-xs); }
 
 /* ── State row ── */
 
@@ -450,7 +473,7 @@ onMounted(loadApplications)
 .moderation-dialog header { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--admin-space-4); padding-bottom: var(--admin-space-4); border-bottom: 1px solid var(--admin-border-soft); }
 .moderation-dialog header span { color: var(--admin-primary); font-size: var(--admin-font-xs); font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; }
 .moderation-dialog h2 { margin: 3px 0 0; font-size: var(--admin-font-2xl); color: var(--admin-text); }
-.moderation-dialog header button { display: grid; width: 32px; height: 32px; place-items: center; border: 0; border-radius: var(--admin-radius-sm); background: var(--admin-bg); color: var(--admin-muted); cursor: pointer; }
+.moderation-dialog header button { display: grid; width: 44px; height: 44px; place-items: center; border: 0; border-radius: var(--admin-radius-sm); background: var(--admin-bg); color: var(--admin-muted); cursor: pointer; }
 .moderation-dialog header button:hover { color: var(--admin-danger); background: var(--admin-danger-soft); }
 
 .detail-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 22px; margin: var(--admin-space-5) 0; padding: var(--admin-space-4); border-radius: var(--admin-radius-md); background: var(--admin-bg); }
@@ -473,5 +496,20 @@ onMounted(loadApplications)
   .filter-bar { grid-template-columns: 1fr; }
   .detail-grid { grid-template-columns: 1fr; }
   .full-row { grid-column: auto; }
+
+  /* Điện thoại: mỗi hồ sơ là một thẻ, nhãn cột đứng cạnh giá trị (cùng cách với trang Người dùng). */
+  .table-responsive { overflow-x: visible; }
+  .applications-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .applications-table tbody { display: grid; gap: var(--admin-space-3); padding: var(--admin-space-3); }
+  .applications-table tr { display: grid; gap: var(--admin-space-2); padding: var(--admin-space-4); border: 1px solid var(--admin-border); border-radius: var(--admin-radius-md); background: var(--admin-card); }
+  .applications-table tbody tr:hover td { background: transparent; }
+  .applications-table td { display: grid; grid-template-columns: minmax(80px, 28%) minmax(0, 1fr); gap: var(--admin-space-2); padding: 0; border: 0; text-align: left; overflow-wrap: anywhere; }
+  .applications-table td::before { content: attr(data-label); color: var(--admin-muted); font-size: var(--admin-font-xs); font-weight: 700; }
+  .applications-table td.cell-main { grid-template-columns: 1fr; }
+  .applications-table td.cell-main::before { content: none; }
+  .applications-table td.cell-actions { grid-template-columns: 1fr; padding-top: var(--admin-space-2); border-top: 1px solid var(--admin-border-soft); }
+  .applications-table td.cell-actions::before { content: none; }
+  .applications-table .row-actions { justify-content: stretch; }
+  .applications-table .row-actions .btn, .applications-table td.cell-actions > .btn { flex: 1; width: 100%; }
 }
 </style>

@@ -57,10 +57,12 @@ describe('StatChart', () => {
     const wrapper = mount(StatChart, { props: { title: 'Hạng sao', items, summary: 'x' } })
     const toggle = wrapper.get('button')
 
-    expect(toggle.attributes('aria-pressed')).toBe('false')
+    // Nút đổi nhãn nên không dùng aria-pressed (tránh vừa "nhấn" vừa đổi tên, trình đọc màn hình đọc thừa).
+    expect(toggle.attributes('aria-pressed')).toBeUndefined()
+    expect(toggle.text()).toContain('Bảng số liệu')
     await toggle.trigger('click')
 
-    expect(toggle.attributes('aria-pressed')).toBe('true')
+    expect(toggle.attributes('aria-pressed')).toBeUndefined()
     expect(toggle.text()).toContain('Xem biểu đồ')
     const rows = wrapper.findAll('tbody tr').map((row) => row.text())
     expect(rows).toEqual(['3 sao46', '4 sao26'])

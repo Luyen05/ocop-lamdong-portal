@@ -3,7 +3,8 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
 import PortalShell, { type PortalNavItem, type PortalNotification } from '@/layouts/PortalShell.vue'
-import { getAdminDashboard, type AdminDashboardStats } from '@/services/admin'
+import { loadAdminDashboard } from '@/composables/useAdminDashboard'
+import type { AdminDashboardStats } from '@/services/admin'
 
 const route = useRoute()
 
@@ -39,24 +40,25 @@ const notifications = computed<PortalNotification[] | null>(() => {
   if (!stats.value) return null
   return [
     { key: 'subjects', label: 'Hồ sơ chủ thể chờ duyệt', count: stats.value.pending_subject_applications, to: '/quan-tri/ho-so-chu-the' },
-    { key: 'products', label: 'Sản phẩm chờ duyệt', count: stats.value.pending_products, to: '/quan-tri/san-pham' },
-    { key: 'product-changes', label: 'Yêu cầu chỉnh sửa sản phẩm', count: stats.value.pending_change_requests, to: '/quan-tri/san-pham' },
+    { key: 'products', label: 'Sản phẩm chờ duyệt', count: stats.value.pending_products, to: '/quan-tri/san-pham?status=pending' },
+    { key: 'product-changes', label: 'Yêu cầu chỉnh sửa sản phẩm', count: stats.value.pending_change_requests, to: '/quan-tri/san-pham?tab=changes' },
     { key: 'locations', label: 'Điểm du lịch chờ duyệt', count: stats.value.pending_locations, to: '/quan-tri/diem-du-lich' },
-    { key: 'location-changes', label: 'Yêu cầu cập nhật điểm', count: stats.value.pending_location_change_requests, to: '/quan-tri/diem-du-lich' },
+    { key: 'location-changes', label: 'Yêu cầu cập nhật điểm', count: stats.value.pending_location_change_requests, to: '/quan-tri/diem-du-lich?tab=requests' },
     { key: 'reviews', label: 'Đánh giá chờ duyệt', count: stats.value.pending_reviews ?? 0, to: '/quan-tri/danh-gia' },
   ]
 })
 
 async function loadNotifications(): Promise<void> {
   try {
-    stats.value = await getAdminDashboard()
+    stats.value = await loadAdminDashboard()
   } catch {
     stats.value = null
   }
 }
 
 onMounted(loadNotifications)
-watch(() => route.fullPath, loadNotifications)
+// Chỉ tải lại khi đổi trang; đổi bộ lọc/tab trên URL không cần gọi lại.
+watch(() => route.path, loadNotifications)
 </script>
 
 <template>

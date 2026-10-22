@@ -236,4 +236,66 @@ describe('SubjectProductEditorView', () => {
     ])
     expect(select.value).toBe('9')
   })
+
+  it('maxlength theo schema backend, o gia khong con step=1000 (B15)', async () => {
+    const wrapper = mount(SubjectProductEditorView, { global: { stubs: { RouterLink: { template: '<a><slot /></a>' } } } })
+    await flushPromises()
+    const limits: Array<[string, string]> = [
+      ['Tên sản phẩm', '255'],
+      ['Đơn vị tính', '50'],
+      ['Mô tả sản phẩm', '5000'],
+      ['Câu chuyện sản phẩm', '10000'],
+      ['Thành phần', '5000'],
+      ['Hướng dẫn sử dụng', '5000'],
+      ['Mã chứng nhận', '100'],
+      ['Cơ quan công nhận', '255'],
+      ['Mã VietGAP', '100'],
+    ]
+    for (const [label, max] of limits) {
+      const field = wrapper.findAll('label').find((item) => item.text().startsWith(label))!.find('input, textarea')
+      expect(field.attributes('maxlength'), label).toBe(max)
+    }
+    const price = wrapper.get('input[type="number"]')
+    expect(price.attributes('step')).toBeUndefined()
+    expect(price.attributes('inputmode')).toBe('numeric')
+    expect(price.attributes('min')).toBe('0')
+  })
+
+  it('khi chua du dieu kien: liet ke truong con thieu va gan aria-describedby vao nut gui duyet (B15)', async () => {
+    const wrapper = mount(SubjectProductEditorView, { global: { stubs: { RouterLink: { template: '<a><slot /></a>' } } } })
+    await flushPromises()
+
+    const hint = wrapper.get('#submit-missing')
+    expect(hint.text()).toContain('Còn thiếu:')
+    for (const field of ['tên sản phẩm', 'mô tả sản phẩm', 'hạng sao', 'mã chứng nhận', 'ngày cấp', 'ngày hết hạn', 'cơ quan công nhận', 'giấy chứng nhận', 'ảnh đại diện']) {
+      expect(hint.text()).toContain(field)
+    }
+    const submit = wrapper.get('button.primary-button')
+    expect(submit.attributes('disabled')).toBeDefined()
+    expect(submit.attributes('aria-describedby')).toBe('submit-missing')
+
+    await wrapper.findAll('label').find((item) => item.text().startsWith('Tên sản phẩm'))!.get('input').setValue('Cà phê Arabica')
+    expect(wrapper.get('#submit-missing').text()).not.toContain('tên sản phẩm')
+  })
+
+  it('luu nhap khi ten trong: bao loi, danh dau o ten, cuon vao khung nhin (A9, C14)', async () => {
+    const scroll = vi.fn()
+    ;(Element.prototype as unknown as { scrollIntoView: unknown }).scrollIntoView = scroll
+    const wrapper = mount(SubjectProductEditorView, {
+      attachTo: document.body,
+      global: { stubs: { RouterLink: { template: '<a><slot /></a>' } } },
+    })
+    await flushPromises()
+    await wrapper.get('.secondary-button').trigger('click')
+    await flushPromises()
+
+    const alert = wrapper.get('[role="alert"][data-flash="error"]')
+    expect(alert.text()).toContain('Cần nhập tên')
+    expect(scroll).toHaveBeenCalledWith({ block: 'center', behavior: expect.any(String) })
+    expect(document.activeElement).toBe(alert.element)
+    const name = wrapper.findAll('label').find((item) => item.text().startsWith('Tên sản phẩm'))!.get('input')
+    expect(name.attributes('aria-invalid')).toBe('true')
+    expect(createProductDraft).not.toHaveBeenCalled()
+    wrapper.unmount()
+  })
 })

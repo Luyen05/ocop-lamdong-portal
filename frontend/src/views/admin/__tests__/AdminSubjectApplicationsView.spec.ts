@@ -95,4 +95,57 @@ describe('AdminSubjectApplicationsView', () => {
     expect(wrapper.text()).toContain('Kết quả mới nhất')
     expect(wrapper.text()).not.toContain('Kết quả cũ trả về muộn')
   })
+
+  it('hien thong bao thanh cong role=status sau khi duyet va sau khi tu choi (C12)', async () => {
+    vi.mocked(listSubjectApplications).mockReset().mockResolvedValue({
+      items: [pendingApplication],
+      page: 1,
+      page_size: 10,
+      total: 1,
+    })
+    vi.mocked(moderateSubjectApplication).mockResolvedValue({ ...pendingApplication, status: 'approved' })
+
+    const wrapper = mount(AdminSubjectApplicationsView)
+    await flushPromises()
+    expect(wrapper.find('[role="status"]').exists()).toBe(false)
+
+    await wrapper.findAll('button').find((button) => button.text() === 'Duyệt')!.trigger('click')
+    await wrapper.get('.moderation-dialog form').trigger('submit')
+    await flushPromises()
+    const status = wrapper.get('.alert-success[role="status"]')
+    expect(status.text()).toContain('Đã duyệt hồ sơ “Hợp tác xã Đà Lạt”')
+
+    await wrapper.findAll('button').find((button) => button.text() === 'Từ chối')!.trigger('click')
+    expect(wrapper.get('.reject-hint').text()).toContain('Cần bổ sung')
+    await wrapper.get('.moderation-dialog textarea').setValue('Thiếu giấy phép')
+    await wrapper.get('.moderation-dialog form').trigger('submit')
+    await flushPromises()
+    expect(wrapper.get('.alert-success[role="status"]').text()).toContain('Cần bổ sung')
+  })
+
+  it('bang co th scope va moi o co data-label de chuyen thanh the tren dien thoai (B18)', async () => {
+    vi.mocked(listSubjectApplications).mockReset().mockResolvedValue({
+      items: [pendingApplication, { ...pendingApplication, id: 2, status: 'rejected' as const }],
+      page: 1,
+      page_size: 10,
+      total: 2,
+    })
+    const wrapper = mount(AdminSubjectApplicationsView)
+    await flushPromises()
+
+    const headers = wrapper.findAll('thead th')
+    expect(headers).toHaveLength(6)
+    expect(headers.every((header) => header.attributes('scope') === 'col')).toBe(true)
+    const cells = wrapper.findAll('tbody tr')[0].findAll('td')
+    expect(cells.map((cell) => cell.attributes('data-label'))).toEqual([
+      'Đơn vị',
+      'Người đăng ký',
+      'Khu vực',
+      'Ngày gửi',
+      'Trạng thái',
+      'Thao tác',
+    ])
+    // Hai phía dùng cùng một cách gọi cho hồ sơ bị từ chối.
+    expect(wrapper.findAll('.status-badge')[1].text()).toBe('Cần bổ sung')
+  })
 })

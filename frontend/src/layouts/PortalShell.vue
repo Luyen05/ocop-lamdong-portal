@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import AppIcon from '@/components/ui/AppIcon.vue'
+import { useDialogFocus } from '@/composables/useDialogFocus'
 import { checkApiHealth } from '@/services/system'
 import { authStore } from '@/stores/auth'
 import pkg from '../../package.json'
@@ -49,6 +50,27 @@ const version = pkg.version
 const isDrawerOpen = ref(false)
 const isBellOpen = ref(false)
 const bellRoot = ref<HTMLElement | null>(null)
+const bellButton = ref<HTMLButtonElement | null>(null)
+const sidebarRef = ref<HTMLElement | null>(null)
+
+// Từ 768px trở lên sidebar luôn hiện cố định; chỉ trên điện thoại nó mới là ngăn kéo dạng hộp thoại.
+const desktopQuery =
+  typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+    ? window.matchMedia('(min-width: 768px)')
+    : null
+const isDesktop = ref(desktopQuery?.matches ?? false)
+function onDesktopChange(event: MediaQueryListEvent): void {
+  isDesktop.value = event.matches
+  if (event.matches) isDrawerOpen.value = false
+}
+const isDrawerModal = computed(() => isDrawerOpen.value && !isDesktop.value)
+
+function closeDrawer(): void {
+  isDrawerOpen.value = false
+}
+
+// Ngăn kéo mở: focus vào mục menu đầu tiên, giữ Tab trong ngăn kéo, khóa cuộn nền, Esc đóng và trả focus về nút menu.
+useDialogFocus(isDrawerModal, sidebarRef, closeDrawer, { initialFocus: '.ps-nav__item' })
 
 const userName = computed(() => authStore.currentUser.value?.full_name ?? '')
 const userInitial = computed(() => userName.value.trim().charAt(0).toUpperCase() || '?')
@@ -80,7 +102,10 @@ function closeOverlays(): void {
 }
 
 function onKeydown(event: KeyboardEvent): void {
-  if (event.key === 'Escape') closeOverlays()
+  if (event.key !== 'Escape') return
+  const bellWasOpen = isBellOpen.value
+  closeOverlays()
+  if (bellWasOpen) void nextTick(() => bellButton.value?.focus())
 }
 
 function onDocumentClick(event: MouseEvent): void {
@@ -99,6 +124,7 @@ watch(() => route.fullPath, closeOverlays)
 onMounted(() => {
   document.addEventListener('keydown', onKeydown)
   document.addEventListener('click', onDocumentClick)
+  desktopQuery?.addEventListener?.('change', onDesktopChange)
   void refreshApiState()
   healthTimer = window.setInterval(() => void refreshApiState(), 60_000)
 })
@@ -106,6 +132,7 @@ onMounted(() => {
 onBeforeUnmount(() => {
   document.removeEventListener('keydown', onKeydown)
   document.removeEventListener('click', onDocumentClick)
+  desktopQuery?.removeEventListener?.('change', onDesktopChange)
   if (healthTimer !== undefined) window.clearInterval(healthTimer)
 })
 </script>
@@ -122,7 +149,15 @@ onBeforeUnmount(() => {
       @click="isDrawerOpen = false"
     />
 
-    <aside id="portal-sidebar" class="ps-sidebar" :class="{ 'is-open': isDrawerOpen }">
+    <aside
+      id="portal-sidebar"
+      ref="sidebarRef"
+      class="ps-sidebar"
+      :class="{ 'is-open': isDrawerOpen }"
+      :role="isDrawerModal ? 'dialog' : undefined"
+      :aria-modal="isDrawerModal ? 'true' : undefined"
+      :aria-label="isDrawerModal ? 'Menu điều hướng' : undefined"
+    >
       <RouterLink class="ps-brand" :to="brandTo">
         <span class="ps-brand__logo"><img src="/assets/brand/bieu-tuong-128.png" alt="" width="38" height="38" /></span>
         <span class="ps-brand__text">
@@ -163,7 +198,7 @@ onBeforeUnmount(() => {
       </div>
     </aside>
 
-    <div class="ps-main">
+    <div class="ps-main" :inert="isDrawerModal || undefined" :aria-hidden="isDrawerModal ? 'true' : undefined">
       <header class="ps-topbar">
         <button
           class="ps-topbar__toggle"
@@ -189,6 +224,7 @@ onBeforeUnmount(() => {
 
           <div v-if="notifications" ref="bellRoot" class="ps-bell">
             <button
+              ref="bellButton"
               class="ps-bell__button"
               type="button"
               :aria-expanded="isBellOpen"

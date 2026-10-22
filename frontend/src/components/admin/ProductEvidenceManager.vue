@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
 
+import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
+import { useConfirmDialog } from '@/composables/useConfirmDialog'
 import { getApiErrorMessage } from '@/services/api-error'
 import {
   createDataSource,
@@ -23,6 +25,8 @@ import type {
   ProductVerificationStatus,
   VerificationLevel,
 } from '@/types/product-management'
+
+const confirm = useConfirmDialog()
 
 const props = defineProps<{
   productId: number
@@ -245,7 +249,13 @@ async function saveLink(): Promise<void> {
 }
 
 async function removeLink(link: ProductEvidenceSource): Promise<void> {
-  if (!window.confirm(`Gỡ nguồn “${link.source.title}” khỏi sản phẩm?`)) return
+  const confirmed = await confirm.ask({
+    title: 'Gỡ nguồn khỏi sản phẩm?',
+    message: `Nguồn “${link.source.title}” sẽ không còn liên kết với sản phẩm này. Bản ghi nguồn vẫn được giữ lại.`,
+    confirmLabel: 'Gỡ nguồn',
+    tone: 'danger',
+  })
+  if (!confirmed) return
   saving.value = true
   resetMessages()
   try {
@@ -354,6 +364,8 @@ async function removeLink(link: ProductEvidenceSource): Promise<void> {
         <button class="danger" type="button" :disabled="saving" @click="removeLink(link)">Gỡ</button>
       </div>
     </article>
+
+    <ConfirmDialog v-bind="confirm.props" @confirm="confirm.accept" @cancel="confirm.dismiss" />
   </section>
 </template>
 
@@ -363,7 +375,7 @@ async function removeLink(link: ProductEvidenceSource): Promise<void> {
 .evidence-manager > header, .form-heading { justify-content: space-between; }
 .evidence-manager header small { color: var(--ocop-primary-700); font-size: var(--ocop-font-size-caption); font-weight: 800; text-transform: uppercase; }
 .evidence-manager h3 { margin: 3px 0 0; font-size: 17px; }
-.evidence-manager button { padding: 7px 9px; border: 1px solid var(--ocop-border); border-radius: 7px; background: var(--ocop-card); font-size: var(--ocop-font-size-caption); font-weight: 700; }
+.evidence-manager button { min-height: 44px; padding: 7px 9px; border: 1px solid var(--ocop-border); border-radius: 7px; background: var(--ocop-card); font-size: var(--ocop-font-size-caption); font-weight: 700; }
 .evidence-manager .primary-action, .evidence-manager .save-button { border-color: var(--ocop-primary-700); background: var(--ocop-primary-700); color: var(--ocop-white); }
 .count-chip { padding: 5px var(--ocop-space-2); border-radius: var(--ocop-radius-pill); background: var(--ocop-mint-soft); color: var(--ocop-primary-700); font-size: var(--ocop-font-size-caption); font-weight: 800; white-space: nowrap; }
 .action-message { padding: 9px 11px; border-radius: var(--ocop-radius-sm); font-size: var(--ocop-font-size-caption); }

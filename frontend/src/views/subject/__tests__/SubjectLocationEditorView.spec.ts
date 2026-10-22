@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils'
 import { reactive } from 'vue'
+import { onBeforeRouteLeave } from 'vue-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import {
@@ -247,5 +248,69 @@ describe('SubjectLocationEditorView', () => {
     expect(wrapper.find('h1').text()).toBe('Bổ sung hồ sơ điểm du lịch')
     expect(wrapper.text()).toContain('Bổ sung ảnh cổng vào.')
     expect(wrapper.find('fieldset').attributes('disabled')).toBeUndefined()
+  })
+
+  it('roi trang khi co thay doi chua luu: hoi bang hop thoai, khong dung window.confirm (B21)', async () => {
+    const nativeConfirm = vi.spyOn(window, 'confirm')
+    const wrapper = mountView()
+    await flushPromises()
+    const guard = vi.mocked(onBeforeRouteLeave).mock.calls.at(-1)![0] as () => boolean | Promise<boolean>
+    expect(guard()).toBe(true)
+
+    await wrapper.find('input[type="text"]').setValue('Vườn mới')
+    const stay = guard() as Promise<boolean>
+    await flushPromises()
+    expect(wrapper.get('[role="alertdialog"]').text()).toContain('Rời trang mà chưa lưu?')
+    await wrapper.get('.cd-btn').trigger('click')
+    await expect(stay).resolves.toBe(false)
+
+    const leave = guard() as Promise<boolean>
+    await flushPromises()
+    await wrapper.get('.cd-btn--confirm').trigger('click')
+    await expect(leave).resolves.toBe(true)
+    expect(nativeConfirm).not.toHaveBeenCalled()
+  })
+
+  it('wizard buoc 1: ten trong thi bao loi, danh dau o ten va khong sang buoc 2; co ten thi Tiep tuc mot lan sang buoc 2 (C14)', async () => {
+    const original = window.matchMedia
+    window.matchMedia = vi.fn().mockReturnValue({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() }) as never
+    vi.mocked(createLocationDraft).mockResolvedValue(
+      makeLocation({ latitude: null, longitude: null, location_source: null, images: [], position_check: null }),
+    )
+    try {
+      const wrapper = mountView()
+      await flushPromises()
+      expect(wrapper.text()).toContain('Bước 1/5')
+
+      await button(wrapper, 'Tiếp tục: Vị trí')?.trigger('click')
+      await flushPromises()
+      const input = wrapper.get('input[type="text"]')
+      expect(wrapper.text()).toContain('Bước 1/5')
+      expect(wrapper.get('[role="alert"]').text()).toContain('Nhập tên điểm du lịch')
+      expect(input.attributes('aria-invalid')).toBe('true')
+      expect(document.activeElement).toBe(input.element)
+      expect(createLocationDraft).not.toHaveBeenCalled()
+
+      await input.setValue('Vườn dâu Langbiang Demo')
+      expect(input.attributes('aria-invalid')).toBeUndefined()
+      await button(wrapper, 'Tiếp tục: Vị trí')?.trigger('click')
+      await flushPromises()
+      expect(createLocationDraft).toHaveBeenCalledTimes(1)
+      expect(wrapper.text()).toContain('Bước 2/5')
+    } finally {
+      window.matchMedia = original
+    }
+  })
+
+  it('loi hien trong khung nhin: cuon vao giua va focus thong bao', async () => {
+    const scroll = vi.fn()
+    ;(Element.prototype as unknown as { scrollIntoView: unknown }).scrollIntoView = scroll
+    const wrapper = mountView()
+    await flushPromises()
+    await button(wrapper, 'Lưu nháp')?.trigger('click')
+    await flushPromises()
+    const alert = wrapper.get('[role="alert"][data-flash="error"]')
+    expect(scroll).toHaveBeenCalledWith({ block: 'center', behavior: expect.any(String) })
+    expect(document.activeElement).toBe(alert.element)
   })
 })

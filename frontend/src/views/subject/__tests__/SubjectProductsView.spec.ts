@@ -114,9 +114,9 @@ describe('SubjectProductsView', () => {
       ...revisionRequest,
       status: 'cancelled',
     })
-    vi.spyOn(window, 'confirm').mockReturnValue(true)
 
     const wrapper = mount(SubjectProductsView, {
+      attachTo: document.body,
       global: { stubs: { RouterLink: { template: '<a><slot /></a>' } } },
     })
     await flushPromises()
@@ -125,6 +125,10 @@ describe('SubjectProductsView', () => {
     expect(wrapper.text()).toContain('Quản trị viên A phản hồi')
     const cancelButton = wrapper.findAll('button').find((button) => button.text() === 'Hủy yêu cầu')
     await cancelButton!.trigger('click')
+    await flushPromises()
+    expect(cancelProductChangeRequest).not.toHaveBeenCalled()
+    expect(wrapper.get('[role="alertdialog"]').text()).toContain('Hủy yêu cầu đang chờ xử lý?')
+    await wrapper.get('.cd-btn--confirm').trigger('click')
     await flushPromises()
     expect(cancelProductChangeRequest).toHaveBeenCalledWith(8)
   })

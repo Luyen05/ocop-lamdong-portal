@@ -40,7 +40,7 @@ function mockList(items = [makeLocation()], requests = [] as ReturnType<typeof m
 describe('SubjectLocationsView', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    document.body.innerHTML = ''
   })
 
   it('hien danh sach, dem theo trang thai va loc bang tab', async () => {
@@ -94,6 +94,11 @@ describe('SubjectLocationsView', () => {
     const cancel = wrapper.findAll('button').find((button) => button.text() === 'Hủy yêu cầu')
     await cancel?.trigger('click')
     await flushPromises()
+    // Hộp xác nhận của trang (không còn window.confirm); Hủy/Esc thì không gọi API.
+    expect(cancelLocationChangeRequest).not.toHaveBeenCalled()
+    expect(wrapper.get('[role="alertdialog"]').text()).toContain('Hủy yêu cầu đang chờ xử lý?')
+    await wrapper.get('.cd-btn--confirm').trigger('click')
+    await flushPromises()
     expect(cancelLocationChangeRequest).toHaveBeenCalledWith(7)
     expect(wrapper.text()).toContain('Đã hủy yêu cầu.')
   })
@@ -125,8 +130,36 @@ describe('SubjectLocationsView', () => {
 
     await wrapper.findAll('button').find((button) => button.text() === 'Xóa')?.trigger('click')
     await flushPromises()
+    expect(deleteLocationDraft).not.toHaveBeenCalled()
+    await wrapper.get('.cd-btn').trigger('click')
+    await flushPromises()
+    expect(deleteLocationDraft).not.toHaveBeenCalled()
+
+    await wrapper.findAll('button').find((button) => button.text() === 'Xóa')?.trigger('click')
+    await flushPromises()
+    await wrapper.get('.cd-btn--confirm').trigger('click')
+    await flushPromises()
 
     expect(deleteLocationDraft).toHaveBeenCalledWith(10)
     expect(wrapper.text()).toContain('Đã xóa “Vườn dâu Langbiang Demo”.')
+  })
+
+  it('loi thao tac nam trong khung nhin: cuon vao giua va focus thong bao', async () => {
+    const scroll = vi.fn()
+    ;(Element.prototype as unknown as { scrollIntoView: unknown }).scrollIntoView = scroll
+    mockList([makeLocation()])
+    vi.mocked(deleteLocationDraft).mockRejectedValue(new Error('500'))
+    const wrapper = mountView()
+    await flushPromises()
+
+    await wrapper.findAll('button').find((button) => button.text() === 'Xóa')?.trigger('click')
+    await flushPromises()
+    await wrapper.get('.cd-btn--confirm').trigger('click')
+    await flushPromises()
+
+    const alert = wrapper.get('[role="alert"][data-flash="error"]')
+    expect(alert.text()).toContain('Không xóa được điểm du lịch.')
+    expect(scroll).toHaveBeenCalledWith({ block: 'center', behavior: expect.any(String) })
+    expect(document.activeElement).toBe(alert.element)
   })
 })

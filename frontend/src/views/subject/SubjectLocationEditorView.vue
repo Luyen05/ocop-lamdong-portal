@@ -1,9 +1,12 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'
 
 import LocationPicker from '@/components/location-management/LocationPicker.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
+import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
+import { useConfirmDialog } from '@/composables/useConfirmDialog'
+import { useFlashFocus } from '@/composables/useFlashFocus'
 import { getApiErrorMessage } from '@/services/api-error'
 import {
   checkLocationPosition,
@@ -82,6 +85,17 @@ const loadError = ref('')
 const saving = ref(false)
 const errorMessage = ref('')
 const successMessage = ref('')
+const confirm = useConfirmDialog()
+const { revealFlash } = useFlashFocus({ success: successMessage })
+/** Tên trống khi bấm lưu/tiếp tục: đánh dấu ô tên bằng aria-invalid và dòng báo lỗi ngay dưới ô. */
+const nameInvalid = ref(false)
+const nameInput = ref<HTMLInputElement | null>(null)
+
+/** Đặt lỗi rồi cuộn vào khung nhìn và focus, kể cả khi lỗi trùng nội dung lần trước. */
+function showError(message: string): void {
+  errorMessage.value = message
+  void revealFlash('error')
+}
 const savedAt = ref<string | null>(null)
 const savedSnapshot = ref('')
 
@@ -560,7 +574,8 @@ async function saveDraft(silent = false): Promise<boolean> {
   errorMessage.value = ''
   if (!silent) successMessage.value = ''
   if (form.name.trim().length < 2) {
-    if (!silent) errorMessage.value = 'Nhập tên điểm du lịch (tối thiểu 2 ký tự) để lưu nháp.'
+    nameInvalid.value = true
+    if (!silent) showError('Nhập tên điểm du lịch (tối thiểu 2 ký tự) để lưu nháp.')
     return false
   }
   saving.value = true
@@ -578,7 +593,7 @@ async function saveDraft(silent = false): Promise<boolean> {
     if (!silent) successMessage.value = 'Đã lưu nháp.'
     return true
   } catch (error) {
-    errorMessage.value = getApiErrorMessage(error, 'Không lưu được bản nháp.')
+    showError(getApiErrorMessage(error, 'Không lưu được bản nháp.'))
     return false
   } finally {
     saving.value = false
@@ -587,7 +602,7 @@ async function saveDraft(silent = false): Promise<boolean> {
 
 async function submitForReview(): Promise<void> {
   if (!isComplete.value) {
-    errorMessage.value = missingSummary.value
+    showError(missingSummary.value)
     return
   }
   if (!(await saveDraft(true)) || !location.value) return
@@ -598,7 +613,7 @@ async function submitForReview(): Promise<void> {
     successMessage.value = 'Đã gửi hồ sơ. Quản trị viên sẽ kiểm tra vị trí và thông tin trước khi hiện trên bản đồ.'
     window.scrollTo?.({ top: 0 })
   } catch (error) {
-    errorMessage.value = getApiErrorMessage(error, 'Không gửi duyệt được.')
+    showError(getApiErrorMessage(error, 'Không gửi duyệt được.'))
   } finally {
     saving.value = false
   }
@@ -607,7 +622,7 @@ async function submitForReview(): Promise<void> {
 async function sendRequest(): Promise<void> {
   errorMessage.value = ''
   if (!isComplete.value) {
-    errorMessage.value = missingSummary.value
+    showError(missingSummary.value)
     return
   }
   saving.value = true
@@ -623,7 +638,7 @@ async function sendRequest(): Promise<void> {
     markSaved()
     await router.push({ path: '/chu-the/diem-du-lich' })
   } catch (error) {
-    errorMessage.value = getApiErrorMessage(error, 'Không gửi được yêu cầu cập nhật.')
+    showError(getApiErrorMessage(error, 'Không gửi được yêu cầu cập nhật.'))
   } finally {
     saving.value = false
   }
@@ -638,7 +653,18 @@ function sectionVisible(index: number): boolean {
 }
 
 async function goToStep(index: number): Promise<void> {
-  if (index > step.value && mode.value !== 'readonly' && !isRequestMode.value && isDirty.value) {
+  const movingForward = index > step.value
+  const editable = mode.value !== 'readonly' && !isRequestMode.value
+  if (movingForward && editable && form.name.trim().length < 2) {
+    // Chưa có tên thì không tạo được bản nháp: dừng ở bước 1 và chỉ rõ ô cần nhập.
+    nameInvalid.value = true
+    step.value = 0
+    showError('Nhập tên điểm du lịch (tối thiểu 2 ký tự) trước khi sang bước tiếp theo.')
+    await nextTick()
+    nameInput.value?.focus()
+    return
+  }
+  if (movingForward && editable && isDirty.value) {
     await saveDraft(true)
   }
   step.value = Math.min(Math.max(index, 0), steps.length - 1)
@@ -651,7 +677,13 @@ function updateCompact(): void {
 
 onBeforeRouteLeave(() => {
   if (!isDirty.value || saving.value) return true
-  return window.confirm('Có thay đổi chưa lưu. Rời trang và bỏ các thay đổi này?')
+  return confirm.ask({
+    title: 'Rời trang mà chưa lưu?',
+    message: 'Có thay đổi chưa lưu. Nếu rời trang, các thay đổi này sẽ bị bỏ.',
+    confirmLabel: 'Rời trang',
+    cancelLabel: 'Ở lại chỉnh sửa',
+    tone: 'danger',
+  })
 })
 
 watch([locationId, requestId], ([id]) => {
@@ -696,8 +728,8 @@ onBeforeUnmount(() => {
 
     <template v-else>
       <div class="banners">
-        <p v-if="successMessage" class="notice is-success" role="status">{{ successMessage }}</p>
-        <p v-if="errorMessage" class="notice is-error" role="alert">{{ errorMessage }}</p>
+        <p v-if="successMessage" class="notice is-success" role="status" data-flash="success" tabindex="-1">{{ successMessage }}</p>
+        <p v-if="errorMessage" class="notice is-error" role="alert" data-flash="error" tabindex="-1">{{ errorMessage }}</p>
         <div
           v-if="location?.review_note && ['needs_revision', 'rejected'].includes(location.status) && !requestId"
           class="notice is-warning"
@@ -741,7 +773,19 @@ onBeforeUnmount(() => {
             <div class="grid-2">
               <label>
                 Tên điểm du lịch *
-                <input v-model="form.name" type="text" required minlength="2" maxlength="255" autocomplete="off" />
+                <input
+                  ref="nameInput"
+                  v-model="form.name"
+                  type="text"
+                  required
+                  minlength="2"
+                  maxlength="255"
+                  autocomplete="off"
+                  :aria-invalid="nameInvalid ? 'true' : undefined"
+                  :aria-describedby="nameInvalid ? 'location-name-error' : undefined"
+                  @input="nameInvalid = false"
+                />
+                <small v-if="nameInvalid" id="location-name-error" class="field-error">Nhập tên điểm du lịch, tối thiểu 2 ký tự.</small>
               </label>
               <label>
                 Loại hình *
@@ -1043,6 +1087,8 @@ onBeforeUnmount(() => {
         </RouterLink>
       </div>
     </template>
+
+    <ConfirmDialog v-bind="confirm.props" @confirm="confirm.accept" @cancel="confirm.dismiss" />
   </div>
 </template>
 
@@ -1096,7 +1142,9 @@ input[type='text'], input[type='tel'], input[type='url'], select, textarea {
   border-radius: var(--ocop-radius-sm); background: var(--ocop-white); color: var(--ocop-mist-950); font: inherit; font-size: var(--ocop-font-size-body); font-weight: 400;
 }
 textarea { padding: var(--ocop-space-3); resize: vertical; }
-:is(input, select, textarea):focus-visible { border-color: var(--admin-primary); outline: 3px solid color-mix(in srgb, var(--ocop-daquy-400) 70%, transparent); outline-offset: 1px; }
+:is(input, select, textarea):focus-visible { border-color: var(--admin-primary-dark); outline: 3px solid var(--admin-primary-dark); outline-offset: 1px; }
+.field-error { color: var(--ocop-danger-strong); font-size: var(--ocop-font-size-caption); font-weight: 700; }
+:is(input, select, textarea)[aria-invalid='true'] { border-color: var(--ocop-danger-strong); }
 fieldset:disabled :is(input, select, textarea) { background: var(--ocop-mist-50); color: var(--ocop-mist-800); }
 label small, .paste-box small, .dropzone small { color: var(--ocop-mist-600); font-size: var(--ocop-font-size-caption); font-weight: 400; }
 label small.is-ok { color: var(--ocop-success); }
@@ -1116,7 +1164,7 @@ label small.is-ok { color: var(--ocop-success); }
 .btn-text { padding: 0 var(--ocop-space-2); border: 0; background: transparent; color: var(--ocop-mist-700); text-decoration: underline; }
 .is-danger { color: var(--ocop-danger-strong); }
 button:disabled { cursor: not-allowed; opacity: 0.65; }
-:is(a, button, .file-button):focus-visible, .file-button:focus-within { outline: 3px solid var(--ocop-daquy-400); outline-offset: 2px; }
+:is(a, button, .file-button):focus-visible, .file-button:focus-within { outline: 3px solid var(--admin-primary-dark); outline-offset: 2px; }
 
 .segmented { display: grid; padding: var(--ocop-space-1); grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--ocop-space-2); border-radius: var(--ocop-radius-md); background: var(--ocop-mist-100); }
 .segmented button { display: inline-flex; min-height: var(--ocop-control-md); padding: 0 var(--ocop-space-3); align-items: center; justify-content: center; gap: var(--ocop-space-2); border: 0; border-radius: var(--ocop-radius-sm); background: transparent; color: var(--ocop-mist-700); font-size: var(--ocop-font-size-small); font-weight: 600; }
