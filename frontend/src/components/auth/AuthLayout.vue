@@ -10,7 +10,7 @@ defineProps<{
 <template>
   <main class="auth-page">
     <div class="container auth-container">
-      <RouterLink class="brand-link" to="/">
+      <RouterLink class="brand-link d-lg-none" to="/">
         <span class="brand-mark"><img src="/assets/brand/bieu-tuong-128.png" alt="" width="48" height="48" /></span>
         <span>
           <strong>LÂM ĐỒNG OCOP</strong>
@@ -21,16 +21,22 @@ defineProps<{
 
       <section class="auth-card ocop-enter">
         <div class="auth-intro d-none d-lg-flex">
-          <div>
+          <img class="auth-watermark" src="/assets/brand/bieu-tuong-512.png" alt="" width="512" height="512" aria-hidden="true" />
+          <div class="auth-intro__top">
+            <RouterLink class="auth-lockup" to="/">
+              <span class="auth-lockup__mark"><img src="/assets/brand/bieu-tuong-128.png" alt="" width="52" height="52" /></span>
+              <span class="auth-lockup__text">
+                <strong>LÂM ĐỒNG OCOP</strong>
+                <small>Nông sản OCOP và du lịch nông nghiệp</small>
+                <span class="visually-hidden">Về trang chủ</span>
+              </span>
+            </RouterLink>
             <span class="eyebrow">Đặc sản từ cao nguyên</span>
             <h1>Kết nối sản phẩm OCOP với cộng đồng</h1>
             <p>
               Khám phá sản phẩm địa phương, điểm du lịch nông nghiệp và những câu
               chuyện đặc trưng của Lâm Đồng.
             </p>
-          </div>
-          <div class="auth-logo-card">
-            <img src="/assets/brand/logo-day-du-320.png" alt="Logo Nông sản và Du lịch Lâm Đồng" width="320" height="350" />
           </div>
           <ul class="feature-list">
             <li><AppIcon name="checkCircle" :size="15" /> Thông tin được kiểm duyệt</li>
@@ -138,20 +144,76 @@ defineProps<{
   line-height: 1.7;
 }
 
-.auth-logo-card {
-  display: grid;
-  width: fit-content;
-  padding: clamp(0.5rem, 1.6vh, 1rem) clamp(0.75rem, 2vh, 1.25rem);
-  place-items: center;
-  border-radius: 1.25rem;
-  background: var(--ocop-white);
-  box-shadow: 0 1rem 2.5rem color-mix(in srgb, var(--ocop-primary-950) 35%, transparent);
+.auth-intro {
+  position: relative;
+  overflow: hidden;
 }
 
-.auth-logo-card img {
+.auth-intro > * {
+  position: relative;
+}
+
+/* Biểu tượng mờ chìm ở góc dưới, cùng tông với nền xanh đậm thay vì thẻ trắng nổi. */
+.auth-intro > .auth-watermark {
+  position: absolute;
+  right: -12%;
+  bottom: -14%;
+  width: clamp(220px, 46vh, 400px);
+  height: auto;
+  opacity: 0.06;
+  filter: brightness(0) invert(1);
+  pointer-events: none;
+}
+
+.auth-intro__top {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.auth-intro__top > .eyebrow {
   display: block;
-  width: auto;
-  height: clamp(88px, 21vh, 190px);
+}
+
+.auth-lockup {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: clamp(1rem, 4.5vh, 2.75rem);
+  color: var(--ocop-white);
+  text-decoration: none;
+}
+
+.auth-lockup__mark {
+  display: grid;
+  width: 52px;
+  height: 52px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--ocop-white);
+}
+
+.auth-lockup__mark img {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+}
+
+.auth-lockup__text {
+  display: grid;
+  line-height: 1.15;
+}
+
+.auth-lockup__text strong {
+  font-size: 1.05rem;
+  letter-spacing: 0.02em;
+}
+
+.auth-lockup__text small {
+  margin-top: 0.25rem;
+  color: color-mix(in srgb, var(--ocop-white) 72%, transparent);
+  font-size: var(--ocop-font-size-caption);
 }
 
 .eyebrow {
@@ -256,7 +318,17 @@ defineProps<{
 }
 
 @media (min-width: 992px) {
+  .auth-container {
+    display: flex;
+    min-height: 100svh;
+    align-items: center;
+    justify-content: center;
+  }
+
   .auth-card {
+    width: 100%;
+    min-height: min(620px, calc(100svh - 2rem));
+    margin: 0 auto;
     grid-template-columns: 1fr 1fr;
   }
 
