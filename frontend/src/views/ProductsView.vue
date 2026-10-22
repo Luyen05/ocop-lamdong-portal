@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import axios from 'axios'
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import ProductCard from '@/components/products/ProductCard.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
 import { teaPhoto } from '@/constants/photos'
+import { useFocusTrap } from '@/composables/useFocusTrap'
 import { categoryTheme } from '@/utils/category'
 import { getApiErrorMessage } from '@/services/api-error'
 import { getCategories } from '@/services/categories'
@@ -16,11 +18,22 @@ import type {
   ProductSort,
 } from '@/types/product'
 import { scrollBehavior } from '@/utils/motion'
+import {
+  DISTRICT_MAX_LENGTH,
+  hasPriceConflict,
+  normalizeProductFilters,
+  PRICE_CONFLICT_MESSAGE,
+  priceNumber,
+  SEARCH_MAX_LENGTH,
+  VALID_STARS,
+  type ProductFilterValues,
+} from '@/utils/product-filters'
 
 const route = useRoute()
 const router = useRouter()
 
 const categories = ref<Category[]>([])
+const categoriesLoaded = ref(false)
 const districts = ref<string[]>([])
 const products = ref<ProductListItem[]>([])
 const total = ref(0)
@@ -28,6 +41,8 @@ const currentPage = ref(1)
 const pageSize = 12
 const isLoading = ref(false)
 const errorMessage = ref('')
+// 422: điều kiện lọc sai, thử lại cùng điều kiện cũng vô ích nên không hiện nút "Thử lại".
+const errorRetryable = ref(true)
 const validationMessage = ref('')
 let latestRequestId = 0
 
@@ -36,19 +51,19 @@ const isFilterOpen = ref(false)
 const bannerPhotoFailed = ref(false)
 const starOptions = [
   { value: '', label: 'Tất cả' },
-  { value: '3', label: '3 sao' },
-  { value: '4', label: '4 sao' },
-  { value: '5', label: '5 sao' },
+  ...VALID_STARS.map((value) => ({ value, label: `${value} sao` })),
 ]
 
-const form = reactive({
+// Nháp trong form: chỉ từ khóa, địa bàn và khoảng giá là nháp (chỉ áp dụng khi bấm Tìm/Áp dụng).
+// Nhóm, hạng sao và sắp xếp áp dụng ngay nên luôn phản chiếu URL.
+const form = reactive<ProductFilterValues>({
   search: '',
   category: '',
   star: '',
   district: '',
   minPrice: '',
   maxPrice: '',
-  sort: 'newest' as ProductSort,
+  sort: 'newest',
 })
 
 const sortOptions: Array<{ value: ProductSort; label: string }> = [
@@ -61,7 +76,8 @@ const sortOptions: Array<{ value: ProductSort; label: string }> = [
 ]
 
 const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize)))
-const resultText = computed(() => `${total.value} sản phẩm phù hợp`)
+// Đang tải thì không hiện số cũ; lỗi thì ẩn hẳn dòng này (tránh "0 sản phẩm phù hợp" sai sự thật).
+const resultText = computed(() => (isLoading.value ? 'Đang tải…' : `${total.value} sản phẩm phù hợp`))
 const pageNumbers = computed(() => {
   const maxVisible = 5
   let start = Math.max(1, currentPage.value - Math.floor(maxVisible / 2))
@@ -70,13 +86,43 @@ const pageNumbers = computed(() => {
   return Array.from({ length: end - start + 1 }, (_, index) => start + index)
 })
 
+function queryText(value: unknown): string {
+  return typeof value === 'string' ? value : ''
+}
+
+// Giá trị lọc trong URL sau khi chuẩn hóa (tham số sai bị bỏ), chưa xét min > max.
+const queryFilters = computed<ProductFilterValues>(() => normalizeProductFilters({
+  search: route.query.search,
+  category: route.query.category,
+  star: route.query.star,
+  district: route.query.district,
+  minPrice: route.query.min_price,
+  maxPrice: route.query.max_price,
+  sort: route.query.sort,
+}))
+
+// URL có min > max: xử lý như applyFilters (báo lỗi, không áp dụng khoảng giá), tránh 422 từ backend.
+const urlPriceConflict = computed(() => hasPriceConflict(queryFilters.value))
+
+const appliedForm = computed<ProductFilterValues>(() => {
+  const filters = queryFilters.value
+  return urlPriceConflict.value ? { ...filters, minPrice: '', maxPrice: '' } : filters
+})
+
+function categoryLabel(slug: string): string | null {
+  const category = categories.value.find((item) => item.slug === slug)
+  if (category) return category.name
+  // Danh mục chưa tải xong thì chưa hiện chip (tránh lộ slug thô); tải xong mà không có thì báo rõ.
+  return categoriesLoaded.value ? 'không hợp lệ' : null
+}
+
 const activeFilters = computed(() => {
   const applied = appliedForm.value
   const filters: Array<{ key: keyof typeof form; label: string }> = []
   if (applied.search) filters.push({ key: 'search', label: `Từ khóa: ${applied.search}` })
   if (applied.category) {
-    const category = categories.value.find((item) => item.slug === applied.category)
-    filters.push({ key: 'category', label: `Danh mục: ${category?.name || applied.category}` })
+    const name = categoryLabel(applied.category)
+    if (name) filters.push({ key: 'category', label: `Danh mục: ${name}` })
   }
   if (applied.star) filters.push({ key: 'star', label: `${applied.star} sao` })
   if (applied.district) filters.push({ key: 'district', label: `Địa bàn: ${applied.district}` })
@@ -85,35 +131,19 @@ const activeFilters = computed(() => {
   return filters
 })
 
-function queryText(value: unknown): string {
-  return typeof value === 'string' ? value : ''
-}
+// Chỉ ghi đè ô nháp khi giá trị đó trong URL đổi (Back/Forward, bỏ chip...). Bấm chip nhóm, hạng sao
+// hay đổi sắp xếp không làm mất những gì người dùng đang gõ ở ô khác.
+let hydrated: ProductFilterValues | null = null
 
-function queryNumber(value: unknown): number | undefined {
-  if (value === '' || value === null || value === undefined) return undefined
-  const parsed = Number(value)
-  return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined
-}
-
-const appliedForm = computed(() => {
-  const requestedSort = queryText(route.query.sort) as ProductSort
-  return {
-    search: queryText(route.query.search),
-    category: queryText(route.query.category),
-    star: queryText(route.query.star),
-    district: queryText(route.query.district),
-    minPrice: queryText(route.query.min_price),
-    maxPrice: queryText(route.query.max_price),
-    sort: sortOptions.some((option) => option.value === requestedSort)
-      ? requestedSort
-      : 'newest' as ProductSort,
+function hydrateFormFromQuery(forceAll = false): void {
+  const next = queryFilters.value
+  const target = form as Record<keyof ProductFilterValues, string>
+  for (const key of Object.keys(next) as Array<keyof ProductFilterValues>) {
+    if (forceAll || !hydrated || hydrated[key] !== next[key]) target[key] = next[key]
   }
-})
-
-function hydrateFormFromQuery(): void {
-  Object.assign(form, appliedForm.value)
-  validationMessage.value = ''
-  const requestedPage = Number(route.query.page)
+  hydrated = { ...next }
+  validationMessage.value = urlPriceConflict.value ? PRICE_CONFLICT_MESSAGE : ''
+  const requestedPage = Number(queryText(route.query.page))
   currentPage.value = Number.isInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1
 }
 
@@ -124,18 +154,32 @@ function filtersFromRoute(): ProductFilters {
     page_size: pageSize,
     search: applied.search || undefined,
     category: applied.category || undefined,
-    star: queryNumber(applied.star),
+    star: applied.star ? Number(applied.star) : undefined,
     district: applied.district || undefined,
-    min_price: queryNumber(applied.minPrice),
-    max_price: queryNumber(applied.maxPrice),
+    min_price: priceNumber(applied.minPrice),
+    max_price: priceNumber(applied.maxPrice),
     sort: applied.sort,
   }
+}
+
+// Sau khi đổi trang hoặc "Thử lại", nút vừa bấm có thể biến mất: đưa focus về dòng kết quả (hoặc khối lỗi).
+const resultCountRef = ref<HTMLElement | null>(null)
+const errorBoxRef = ref<HTMLElement | null>(null)
+let focusResultsAfterLoad = false
+
+async function settleFocus(): Promise<void> {
+  if (!focusResultsAfterLoad) return
+  focusResultsAfterLoad = false
+  await nextTick()
+  const target = errorMessage.value ? errorBoxRef.value : resultCountRef.value
+  target?.focus({ preventScroll: true })
 }
 
 async function loadProducts(): Promise<void> {
   const requestId = ++latestRequestId
   isLoading.value = true
   errorMessage.value = ''
+  errorRetryable.value = true
   try {
     const response = await getProducts(filtersFromRoute())
     if (requestId !== latestRequestId) return
@@ -147,22 +191,40 @@ async function loadProducts(): Promise<void> {
     }
     products.value = response.items
     total.value = response.total
+    isLoading.value = false
+    void settleFocus()
   } catch (error) {
     if (requestId !== latestRequestId) return
     products.value = []
     total.value = 0
-    errorMessage.value = getApiErrorMessage(
-      error,
-      'Không thể tải danh sách sản phẩm. Vui lòng thử lại.',
-    )
+    if (axios.isAxiosError(error) && error.response?.status === 422) {
+      errorRetryable.value = false
+      errorMessage.value = 'Từ khóa, địa bàn hoặc khoảng giá chưa phù hợp. Hãy chỉnh lại hoặc xóa bộ lọc.'
+    } else {
+      errorMessage.value = getApiErrorMessage(
+        error,
+        'Không thể tải danh sách sản phẩm. Vui lòng thử lại.',
+      )
+    }
+    isLoading.value = false
+    void settleFocus()
   } finally {
     if (requestId === latestRequestId) isLoading.value = false
   }
 }
 
+async function retryLoad(): Promise<void> {
+  focusResultsAfterLoad = true
+  void loadProducts()
+  // Nút "Thử lại" biến mất ngay khi bắt đầu tải: giữ focus ở dòng kết quả trong lúc chờ.
+  await nextTick()
+  resultCountRef.value?.focus({ preventScroll: true })
+}
+
 async function loadCategories(): Promise<void> {
   try {
     categories.value = (await getCategories()).items
+    categoriesLoaded.value = true
   } catch {
     categories.value = []
   }
@@ -176,25 +238,24 @@ async function loadFilterOptions(): Promise<void> {
   }
 }
 
-function filterQuery(page = 1, filters = appliedForm.value): Record<string, string> {
+function filterQuery(page = 1, filters: ProductFilterValues = appliedForm.value): Record<string, string> {
+  const normalized = normalizeProductFilters(filters)
   const query: Record<string, string> = {}
   if (page > 1) query.page = String(page)
-  if (filters.search) query.search = filters.search
-  if (filters.category) query.category = filters.category
-  if (filters.star) query.star = filters.star
-  if (filters.district) query.district = filters.district
-  if (filters.minPrice) query.min_price = filters.minPrice
-  if (filters.maxPrice) query.max_price = filters.maxPrice
-  if (filters.sort !== 'newest') query.sort = filters.sort
+  if (normalized.search) query.search = normalized.search
+  if (normalized.category) query.category = normalized.category
+  if (normalized.star) query.star = normalized.star
+  if (normalized.district) query.district = normalized.district
+  if (normalized.minPrice) query.min_price = normalized.minPrice
+  if (normalized.maxPrice) query.max_price = normalized.maxPrice
+  if (normalized.sort !== 'newest') query.sort = normalized.sort
   return query
 }
 
 async function applyFilters(): Promise<void> {
   validationMessage.value = ''
-  const minPrice = queryNumber(form.minPrice)
-  const maxPrice = queryNumber(form.maxPrice)
-  if (minPrice !== undefined && maxPrice !== undefined && minPrice > maxPrice) {
-    validationMessage.value = 'Giá tối thiểu không được lớn hơn giá tối đa.'
+  if (hasPriceConflict(form)) {
+    validationMessage.value = PRICE_CONFLICT_MESSAGE
     return
   }
   await router.push({ name: 'products', query: filterQuery(1, form) })
@@ -203,7 +264,7 @@ async function applyFilters(): Promise<void> {
 async function clearFilters(): Promise<void> {
   validationMessage.value = ''
   await router.push({ name: 'products' })
-  hydrateFormFromQuery()
+  hydrateFormFromQuery(true)
 }
 
 async function removeFilter(key: keyof typeof form): Promise<void> {
@@ -213,9 +274,9 @@ async function removeFilter(key: keyof typeof form): Promise<void> {
   await router.push({ name: 'products', query: filterQuery(1, filters) })
 }
 
-// Chip nhóm và nút hạng sao áp dụng ngay, chỉ đổi đúng bộ lọc đó trên các bộ lọc đang áp dụng;
-// giá trị đang gõ dở trong form (chưa bấm Tìm/Áp dụng) không bị gửi kèm.
-async function applyQuickFilter(change: Partial<typeof form>): Promise<void> {
+// Chip nhóm, nút hạng sao và ô sắp xếp áp dụng ngay, chỉ đổi đúng bộ lọc đó trên các bộ lọc đang áp dụng;
+// giá trị đang gõ dở trong form (chưa bấm Tìm/Áp dụng) không bị gửi kèm và cũng không bị xóa.
+async function applyQuickFilter(change: Partial<ProductFilterValues>): Promise<void> {
   const filters = { ...appliedForm.value, ...change }
   await router.push({ name: 'products', query: filterQuery(1, filters) })
 }
@@ -228,6 +289,10 @@ async function selectStar(value: string): Promise<void> {
   await applyQuickFilter({ star: value })
 }
 
+async function changeSort(): Promise<void> {
+  await applyQuickFilter({ sort: form.sort })
+}
+
 async function submitFromDrawer(): Promise<void> {
   await applyFilters()
   if (!validationMessage.value) isFilterOpen.value = false
@@ -235,9 +300,45 @@ async function submitFromDrawer(): Promise<void> {
 
 async function goToPage(page: number): Promise<void> {
   if (page < 1 || page > totalPages.value || page === currentPage.value) return
+  focusResultsAfterLoad = true
   await router.push({ name: 'products', query: filterQuery(page) })
   window.scrollTo({ top: 0, behavior: scrollBehavior() })
 }
+
+// Ngăn kéo bộ lọc: chỉ là hộp thoại (bottom sheet) ở màn hẹp, cùng mốc với CSS (max-width: 991.98px).
+const SHEET_QUERY = '(max-width: 991.98px)'
+const isSheet = ref(false)
+const sheetOpen = computed(() => isFilterOpen.value && isSheet.value)
+const filterAsideRef = ref<HTMLElement | null>(null)
+const filterToggleRef = ref<HTMLButtonElement | null>(null)
+const filterCloseRef = ref<HTMLButtonElement | null>(null)
+let sheetMedia: MediaQueryList | null = null
+
+function syncSheetMode(): void {
+  isSheet.value = Boolean(sheetMedia?.matches)
+  // Quay lại màn rộng: bộ lọc là cột cố định, không còn là ngăn kéo.
+  if (!isSheet.value) isFilterOpen.value = false
+}
+
+useFocusTrap(sheetOpen, filterAsideRef, {
+  onEscape: () => { isFilterOpen.value = false },
+  initialFocus: () => filterCloseRef.value,
+  returnFocusTo: () => filterToggleRef.value,
+})
+
+// Ô tìm kiếm và dải chip nhóm: gợi ý cuộn ngang khi còn chip bị che.
+const chipsRef = ref<HTMLElement | null>(null)
+const chipsFade = reactive({ start: false, end: false })
+
+function updateChipsFade(): void {
+  const element = chipsRef.value
+  if (!element) return
+  const max = element.scrollWidth - element.clientWidth
+  chipsFade.start = element.scrollLeft > 1
+  chipsFade.end = max > 1 && element.scrollLeft < max - 1
+}
+
+let chipsObserver: ResizeObserver | null = null
 
 watch(
   () => route.query,
@@ -248,12 +349,29 @@ watch(
   { deep: true, immediate: true },
 )
 
+// Danh sách nhóm tải xong mới đo được độ rộng dải chip.
+watch(() => categories.value.length, () => void nextTick(updateChipsFade))
+
 onMounted(() => {
   void loadCategories()
   void loadFilterOptions()
   document.title = 'Sản phẩm OCOP | OCOP Lâm Đồng'
+  if (typeof window.matchMedia === 'function') {
+    sheetMedia = window.matchMedia(SHEET_QUERY)
+    sheetMedia.addEventListener?.('change', syncSheetMode)
+    isSheet.value = sheetMedia.matches
+  }
+  if (typeof ResizeObserver !== 'undefined' && chipsRef.value) {
+    chipsObserver = new ResizeObserver(updateChipsFade)
+    chipsObserver.observe(chipsRef.value)
+  }
+  updateChipsFade()
 })
 
+onBeforeUnmount(() => {
+  sheetMedia?.removeEventListener?.('change', syncSheetMode)
+  chipsObserver?.disconnect()
+})
 </script>
 
 <template>
@@ -273,7 +391,7 @@ onMounted(() => {
           <span aria-current="page">Sản phẩm OCOP</span>
         </nav>
         <h1>Sản phẩm OCOP Lâm Đồng</h1>
-        <p>Đặc sản đã được công nhận 3–5 sao, tìm theo nhóm sản phẩm, hạng sao, địa phương và mức giá.</p>
+        <p>Đặc sản được công nhận OCOP, tìm theo nhóm sản phẩm, hạng sao, địa phương và mức giá.</p>
 
         <form class="banner-search" role="search" @submit.prevent="applyFilters">
           <label class="banner-search-field">
@@ -283,37 +401,43 @@ onMounted(() => {
               id="product-search"
               v-model.trim="form.search"
               type="search"
-              placeholder="Tên sản phẩm, chủ thể: atiso, cà phê, mắc ca..."
+              :maxlength="SEARCH_MAX_LENGTH"
+              placeholder="Tìm sản phẩm, chủ thể"
             />
           </label>
-          <button class="ocop-btn-accent" type="submit" :disabled="isLoading">Tìm</button>
+          <button class="ocop-btn-accent" type="submit">Tìm</button>
         </form>
       </div>
     </section>
 
     <div class="site-content category-strip">
-      <ul class="category-chips" aria-label="Lọc theo nhóm sản phẩm">
-        <li>
-          <button type="button" class="chip" :aria-pressed="!form.category" @click="selectCategory('')">
-            Tất cả nhóm
-          </button>
-        </li>
-        <li v-for="category in categories" :key="category.id">
-          <button
-            type="button"
-            class="chip"
-            :aria-pressed="form.category === category.slug"
-            :style="{
-              '--chip-bg': categoryTheme(category.slug).background,
-              '--chip-fg': categoryTheme(category.slug).foreground,
-            }"
-            @click="selectCategory(category.slug)"
-          >
-            <span class="chip-icon" aria-hidden="true"><AppIcon :name="categoryTheme(category.slug).icon" :size="14" /></span>
-            {{ category.name }}
-          </button>
-        </li>
-      </ul>
+      <div
+        class="category-chips-wrap"
+        :class="{ 'fade-start': chipsFade.start, 'fade-end': chipsFade.end }"
+      >
+        <ul ref="chipsRef" class="category-chips" aria-label="Lọc theo nhóm sản phẩm" @scroll.passive="updateChipsFade">
+          <li>
+            <button type="button" class="chip" :aria-pressed="!form.category" @click="selectCategory('')">
+              Tất cả nhóm
+            </button>
+          </li>
+          <li v-for="category in categories" :key="category.id">
+            <button
+              type="button"
+              class="chip"
+              :aria-pressed="form.category === category.slug"
+              :style="{
+                '--chip-bg': categoryTheme(category.slug).background,
+                '--chip-fg': categoryTheme(category.slug).foreground,
+              }"
+              @click="selectCategory(category.slug)"
+            >
+              <span class="chip-icon" aria-hidden="true"><AppIcon :name="categoryTheme(category.slug).icon" :size="14" /></span>
+              {{ category.name }}
+            </button>
+          </li>
+        </ul>
+      </div>
     </div>
 
     <div class="site-content products-body">
@@ -321,90 +445,98 @@ onMounted(() => {
         <div v-if="isFilterOpen" class="filter-scrim" aria-hidden="true" @click="isFilterOpen = false" />
         <aside
           id="product-filters"
+          ref="filterAsideRef"
           class="filter-aside"
           :class="{ open: isFilterOpen }"
           aria-label="Bộ lọc sản phẩm"
-          @keydown.esc="isFilterOpen = false"
         >
-          <form class="filter-panel" @submit.prevent="submitFromDrawer">
-            <div class="filter-heading">
-              <h2>Bộ lọc</h2>
-              <button class="btn-reset" type="button" @click="clearFilters">Xóa tất cả</button>
-              <button class="filter-close" type="button" aria-label="Đóng bộ lọc" @click="isFilterOpen = false">
-                <AppIcon name="close" :size="18" />
-              </button>
-            </div>
-
-            <fieldset class="filter-group">
-              <legend>Hạng sao OCOP</legend>
-              <div class="star-segment" role="group" aria-label="Chọn hạng sao">
-                <button
-                  v-for="option in starOptions"
-                  :key="option.value"
-                  type="button"
-                  :aria-pressed="form.star === option.value"
-                  @click="selectStar(option.value)"
-                >
-                  <AppIcon v-if="option.value" name="star" :size="13" />
-                  {{ option.label }}
+          <div
+            class="filter-dialog"
+            :role="sheetOpen ? 'dialog' : undefined"
+            :aria-modal="sheetOpen ? 'true' : undefined"
+            :aria-labelledby="sheetOpen ? 'product-filters-title' : undefined"
+            :tabindex="sheetOpen ? -1 : undefined"
+          >
+            <form class="filter-panel" @submit.prevent="submitFromDrawer">
+              <div class="filter-heading">
+                <h2 id="product-filters-title">Bộ lọc</h2>
+                <button class="btn-reset" type="button" @click="clearFilters">Xóa tất cả</button>
+                <button ref="filterCloseRef" class="filter-close" type="button" aria-label="Đóng bộ lọc" @click="isFilterOpen = false">
+                  <AppIcon name="close" :size="18" />
                 </button>
               </div>
-            </fieldset>
 
-            <div class="filter-group">
-              <label class="form-label" for="product-district">Địa bàn</label>
-              <input
-                id="product-district"
-                v-model.trim="form.district"
-                class="form-control"
-                list="product-district-options"
-                type="text"
-                placeholder="Xã, phường..."
-              />
-              <datalist id="product-district-options">
-                <option v-for="district in districts" :key="district" :value="district" />
-              </datalist>
-            </div>
+              <fieldset class="filter-group">
+                <legend>Hạng sao OCOP</legend>
+                <div class="star-segment" role="group" aria-label="Chọn hạng sao">
+                  <button
+                    v-for="option in starOptions"
+                    :key="option.value"
+                    type="button"
+                    :aria-pressed="form.star === option.value"
+                    @click="selectStar(option.value)"
+                  >
+                    <AppIcon v-if="option.value" name="star" :size="13" />
+                    {{ option.label }}
+                  </button>
+                </div>
+              </fieldset>
 
-            <fieldset class="filter-group">
-              <legend>Khoảng giá (đồng)</legend>
-              <div class="price-row">
+              <div class="filter-group">
+                <label class="form-label" for="product-district">Địa bàn</label>
                 <input
-                  v-model="form.minPrice"
+                  id="product-district"
+                  v-model.trim="form.district"
                   class="form-control"
-                  type="number"
-                  min="0"
-                  step="1000"
-                  aria-label="Giá tối thiểu"
-                  placeholder="Từ"
+                  list="product-district-options"
+                  type="text"
+                  :maxlength="DISTRICT_MAX_LENGTH"
+                  placeholder="Xã, phường..."
                 />
-                <span aria-hidden="true">–</span>
-                <input
-                  v-model="form.maxPrice"
-                  class="form-control"
-                  type="number"
-                  min="0"
-                  step="1000"
-                  aria-label="Giá tối đa"
-                  placeholder="Đến"
-                />
+                <datalist id="product-district-options">
+                  <option v-for="district in districts" :key="district" :value="district" />
+                </datalist>
               </div>
-            </fieldset>
 
-            <p v-if="validationMessage" class="filter-error" role="alert">
-              {{ validationMessage }}
-            </p>
-            <button class="ocop-btn-main filter-submit" type="submit" :disabled="isLoading">
-              {{ isLoading ? 'Đang tải...' : 'Áp dụng bộ lọc' }}
-            </button>
-          </form>
+              <fieldset class="filter-group">
+                <legend>Khoảng giá (đồng)</legend>
+                <div class="price-row">
+                  <input
+                    v-model="form.minPrice"
+                    class="form-control"
+                    type="number"
+                    inputmode="numeric"
+                    min="0"
+                    aria-label="Giá tối thiểu"
+                    placeholder="Từ"
+                  />
+                  <span aria-hidden="true">–</span>
+                  <input
+                    v-model="form.maxPrice"
+                    class="form-control"
+                    type="number"
+                    inputmode="numeric"
+                    min="0"
+                    aria-label="Giá tối đa"
+                    placeholder="Đến"
+                  />
+                </div>
+              </fieldset>
+
+              <p v-if="validationMessage" class="filter-error" role="alert">
+                {{ validationMessage }}
+              </p>
+              <button class="ocop-btn-main filter-submit" type="submit">Áp dụng bộ lọc</button>
+            </form>
+          </div>
         </aside>
 
-        <section class="results" :aria-busy="isLoading" aria-live="polite">
+        <section class="results" :aria-busy="isLoading">
           <div class="result-toolbar">
-            <p class="result-count">{{ resultText }}</p>
+            <p v-show="!errorMessage" ref="resultCountRef" class="result-count" role="status" tabindex="-1">{{ resultText }}</p>
             <div class="toolbar-actions">
               <button
+                ref="filterToggleRef"
                 class="filter-toggle"
                 type="button"
                 aria-controls="product-filters"
@@ -421,7 +553,7 @@ onMounted(() => {
                   v-model="form.sort"
                   class="form-select sort-select"
                   aria-label="Sắp xếp sản phẩm"
-                  @change="applyFilters"
+                  @change="changeSort"
                 >
                   <option v-for="option in sortOptions" :key="option.value" :value="option.value">
                     {{ option.label }}
@@ -436,21 +568,23 @@ onMounted(() => {
               v-for="filter in activeFilters"
               :key="filter.key"
               type="button"
+              :title="filter.label"
               :aria-label="`Bỏ ${filter.label}`"
               @click="removeFilter(filter.key)"
             >
-              {{ filter.label }} <AppIcon name="close" :size="12" />
+              <span class="filter-chip-label">{{ filter.label }}</span> <AppIcon name="close" :size="12" />
             </button>
             <button class="clear-all" type="button" @click="clearFilters">Xóa tất cả</button>
           </div>
 
-          <div v-if="errorMessage" class="state-box is-error" role="alert">
+          <div v-if="errorMessage" ref="errorBoxRef" class="state-box is-error" role="alert" tabindex="-1">
             <span class="state-icon" aria-hidden="true"><AppIcon name="refresh" :size="22" /></span>
             <div>
-              <strong>Không tải được sản phẩm</strong>
+              <strong>{{ errorRetryable ? 'Không tải được sản phẩm' : 'Điều kiện lọc không hợp lệ' }}</strong>
               <p>{{ errorMessage }}</p>
             </div>
-            <button class="ocop-btn-main" type="button" @click="loadProducts">Thử lại</button>
+            <button v-if="errorRetryable" class="ocop-btn-main" type="button" @click="retryLoad">Thử lại</button>
+            <button v-else class="ocop-btn-ghost" type="button" @click="clearFilters">Xóa bộ lọc</button>
           </div>
 
           <div v-else-if="isLoading" class="product-grid" aria-label="Đang tải sản phẩm">
@@ -477,14 +611,21 @@ onMounted(() => {
             <button class="ocop-btn-ghost" type="button" @click="clearFilters">Xóa bộ lọc</button>
           </div>
 
-          <nav v-if="!isLoading && totalPages > 1" class="pagination-wrap" aria-label="Phân trang">
+          <nav
+            v-if="totalPages > 1"
+            class="pagination-wrap"
+            :class="{ 'is-loading': isLoading }"
+            :aria-busy="isLoading"
+            aria-label="Phân trang"
+          >
             <button
               class="page-step"
               type="button"
+              aria-label="Trang trước"
               :disabled="currentPage === 1"
               @click="goToPage(currentPage - 1)"
             >
-              <AppIcon name="chevronLeft" :size="16" /> Trang trước
+              <AppIcon name="chevronLeft" :size="16" /> <span class="page-step-label">Trang trước</span>
             </button>
             <div class="page-number-list">
               <button
@@ -503,10 +644,11 @@ onMounted(() => {
             <button
               class="page-step"
               type="button"
+              aria-label="Trang sau"
               :disabled="currentPage === totalPages"
               @click="goToPage(currentPage + 1)"
             >
-              Trang sau <AppIcon name="chevronRight" :size="16" />
+              <span class="page-step-label">Trang sau</span> <AppIcon name="chevronRight" :size="16" />
             </button>
           </nav>
         </section>
@@ -639,6 +781,41 @@ onMounted(() => {
   margin-top: calc(var(--ocop-space-6) * -1);
 }
 
+.category-chips-wrap {
+  position: relative;
+}
+
+/* Gợi ý còn chip bị che: mép mờ cùng màu nền thẻ ở phía còn nội dung cuộn được. */
+.category-chips-wrap::before,
+.category-chips-wrap::after {
+  position: absolute;
+  z-index: 1;
+  top: 1px;
+  bottom: 1px;
+  width: var(--ocop-space-12);
+  opacity: 0;
+  pointer-events: none;
+  content: '';
+  transition: opacity var(--ocop-transition);
+}
+
+.category-chips-wrap::before {
+  left: 1px;
+  border-radius: calc(var(--ocop-radius-lg) - 1px) 0 0 calc(var(--ocop-radius-lg) - 1px);
+  background: linear-gradient(to right, var(--ocop-card), color-mix(in srgb, var(--ocop-card) 0%, transparent));
+}
+
+.category-chips-wrap::after {
+  right: 1px;
+  border-radius: 0 calc(var(--ocop-radius-lg) - 1px) calc(var(--ocop-radius-lg) - 1px) 0;
+  background: linear-gradient(to left, var(--ocop-card), color-mix(in srgb, var(--ocop-card) 0%, transparent));
+}
+
+.category-chips-wrap.fade-start::before,
+.category-chips-wrap.fade-end::after {
+  opacity: 1;
+}
+
 .category-chips {
   display: flex;
   margin: 0;
@@ -714,6 +891,10 @@ onMounted(() => {
   grid-template-columns: 280px minmax(0, 1fr);
   align-items: start;
   gap: var(--ocop-space-8);
+}
+
+.filter-dialog {
+  min-width: 0;
 }
 
 .filter-aside {
@@ -896,6 +1077,7 @@ onMounted(() => {
 
 .active-filters button {
   display: inline-flex;
+  max-width: 100%;
   min-height: 36px;
   align-items: center;
   gap: var(--ocop-space-2);
@@ -906,6 +1088,13 @@ onMounted(() => {
   color: var(--ocop-mist-900);
   font-size: var(--ocop-font-size-small);
   font-weight: 600;
+}
+
+.filter-chip-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .active-filters .clear-all {
@@ -996,6 +1185,7 @@ onMounted(() => {
 
 .pagination-wrap {
   display: flex;
+  transition: opacity var(--ocop-transition);
   margin-top: var(--ocop-space-8);
   align-items: center;
   justify-content: center;
@@ -1005,6 +1195,7 @@ onMounted(() => {
 .page-step,
 .page-number {
   display: inline-flex;
+  white-space: nowrap;
   min-width: var(--ocop-control-md);
   min-height: var(--ocop-control-md);
   align-items: center;
@@ -1016,6 +1207,10 @@ onMounted(() => {
   background: var(--ocop-card);
   color: var(--ocop-navy);
   font-weight: 600;
+}
+
+.pagination-wrap.is-loading {
+  opacity: 0.6;
 }
 
 .page-step:disabled {
@@ -1035,6 +1230,14 @@ onMounted(() => {
 
 .filter-scrim {
   display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .category-chips-wrap::before,
+  .category-chips-wrap::after,
+  .pagination-wrap {
+    transition: none;
+  }
 }
 
 @media (max-width: 991.98px) {
@@ -1113,6 +1316,10 @@ onMounted(() => {
     min-width: 72px;
   }
 
+  .banner-search-field input {
+    font-size: var(--ocop-font-size-body);
+  }
+
   .result-toolbar {
     flex-wrap: wrap;
   }
@@ -1147,9 +1354,14 @@ onMounted(() => {
     gap: var(--ocop-space-2);
   }
 
+  /* Màn hẹp: nút Trước/Sau chỉ còn mũi tên (tên vẫn có trong aria-label) để cả hàng vừa một dòng. */
   .page-step {
     padding: 0 var(--ocop-space-2);
     font-size: var(--ocop-font-size-small);
+  }
+
+  .page-step-label {
+    display: none;
   }
 }
 </style>

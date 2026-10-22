@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import axios from 'axios'
-import { computed, onUnmounted, ref, watch } from 'vue'
+import { computed, nextTick, onUnmounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
 import ReviewForm from '@/components/reviews/ReviewForm.vue'
@@ -54,6 +54,8 @@ const formError = ref('')
 const notice = ref('')
 const isConfirmingDelete = ref(false)
 const isDeleting = ref(false)
+const noticeRef = ref<HTMLElement | null>(null)
+const deleteAlertRef = ref<HTMLElement | null>(null)
 
 const headingId = computed(() => `review-heading-${props.targetType}-${props.targetId}`)
 const user = computed(() => authStore.currentUser.value)
@@ -176,6 +178,11 @@ onUnmounted(() => {
   mineRequestId++
 })
 
+// Sau khi gửi, sửa hoặc xóa thành công form biến mất: đưa focus tới thông báo để không rơi về BODY.
+function focusNotice(): void {
+  void nextTick(() => noticeRef.value?.focus())
+}
+
 async function submitReview(payload: ReviewPayload): Promise<void> {
   if (isSubmitting.value) return
   isSubmitting.value = true
@@ -191,6 +198,7 @@ async function submitReview(payload: ReviewPayload): Promise<void> {
       notice.value = 'Cảm ơn bạn! Đánh giá sẽ hiển thị sau khi được duyệt.'
     }
     isEditing.value = false
+    focusNotice()
     if (wasApproved) void loadReviews()
   } catch (error) {
     formError.value = getApiErrorMessage(error, 'Chưa gửi được đánh giá. Vui lòng thử lại.')
@@ -213,9 +221,11 @@ async function confirmDelete(): Promise<void> {
     myReview.value = null
     isConfirmingDelete.value = false
     notice.value = 'Đã xóa đánh giá của bạn.'
+    focusNotice()
     if (wasApproved) void loadReviews()
   } catch (error) {
     formError.value = getApiErrorMessage(error, 'Chưa xóa được đánh giá. Vui lòng thử lại.')
+    void nextTick(() => deleteAlertRef.value?.focus())
   } finally {
     isDeleting.value = false
   }
@@ -265,7 +275,7 @@ function startEdit(): void {
 
       <div class="review-main">
         <div class="write-area" data-test="write-area">
-          <p v-if="notice" class="notice" role="status">{{ notice }}</p>
+          <p v-if="notice" ref="noticeRef" class="notice" role="status" tabindex="-1">{{ notice }}</p>
 
           <div v-if="!isAuthenticated" class="write-prompt">
             <p>Bạn đã dùng {{ targetNoun }} này? Đăng nhập để chia sẻ cảm nhận với mọi người.</p>
@@ -299,7 +309,7 @@ function startEdit(): void {
             <p v-else-if="myReview.status === 'pending'" class="write-hint">
               Đánh giá sẽ hiển thị công khai sau khi ban quản trị duyệt.
             </p>
-            <p v-if="formError" class="form-alert" role="alert">{{ formError }}</p>
+            <p v-if="formError" ref="deleteAlertRef" class="form-alert" role="alert" tabindex="-1">{{ formError }}</p>
             <div v-if="isConfirmingDelete" class="confirm-row" role="group" aria-label="Xác nhận xóa đánh giá">
               <span>Xóa đánh giá này? Bạn không thể khôi phục.</span>
               <button class="ocop-btn-ghost" type="button" :disabled="isDeleting" @click="isConfirmingDelete = false">

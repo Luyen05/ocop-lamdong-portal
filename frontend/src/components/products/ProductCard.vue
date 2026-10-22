@@ -43,7 +43,7 @@ const formattedPrice = computed(() => {
 
 <template>
   <article class="product-card" :style="themeStyle">
-    <RouterLink class="product-card-link" :to="`/san-pham/${product.slug}`" :aria-label="product.name">
+    <RouterLink class="product-card-link" :to="`/san-pham/${product.slug}`">
       <div class="product-media">
         <img
           v-if="showImage"
@@ -245,7 +245,8 @@ const formattedPrice = computed(() => {
   padding: 2px var(--ocop-space-2);
   border-radius: var(--ocop-radius-pill);
   background: var(--placeholder-bg, var(--ocop-mist-100));
-  color: var(--placeholder-fg, var(--ocop-mist-700));
+  /* Pha thêm màu chữ đậm để đạt 4,5:1 trên nền nhạt của mọi nhóm (chữ nhỏ 12px). */
+  color: color-mix(in srgb, var(--placeholder-fg, var(--ocop-mist-700)) 65%, var(--ocop-mist-950));
   font-weight: 700;
 }
 
@@ -367,9 +368,28 @@ const formattedPrice = computed(() => {
   }
 }
 
+/* Vòng focus đặc 3px màu đậm vẽ ở ngoài thẻ: thẻ có overflow:hidden nên offset âm trên liên kết bị cắt. */
+.product-card:has(.product-card-link:focus-visible) {
+  outline: 3px solid var(--ocop-primary-700);
+  outline-offset: 3px;
+}
+
 .product-card-link:focus-visible {
-  border-radius: inherit;
-  outline: 3px solid color-mix(in srgb, var(--ocop-primary-500) 28%, transparent);
-  outline-offset: -3px;
+  outline: 0;
+}
+
+/* Trình duyệt chưa hỗ trợ :has: vẽ vòng đặc bên trong liên kết (không bị cắt). */
+@supports not selector(:has(*)) {
+  .product-card-link:focus-visible {
+    border-radius: inherit;
+    outline: 3px solid var(--ocop-primary-700);
+    outline-offset: -3px;
+  }
+}
+
+@media (forced-colors: active) {
+  .product-card:has(.product-card-link:focus-visible) {
+    outline-color: Highlight;
+  }
 }
 </style>

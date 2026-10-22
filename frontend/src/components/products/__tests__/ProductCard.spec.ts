@@ -47,8 +47,10 @@ describe('ProductCard', () => {
 })
 
 describe('ProductCard link accessibility', () => {
+  // axe "label-content-name-mismatch" vẫn báo lỗi khi liên kết có aria-label hoặc aria-labelledby chỉ trỏ tới tên
+  // (chữ giá, hạng, chủ thể hiển thị không nằm trong tên). Vì vậy liên kết lấy tên từ chính nội dung hiển thị.
   it.each([product.primary_image_url, null])(
-    'keeps an explicit product name and destination with image %s', async (imageUrl) => {
+    'names the link from its visible content without aria-label for image %s', async (imageUrl) => {
       const router = createRouter({
         history: createMemoryHistory(),
         routes: [
@@ -59,21 +61,25 @@ describe('ProductCard link accessibility', () => {
       await router.push('/')
       await router.isReady()
       const wrapper = mount(ProductCard, {
-        props: { product: { ...product, primary_image_url: imageUrl } },
+        props: { product: { ...product, primary_image_url: imageUrl, price: 120000 } },
         global: { plugins: [router] },
       })
       const link = wrapper.get('a')
       expect(wrapper.findAll('a')).toHaveLength(1)
-      expect(link.attributes('aria-label')).toBe(product.name)
+      expect(link.attributes('aria-label')).toBeUndefined()
+      expect(link.attributes('aria-labelledby')).toBeUndefined()
       expect(link.attributes('href')).toBe(`/san-pham/${product.slug}`)
+      expect(wrapper.get('h2').text()).toBe(product.name)
+      for (const part of [product.name, product.subject.name, 'OCOP 3 sao']) {
+        expect(link.text()).toContain(part)
+      }
+      expect(link.text()).toMatch(/120\.000/)
 
       if (imageUrl) await wrapper.get('img').trigger('error')
       expect(wrapper.find('.product-placeholder').exists()).toBe(true)
-      expect(link.attributes('aria-label')).toBe(product.name)
 
       const nextProduct = { ...product, id: 2, name: 'Product B', slug: 'product-b' }
       await wrapper.setProps({ product: nextProduct })
-      expect(link.attributes('aria-label')).toBe(nextProduct.name)
       expect(wrapper.get('h2').text()).toBe(nextProduct.name)
       expect(link.attributes('href')).toBe(`/san-pham/${nextProduct.slug}`)
       await link.trigger('click')

@@ -10,7 +10,7 @@ import AppIcon from '@/components/ui/AppIcon.vue'
 import { getApiErrorMessage } from '@/services/api-error'
 import { getProduct, getProducts } from '@/services/products'
 import type { ProductDetail, ProductListItem } from '@/types/product'
-import { safeExternalUrl } from '@/utils/location'
+import { parseStorySource } from '@/utils/product-story'
 import { absoluteUrl, applyPageSeo, clipDescription, productJsonLd } from '@/utils/seo'
 
 const route = useRoute()
@@ -21,14 +21,7 @@ const isLoading = ref(true)
 const errorMessage = ref('')
 const errorTitle = ref('Không thể tải sản phẩm')
 
-const storyPresentation = computed(() => {
-  const story = product.value?.story ?? ''
-  const source = story.match(/\s*Nguồn sản phẩm:\s*(\S+)\s*$/u)
-  return {
-    text: source ? story.slice(0, source.index).trim() : story,
-    sourceUrl: safeExternalUrl(source?.[1]),
-  }
-})
+const storyPresentation = computed(() => parseStorySource(product.value?.story))
 
 const formattedPrice = computed(() => {
   if (!product.value) return ''
@@ -90,6 +83,8 @@ async function loadProduct(slug: string): Promise<void> {
       error,
       'Không thể tải thông tin sản phẩm. Vui lòng thử lại.',
     )
+    // Tab trình duyệt phải phản ánh trạng thái lỗi, không còn giữ tiêu đề sản phẩm trước đó.
+    applyPageSeo({ title: errorTitle.value, noindex: true })
   } finally {
     if (requestId === latestRequestId) isLoading.value = false
   }
@@ -128,7 +123,8 @@ function retryLoad(): void {
         </template>
       </nav>
 
-      <div v-if="isLoading" class="detail-loading placeholder-glow">
+      <div v-if="isLoading" class="detail-loading placeholder-glow" role="status" aria-busy="true">
+        <span class="visually-hidden">Đang tải thông tin sản phẩm…</span>
         <span class="placeholder media-loading" />
         <div>
           <span class="placeholder col-4" />
@@ -138,8 +134,8 @@ function retryLoad(): void {
         </div>
       </div>
 
-      <section v-else-if="errorMessage" class="error-state">
-        <span class="error-symbol">!</span>
+      <section v-else-if="errorMessage" class="error-state" role="alert">
+        <span class="error-symbol" aria-hidden="true">!</span>
         <h1>{{ errorTitle }}</h1>
         <p>{{ errorMessage }}</p>
         <div class="error-actions">
@@ -279,6 +275,24 @@ function retryLoad(): void {
 </template>
 
 <style scoped>
+/* Chuỗi dài không có khoảng trắng (URL trần, mã) không được đẩy trang tràn ngang. */
+.product-overview > *,
+.detail-columns > *,
+.content-section > *,
+.product-info {
+  min-width: 0;
+}
+.product-info h1,
+.lead-description,
+.content-block p,
+.content-block strong,
+.product-producer,
+.source-block li strong,
+.location-block li strong {
+  overflow-wrap: anywhere;
+}
+.source-block li > div,
+.location-block li > div { min-width: 0; }
 .product-producer, .metadata-note { color: var(--ocop-text-secondary); }
 .ocop-info { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--ocop-border); }
 .ocop-info h2 { font-size: 1rem; font-weight: 750; }
@@ -286,7 +300,7 @@ function retryLoad(): void {
 .ocop-info:has(.metadata-note) h2 { display: inline; margin-right: .5rem; font-size: .85rem; }
 .ocop-info .metadata-note { display: inline; margin: 0; font-size: .85rem; }
 .ocop-info:has(.metadata-note) .certification-list { display: none; }
-.story-source { display: inline-block; margin-top: .75rem; color: var(--ocop-primary-700); font-size: .9rem; font-weight: 650; }
+.story-source { display: inline-flex; min-height: var(--ocop-control-md); align-items: center; margin-top: .75rem; color: var(--ocop-primary-700); font-size: .9rem; font-weight: 650; }
 
 .detail-page {
   min-height: calc(100vh - 4.5rem);
@@ -309,6 +323,7 @@ function retryLoad(): void {
 .product-overview,
 .detail-loading {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 2.5rem;
 }
 
@@ -428,6 +443,7 @@ function retryLoad(): void {
 
 .content-section {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 1.25rem;
   margin-top: 3rem;
 }
@@ -501,6 +517,7 @@ function retryLoad(): void {
 
 .detail-columns {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 1.25rem;
 }
 
@@ -545,7 +562,7 @@ function retryLoad(): void {
 
 @media (min-width: 768px) {
   .detail-columns {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 

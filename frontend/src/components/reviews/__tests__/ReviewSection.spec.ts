@@ -295,4 +295,62 @@ describe('ReviewSection', () => {
     expect(wrapper.findAll('.review-item')).toHaveLength(0)
     expect(wrapper.text()).toContain('Chưa có đánh giá nào')
   })
+
+  describe('chuyen focus', () => {
+    function mountAttached() {
+      return mount(ReviewSection, {
+        props: { targetType: 'product', targetId: 1, ownerSubjectId: 3 },
+        global: { stubs: { RouterLink: RouterLinkStub } },
+        attachTo: document.body,
+      })
+    }
+
+    it('gui thieu thi focus o loi dau tien (sao roi toi nhan xet), loi nhan xet co role=alert', async () => {
+      currentUser.value = makeUser('user')
+      const wrapper = mountAttached()
+      await flushPromises()
+
+      await wrapper.get('form').trigger('submit')
+      await flushPromises()
+      expect(document.activeElement).toBe(wrapper.findAll('input[type="radio"]')[0].element)
+
+      await wrapper.findAll('input[type="radio"]')[3].setValue(true)
+      await wrapper.get('form').trigger('submit')
+      await flushPromises()
+      expect(document.activeElement).toBe(wrapper.get('textarea').element)
+      expect(wrapper.get('.field-error').attributes('role')).toBe('alert')
+    })
+
+    it('loi may chu thi focus khoi thong bao loi cua form', async () => {
+      currentUser.value = makeUser('user')
+      vi.mocked(createReview).mockRejectedValue(axiosError(500, { message: 'Máy chủ đang bận.' }))
+      const wrapper = mountAttached()
+      await flushPromises()
+      await wrapper.findAll('input[type="radio"]')[3].setValue(true)
+      await wrapper.get('textarea').setValue('Ngon, sẽ mua lại lần sau.')
+      await wrapper.get('form').trigger('submit')
+      await flushPromises()
+
+      const alert = wrapper.get('.form-alert')
+      expect(alert.attributes('role')).toBe('alert')
+      expect(alert.attributes('tabindex')).toBe('-1')
+      expect(document.activeElement).toBe(alert.element)
+    })
+
+    it('gui thanh cong thi focus khoi thong bao', async () => {
+      currentUser.value = makeUser('user')
+      vi.mocked(createReview).mockResolvedValue(myPending)
+      const wrapper = mountAttached()
+      await flushPromises()
+      await wrapper.findAll('input[type="radio"]')[3].setValue(true)
+      await wrapper.get('textarea').setValue('Ngon, sẽ mua lại lần sau.')
+      await wrapper.get('form').trigger('submit')
+      await flushPromises()
+
+      const notice = wrapper.get('.notice')
+      expect(notice.attributes('tabindex')).toBe('-1')
+      expect(document.activeElement).toBe(notice.element)
+    })
+  })
+
 })

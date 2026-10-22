@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 
 import type { ReviewPayload } from '@/types/review'
 import {
@@ -35,6 +35,9 @@ const emit = defineEmits<{ submit: [payload: ReviewPayload]; cancel: [] }>()
 const rating = ref<number | null>(props.initialRating)
 const comment = ref(props.initialComment)
 const attempted = ref(false)
+const formRef = ref<HTMLFormElement | null>(null)
+const alertRef = ref<HTMLElement | null>(null)
+const commentRef = ref<HTMLTextAreaElement | null>(null)
 
 watch(
   () => [props.initialRating, props.initialComment] as const,
@@ -60,16 +63,33 @@ const ids = computed(() => ({
   commentError: `${props.idPrefix}-comment-error`,
 }))
 
+// Trợ năng: lỗi nhập thì đưa focus tới ô lỗi đầu tiên (nhóm sao rồi tới nhận xét); lỗi từ máy chủ thì
+// tới khối thông báo lỗi đầu form, để người dùng bàn phím và trình đọc màn hình không phải tự tìm.
+function focusFirstInvalid(): void {
+  if (!rating.value) formRef.value?.querySelector<HTMLInputElement>('input[type="radio"]')?.focus()
+  else commentRef.value?.focus()
+}
+
 function submit(): void {
   attempted.value = true
-  if (!rating.value || validateReviewComment(comment.value)) return
+  if (!rating.value || validateReviewComment(comment.value)) {
+    void nextTick(focusFirstInvalid)
+    return
+  }
   emit('submit', { rating: rating.value, comment: comment.value.trim() })
 }
+
+watch(
+  () => props.errorMessage,
+  (message) => {
+    if (message) void nextTick(() => alertRef.value?.focus())
+  },
+)
 </script>
 
 <template>
-  <form class="review-form" novalidate @submit.prevent="submit">
-    <p v-if="errorMessage" class="form-alert" role="alert">{{ errorMessage }}</p>
+  <form ref="formRef" class="review-form" novalidate @submit.prevent="submit">
+    <p v-if="errorMessage" ref="alertRef" class="form-alert" role="alert" tabindex="-1">{{ errorMessage }}</p>
 
     <fieldset class="rating-field" :aria-describedby="ids.ratingHint">
       <legend :id="ids.legend">Bạn chấm mấy sao? <span class="required-mark" aria-hidden="true">*</span></legend>
@@ -95,6 +115,7 @@ function submit(): void {
       <label :for="ids.comment">Nhận xét của bạn <span class="required-mark" aria-hidden="true">*</span></label>
       <textarea
         :id="ids.comment"
+        ref="commentRef"
         v-model="comment"
         class="form-control"
         rows="4"
@@ -110,7 +131,7 @@ function submit(): void {
           {{ commentLength }}/{{ REVIEW_COMMENT_MAX }} ký tự
         </span>
       </p>
-      <p v-if="commentError" :id="ids.commentError" class="field-error">{{ commentError }}</p>
+      <p v-if="commentError" :id="ids.commentError" class="field-error" role="alert">{{ commentError }}</p>
     </div>
 
     <div class="form-actions">
