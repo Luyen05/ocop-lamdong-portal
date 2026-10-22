@@ -47,10 +47,6 @@ const navigation = computed(() => [
     : []),
 ])
 
-function asset(name: string): string {
-  return `/assets/figma/home/${name}`
-}
-
 // Mọi trang công khai có đúng một <main>; chuyển tiêu điểm vào đó (WCAG 2.4.1).
 function skipToContent(): void {
   const main = document.querySelector('main')
@@ -127,7 +123,7 @@ onBeforeUnmount(() => {
       <div class="site-container header-inner">
         <RouterLink class="site-brand" to="/">
           <span class="brand-symbol">
-            <img :src="asset('icon-brand.svg')" alt="" />
+            <img src="/assets/brand/bieu-tuong-128.png" alt="" width="44" height="44" />
           </span>
           <span class="brand-copy">
             <span class="brand-title">
@@ -327,8 +323,24 @@ onBeforeUnmount(() => {
 }
 
 .site-header.is-condensed .brand-symbol {
-  width: 34px;
-  height: 34px;
+  width: 38px;
+  height: 38px;
+}
+
+/* Màn hình thấp (laptop có thang hiển thị 125-150%): bỏ dải thông báo, thu gọn đầu trang để nhường chỗ cho nội dung. */
+@media (max-height: 760px) and (min-width: 768px) {
+  .announcement-bar {
+    display: none;
+  }
+
+  .header-inner {
+    min-height: 60px;
+  }
+
+  .brand-symbol {
+    width: 38px;
+    height: 38px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -363,18 +375,16 @@ onBeforeUnmount(() => {
 
 .brand-symbol {
   display: grid;
-  width: 40px;
-  height: 40px;
+  width: 46px;
+  height: 46px;
   flex: 0 0 auto;
   place-items: center;
-  border-radius: var(--ocop-radius-md);
-  background: var(--ocop-mist-800);
-  box-shadow: inset 0 -4px 0 var(--ocop-daquy-400), 0 4px 8px color-mix(in srgb, var(--ocop-mist-800) 22%, transparent);
 }
 
 .brand-symbol img {
-  width: 24px;
-  height: 24px;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .brand-copy {
