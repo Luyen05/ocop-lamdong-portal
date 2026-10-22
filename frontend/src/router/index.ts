@@ -6,7 +6,7 @@ import { pageStatus } from '@/stores/page-status'
 import HomeView from '@/views/HomeView.vue'
 import { resolveRouteAccess } from '@/router/access'
 import { documentTitleFor } from '@/router/titles'
-import { scrollBehavior } from '@/utils/motion'
+import { resolveScroll } from '@/router/scroll'
 import { decideChunkRecovery, isChunkLoadError } from '@/utils/chunk-error'
 import { applyPageSeo, ROUTE_DESCRIPTIONS } from '@/utils/seo'
 
@@ -209,11 +209,8 @@ const router = createRouter({
       component: () => import('@/views/NotFoundView.vue'),
     },
   ],
-  // Quay lại trang trước thì giữ vị trí cuộn cũ; cuộn tới #neo thì mượt trừ khi người dùng giảm chuyển động.
-  scrollBehavior: (to, _from, savedPosition) => {
-    if (savedPosition) return savedPosition
-    return to.hash ? { el: to.hash, behavior: scrollBehavior() } : { top: 0 }
-  },
+  // Quy tắc cuộn nằm ở router/scroll.ts (Back giữ vị trí, #neo cuộn mượt, trang bản đồ đổi query không nhảy lên đầu).
+  scrollBehavior: resolveScroll,
 })
 
 router.beforeEach(async (to) => {

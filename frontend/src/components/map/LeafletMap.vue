@@ -6,7 +6,7 @@ import 'leaflet.markercluster/dist/MarkerCluster.Default.css'
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 import type { Coordinate, MapFeature } from '@/types/location'
-import { locationTypeStyle } from '@/utils/location'
+import { hasValidCoordinates, isInsideLamDong, locationTypeStyle } from '@/utils/location'
 
 const props = withDefaults(
   defineProps<{
@@ -75,17 +75,68 @@ let isUnmounted = false
 const markers = new Map<string, L.Marker>()
 const featuresBySlug = new Map<string, MapFeature>()
 
+/**
+ * DivIcon có nhãn đọc được: Leaflet chỉ đặt role="button" và tabindex cho phần tử icon, nên
+ * aria-label/title được gắn mỗi lần Leaflet tạo lại phần tử (thêm vào bản đồ, tách cụm...).
+ */
+function labelledDivIcon(options: L.DivIconOptions, label: string): L.DivIcon {
+  const icon = L.divIcon(options)
+  const createIcon = icon.createIcon.bind(icon)
+  icon.createIcon = (oldIcon?: HTMLElement) => {
+    const element = createIcon(oldIcon)
+    element.setAttribute('aria-label', label)
+    element.title = label
+    return element
+  }
+  return icon
+}
+
+function markerLabel(feature: MapFeature): string {
+  return `${feature.properties.name}, ${feature.properties.type_label}`
+}
+
 function markerIcon(feature: MapFeature, selected: boolean): L.DivIcon {
   const style = locationTypeStyle(feature.properties.type)
   // HTML chỉ ghép từ hằng số nội bộ; tên địa điểm được gắn qua textContent ở tooltip.
-  return L.divIcon({
-    className: 'ocop-marker-anchor',
-    html: `<span class="ocop-marker${selected ? ' is-selected' : ''}" style="--marker-color:${style.color}"><i class="bi bi-${style.markerIcon}"></i></span>`,
-    // Marker là hình vuông 34px xoay -45°, đỉnh nhọn nằm dưới tâm khoảng 24px.
-    iconSize: [34, 34],
-    iconAnchor: [17, 40],
-    tooltipAnchor: [0, -38],
-  })
+  return labelledDivIcon(
+    {
+      className: 'ocop-marker-anchor',
+      html: `<span class="ocop-marker${selected ? ' is-selected' : ''}" style="--marker-color:${style.color}"><i class="bi bi-${style.markerIcon}" aria-hidden="true"></i></span>`,
+      // Marker là hình vuông 34px xoay -45°, đỉnh nhọn nằm dưới tâm khoảng 24px.
+      iconSize: [34, 34],
+      iconAnchor: [17, 40],
+      tooltipAnchor: [0, -38],
+    },
+    markerLabel(feature),
+  )
+}
+
+function clusterIcon(cluster: L.MarkerCluster): L.DivIcon {
+  const count = cluster.getChildCount()
+  const size = count < 10 ? 'small' : count < 100 ? 'medium' : 'large'
+  return labelledDivIcon(
+    {
+      html: `<div><span>${count}</span></div>`,
+      className: `marker-cluster marker-cluster-${size}`,
+      iconSize: new L.Point(40, 40),
+    },
+    `Nhóm ${count} điểm, bấm để phóng to`,
+  )
+}
+
+/** Enter và Space là hai phím kích hoạt nút; Leaflet chỉ chuyển 'keypress', không tự đổi thành 'click'. */
+function isActivationKey(event: KeyboardEvent | undefined): boolean {
+  return Boolean(event) && (event!.key === 'Enter' || event!.key === ' ' || event!.keyCode === 13 || event!.keyCode === 32)
+}
+
+/** Trạng thái chọn đổi trực tiếp class của marker đang có (không tạo lại phần tử) để giữ focus bàn phím. */
+function setMarkerSelected(slug: string, selected: boolean): void {
+  const marker = markers.get(slug)
+  const feature = featuresBySlug.get(slug)
+  if (!marker || !feature) return
+  // Lưu icon mới cho lần Leaflet tạo lại phần tử (cụm tách/gộp), còn phần tử đang hiển thị chỉ đổi class.
+  marker.options.icon = markerIcon(feature, selected)
+  marker.getElement()?.querySelector('.ocop-marker')?.classList.toggle('is-selected', selected)
 }
 
 function tooltipContent(feature: MapFeature): HTMLElement {
@@ -128,48 +179,55 @@ function renderMarkers(fitToFeatures: boolean): void {
   markerLayer.clearLayers()
   markers.clear()
   featuresBySlug.clear()
+  const drawn: L.LatLngTuple[] = []
 
+  // Điểm không có tọa độ hợp lệ (null, [0,0], ngoài khung Lâm Đồng) bị bỏ qua để không làm hỏng cả bản đồ.
   for (const feature of props.features) {
-    const [longitude, latitude] = feature.geometry.coordinates
-    const slug = feature.properties.slug
-    const marker = L.marker([latitude, longitude], {
-      icon: markerIcon(feature, slug === props.selectedSlug),
-      title: feature.properties.name,
-      alt: feature.properties.name,
-      keyboard: true,
-      riseOnHover: true,
-    })
-    marker.bindTooltip(tooltipContent(feature), { direction: 'top' })
-    marker.on('click', () => emit('select', slug))
-    marker.addTo(markerLayer)
-    markers.set(slug, marker)
-    featuresBySlug.set(slug, feature)
+    if (!hasValidCoordinates(feature)) continue
+    try {
+      const [longitude, latitude] = feature.geometry.coordinates
+      const slug = feature.properties.slug
+      const marker = L.marker([latitude, longitude], {
+        icon: markerIcon(feature, slug === props.selectedSlug),
+        title: markerLabel(feature),
+        keyboard: true,
+        riseOnHover: true,
+      })
+      marker.bindTooltip(tooltipContent(feature), { direction: 'top' })
+      marker.on('click', () => emit('select', slug))
+      marker.on('keypress', (event: L.LeafletEvent) => {
+        const keyboardEvent = (event as L.LeafletKeyboardEvent).originalEvent
+        if (!isActivationKey(keyboardEvent)) return
+        keyboardEvent.preventDefault()
+        emit('select', slug)
+      })
+      marker.addTo(markerLayer)
+      markers.set(slug, marker)
+      featuresBySlug.set(slug, feature)
+      drawn.push([latitude, longitude])
+    } catch {
+      // Một marker lỗi không được làm mất các marker còn lại.
+    }
   }
 
-  if (fitToFeatures && props.features.length && !props.selectedSlug) {
-    const bounds = L.latLngBounds(
-      props.features.map((feature) => [
-        feature.geometry.coordinates[1],
-        feature.geometry.coordinates[0],
-      ] as L.LatLngTuple),
-    )
-    map.fitBounds(bounds, { padding: [32, 32], maxZoom: 13 })
+  if (fitToFeatures && drawn.length && !props.selectedSlug) {
+    map.fitBounds(L.latLngBounds(drawn), { padding: [32, 32], maxZoom: 13 })
   }
   focusSelected()
 }
 
 function focusSelected(previousSlug: string | null = null): void {
   if (!map) return
-  const previousFeature = previousSlug ? featuresBySlug.get(previousSlug) : undefined
-  if (previousSlug && previousFeature) {
-    markers.get(previousSlug)?.setIcon(markerIcon(previousFeature, false))
+  if (previousSlug && previousSlug !== props.selectedSlug) {
+    setMarkerSelected(previousSlug, false)
+    markers.get(previousSlug)?.closeTooltip()
   }
   const slug = props.selectedSlug
   if (!slug) return
   const marker = markers.get(slug)
-  const feature = featuresBySlug.get(slug)
-  if (!marker || !feature) return
-  marker.setIcon(markerIcon(feature, true))
+  // Điểm không có tọa độ hợp lệ không có marker: thẻ thông tin vẫn hiện ở panel nhưng bản đồ không di chuyển.
+  if (!marker) return
+  setMarkerSelected(slug, true)
 
   const showTooltip = () => marker.openTooltip()
   if (clusterLayer) {
@@ -178,6 +236,17 @@ function focusSelected(previousSlug: string | null = null): void {
     map.setView(marker.getLatLng(), Math.max(map.getZoom(), 13))
     showTooltip()
   }
+}
+
+/** Sau khi đổi kích thước khung, đảm bảo marker đang chọn vẫn nằm trong tầm nhìn. */
+function keepSelectedInView(): void {
+  if (!map || !props.selectedSlug) return
+  const marker = markers.get(props.selectedSlug)
+  if (marker) map.panInside(marker.getLatLng(), { padding: [48, 48], animate: false })
+}
+
+function selectedLatLng(): L.LatLng | null {
+  return (props.selectedSlug ? markers.get(props.selectedSlug)?.getLatLng() : null) ?? null
 }
 
 function renderUserPosition(): void {
@@ -194,7 +263,16 @@ function renderUserPosition(): void {
   })
     .bindTooltip('Vị trí của bạn', { direction: 'top' })
     .addTo(userLayer)
-  if (!props.route?.length) map.setView(position, Math.max(map.getZoom(), 11))
+  if (props.route?.length) return // renderRoute tự căn khung theo tuyến đường.
+
+  const destination = selectedLatLng()
+  if (destination) {
+    // Có điểm đang chọn: không kéo bản đồ về phía người dùng mà ôm cả hai điểm.
+    markers.get(props.selectedSlug as string)?.closeTooltip()
+    map.fitBounds(L.latLngBounds([position, destination]), { padding: [56, 56], maxZoom: 15 })
+  } else if (isInsideLamDong(props.userPosition)) {
+    map.setView(position, Math.max(map.getZoom(), 11))
+  }
 }
 
 function renderRoute(): void {
@@ -204,6 +282,7 @@ function renderRoute(): void {
   if (!props.route?.length) return
   const points = props.route.map(([longitude, latitude]) => [latitude, longitude] as L.LatLngTuple)
   routeLayer = L.polyline(points, { className: 'ocop-route-line', weight: 5, opacity: 0.85 }).addTo(map)
+  if (props.selectedSlug) markers.get(props.selectedSlug)?.closeTooltip()
   map.fitBounds(routeLayer.getBounds(), { padding: [40, 40] })
 }
 
@@ -219,7 +298,18 @@ async function initialize(): Promise<void> {
       ;(window as unknown as { L: typeof L }).L = L
       await import('leaflet.markercluster')
       if (isUnmounted || !map) return
-      clusterLayer = L.markerClusterGroup({ showCoverageOnHover: false, maxClusterRadius: 48 })
+      clusterLayer = L.markerClusterGroup({
+        showCoverageOnHover: false,
+        maxClusterRadius: 48,
+        iconCreateFunction: clusterIcon,
+      })
+      // Thư viện cụm chỉ xử lý Enter (clusterkeypress); bổ sung Space cho nhất quán với nút.
+      clusterLayer.on('clusterkeypress', (event: L.LeafletEvent) => {
+        const keyboardEvent = (event as L.LeafletKeyboardEvent).originalEvent
+        if (keyboardEvent?.key !== ' ' && keyboardEvent?.keyCode !== 32) return
+        keyboardEvent.preventDefault()
+        ;(event as unknown as { layer: L.MarkerCluster }).layer.zoomToBounds({ padding: [24, 24] })
+      })
       markerLayer = clusterLayer
     } else {
       markerLayer = L.layerGroup()
@@ -232,7 +322,10 @@ async function initialize(): Promise<void> {
     renderRoute()
 
     if (typeof ResizeObserver !== 'undefined') {
-      resizeObserver = new ResizeObserver(() => map?.invalidateSize())
+      resizeObserver = new ResizeObserver(() => {
+        map?.invalidateSize()
+        keepSelectedInView()
+      })
       resizeObserver.observe(container.value)
     }
   } catch {
