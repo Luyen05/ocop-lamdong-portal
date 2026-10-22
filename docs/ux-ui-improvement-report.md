@@ -85,7 +85,7 @@ Môi trường: PostgreSQL 16 + PostGIS, backend FastAPI, Vite dev server, Playw
 
 Quét lại đúng 90 lượt tải trang như audit (30 đường dẫn của khách, người dùng, chủ thể, quản trị; 390, 768, 1440 px; Chromium), sau khi gộp cả bốn đợt:
 
-| Chỉ số | Trước (lượt quét ngay trước đợt 2 đến 4) | Sau |
+| Chỉ số | Trước | Sau |
 |---|---|---|
 | Tràn ngang | 0 | 0 |
 | Lỗi axe-core | 9 lượt tải, cùng một lỗi `label-content-name-mismatch` trên thẻ sản phẩm | **0** |
@@ -93,7 +93,7 @@ Quét lại đúng 90 lượt tải trang như audit (30 đường dẫn của k
 | Mỗi trang đúng một `main` | đạt | đạt (90/90) |
 | Request 5xx | 6, đều là `503 /api/v1/news` | 6, đều là `503 /api/v1/news` (nguồn RSS bị sandbox chặn, lỗi môi trường) |
 
-Lưu ý khi đọc bảng: lượt quét "trước" là lượt gần nhất sau khi sửa trang chi tiết sản phẩm tràn ngang và chưa sửa thẻ sản phẩm. Lỗi tràn 1055 px của audit gốc (A3) và lỗi ARIA của bảng so sánh yêu cầu (B19) chỉ xuất hiện ở trạng thái dữ liệu cụ thể (URL nguồn dài, mở modal so sánh), nên được kiểm riêng ở các kịch bản tương tác ở trên, không nằm trong con số 90 lượt tải này. Quét tải trang không thay thế được kiểm tra tương tác.
+Lưu ý khi đọc bảng: cột "Trước" là lượt quét `audit8` chạy trước các đợt 2 đến 4 (bộ đường dẫn giống nhau). Lượt quét dùng sản phẩm Dehavi, không dùng 9 sản phẩm có URL nguồn trần (A3) và không mở modal so sánh yêu cầu (B19); hai lỗi đó chỉ được kiểm ở các kịch bản tương tác ở trên. Quét tải trang không thay thế được kiểm tra tương tác.
 
 ## 7. Lỗi và hạng mục còn lại
 
