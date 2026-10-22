@@ -17,12 +17,17 @@ Các thay đổi đáng chú ý của dự án. Định dạng theo [Keep a Chan
 - Giới hạn đăng nhập sai (5 lần/15 phút mỗi email, 20 lần/15 phút mỗi IP).
 - Tổng quan quản trị đếm sản phẩm thực sự hiển thị công khai; hàng đợi đánh giá chờ duyệt.
 - Tiêu đề thẻ trình duyệt cho từng trang, link bỏ qua điều hướng, hiệu ứng chuyển trang nhẹ (tôn trọng giảm chuyển động), trạng thái lỗi có nút "Thử lại" ở mọi trang.
+- Hiệu ứng chờ tải trang: thanh tiến trình trên đầu khi chuyển trang hoặc chờ API (hiện sau 150 ms để không nhấp nháy), khung xương trang cho lần mở đầu, thông báo ngoại tuyến/đã kết nối lại, thông báo "Chưa mở được trang" kèm nút Thử lại khi tải mã trang thất bại (tự tải lại một lần nếu nghi bản mới vừa triển khai), trang lỗi chung "Đã xảy ra sự cố" khi giao diện gặp lỗi khi dựng.
+- Trang 404 hiện địa chỉ đã mở, lối về đúng khu (quản trị/chủ thể), nút Quay lại và ô tìm sản phẩm; trang 403 dùng chung khung với 404 và 500.
+- Logo thương hiệu mới (biểu tượng + logo đầy đủ) ở đầu trang, chân trang, đăng nhập/đăng ký, khu quản trị/chủ thể, favicon và ảnh chia sẻ.
 - `PUBLIC_BASE_URL` cho URL ảnh khi chạy sau proxy; favicon.
 - Migration tổng hợp `014_hoan_thien.sql`; công cụ kiểm tra database so cả kiểu cột, ràng buộc, index.
 - `tools/sinh_tai_lieu_api.py` sinh `docs/API.md` (103 endpoint) và bộ Postman từ OpenAPI.
 
 ### Sửa
 
+- Trang đăng nhập/đăng ký vừa màn hình laptop (Windows 125–150%, trình duyệt 100%): không còn tràn theo chiều dọc ở 1536×784 và 1366×650 (đăng nhập); thanh thông báo đầu trang tự gọn khi màn hình thấp; nút Google/Facebook xếp hai cột.
+- Thẻ lỗi 404 không còn tràn ngang trên màn hình 375 px.
 - Chân trang không còn nhảy xuống khi nội dung trang công khai tải xong (CLS từ 0,8 về 0); font Google nạp không chặn hiển thị.
 - Test seed ảnh Dehavi (chỉ chạy với PostGIS tạm) lệch vì lượt xem tăng giữa hai lần chạy.
 - Trang duyệt hồ sơ chủ thể lỗi 500 với dữ liệu loại chủ thể `company`; lỗi 500 trả JSON có CORS.
