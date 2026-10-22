@@ -281,11 +281,25 @@ defineProps<{
   }
 
   .auth-form-panel :deep(.social-note) {
+    margin-top: 0.4rem;
+    font-size: 0.72rem;
+    line-height: 1.3;
+  }
+}
+
+/* Chỉ khi quá thấp mới bỏ ghi chú quyền riêng tư; chữ ở cột trái luôn giữ vì chiều cao thẻ do biểu mẫu quyết định. */
+@media (max-height: 700px) {
+  .auth-form-panel :deep(.social-note) {
     display: none;
   }
+}
 
+/* Màn hình thấp: cột trái chỉ gọn khoảng cách, không ẩn nội dung. */
+@media (max-height: 880px) and (min-width: 992px) {
   .feature-list {
-    display: none;
+    gap: 0.3rem;
+    margin-top: 0.75rem;
+    font-size: 0.9rem;
   }
 }
 

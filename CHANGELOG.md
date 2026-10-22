@@ -28,7 +28,7 @@ Các thay đổi đáng chú ý của dự án. Định dạng theo [Keep a Chan
 
 ### Sửa
 
-- Trang đăng nhập/đăng ký vừa màn hình laptop (Windows 125–150%, trình duyệt 100%): không còn tràn theo chiều dọc ở 1536×784 và 1366×650 (đăng nhập); thanh thông báo đầu trang tự gọn khi màn hình thấp; nút Google/Facebook xếp hai cột.
+- Trang đăng nhập/đăng ký vừa màn hình laptop (Windows 125–150%, trình duyệt 100%): không còn tràn theo chiều dọc ở 1536×784 và 1366×650 (đăng nhập), vẫn giữ ba dòng lợi ích ở cột trái và ghi chú quyền riêng tư (chỉ ẩn ghi chú khi cao dưới 700 px); thanh thông báo đầu trang tự gọn khi màn hình thấp; nút Google/Facebook xếp hai cột.
 - Thẻ lỗi 404 không còn tràn ngang trên màn hình 375 px.
 - Viền focus đặc 3 px, tương phản từ 3:1 trên mọi nền (nền tối dùng màu dã quỳ); tên truy cập của thẻ sản phẩm chứa nội dung nhìn thấy; màu chữ nhãn nhóm sản phẩm đạt 4,5:1.
 - Danh sách và chi tiết sản phẩm: không tràn ngang trên điện thoại, ngăn kéo bộ lọc có bẫy phím Tab, biểu mẫu đánh giá đưa focus vào thông báo, liên kết nguồn thành nút "Xem nguồn chính thức", trạng thái tải/lỗi/rỗng nhất quán.
