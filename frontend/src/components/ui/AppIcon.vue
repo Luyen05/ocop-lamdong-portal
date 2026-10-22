@@ -68,6 +68,7 @@ const iconNames: Record<string, string> = {
   barChart: 'bar-chart-line',
   table: 'table',
   alert: 'exclamation-triangle',
+  wifiOff: 'wifi-off',
   bell: 'bell',
   google: 'google',
   facebook: 'facebook',
