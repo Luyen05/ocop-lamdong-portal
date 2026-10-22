@@ -10,6 +10,7 @@ defineProps<{ label?: string }>()
   <div class="page-skeleton" role="status" aria-live="polite" data-testid="page-skeleton">
     <span class="visually-hidden">{{ label || 'Đang tải trang…' }}</span>
     <div class="page-skeleton__inner" aria-hidden="true">
+      <img class="page-skeleton__logo" src="/assets/brand/bieu-tuong-128.png" alt="" width="64" height="64" />
       <span class="ocop-skeleton page-skeleton__crumb" />
       <span class="ocop-skeleton page-skeleton__title" />
       <span class="ocop-skeleton page-skeleton__lead" />
@@ -34,6 +35,32 @@ defineProps<{ label?: string }>()
   width: min(100%, 1180px);
   margin: 0 auto;
   gap: var(--ocop-space-4);
+}
+
+.page-skeleton__logo {
+  width: 64px;
+  height: 64px;
+  margin: var(--ocop-space-4) auto var(--ocop-space-2);
+  animation: page-skeleton-logo 1.4s ease-in-out infinite;
+}
+
+@keyframes page-skeleton-logo {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(0.94);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-skeleton__logo {
+    animation: none;
+  }
 }
 
 .page-skeleton__crumb {

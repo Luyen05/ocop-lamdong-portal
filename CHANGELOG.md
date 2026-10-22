@@ -19,7 +19,7 @@ Các thay đổi đáng chú ý của dự án. Định dạng theo [Keep a Chan
 - Tiêu đề thẻ trình duyệt cho từng trang, link bỏ qua điều hướng, hiệu ứng chuyển trang nhẹ (tôn trọng giảm chuyển động), trạng thái lỗi có nút "Thử lại" ở mọi trang.
 - Hiệu ứng chờ tải trang: thanh tiến trình trên đầu khi chuyển trang hoặc chờ API (hiện sau 150 ms để không nhấp nháy), khung xương trang cho lần mở đầu, thông báo ngoại tuyến/đã kết nối lại, thông báo "Chưa mở được trang" kèm nút Thử lại khi tải mã trang thất bại (tự tải lại một lần nếu nghi bản mới vừa triển khai), trang lỗi chung "Đã xảy ra sự cố" khi giao diện gặp lỗi khi dựng.
 - Trang 404 hiện địa chỉ đã mở, lối về đúng khu (quản trị/chủ thể), nút Quay lại và ô tìm sản phẩm; trang 403 dùng chung khung với 404 và 500.
-- Logo thương hiệu mới (biểu tượng + logo đầy đủ) ở đầu trang, chân trang, đăng nhập/đăng ký, khu quản trị/chủ thể, favicon và ảnh chia sẻ.
+- Logo thương hiệu mới (biểu tượng + logo đầy đủ) ở đầu trang, chân trang (logo lớn), cột trái đăng nhập/đăng ký (thẻ logo), tấm logo kính mờ ở trang chủ, trang lỗi, màn hình chờ tải, khu quản trị/chủ thể, favicon và ảnh chia sẻ.
 - `PUBLIC_BASE_URL` cho URL ảnh khi chạy sau proxy; favicon.
 - Migration tổng hợp `014_hoan_thien.sql`; công cụ kiểm tra database so cả kiểu cột, ràng buộc, index.
 - `tools/sinh_tai_lieu_api.py` sinh `docs/API.md` (103 endpoint) và bộ Postman từ OpenAPI.

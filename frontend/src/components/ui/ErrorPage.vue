@@ -6,6 +6,7 @@ defineProps<{ code: string; title: string; titleId?: string }>()
 <template>
   <main class="error-page">
     <section class="error-card ocop-enter" :aria-labelledby="titleId || 'error-title'">
+      <img class="error-logo" src="/assets/brand/bieu-tuong-128.png" alt="" width="72" height="72" />
       <span class="error-code">{{ code }}</span>
       <slot name="icon" />
       <h1 :id="titleId || 'error-title'">{{ title }}</h1>
@@ -34,6 +35,13 @@ defineProps<{ code: string; title: string; titleId?: string }>()
   background: var(--ocop-card);
   box-shadow: 0 24px 50px color-mix(in srgb, var(--ocop-neutral-900) 10%, transparent);
   text-align: center;
+}
+
+.error-logo {
+  display: block;
+  width: 72px;
+  height: 72px;
+  margin: 0 auto var(--ocop-space-4);
 }
 
 .error-code {

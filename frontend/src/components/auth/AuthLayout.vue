@@ -29,6 +29,9 @@ defineProps<{
               chuyện đặc trưng của Lâm Đồng.
             </p>
           </div>
+          <div class="auth-logo-card">
+            <img src="/assets/brand/logo-day-du-320.png" alt="Logo Nông sản và Du lịch Lâm Đồng" width="320" height="350" />
+          </div>
           <ul class="feature-list">
             <li><AppIcon name="checkCircle" :size="15" /> Thông tin được kiểm duyệt</li>
             <li><AppIcon name="checkCircle" :size="15" /> Trải nghiệm bản đồ trực quan</li>
@@ -133,6 +136,22 @@ defineProps<{
   margin: 0;
   color: color-mix(in srgb, var(--ocop-white) 78%, transparent);
   line-height: 1.7;
+}
+
+.auth-logo-card {
+  display: grid;
+  width: fit-content;
+  padding: clamp(0.5rem, 1.6vh, 1rem) clamp(0.75rem, 2vh, 1.25rem);
+  place-items: center;
+  border-radius: 1.25rem;
+  background: var(--ocop-white);
+  box-shadow: 0 1rem 2.5rem color-mix(in srgb, var(--ocop-primary-950) 35%, transparent);
+}
+
+.auth-logo-card img {
+  display: block;
+  width: auto;
+  height: clamp(88px, 21vh, 190px);
 }
 
 .eyebrow {
