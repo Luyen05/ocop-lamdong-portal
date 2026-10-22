@@ -124,7 +124,7 @@ onBeforeUnmount(() => {
 
     <aside id="portal-sidebar" class="ps-sidebar" :class="{ 'is-open': isDrawerOpen }">
       <RouterLink class="ps-brand" :to="brandTo">
-        <span class="ps-brand__logo"><img src="/assets/figma/home/icon-brand.svg" alt="" width="20" height="20" /></span>
+        <span class="ps-brand__logo"><img src="/assets/brand/bieu-tuong-64.png" alt="" width="30" height="30" /></span>
         <span class="ps-brand__text">
           <strong>{{ brandTitle }}</strong>
           <small>{{ brandSubtitle }}</small>
@@ -309,8 +309,9 @@ onBeforeUnmount(() => {
   flex-shrink: 0;
   place-items: center;
   border-radius: var(--admin-radius-md);
-  background: var(--admin-primary);
+  background: var(--ocop-white);
 }
+.ps-brand__logo img { width: 30px; height: 30px; object-fit: contain; }
 .ps-brand__text { display: grid; min-width: 0; }
 .ps-brand__text strong { font-size: var(--admin-font-sm); font-weight: 800; letter-spacing: 0.02em; }
 .ps-brand__text small { color: var(--admin-muted); font-size: var(--admin-font-xs); }

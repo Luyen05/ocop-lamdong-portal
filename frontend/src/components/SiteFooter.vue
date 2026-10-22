@@ -26,7 +26,7 @@ const stats = [
       <div v-reveal class="footer-grid">
         <section class="footer-brand" aria-labelledby="footer-brand-title">
           <h2 id="footer-brand-title">
-            <span><img src="/assets/figma/home/icon-brand.svg" alt="" /></span>
+            <span><img src="/assets/brand/bieu-tuong-64.png" alt="" width="40" height="40" /></span>
             Cổng OCOP Lâm Đồng
           </h2>
           <p>Cổng thông tin quảng bá sản phẩm OCOP và bản đồ số du lịch nông nghiệp tỉnh Lâm Đồng.</p>
@@ -152,17 +152,15 @@ const stats = [
 
 .footer-brand h2 > span {
   display: grid;
-  width: 28px;
-  height: 28px;
+  width: 40px;
+  height: 40px;
   place-items: center;
-  border-radius: var(--ocop-radius-sm);
-  background: var(--ocop-tone-sky);
-  box-shadow: inset 0 -3px 0 var(--ocop-daquy-400);
 }
 
 .footer-brand h2 img {
-  width: 16px;
-  height: 16px;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .footer-grid p,
