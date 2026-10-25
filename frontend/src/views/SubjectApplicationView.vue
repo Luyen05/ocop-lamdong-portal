@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import axios from 'axios'
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 
+import StatusPanel from '@/components/ui/StatusPanel.vue'
 import { getApiErrorMessage } from '@/services/api-error'
 import {
   createSubjectApplication,
@@ -21,6 +22,7 @@ const isLoading = ref(true)
 const isSubmitting = ref(false)
 const isEditing = ref(false)
 const errorMessage = ref('')
+const loadError = ref('')
 const successMessage = ref('')
 
 const form = reactive<SubjectApplicationPayload>({
@@ -72,17 +74,32 @@ function startEditing(): void {
   successMessage.value = ''
 }
 
+/**
+ * Hồ sơ vừa được duyệt nhưng thông tin tài khoản đang giữ vẫn là vai trò cũ: tải lại /auth/me để
+ * đầu trang và quyền vào khu chủ thể cập nhật ngay, không cần đăng nhập lại.
+ */
+async function syncApprovedRole(): Promise<void> {
+  const user = authStore.currentUser.value
+  if (!user || user.role === 'subject') return
+  try {
+    await authStore.refreshUser()
+  } catch {
+    // Không tải lại được thì giữ nguyên; lần đăng nhập sau sẽ có vai trò mới.
+  }
+}
+
 async function loadApplication(): Promise<void> {
   isLoading.value = true
-  errorMessage.value = ''
+  loadError.value = ''
   try {
     application.value = await getMySubjectApplication()
     fillForm(application.value)
+    if (application.value.status === 'approved') void syncApprovedRole()
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status === 404) {
       application.value = null
     } else {
-      errorMessage.value = getApiErrorMessage(error, 'Không thể tải hồ sơ chủ thể.')
+      loadError.value = getApiErrorMessage(error, 'Không thể tải hồ sơ chủ thể.')
     }
   } finally {
     isLoading.value = false
@@ -112,7 +129,40 @@ async function submit(): Promise<void> {
   }
 }
 
-onMounted(loadApplication)
+/**
+ * Hồ sơ đang chờ duyệt: kiểm tra lại khi người dùng quay lại tab và mỗi phút, để trang và thanh
+ * đầu trang chuyển sang quyền chủ thể ngay khi quản trị viên duyệt, không cần tải lại trang.
+ */
+async function refreshPendingApplication(): Promise<void> {
+  if (application.value?.status !== 'pending' || isEditing.value || document.visibilityState === 'hidden') return
+  try {
+    const latest = await getMySubjectApplication()
+    if (latest.status === application.value?.status) return
+    application.value = latest
+    fillForm(latest)
+    if (latest.status === 'approved') await syncApprovedRole()
+  } catch {
+    // Lỗi mạng tạm thời: lần kiểm tra sau sẽ thử lại.
+  }
+}
+
+let refreshTimer: ReturnType<typeof setInterval> | undefined
+function onVisibilityChange(): void {
+  if (document.visibilityState === 'visible') void refreshPendingApplication()
+}
+
+onMounted(() => {
+  void loadApplication()
+  refreshTimer = setInterval(() => void refreshPendingApplication(), 60_000)
+  document.addEventListener('visibilitychange', onVisibilityChange)
+  window.addEventListener('focus', onVisibilityChange)
+})
+
+onBeforeUnmount(() => {
+  if (refreshTimer) clearInterval(refreshTimer)
+  document.removeEventListener('visibilitychange', onVisibilityChange)
+  window.removeEventListener('focus', onVisibilityChange)
+})
 </script>
 
 <template>
@@ -127,17 +177,26 @@ onMounted(loadApplication)
         <RouterLink to="/tai-khoan">Quay lại tài khoản</RouterLink>
       </header>
 
-      <div v-if="errorMessage" class="alert alert-danger" role="alert">
-        {{ errorMessage }}
-      </div>
-      <div v-if="successMessage" class="alert alert-success" role="status">
-        {{ successMessage }}
-      </div>
+      <Transition name="ocop-rise">
+        <div v-if="errorMessage" class="alert alert-danger" role="alert">
+          {{ errorMessage }}
+        </div>
+      </Transition>
+      <Transition name="ocop-rise">
+        <div v-if="successMessage" class="alert alert-success" role="status">
+          {{ successMessage }}
+        </div>
+      </Transition>
 
-      <section v-if="isLoading" class="state-card" aria-live="polite">
-        <span class="spinner-border spinner-border-sm" aria-hidden="true" />
-        Đang tải hồ sơ...
-      </section>
+      <StatusPanel v-if="isLoading" class="state-card" kind="loading" :rows="2" message="Đang tải hồ sơ…" />
+      <StatusPanel
+        v-else-if="loadError"
+        class="state-card"
+        kind="error"
+        title="Chưa tải được hồ sơ chủ thể"
+        :message="loadError"
+        @retry="loadApplication"
+      />
 
       <template v-else>
         <section v-if="application && !isEditing" class="application-summary">

@@ -1,14 +1,16 @@
 <script setup lang="ts">
 import axios from 'axios'
-import { computed, onUnmounted, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
 import LeafletMap from '@/components/map/LeafletMap.vue'
 import PresentationGallery from '@/components/products/PresentationGallery.vue'
 import ProductCard from '@/components/products/ProductCard.vue'
+import ReviewSection from '@/components/reviews/ReviewSection.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
 import { getApiErrorMessage } from '@/services/api-error'
 import { getLocation } from '@/services/locations'
+import { absoluteUrl, applyPageSeo, clipDescription, locationJsonLd } from '@/utils/seo'
 import type { LocationDetail, MapFeature } from '@/types/location'
 import {
   externalDirectionsUrl,
@@ -67,7 +69,17 @@ async function loadLocation(slug: string): Promise<void> {
   location.value = null
   try {
     location.value = await getLocation(slug)
-    document.title = `${location.value.name} | Du lịch nông nghiệp Lâm Đồng`
+    const loaded = location.value
+    const canonicalPath = `/diem-du-lich/${loaded.slug}`
+    applyPageSeo({
+      title: `${loaded.name} – Du lịch nông nghiệp Lâm Đồng`,
+      description:
+        clipDescription(loaded.description) ||
+        clipDescription(`${loaded.type_label} tại ${loaded.district || 'Lâm Đồng'}. ${loaded.address}`),
+      image: loaded.primary_image_url ?? loaded.images[0]?.image_url,
+      path: canonicalPath,
+      jsonLd: locationJsonLd(loaded, absoluteUrl(canonicalPath)),
+    })
   } catch (error) {
     errorTitle.value = axios.isAxiosError(error) && error.response?.status === 404
       ? 'Không tìm thấy điểm du lịch'
@@ -86,14 +98,18 @@ watch(
   { immediate: true },
 )
 
-onUnmounted(() => {
-  document.title = 'OCOP Lâm Đồng'
-})
+
+// Lỗi mạng hoặc máy chủ thì cho thử lại; không tìm thấy (404) thì chỉ quay lại danh sách.
+const canRetry = computed(() => errorTitle.value === 'Không thể tải điểm du lịch')
+
+function retryLoad(): void {
+  void loadLocation(String(route.params.slug))
+}
 </script>
 
 <template>
   <main class="location-detail-page">
-    <div class="container py-4 py-lg-5">
+    <div class="container py-4 py-lg-5 stagger-in">
       <nav class="breadcrumb-nav mb-4" aria-label="Đường dẫn">
         <RouterLink to="/">Trang chủ</RouterLink>
         <span>/</span>
@@ -117,7 +133,10 @@ onUnmounted(() => {
         <span class="error-symbol">!</span>
         <h1>{{ errorTitle }}</h1>
         <p>{{ errorMessage }}</p>
-        <RouterLink class="btn btn-success" :to="{ name: 'locations' }">Quay lại danh sách</RouterLink>
+        <div class="error-actions">
+          <button v-if="canRetry" class="btn btn-success" type="button" @click="retryLoad">Thử lại</button>
+          <RouterLink class="btn btn-outline-secondary" :to="{ name: 'locations' }">Quay lại danh sách</RouterLink>
+        </div>
       </section>
 
       <template v-else-if="location">
@@ -214,6 +233,7 @@ onUnmounted(() => {
           </template>
           Vui lòng liên hệ điểm đến trước khi tham quan.
         </p>
+        <ReviewSection target-type="location" :target-id="location.id" :owner-subject-id="location.subject?.id ?? null" />
       </template>
     </div>
   </main>
@@ -272,6 +292,13 @@ onUnmounted(() => {
 .error-state h1 {
   margin: 1rem 0 0.5rem;
   font-size: 1.6rem;
+}
+
+.error-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--ocop-space-3);
 }
 
 .error-state p {

@@ -55,11 +55,35 @@ describe('HomeMapPreview', () => {
   })
 
   it('hien thi thong bao khi chua co diem', async () => {
-    vi.mocked(getMapLocations).mockRejectedValue(new Error('network'))
+    vi.mocked(getMapLocations).mockResolvedValue({ type: 'FeatureCollection', features: [] })
     const wrapper = mount(HomeMapPreview, { global: { stubs: { RouterLink: true } } })
     await flushPromises()
 
     expect(wrapper.text()).toContain('Chưa có điểm đến được công bố.')
+    expect(wrapper.text()).toContain('0 điểm đến')
+    expect(wrapper.find('[role="alert"]').exists()).toBe(false)
+  })
+
+  it('tai loi thi bao loi va co nut Thu lai, khong hien nhu rong', async () => {
+    vi.mocked(getMapLocations)
+      .mockRejectedValueOnce(new Error('network'))
+      .mockResolvedValueOnce({
+        type: 'FeatureCollection',
+        features: [feature('tay-bac', 'tea_coffee_farm', [107.7, 12.1])],
+      })
+    const wrapper = mount(HomeMapPreview, { global: { stubs: { RouterLink: true } } })
+    await flushPromises()
+
+    expect(wrapper.get('[role="alert"]').text()).toContain('Chưa tải được các điểm du lịch')
+    expect(wrapper.text()).not.toContain('Chưa có điểm đến được công bố.')
+    expect(wrapper.text()).not.toContain('0 điểm đến')
+
+    await wrapper.get('.retry-button').trigger('click')
+    await flushPromises()
+
+    expect(getMapLocations).toHaveBeenCalledTimes(2)
+    expect(wrapper.find('[role="alert"]').exists()).toBe(false)
+    expect(wrapper.text()).toContain('1 điểm đến')
   })
 
   it('gom cac diem qua gan thanh mot vong co so luong', async () => {

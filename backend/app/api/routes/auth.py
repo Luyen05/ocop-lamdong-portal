@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session, joinedload
 from app.api.dependencies import CurrentUser
 from app.core.config import get_settings
 from app.core.database import get_db
+from app.core.rate_limit import password_attempts
 from app.core.roles import RoleName
 from app.core.security import (
     DUMMY_PASSWORD_HASH,
@@ -18,6 +19,7 @@ from app.core.security import (
 from app.models.role import Role
 from app.models.user import User
 from app.schemas.auth import (
+    ChangePasswordRequest,
     LoginRequest,
     RegisterRequest,
     TokenResponse,
@@ -31,6 +33,27 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 settings = get_settings()
 
 
+def client_ip(request: Request) -> str:
+    return request.client.host if request.client else "unknown"
+
+
+def ensure_password_attempts_allowed(*, email: str, ip: str) -> None:
+    """429 khi email hoặc địa chỉ IP đã nhập sai mật khẩu quá nhiều lần gần đây."""
+
+    retry_after = password_attempts.retry_after(email=email, ip=ip)
+    if retry_after > 0:
+        minutes = max(1, -(-retry_after // 60))
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail={
+                "code": "TOO_MANY_LOGIN_ATTEMPTS",
+                "message": f"Bạn đã nhập sai mật khẩu quá nhiều lần. Vui lòng thử lại sau khoảng {minutes} phút.",
+                "details": {"retry_after_seconds": retry_after},
+            },
+            headers={"Retry-After": str(retry_after)},
+        )
+
+
 def to_user_read(user: User) -> UserRead:
     return UserRead(
         id=user.id,
@@ -40,6 +63,8 @@ def to_user_read(user: User) -> UserRead:
         avatar_url=user.avatar_url,
         is_active=user.is_active,
         role=user.role.name,
+        has_password=user.hashed_password is not None,
+        social_providers=[account.provider for account in user.social_accounts],
         created_at=user.created_at,
         updated_at=user.updated_at,
     )
@@ -113,22 +138,30 @@ def register(
     responses={
         status.HTTP_401_UNAUTHORIZED: {"model": ErrorResponse},
         status.HTTP_403_FORBIDDEN: {"model": ErrorResponse},
+        status.HTTP_429_TOO_MANY_REQUESTS: {"model": ErrorResponse},
     },
 )
 def login(
     payload: LoginRequest,
+    request: Request,
     db: Annotated[Session, Depends(get_db)],
 ) -> TokenResponse:
+    ip = client_ip(request)
+    ensure_password_attempts_allowed(email=payload.email, ip=ip)
     user = db.scalar(
         select(User)
         .options(joinedload(User.role))
         .where(func.lower(User.email) == payload.email)
     )
+    # Vẫn băm với tài khoản không tồn tại hoặc chưa có mật khẩu (tạo bằng Google/Facebook)
+    # để thời gian phản hồi như nhau, không lộ email nào đã đăng ký.
+    stored_hash = user.hashed_password if user is not None else None
     password_matches = verify_password(
         payload.password.get_secret_value(),
-        user.hashed_password if user is not None else DUMMY_PASSWORD_HASH,
-    )
+        stored_hash or DUMMY_PASSWORD_HASH,
+    ) and stored_hash is not None
     if user is None or not password_matches:
+        password_attempts.record_failure(email=payload.email, ip=ip)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail={
@@ -138,6 +171,7 @@ def login(
             },
             headers={"WWW-Authenticate": "Bearer"},
         )
+    password_attempts.record_success(email=payload.email)
     if not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -195,3 +229,62 @@ def update_me(
     db.commit()
     db.refresh(current_user)
     return to_user_read(current_user)
+
+
+def password_error(status_code: int, code: str, message: str, field: str) -> HTTPException:
+    return HTTPException(
+        status_code=status_code,
+        detail={"code": code, "message": message, "details": {"field": field}},
+    )
+
+
+@router.post(
+    "/change-password",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses={
+        status.HTTP_400_BAD_REQUEST: {"model": ErrorResponse},
+        status.HTTP_401_UNAUTHORIZED: {"model": ErrorResponse},
+        status.HTTP_422_UNPROCESSABLE_ENTITY: {"model": ErrorResponse},
+        status.HTTP_429_TOO_MANY_REQUESTS: {"model": ErrorResponse},
+    },
+)
+def change_password(
+    payload: ChangePasswordRequest,
+    request: Request,
+    current_user: CurrentUser,
+    db: Annotated[Session, Depends(get_db)],
+) -> Response:
+    """Đổi mật khẩu; tài khoản tạo bằng Google/Facebook (chưa có mật khẩu) thì đặt mật khẩu lần đầu."""
+
+    new_password = payload.new_password.get_secret_value()
+    if current_user.hashed_password is not None:
+        if payload.current_password is None:
+            raise password_error(
+                status.HTTP_422_UNPROCESSABLE_ENTITY,
+                "CURRENT_PASSWORD_REQUIRED",
+                "Vui lòng nhập mật khẩu hiện tại.",
+                "current_password",
+            )
+        ip = client_ip(request)
+        ensure_password_attempts_allowed(email=current_user.email, ip=ip)
+        if not verify_password(payload.current_password.get_secret_value(), current_user.hashed_password):
+            password_attempts.record_failure(email=current_user.email, ip=ip)
+            raise password_error(
+                status.HTTP_400_BAD_REQUEST,
+                "INVALID_CURRENT_PASSWORD",
+                "Mật khẩu hiện tại không đúng.",
+                "current_password",
+            )
+        password_attempts.record_success(email=current_user.email)
+        if verify_password(new_password, current_user.hashed_password):
+            raise password_error(
+                status.HTTP_422_UNPROCESSABLE_ENTITY,
+                "PASSWORD_UNCHANGED",
+                "Mật khẩu mới phải khác mật khẩu hiện tại.",
+                "new_password",
+            )
+
+    current_user.hashed_password = hash_password(new_password)
+    db.add(current_user)
+    db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

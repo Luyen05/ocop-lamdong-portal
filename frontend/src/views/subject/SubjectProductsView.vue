@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
+import StatusPanel from '@/components/ui/StatusPanel.vue'
 import { useDialogFocus } from '@/composables/useDialogFocus'
 import { getApiErrorMessage } from '@/services/api-error'
 import {
@@ -25,7 +27,18 @@ const filter = ref<ProductGroup>('all')
 const loading = ref(true)
 const actionId = ref<number | null>(null)
 const errorMessage = ref('')
+const loadError = ref('')
 const successMessage = ref('')
+const route = useRoute()
+const router = useRouter()
+
+/** Thông báo khi quay về từ trang soạn sản phẩm (?saved=draft|submitted|requested). */
+const savedMessages: Record<string, string> = {
+  draft: 'Đã lưu bản nháp sản phẩm.',
+  submitted: 'Đã gửi sản phẩm để quản trị viên duyệt hiển thị.',
+  requested: 'Đã gửi yêu cầu cập nhật. Sản phẩm vẫn hiển thị nội dung cũ cho đến khi được duyệt.',
+  resubmitted: 'Đã sửa và gửi lại yêu cầu cập nhật để quản trị viên duyệt.',
+}
 const deletingProduct = ref<ManagedProduct | null>(null)
 const revisingDeletionRequest = ref<ProductChangeRequest | null>(null)
 const deletionReason = ref('')
@@ -67,7 +80,7 @@ function groupCount(group: ProductGroup): number {
 
 async function loadData(): Promise<void> {
   loading.value = true
-  errorMessage.value = ''
+  loadError.value = ''
   try {
     const [productData, requestData] = await Promise.all([
       listMyProducts(),
@@ -76,7 +89,7 @@ async function loadData(): Promise<void> {
     products.value = productData.items
     changeRequests.value = requestData.items
   } catch (error) {
-    errorMessage.value = getApiErrorMessage(error, 'Không thể tải danh sách sản phẩm.')
+    loadError.value = getApiErrorMessage(error, 'Không thể tải danh sách sản phẩm.')
   } finally {
     loading.value = false
   }
@@ -183,11 +196,18 @@ function markImageBroken(productId: number): void {
   brokenProductImages.value = new Set([...brokenProductImages.value, productId])
 }
 
-onMounted(loadData)
+onMounted(() => {
+  const saved = route.query.saved
+  if (typeof saved === 'string' && savedMessages[saved]) {
+    successMessage.value = savedMessages[saved]
+    void router.replace({ query: { ...route.query, saved: undefined } })
+  }
+  void loadData()
+})
 </script>
 
 <template>
-  <main class="subject-products-page">
+  <div class="subject-products-page">
     <header class="page-heading">
       <div>
         <span>Quản lý sản phẩm OCOP</span>
@@ -197,8 +217,12 @@ onMounted(loadData)
       <RouterLink class="primary-button" to="/chu-the/san-pham/them">+ Thêm sản phẩm</RouterLink>
     </header>
 
-    <div v-if="errorMessage" class="alert alert-danger" role="alert">{{ errorMessage }}</div>
-    <div v-if="successMessage" class="alert alert-success" role="status">{{ successMessage }}</div>
+    <Transition name="ocop-rise">
+      <div v-if="errorMessage" class="alert alert-danger" role="alert">{{ errorMessage }}</div>
+    </Transition>
+    <Transition name="ocop-rise">
+      <div v-if="successMessage" class="alert alert-success" role="status">{{ successMessage }}</div>
+    </Transition>
 
     <section class="filter-bar" aria-label="Lọc sản phẩm theo trạng thái">
       <button
@@ -213,8 +237,14 @@ onMounted(loadData)
     </section>
 
     <section class="product-panel">
-      <p v-if="loading" class="state-message">Đang tải sản phẩm...</p>
-      <p v-else-if="!filteredProducts.length" class="state-message">Chưa có sản phẩm phù hợp.</p>
+      <StatusPanel v-if="loading" kind="loading" :rows="3" message="Đang tải sản phẩm…" />
+      <StatusPanel v-else-if="loadError" kind="error" :message="loadError" @retry="loadData" />
+      <StatusPanel
+        v-else-if="!filteredProducts.length"
+        kind="empty"
+        :title="products.length ? 'Không có sản phẩm ở trạng thái này' : 'Chưa có sản phẩm nào'"
+        :message="products.length ? 'Chọn nhóm trạng thái khác để xem sản phẩm.' : 'Bấm “Thêm sản phẩm” để lưu bản nháp đầu tiên.'"
+      />
       <div v-else class="product-list stagger-in">
         <article v-for="product in filteredProducts" :key="product.id">
           <img
@@ -282,7 +312,7 @@ onMounted(loadData)
               type="button"
               @click="removeDraft(product)"
             >
-              Xóa bản nháp
+              {{ product.status === 'draft' ? 'Xóa bản nháp' : 'Xóa hồ sơ' }}
             </button>
             <button
               v-if="product.status === 'approved' && !activeRequest(product.id)"
@@ -328,7 +358,7 @@ onMounted(loadData)
         </div>
       </form>
     </div>
-  </main>
+  </div>
 </template>
 
 <style scoped>
@@ -361,7 +391,6 @@ onMounted(loadData)
 .product-actions button, .dialog-card button { padding: var(--ocop-space-2) 10px; border: 1px solid var(--ocop-border); border-radius: var(--ocop-radius-sm); background: var(--ocop-card); font-size: var(--ocop-font-size-caption); font-weight: 700; }
 .approve-button { border-color: var(--ocop-primary-700) !important; color: var(--ocop-primary-700); }
 .danger-button { border-color: var(--ocop-danger-border) !important; color: var(--ocop-danger-strong); }
-.state-message { padding: 50px var(--ocop-space-5); color: var(--ocop-slate); text-align: center; }
 .dialog-backdrop { position: fixed; z-index: 80; inset: 0; display: grid; padding: var(--ocop-space-5); place-items: center; background: color-mix(in srgb, var(--ocop-neutral-900) 55%, transparent); }
 .dialog-card { width: min(100%, 500px); padding: var(--ocop-space-6); border-radius: 15px; background: var(--ocop-card); box-shadow: 0 25px 60px color-mix(in srgb, var(--ocop-neutral-900) 25%, transparent); }
 .dialog-card h2 { margin-top: 0; }

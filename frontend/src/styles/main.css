@@ -56,8 +56,10 @@ h6 {
   font-family: inherit;
 }
 
-html {
-  scroll-behavior: smooth;
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
 }
 
 [id] {
@@ -360,11 +362,125 @@ img {
   transform: translateY(0) scale(0.98);
 }
 
+/* Chuyển cảnh dùng chung cho <Transition>/<TransitionGroup> ở mọi khu (công khai, chủ thể, quản trị).
+ * - ocop-fade  : thông báo, khối nội dung đổi theo tab.
+ * - ocop-rise  : banner trạng thái, khối mới xuất hiện (trượt lên 8px).
+ * - ocop-pop   : hộp thoại, menu nổi (phóng nhẹ từ 96%).
+ * - ocop-list  : danh sách thêm/bớt phần tử; phần tử còn lại trượt về chỗ mới.
+ */
+.ocop-fade-enter-active,
+.ocop-fade-leave-active {
+  transition: opacity var(--ocop-duration-base) var(--ocop-ease-out);
+}
+
+.ocop-fade-enter-from,
+.ocop-fade-leave-to {
+  opacity: 0;
+}
+
+.ocop-rise-enter-active {
+  transition: opacity var(--ocop-duration-base) var(--ocop-ease-out), transform var(--ocop-duration-base) var(--ocop-ease-out);
+}
+
+.ocop-rise-leave-active {
+  transition: opacity var(--ocop-duration-fast) var(--ocop-ease-in);
+}
+
+.ocop-rise-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.ocop-rise-leave-to {
+  opacity: 0;
+}
+
+.ocop-pop-enter-active {
+  transition: opacity var(--ocop-duration-base) var(--ocop-ease-out), transform var(--ocop-duration-base) var(--ocop-ease-out);
+}
+
+.ocop-pop-leave-active {
+  transition: opacity var(--ocop-duration-fast) var(--ocop-ease-in), transform var(--ocop-duration-fast) var(--ocop-ease-in);
+}
+
+.ocop-pop-enter-from,
+.ocop-pop-leave-to {
+  opacity: 0;
+  transform: scale(0.96);
+}
+
+.ocop-list-enter-active,
+.ocop-list-move {
+  transition: opacity var(--ocop-duration-base) var(--ocop-ease-out), transform var(--ocop-duration-base) var(--ocop-ease-out);
+}
+
+.ocop-list-leave-active {
+  transition: opacity var(--ocop-duration-fast) var(--ocop-ease-in);
+}
+
+.ocop-list-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.ocop-list-leave-to {
+  opacity: 0;
+}
+
+/* Khối chính của trang đơn (đăng nhập, 404, không có quyền) trượt lên khi mở trang. */
+.ocop-enter {
+  animation: ocop-rise-in var(--ocop-duration-slow) var(--ocop-ease-out) both;
+}
+
+/* Khung xương khi đang tải: dải sáng chạy ngang, tắt khi giảm chuyển động. */
+.ocop-skeleton {
+  display: block;
+  border-radius: var(--ocop-radius-sm);
+  background: linear-gradient(90deg, var(--ocop-mist-100) 25%, var(--ocop-mist-50) 50%, var(--ocop-mist-100) 75%);
+  background-size: 200% 100%;
+  animation: ocop-shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes ocop-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+
+  to {
+    background-position: -100% 0;
+  }
+}
+
+/* Phản hồi khi bấm: mọi nút hơi lún xuống trong lúc nhấn. */
+@media (prefers-reduced-motion: no-preference) {
+  :where(.btn, button[class*='btn'], a[class*='btn']):not(:disabled):active {
+    transform: scale(0.97);
+  }
+}
+
 @media print {
   .reveal {
     opacity: 1;
     transform: none;
     transition: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ocop-fade-enter-active,
+  .ocop-fade-leave-active,
+  .ocop-rise-enter-active,
+  .ocop-rise-leave-active,
+  .ocop-pop-enter-active,
+  .ocop-pop-leave-active,
+  .ocop-list-enter-active,
+  .ocop-list-leave-active,
+  .ocop-list-move {
+    transition: none;
+  }
+
+  .ocop-skeleton {
+    animation: none;
   }
 }
 
@@ -389,5 +505,18 @@ img {
   .ocop-btn-main:active,
   .ocop-btn-ghost:active {
     transform: none;
+  }
+}
+
+/* Lưới an toàn: khi người dùng bật giảm chuyển động, mọi hiệu ứng trong component (kể cả style scoped
+ * chưa tự xử lý) chạy tức thì và không lặp. Trạng thái cuối vẫn hiển thị đúng. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

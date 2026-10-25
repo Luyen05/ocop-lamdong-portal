@@ -3,6 +3,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import AppIcon from '@/components/ui/AppIcon.vue'
+import StatusPanel from '@/components/ui/StatusPanel.vue'
 import { getCategories } from '@/services/categories'
 import { getApiErrorMessage } from '@/services/api-error'
 import {
@@ -36,6 +37,9 @@ const saving = ref(false)
 const uploadingImage = ref(false)
 const uploadingCertificate = ref(false)
 const errorMessage = ref('')
+// Lỗi khi mở biểu mẫu: không hiện form để tránh sửa trên dữ liệu rỗng hoặc hồ sơ đang khóa.
+const loadError = ref('')
+const loadRetryable = ref(true)
 const imageErrorMessage = ref('')
 const certificateErrorMessage = ref('')
 const certificateFileName = ref('')
@@ -232,8 +236,28 @@ function submissionPayload(): ProductWritePayload {
   return normalizedDraftPayload() as ProductWritePayload
 }
 
+/**
+ * Danh sách danh mục công khai không có danh mục đang ẩn. Sản phẩm đã thuộc danh mục ẩn vẫn
+ * được sửa và giữ nguyên danh mục, nên thêm riêng danh mục đó vào ô chọn (chỉ khi sửa).
+ */
+function keepCurrentCategory(categoryId: number, category?: { name: string; slug: string }): void {
+  if (form.category_id !== categoryId || categories.value.some((item) => item.id === categoryId)) return
+  categories.value = [
+    ...categories.value,
+    {
+      id: categoryId,
+      name: `${category?.name ?? 'Danh mục hiện tại'} (đang tạm ẩn)`,
+      slug: category?.slug ?? '',
+      description: null,
+      icon: null,
+    },
+  ]
+}
+
 async function load(): Promise<void> {
   loading.value = true
+  loadError.value = ''
+  loadRetryable.value = true
   try {
     const categoryData = await getCategories()
     categories.value = categoryData.items
@@ -241,26 +265,64 @@ async function load(): Promise<void> {
     if (requestId.value) {
       const request = await getProductChangeRequest('subject', requestId.value)
       if (request.status !== 'needs_revision' || request.request_type !== 'update' || !request.proposed_data) {
-        errorMessage.value = 'Chỉ yêu cầu cập nhật cần bổ sung mới có thể chỉnh sửa.'
+        loadError.value = 'Chỉ yêu cầu cập nhật cần bổ sung mới có thể chỉnh sửa.'
+        loadRetryable.value = false
         return
       }
       currentRequest.value = request
       updateReason.value = request.reason || ''
       fillForm(request.proposed_data)
+      keepCurrentCategory(request.current_data.category_id)
     } else if (productId.value) {
       const product = await getMyProduct(productId.value)
       if (!['draft', 'needs_revision', 'rejected', 'approved'].includes(product.status)) {
-        errorMessage.value = 'Sản phẩm đang chờ xử lý và không thể chỉnh sửa.'
+        loadError.value = 'Sản phẩm đang chờ xử lý và không thể chỉnh sửa.'
+        loadRetryable.value = false
         return
       }
       currentProduct.value = product
       fillForm(product)
+      keepCurrentCategory(product.category.id, product.category)
+      const carriedError = takeSaveErrorFromHistory()
+      if (carriedError) errorMessage.value = carriedError
     }
   } catch (error) {
-    errorMessage.value = getApiErrorMessage(error, 'Không thể tải biểu mẫu sản phẩm.')
+    loadError.value = getApiErrorMessage(error, 'Không thể tải biểu mẫu sản phẩm.')
   } finally {
     loading.value = false
   }
+}
+
+const SAVE_ERROR_STATE_KEY = 'productEditorError'
+
+/**
+ * Bản nháp mới đã tạo nhưng gửi duyệt lỗi: chuyển sang URL chỉnh sửa để tải lại trang hay bấm lưu lần nữa
+ * đều sửa đúng bản nháp này. Đổi URL làm khung chủ thể dựng lại trang, nên thông báo lỗi được chuyển kèm
+ * qua history state để trang mới hiện lại.
+ */
+async function moveToEditUrl(id: number, error: unknown): Promise<void> {
+  const message = `Đã lưu bản nháp nhưng chưa gửi duyệt được: ${getApiErrorMessage(error, 'Vui lòng thử lại.')}`
+  try {
+    await router.replace({
+      name: 'subject-product-edit',
+      params: { id: String(id) },
+      state: { [SAVE_ERROR_STATE_KEY]: message },
+    })
+  } catch {
+    // Không đổi được URL vẫn giữ currentProduct, lần lưu sau không tạo bản nháp trùng.
+  }
+}
+
+function takeSaveErrorFromHistory(): string {
+  const state = typeof window !== 'undefined' ? window.history.state : null
+  const message = state?.[SAVE_ERROR_STATE_KEY]
+  if (typeof message !== 'string') return ''
+  try {
+    window.history.replaceState({ ...state, [SAVE_ERROR_STATE_KEY]: undefined }, '')
+  } catch {
+    // Bỏ qua: chỉ để tải lại trang không hiện lại lỗi cũ.
+  }
+  return message
 }
 
 async function save(submitAfterSave = false): Promise<void> {
@@ -284,10 +346,20 @@ async function save(submitAfterSave = false): Promise<void> {
     } else if (isApprovedUpdate.value && currentProduct.value) {
       await requestProductUpdate(currentProduct.value.id, submissionPayload(), updateReason.value)
     } else {
+      const isNewDraft = !currentProduct.value
       const saved = currentProduct.value
         ? await updateProductDraft(currentProduct.value.id, draftPayload)
         : await createProductDraft(draftPayload)
-      if (submitAfterSave) await submitProduct(saved.id)
+      // Từ đây sản phẩm đã có trên máy chủ: lần lưu sau phải sửa bản nháp này, không tạo bản mới.
+      currentProduct.value = saved
+      if (submitAfterSave) {
+        try {
+          await submitProduct(saved.id)
+        } catch (error) {
+          if (isNewDraft) await moveToEditUrl(saved.id, error)
+          throw error
+        }
+      }
     }
     await router.push({
       name: 'subject-products',
@@ -312,7 +384,7 @@ onMounted(load)
 </script>
 
 <template>
-  <main class="editor-page">
+  <div class="editor-page">
     <header>
       <RouterLink to="/chu-the/san-pham"><AppIcon name="arrowLeft" :size="14" /> Danh sách sản phẩm</RouterLink>
       <span>{{ isApprovedUpdate || isRequestRevision ? 'Yêu cầu thay đổi' : 'Hồ sơ sản phẩm OCOP' }}</span>
@@ -328,8 +400,21 @@ onMounted(load)
       </p>
     </header>
 
-    <div v-if="errorMessage" class="alert alert-danger" role="alert">{{ errorMessage }}</div>
-    <p v-if="loading" class="loading-card">Đang tải biểu mẫu...</p>
+    <Transition name="ocop-rise">
+      <div v-if="errorMessage" class="alert alert-danger" role="alert">{{ errorMessage }}</div>
+    </Transition>
+    <StatusPanel v-if="loading" class="loading-card" kind="loading" :rows="4" message="Đang tải biểu mẫu…" />
+    <StatusPanel
+      v-else-if="loadError"
+      class="loading-card"
+      kind="error"
+      :title="loadRetryable ? 'Chưa mở được biểu mẫu' : 'Không thể chỉnh sửa lúc này'"
+      :message="loadError"
+      :retryable="loadRetryable"
+      @retry="load"
+    >
+      <RouterLink class="back-to-list" to="/chu-the/san-pham">Về danh sách sản phẩm</RouterLink>
+    </StatusPanel>
 
     <form v-else class="product-form" @submit.prevent="save(true)">
       <aside class="completion-card" aria-label="Mức độ hoàn thiện hồ sơ">
@@ -450,7 +535,7 @@ onMounted(load)
         </button>
       </footer>
     </form>
-  </main>
+  </div>
 </template>
 
 <style scoped>
@@ -459,6 +544,7 @@ header > a { color: var(--ocop-primary-700); font-size: var(--ocop-font-size-cap
 header > span { display: block; margin-top: var(--ocop-space-4); color: var(--ocop-primary-700); font-size: var(--ocop-font-size-caption); font-weight: 800; text-transform: uppercase; }
 header h1 { margin: var(--ocop-space-1) 0; font-size: 30px; }
 header p { margin: 0; color: var(--ocop-slate); font-size: var(--ocop-font-size-small); }
+.back-to-list { color: var(--ocop-mist-800); font-weight: 600; }
 .loading-card, .product-form section { padding: 22px; border: 1px solid var(--ocop-border); border-radius: 14px; background: var(--ocop-card); }
 .product-form { display: grid; gap: var(--ocop-space-4); }
 .completion-card { padding: var(--ocop-space-4) var(--ocop-space-5); border: 1px solid var(--ocop-mint-border); border-radius: 14px; background: var(--ocop-surface-muted); }

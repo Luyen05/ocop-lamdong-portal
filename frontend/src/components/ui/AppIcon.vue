@@ -23,6 +23,11 @@ const iconNames: Record<string, string> = {
   'map-pin': 'geo-alt',
   building: 'buildings',
   users: 'people',
+  tags: 'tags',
+  plus: 'plus-lg',
+  pencil: 'pencil',
+  trash: 'trash',
+  unlock: 'unlock',
   star: 'star-fill',
   newspaper: 'newspaper',
   user: 'person-circle',
@@ -64,6 +69,8 @@ const iconNames: Record<string, string> = {
   table: 'table',
   alert: 'exclamation-triangle',
   bell: 'bell',
+  google: 'google',
+  facebook: 'facebook',
 }
 
 const iconName = computed(() => iconNames[props.name] ?? 'check-circle')

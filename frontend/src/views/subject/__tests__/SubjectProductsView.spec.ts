@@ -9,6 +9,13 @@ import {
 } from '@/services/product-management'
 import SubjectProductsView from '@/views/subject/SubjectProductsView.vue'
 
+const routeState = vi.hoisted(() => ({ query: {} as Record<string, string> }))
+const replaceMock = vi.hoisted(() => vi.fn())
+vi.mock('vue-router', () => ({
+  useRoute: () => routeState,
+  useRouter: () => ({ replace: replaceMock }),
+}))
+
 vi.mock('@/services/product-management', () => ({
   cancelProductChangeRequest: vi.fn(),
   deleteProductDraft: vi.fn(),
@@ -120,5 +127,14 @@ describe('SubjectProductsView', () => {
     await cancelButton!.trigger('click')
     await flushPromises()
     expect(cancelProductChangeRequest).toHaveBeenCalledWith(8)
+  })
+
+  it('hien thong bao khi quay ve tu trang soan san pham', async () => {
+    routeState.query = { saved: 'submitted' }
+    const wrapper = mount(SubjectProductsView, { global: { stubs: { RouterLink: { template: '<a><slot /></a>' } } } })
+    await flushPromises()
+    expect(wrapper.get('[role="status"]').text()).toContain('Đã gửi sản phẩm để quản trị viên duyệt')
+    expect(replaceMock).toHaveBeenCalledWith({ query: { saved: undefined } })
+    routeState.query = {}
   })
 })

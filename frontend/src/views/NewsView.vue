@@ -9,6 +9,7 @@ import { flowerFarmPhoto } from '@/constants/photos'
 import { getApiErrorMessage } from '@/services/api-error'
 import { getNews } from '@/services/news'
 import type { NewsItem } from '@/types/news'
+import { scrollBehavior } from '@/utils/motion'
 
 const route = useRoute()
 const router = useRouter()
@@ -86,7 +87,7 @@ async function goToPage(page: number, replace = false): Promise<void> {
   if (search.value) query.search = search.value
   if (page > 1) query.page = String(page)
   await (replace ? router.replace({ name: 'news', query }) : router.push({ name: 'news', query }))
-  window.scrollTo({ top: 0, behavior: 'smooth' })
+  window.scrollTo({ top: 0, behavior: scrollBehavior() })
 }
 
 watch(

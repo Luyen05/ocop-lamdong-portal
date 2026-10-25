@@ -9,7 +9,9 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy.exc import OperationalError, ProgrammingError, SQLAlchemyError
 
 from app.api.router import api_router
+from app.api.routes import seo
 from app.core.config import get_settings
+from app.core.errors import UnhandledErrorMiddleware
 
 
 settings = get_settings()
@@ -21,6 +23,8 @@ app = FastAPI(
     description="REST API cho cổng thông tin OCOP và du lịch nông nghiệp Lâm Đồng.",
 )
 
+# Thêm trước CORSMiddleware để nằm bên trong nó: phản hồi lỗi 500 vẫn có header CORS.
+app.add_middleware(UnhandledErrorMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origin_list,
@@ -37,6 +41,8 @@ for folder, mount_name in (("products", "product-uploads"), ("locations", "locat
     app.mount(f"/uploads/{folder}", StaticFiles(directory=public_uploads), name=mount_name)
 
 app.include_router(api_router, prefix=settings.api_v1_prefix)
+# robots.txt, sitemap.xml và trang HTML cho bot (ngoài /api/v1, xem routes/seo.py).
+app.include_router(seo.router)
 
 
 @app.exception_handler(HTTPException)
@@ -90,7 +96,7 @@ async def database_exception_handler(request: Request, exc: SQLAlchemyError) -> 
         code = "DATABASE_SCHEMA_OUTDATED"
         message = (
             "Cơ sở dữ liệu chưa được cập nhật theo phiên bản mã nguồn hiện tại. "
-            "Hãy chạy các migration còn thiếu trong thư mục database/migrations."
+            "Hãy chạy database/migrations/014_hoan_thien.sql để cập nhật database."
         )
     elif isinstance(exc, OperationalError):
         status_code = 503

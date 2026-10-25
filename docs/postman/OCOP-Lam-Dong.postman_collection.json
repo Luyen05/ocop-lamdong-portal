@@ -1,98 +1,3473 @@
 {
   "info": {
     "name": "OCOP Lâm Đồng API",
-    "description": "Các luồng public, user, subject và admin của REST API v1.",
+    "description": "Sinh tự động bằng tools/sinh_tai_lieu_api.py. Chạy 'POST /auth/login' trước để lưu token.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
   "variable": [
-    {"key": "baseUrl", "value": "http://localhost:8000/api/v1"},
-    {"key": "userToken", "value": ""},
-    {"key": "adminToken", "value": ""},
-    {"key": "subjectToken", "value": ""},
-    {"key": "subjectId", "value": "1"}
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8000/api/v1"
+    },
+    {
+      "key": "token",
+      "value": ""
+    }
   ],
   "item": [
     {
-      "name": "Public",
-      "item": [
-        {"name": "Danh mục", "request": {"method": "GET", "url": "{{baseUrl}}/categories"}},
-        {"name": "Sản phẩm", "request": {"method": "GET", "url": "{{baseUrl}}/products?page=1&page_size=20&sort=newest"}},
-        {"name": "Điểm gần nhất", "request": {"method": "GET", "url": "{{baseUrl}}/map/nearby?lat=11.9404&lng=108.4583&radius_km=20&limit=10"}}
-      ]
-    },
-    {
-      "name": "User",
+      "name": "Hệ thống",
       "item": [
         {
-          "name": "Đăng ký",
+          "name": "GET /health/database",
           "request": {
-            "method": "POST",
-            "header": [{"key": "Content-Type", "value": "application/json"}],
-            "body": {"mode": "raw", "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"change-me-123\",\n  \"full_name\": \"Người dùng thử\"\n}"},
-            "url": "{{baseUrl}}/auth/register"
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health/database",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health",
+                "database"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Kiểm tra kết nối database.",
+            "auth": {
+              "type": "noauth"
+            }
           }
         },
         {
-          "name": "Đăng nhập user",
-          "event": [{"listen": "test", "script": {"exec": ["pm.collectionVariables.set('userToken', pm.response.json().access_token);"]}}],
+          "name": "GET /health",
           "request": {
-            "method": "POST",
-            "header": [{"key": "Content-Type", "value": "application/json"}],
-            "body": {"mode": "raw", "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"change-me-123\"\n}"},
-            "url": "{{baseUrl}}/auth/login"
-          }
-        },
-        {
-          "name": "Gửi hồ sơ subject",
-          "request": {
-            "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{userToken}}", "type": "string"}]},
-            "method": "POST",
-            "header": [{"key": "Content-Type", "value": "application/json"}],
-            "body": {"mode": "raw", "raw": "{\n  \"name\": \"HTX Nông nghiệp mẫu\",\n  \"type\": \"cooperative\",\n  \"representative\": \"Nguyễn Văn A\",\n  \"phone\": \"0900000000\",\n  \"address\": \"Đà Lạt, Lâm Đồng\",\n  \"district\": \"Đà Lạt\"\n}"},
-            "url": "{{baseUrl}}/subject-applications"
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Kiểm tra API đang chạy.",
+            "auth": {
+              "type": "noauth"
+            }
           }
         }
       ]
     },
     {
-      "name": "Subject",
+      "name": "Tài khoản và xác thực",
       "item": [
         {
-          "name": "Đăng nhập subject",
-          "event": [{"listen": "test", "script": {"exec": ["pm.collectionVariables.set('subjectToken', pm.response.json().access_token);"]}}],
+          "name": "POST /auth/change-password",
           "request": {
             "method": "POST",
-            "header": [{"key": "Content-Type", "value": "application/json"}],
-            "body": {"mode": "raw", "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"change-me-123\"\n}"},
-            "url": "{{baseUrl}}/auth/login"
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/change-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "change-password"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Đổi mật khẩu; tài khoản tạo bằng Google/Facebook (chưa có mật khẩu) thì đặt mật khẩu lần đầu.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"new_password\": \"MatKhauAnToan123\"\n}"
+            }
           }
         },
-        {"name": "Sản phẩm của tôi", "request": {"auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{subjectToken}}", "type": "string"}]}, "method": "GET", "url": "{{baseUrl}}/subject/products"}}
+        {
+          "name": "POST /auth/login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Đăng nhập, nhận access token (JWT). Sai quá nhiều lần trả 429.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin.ocop.demo@example.com\",\n  \"password\": \"DemoOCOP@2026\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  pm.collectionVariables.set('token', pm.response.json().access_token);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /auth/me",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Thông tin tài khoản đang đăng nhập (kèm has_password, social_providers)."
+          }
+        },
+        {
+          "name": "PATCH /auth/me",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Sửa họ tên, số điện thoại, ảnh đại diện.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"full_name\": \"chuoi\",\n  \"phone\": \"chuoi\",\n  \"avatar_url\": \"https://example.com\"\n}"
+            }
+          }
+        },
+        {
+          "name": "POST /auth/register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Đăng ký tài khoản người dùng bằng email và mật khẩu.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"nguoidung@example.com\",\n  \"password\": \"MatKhauAnToan123\",\n  \"full_name\": \"chuoi\"\n}"
+            }
+          }
+        },
+        {
+          "name": "GET /auth/social/providers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/social/providers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "social",
+                "providers"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Nhà cung cấp đã khai báo khóa; frontend chỉ hiện nút của các nhà cung cấp này.",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "DELETE /auth/social/{provider}",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/social/:provider",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "social",
+                ":provider"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "provider",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Bỏ liên kết; không cho bỏ nếu đó là cách đăng nhập duy nhất (tài khoản chưa có mật khẩu)."
+          }
+        },
+        {
+          "name": "POST /auth/social/{provider}/authorize",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/social/:provider/authorize",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "social",
+                ":provider",
+                "authorize"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "provider",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Tạo địa chỉ trang đăng nhập Google/Facebook (state do frontend tạo; Google cần PKCE).",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"state\": \"chuoi\"\n}"
+            }
+          }
+        },
+        {
+          "name": "POST /auth/social/{provider}/callback",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/social/:provider/callback",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "social",
+                ":provider",
+                "callback"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "provider",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Hoàn tất đăng nhập Google/Facebook, nhận JWT.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"chuoi\"\n}"
+            }
+          }
+        },
+        {
+          "name": "POST /auth/social/{provider}/link",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/social/:provider/link",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "social",
+                ":provider",
+                "link"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "provider",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Người dùng đang đăng nhập liên kết thêm Google/Facebook (bước cuối của luồng như /callback).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"chuoi\"\n}"
+            }
+          }
+        }
       ]
     },
     {
-      "name": "Admin",
+      "name": "Danh mục (công khai)",
       "item": [
         {
-          "name": "Đăng nhập admin",
-          "event": [{"listen": "test", "script": {"exec": ["pm.collectionVariables.set('adminToken', pm.response.json().access_token);"]}}],
+          "name": "GET /categories",
           "request": {
-            "method": "POST",
-            "header": [{"key": "Content-Type", "value": "application/json"}],
-            "body": {"mode": "raw", "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"your-admin-password\"\n}"},
-            "url": "{{baseUrl}}/auth/login"
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/categories",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "categories"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "page_size",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "sort",
+                  "value": "",
+                  "disabled": true
+                }
+              ],
+              "variable": []
+            },
+            "description": "Danh mục đang hiển thị, sắp theo thứ tự.",
+            "auth": {
+              "type": "noauth"
+            }
           }
         },
-        {"name": "Dashboard", "request": {"auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{adminToken}}", "type": "string"}]}, "method": "GET", "url": "{{baseUrl}}/admin/dashboard"}},
-        {"name": "Hồ sơ chờ duyệt", "request": {"auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{adminToken}}", "type": "string"}]}, "method": "GET", "url": "{{baseUrl}}/admin/subjects?status=pending"}},
         {
-          "name": "Duyệt subject",
+          "name": "GET /categories/{slug}",
           "request": {
-            "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{adminToken}}", "type": "string"}]},
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/categories/:slug",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "categories",
+                ":slug"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "slug",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Chi tiết danh mục.",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Sản phẩm (công khai)",
+      "item": [
+        {
+          "name": "GET /products",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "page_size",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "category",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "star",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "district",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "min_price",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "max_price",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "sort",
+                  "value": "",
+                  "disabled": true
+                }
+              ],
+              "variable": []
+            },
+            "description": "Danh sách sản phẩm công khai: tìm kiếm, lọc nhóm, hạng sao, địa bàn, giá; sắp xếp; phân trang.",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "GET /products/filter-options",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/products/filter-options",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products",
+                "filter-options"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Giá trị cho bộ lọc sản phẩm (địa bàn).",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "GET /products/{slug}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/products/:slug",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products",
+                ":slug"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "slug",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Chi tiết sản phẩm công khai (tăng lượt xem).",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Điểm du lịch (công khai)",
+      "item": [
+        {
+          "name": "GET /locations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/locations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "locations"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "page_size",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "type",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "district",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "sort",
+                  "value": "",
+                  "disabled": true
+                }
+              ],
+              "variable": []
+            },
+            "description": "Danh sách điểm du lịch công khai.",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "GET /locations/filter-options",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/locations/filter-options",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "locations",
+                "filter-options"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Giá trị cho bộ lọc điểm du lịch (loại hình, địa bàn).",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "GET /locations/{slug}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/locations/:slug",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "locations",
+                ":slug"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "slug",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Chi tiết điểm du lịch công khai (tăng lượt xem).",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Bản đồ số",
+      "item": [
+        {
+          "name": "GET /map/locations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/map/locations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "map",
+                "locations"
+              ],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "type",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "district",
+                  "value": "",
+                  "disabled": true
+                }
+              ],
+              "variable": []
+            },
+            "description": "Trả các điểm đã duyệt dưới dạng GeoJSON FeatureCollection.",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "GET /map/nearby",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/map/nearby",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "map",
+                "nearby"
+              ],
+              "query": [
+                {
+                  "key": "latitude",
+                  "value": "",
+                  "disabled": false
+                },
+                {
+                  "key": "longitude",
+                  "value": "",
+                  "disabled": false
+                },
+                {
+                  "key": "radius_km",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "type",
+                  "value": "",
+                  "disabled": true
+                }
+              ],
+              "variable": []
+            },
+            "description": "Tìm điểm đã duyệt gần nhất trong bán kính, sắp xếp theo khoảng cách.",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "GET /map/route",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/map/route",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "map",
+                "route"
+              ],
+              "query": [
+                {
+                  "key": "destination",
+                  "value": "",
+                  "disabled": false
+                },
+                {
+                  "key": "from_latitude",
+                  "value": "",
+                  "disabled": false
+                },
+                {
+                  "key": "from_longitude",
+                  "value": "",
+                  "disabled": false
+                }
+              ],
+              "variable": []
+            },
+            "description": "Gợi ý tuyến đường bộ từ vị trí người dùng tới một điểm du lịch đã duyệt.",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tin tức",
+      "item": [
+        {
+          "name": "GET /news",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/news",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "news"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "page_size",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "disabled": true
+                }
+              ],
+              "variable": []
+            },
+            "description": "Tin tức lấy từ RSS cổng OCOP tỉnh (có bộ nhớ đệm).",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Đánh giá",
+      "item": [
+        {
+          "name": "GET /locations/{location_id}/reviews",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/locations/:location_id/reviews",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "locations",
+                ":location_id",
+                "reviews"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "page_size",
+                  "value": "",
+                  "disabled": true
+                }
+              ],
+              "variable": [
+                {
+                  "key": "location_id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Đánh giá đã duyệt của điểm du lịch, kèm tóm tắt điểm.",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "POST /locations/{location_id}/reviews",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/locations/:location_id/reviews",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "locations",
+                ":location_id",
+                "reviews"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "location_id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Viết đánh giá điểm du lịch (chờ duyệt).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 1,\n  \"comment\": \"chuoi\"\n}"
+            }
+          }
+        },
+        {
+          "name": "GET /products/{product_id}/reviews",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/products/:product_id/reviews",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products",
+                ":product_id",
+                "reviews"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "page_size",
+                  "value": "",
+                  "disabled": true
+                }
+              ],
+              "variable": [
+                {
+                  "key": "product_id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Đánh giá đã duyệt của sản phẩm, kèm tóm tắt điểm.",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "POST /products/{product_id}/reviews",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/products/:product_id/reviews",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products",
+                ":product_id",
+                "reviews"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "product_id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Viết đánh giá sản phẩm (chờ duyệt).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 1,\n  \"comment\": \"chuoi\"\n}"
+            }
+          }
+        },
+        {
+          "name": "GET /reviews/me",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reviews/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reviews",
+                "me"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "page_size",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "product_id",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "location_id",
+                  "value": "",
+                  "disabled": true
+                }
+              ],
+              "variable": []
+            },
+            "description": "Mọi đánh giá của tài khoản hiện tại; lọc theo product_id/location_id để biết đã đánh giá chưa."
+          }
+        },
+        {
+          "name": "PATCH /reviews/{review_id}",
+          "request": {
             "method": "PATCH",
-            "header": [{"key": "Content-Type", "value": "application/json"}],
-            "body": {"mode": "raw", "raw": "{\n  \"status\": \"approved\"\n}"},
-            "url": "{{baseUrl}}/admin/subjects/{{subjectId}}/moderation"
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reviews/:review_id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reviews",
+                ":review_id"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "review_id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Sửa đánh giá của tôi (quay về chờ duyệt).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 1,\n  \"comment\": \"chuoi\"\n}"
+            }
+          }
+        },
+        {
+          "name": "DELETE /reviews/{review_id}",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reviews/:review_id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reviews",
+                ":review_id"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "review_id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Xóa đánh giá của tôi."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Hồ sơ đăng ký chủ thể",
+      "item": [
+        {
+          "name": "POST /subject-applications",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/subject-applications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "subject-applications"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Gửi hồ sơ đăng ký trở thành chủ thể OCOP.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"chuoi\",\n  \"type\": \"cooperative\",\n  \"representative\": \"chuoi\",\n  \"phone\": \"chuoi\",\n  \"address\": \"chuoi\",\n  \"district\": \"chuoi\"\n}"
+            }
+          }
+        },
+        {
+          "name": "GET /subject-applications/me",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/subject-applications/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "subject-applications",
+                "me"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Xem hồ sơ chủ thể của tôi và kết quả duyệt."
+          }
+        },
+        {
+          "name": "PUT /subject-applications/me",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/subject-applications/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "subject-applications",
+                "me"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Sửa và gửi lại hồ sơ bị từ chối.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"chuoi\",\n  \"type\": \"cooperative\",\n  \"representative\": \"chuoi\",\n  \"phone\": \"chuoi\",\n  \"address\": \"chuoi\",\n  \"district\": \"chuoi\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Khu chủ thể",
+      "item": [
+        {
+          "name": "GET /subject/location-change-requests",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/subject/location-change-requests",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "subject",
+                "location-change-requests"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "page_size",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "",
+                  "disabled": true
+                }
+              ],
+              "variable": []
+            },
+            "description": "Yêu cầu cập nhật điểm du lịch của tôi."
+          }
+        },
+        {
+          "name": "GET /subject/location-change-requests/{request_id}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/subject/location-change-requests/:request_id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "subject",
+                "location-change-requests",
+                ":request_id"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "request_id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Chi tiết yêu cầu cập nhật điểm du lịch."
+          }
+        },
+        {
+          "name": "PUT /subject/location-change-requests/{request_id}",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/subject/location-change-requests/:request_id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "subject",
+                "location-change-requests",
+                ":request_id"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "request_id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Sửa và gửi lại yêu cầu cần bổ sung.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"proposed_data\": {\n    \"name\": null,\n    \"type\": null,\n    \"description\": null,\n    \"latitude\": null,\n    \"longitude\": null,\n    \"location_source\": null,\n    \"district\": null,\n    \"address\": null,\n    \"images\": null\n  },\n  \"reason\": \"chuoi\"\n}"
+            }
+          }
+        },
+        {
+          "name": "POST /subject/location-change-requests/{request_id}/cancel",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/subject/location-change-requests/:request_id/cancel",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "subject",
+                "location-change-requests",
+                ":request_id",
+                "cancel"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "request_id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Hủy yêu cầu cập nhật đang chờ."
+          }
+        },
+        {
+          "name": "POST /subject/location-images",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/subject/location-images",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "subject",
+                "location-images"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Tải ảnh điểm du lịch.",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "DELETE /subject/location-images/{file_name}",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/subject/location-images/:file_name",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "subject",
+                "location-images",
+                ":file_name"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "file_name",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Xóa ảnh điểm du lịch chưa gắn vào điểm."
+          }
+        },
+        {
+          "name": "GET /subject/locations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/subject/locations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "subject",
+                "locations"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "page_size",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "",
+                  "disabled": true
+                }
+              ],
+              "variable": []
+            },
+            "description": "Điểm du lịch của tôi."
+          }
+        },
+        {
+          "name": "POST /subject/locations",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/subject/locations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "subject",
+                "locations"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Tạo bản nháp điểm du lịch.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"chuoi\",\n  \"type\": \"tea_coffee_farm\"\n}"
+            }
+          }
+        },
+        {
+          "name": "POST /subject/locations/parse-coordinates",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/subject/locations/parse-coordinates",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "subject",
+                "locations",
+                "parse-coordinates"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Đọc tọa độ dán vào (thập phân hoặc độ-phút-giây) hay link Google Maps đầy đủ.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"chuoi\"\n}"
+            }
+          }
+        },
+        {
+          "name": "GET /subject/locations/position-check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/subject/locations/position-check",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "subject",
+                "locations",
+                "position-check"
+              ],
+              "query": [
+                {
+                  "key": "latitude",
+                  "value": "",
+                  "disabled": false
+                },
+                {
+                  "key": "longitude",
+                  "value": "",
+                  "disabled": false
+                },
+                {
+                  "key": "exclude_id",
+                  "value": "",
+                  "disabled": true
+                }
+              ],
+              "variable": []
+            },
+            "description": "Kiểm tra ghim ngay khi chủ thể chọn vị trí: trong tỉnh chưa, có điểm đã duyệt nào quá gần không."
+          }
+        },
+        {
+          "name": "GET /subject/locations/{location_id}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/subject/locations/:location_id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "subject",
+                "locations",
+                ":location_id"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "location_id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Chi tiết điểm du lịch của tôi."
+          }
+        },
+        {
+          "name": "PATCH /subject/locations/{location_id}",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/subject/locations/:location_id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "subject",
+                "locations",
+                ":location_id"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "location_id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Lưu bản nháp điểm du lịch.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"chuoi\",\n  \"type\": \"tea_coffee_farm\",\n  \"description\": \"chuoi\",\n  \"latitude\": 0,\n  \"longitude\": 0,\n  \"location_source\": \"map_pin\"\n}"
+            }
+          }
+        },
+        {
+          "name": "DELETE /subject/locations/{location_id}",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/subject/locations/:location_id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "subject",
+                "locations",
+                ":location_id"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "location_id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Xóa điểm du lịch chưa được duyệt."
+          }
+        },
+        {
+          "name": "POST /subject/locations/{location_id}/change-requests",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/subject/locations/:location_id/change-requests",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "subject",
+                "locations",
+                ":location_id",
+                "change-requests"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "location_id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Gửi yêu cầu cập nhật điểm đã duyệt.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"proposed_data\": {\n    \"name\": \"chuoi\",\n    \"type\": \"tea_coffee_farm\",\n    \"description\": \"chuoi\",\n    \"latitude\": 0,\n    \"longitude\": 0,\n    \"location_source\": \"map_pin\",\n    \"district\": \"chuoi\",\n    \"address\": \"chuoi\",\n    \"images\": []\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "POST /subject/locations/{location_id}/deletion-requests",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/subject/locations/:location_id/deletion-requests",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "subject",
+                "locations",
+                ":location_id",
+                "deletion-requests"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "location_id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Gửi yêu cầu ngừng hiển thị điểm đã duyệt.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"chuoi\"\n}"
+            }
+          }
+        },
+        {
+          "name": "POST /subject/locations/{location_id}/submit",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/subject/locations/:location_id/submit",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "subject",
+                "locations",
+                ":location_id",
+                "submit"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "location_id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Gửi điểm du lịch để quản trị viên duyệt."
+          }
+        },
+        {
+          "name": "POST /subject/product-certificates",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/subject/product-certificates",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "subject",
+                "product-certificates"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Tải giấy chứng nhận OCOP (PDF, JPG, PNG; tối đa 10 MB; riêng tư).",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /subject/product-certificates/products/{product_id}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/subject/product-certificates/products/:product_id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "subject",
+                "product-certificates",
+                "products",
+                ":product_id"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "product_id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Tải giấy chứng nhận của sản phẩm của tôi."
+          }
+        },
+        {
+          "name": "DELETE /subject/product-certificates/{file_name}",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/subject/product-certificates/:file_name",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "subject",
+                "product-certificates",
+                ":file_name"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "file_name",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Xóa giấy chứng nhận vừa tải chưa gắn vào sản phẩm."
+          }
+        },
+        {
+          "name": "GET /subject/product-change-requests",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/subject/product-change-requests",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "subject",
+                "product-change-requests"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "page_size",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "",
+                  "disabled": true
+                }
+              ],
+              "variable": []
+            },
+            "description": "Yêu cầu thay đổi sản phẩm của tôi."
+          }
+        },
+        {
+          "name": "GET /subject/product-change-requests/{request_id}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/subject/product-change-requests/:request_id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "subject",
+                "product-change-requests",
+                ":request_id"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "request_id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Chi tiết yêu cầu thay đổi sản phẩm."
+          }
+        },
+        {
+          "name": "PUT /subject/product-change-requests/{request_id}",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/subject/product-change-requests/:request_id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "subject",
+                "product-change-requests",
+                ":request_id"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "request_id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Sửa và gửi lại yêu cầu cần bổ sung.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"proposed_data\": {\n    \"category_id\": null,\n    \"name\": null,\n    \"star\": null,\n    \"cert_code\": null,\n    \"cert_issued_at\": null,\n    \"cert_expires_at\": null,\n    \"issuing_authority\": null,\n    \"description\": null,\n    \"images\": null\n  },\n  \"reason\": \"chuoi\"\n}"
+            }
+          }
+        },
+        {
+          "name": "POST /subject/product-change-requests/{request_id}/cancel",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/subject/product-change-requests/:request_id/cancel",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "subject",
+                "product-change-requests",
+                ":request_id",
+                "cancel"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "request_id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Hủy yêu cầu thay đổi đang chờ."
+          }
+        },
+        {
+          "name": "POST /subject/product-images",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/subject/product-images",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "subject",
+                "product-images"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Tải ảnh sản phẩm (JPG, PNG, WebP; tối đa 5 MB).",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "DELETE /subject/product-images/{file_name}",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/subject/product-images/:file_name",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "subject",
+                "product-images",
+                ":file_name"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "file_name",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Xóa ảnh vừa tải chưa gắn vào sản phẩm."
+          }
+        },
+        {
+          "name": "GET /subject/products",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/subject/products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "subject",
+                "products"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "page_size",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "",
+                  "disabled": true
+                }
+              ],
+              "variable": []
+            },
+            "description": "Sản phẩm của tôi (mọi trạng thái)."
+          }
+        },
+        {
+          "name": "POST /subject/products",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/subject/products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "subject",
+                "products"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Tạo bản nháp sản phẩm.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"category_id\": 1,\n  \"name\": \"chuoi\"\n}"
+            }
+          }
+        },
+        {
+          "name": "GET /subject/products/{product_id}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/subject/products/:product_id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "subject",
+                "products",
+                ":product_id"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "product_id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Chi tiết sản phẩm của tôi."
+          }
+        },
+        {
+          "name": "PUT /subject/products/{product_id}",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/subject/products/:product_id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "subject",
+                "products",
+                ":product_id"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "product_id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Lưu toàn bộ bản nháp sản phẩm.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"category_id\": 1,\n  \"name\": \"chuoi\",\n  \"star\": 3.0,\n  \"cert_code\": \"chuoi\",\n  \"cert_issued_at\": \"2026-01-01\",\n  \"cert_expires_at\": \"2026-01-01\",\n  \"issuing_authority\": \"chuoi\",\n  \"description\": \"chuoi\",\n  \"images\": [\n    {\n      \"image_url\": null\n    }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "PATCH /subject/products/{product_id}",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/subject/products/:product_id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "subject",
+                "products",
+                ":product_id"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "product_id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Lưu một phần bản nháp sản phẩm.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"category_id\": 1,\n  \"name\": \"chuoi\",\n  \"star\": 3.0,\n  \"price\": 0,\n  \"unit\": \"chuoi\",\n  \"cert_code\": \"chuoi\"\n}"
+            }
+          }
+        },
+        {
+          "name": "DELETE /subject/products/{product_id}",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/subject/products/:product_id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "subject",
+                "products",
+                ":product_id"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "product_id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Xóa sản phẩm chưa được duyệt."
+          }
+        },
+        {
+          "name": "POST /subject/products/{product_id}/change-requests",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/subject/products/:product_id/change-requests",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "subject",
+                "products",
+                ":product_id",
+                "change-requests"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "product_id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Gửi yêu cầu sửa sản phẩm đã duyệt.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"proposed_data\": {\n    \"category_id\": 1,\n    \"name\": \"chuoi\",\n    \"star\": 3.0,\n    \"cert_code\": \"chuoi\",\n    \"cert_issued_at\": \"2026-01-01\",\n    \"cert_expires_at\": \"2026-01-01\",\n    \"issuing_authority\": \"chuoi\",\n    \"description\": \"chuoi\",\n    \"images\": []\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "POST /subject/products/{product_id}/deletion-requests",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/subject/products/:product_id/deletion-requests",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "subject",
+                "products",
+                ":product_id",
+                "deletion-requests"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "product_id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Gửi yêu cầu ngừng hiển thị sản phẩm đã duyệt.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"chuoi\"\n}"
+            }
+          }
+        },
+        {
+          "name": "POST /subject/products/{product_id}/submit",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/subject/products/:product_id/submit",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "subject",
+                "products",
+                ":product_id",
+                "submit"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "product_id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Gửi sản phẩm để quản trị viên duyệt."
+          }
+        },
+        {
+          "name": "GET /subject/profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/subject/profile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "subject",
+                "profile"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Thông tin đơn vị của chủ thể."
+          }
+        },
+        {
+          "name": "PATCH /subject/profile",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/subject/profile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "subject",
+                "profile"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Sửa thông tin liên hệ của đơn vị (tên, loại, mã số thuế do admin sửa).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"representative\": \"chuoi\",\n  \"phone\": \"chuoi\",\n  \"email\": \"nguoidung@example.com\",\n  \"address\": \"chuoi\",\n  \"district\": \"chuoi\",\n  \"name\": null\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Quản trị",
+      "item": [
+        {
+          "name": "GET /admin/access",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/access",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "access"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Xác nhận JWT hiện tại thuộc một tài khoản admin đang hoạt động."
+          }
+        },
+        {
+          "name": "GET /admin/categories",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/categories",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "categories"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Danh sách danh mục, gồm cả danh mục ẩn và số sản phẩm."
+          }
+        },
+        {
+          "name": "POST /admin/categories",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/categories",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "categories"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Thêm danh mục.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"chuoi\"\n}"
+            }
+          }
+        },
+        {
+          "name": "PATCH /admin/categories/{category_id}",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/categories/:category_id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "categories",
+                ":category_id"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "category_id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Sửa, ẩn/hiện, đổi thứ tự danh mục.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"chuoi\",\n  \"slug\": \"chuoi\",\n  \"description\": \"chuoi\",\n  \"icon\": \"chuoi\",\n  \"is_visible\": true,\n  \"sort_order\": 1\n}"
+            }
+          }
+        },
+        {
+          "name": "DELETE /admin/categories/{category_id}",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/categories/:category_id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "categories",
+                ":category_id"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "category_id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Xóa danh mục chưa có sản phẩm."
+          }
+        },
+        {
+          "name": "GET /admin/dashboard",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/dashboard",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "dashboard"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Số liệu tổng quan và hàng đợi việc cần duyệt."
+          }
+        },
+        {
+          "name": "GET /admin/data-sources",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/data-sources",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "data-sources"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "page_size",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "source_type",
+                  "value": "",
+                  "disabled": true
+                }
+              ],
+              "variable": []
+            },
+            "description": "Danh sách nguồn dữ liệu (văn bản, trang thông tin)."
+          }
+        },
+        {
+          "name": "POST /admin/data-sources",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/data-sources",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "data-sources"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Thêm nguồn dữ liệu.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"chuoi\",\n  \"source_type\": \"legal_document\",\n  \"source_url\": \"chuoi\"\n}"
+            }
+          }
+        },
+        {
+          "name": "PATCH /admin/data-sources/{source_id}",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/data-sources/:source_id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "data-sources",
+                ":source_id"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "source_id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Sửa nguồn dữ liệu.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"chuoi\",\n  \"source_type\": \"legal_document\",\n  \"source_url\": \"chuoi\"\n}"
+            }
+          }
+        },
+        {
+          "name": "GET /admin/location-change-requests",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/location-change-requests",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "location-change-requests"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "page_size",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "request_type",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "disabled": true
+                }
+              ],
+              "variable": []
+            },
+            "description": "Danh sách yêu cầu cập nhật/ngừng hiển thị điểm du lịch."
+          }
+        },
+        {
+          "name": "GET /admin/location-change-requests/{request_id}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/location-change-requests/:request_id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "location-change-requests",
+                ":request_id"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "request_id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Chi tiết yêu cầu cập nhật điểm du lịch."
+          }
+        },
+        {
+          "name": "PATCH /admin/location-change-requests/{request_id}/moderation",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/location-change-requests/:request_id/moderation",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "location-change-requests",
+                ":request_id",
+                "moderation"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "request_id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Duyệt hoặc từ chối yêu cầu cập nhật điểm du lịch.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"approved\"\n}"
+            }
+          }
+        },
+        {
+          "name": "GET /admin/locations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/locations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "locations"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "page_size",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "origin",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "type",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "location_source",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "disabled": true
+                }
+              ],
+              "variable": []
+            },
+            "description": "Danh sách điểm du lịch để kiểm duyệt."
+          }
+        },
+        {
+          "name": "GET /admin/locations/{location_id}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/locations/:location_id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "locations",
+                ":location_id"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "location_id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Chi tiết điểm du lịch để kiểm duyệt."
+          }
+        },
+        {
+          "name": "PATCH /admin/locations/{location_id}/moderation",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/locations/:location_id/moderation",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "locations",
+                ":location_id",
+                "moderation"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "location_id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Duyệt (có thể chỉnh ghim), yêu cầu bổ sung hoặc từ chối điểm du lịch.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"approved\"\n}"
+            }
+          }
+        },
+        {
+          "name": "GET /admin/product-change-requests",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/product-change-requests",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "product-change-requests"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "page_size",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "request_type",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "disabled": true
+                }
+              ],
+              "variable": []
+            },
+            "description": "Danh sách yêu cầu sửa/ngừng hiển thị sản phẩm."
+          }
+        },
+        {
+          "name": "GET /admin/product-change-requests/{request_id}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/product-change-requests/:request_id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "product-change-requests",
+                ":request_id"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "request_id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Chi tiết yêu cầu, so sánh với sản phẩm hiện tại."
+          }
+        },
+        {
+          "name": "PATCH /admin/product-change-requests/{request_id}/moderation",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/product-change-requests/:request_id/moderation",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "product-change-requests",
+                ":request_id",
+                "moderation"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "request_id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Duyệt, yêu cầu bổ sung hoặc từ chối yêu cầu thay đổi sản phẩm.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"approved\"\n}"
+            }
+          }
+        },
+        {
+          "name": "GET /admin/products",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "products"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "page_size",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "verification_level",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "verification_status",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "missing_decision",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "missing_issued_at",
+                  "value": "",
+                  "disabled": true
+                }
+              ],
+              "variable": []
+            },
+            "description": "Danh sách sản phẩm để kiểm duyệt."
+          }
+        },
+        {
+          "name": "GET /admin/products/{product_id}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/products/:product_id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "products",
+                ":product_id"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "product_id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Chi tiết sản phẩm để kiểm duyệt."
+          }
+        },
+        {
+          "name": "GET /admin/products/{product_id}/certificate",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/products/:product_id/certificate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "products",
+                ":product_id",
+                "certificate"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "product_id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Tải giấy chứng nhận OCOP của sản phẩm (file riêng tư)."
+          }
+        },
+        {
+          "name": "GET /admin/products/{product_id}/evidence",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/products/:product_id/evidence",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "products",
+                ":product_id",
+                "evidence"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "product_id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Các nguồn chứng cứ gắn với sản phẩm."
+          }
+        },
+        {
+          "name": "POST /admin/products/{product_id}/evidence",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/products/:product_id/evidence",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "products",
+                ":product_id",
+                "evidence"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "product_id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Gắn nguồn chứng cứ (quyết định công nhận, trang thông tin) cho sản phẩm.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"source_id\": 1,\n  \"verification_level\": \"A\"\n}"
+            }
+          }
+        },
+        {
+          "name": "PATCH /admin/products/{product_id}/evidence/{source_id}/{evidence_role}",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/products/:product_id/evidence/:source_id/:evidence_role",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "products",
+                ":product_id",
+                "evidence",
+                ":source_id",
+                ":evidence_role"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "product_id",
+                  "value": "1"
+                },
+                {
+                  "key": "source_id",
+                  "value": "1"
+                },
+                {
+                  "key": "evidence_role",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Sửa liên kết nguồn chứng cứ.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"verification_level\": \"A\",\n  \"verified_at\": \"2026-01-01\"\n}"
+            }
+          }
+        },
+        {
+          "name": "DELETE /admin/products/{product_id}/evidence/{source_id}/{evidence_role}",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/products/:product_id/evidence/:source_id/:evidence_role",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "products",
+                ":product_id",
+                "evidence",
+                ":source_id",
+                ":evidence_role"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "product_id",
+                  "value": "1"
+                },
+                {
+                  "key": "source_id",
+                  "value": "1"
+                },
+                {
+                  "key": "evidence_role",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Bỏ liên kết nguồn chứng cứ."
+          }
+        },
+        {
+          "name": "PATCH /admin/products/{product_id}/moderation",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/products/:product_id/moderation",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "products",
+                ":product_id",
+                "moderation"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "product_id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Duyệt, yêu cầu bổ sung hoặc từ chối sản phẩm.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"approved\"\n}"
+            }
+          }
+        },
+        {
+          "name": "GET /admin/reviews",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/reviews",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "reviews"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "page_size",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "target",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "q",
+                  "value": "",
+                  "disabled": true
+                }
+              ],
+              "variable": []
+            },
+            "description": "Danh sách đánh giá để kiểm duyệt."
+          }
+        },
+        {
+          "name": "PATCH /admin/reviews/{review_id}/moderation",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/reviews/:review_id/moderation",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "reviews",
+                ":review_id",
+                "moderation"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "review_id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Duyệt hoặc từ chối (kèm lý do) đánh giá.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"approve\"\n}"
+            }
+          }
+        },
+        {
+          "name": "GET /admin/statistics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/statistics",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "statistics"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Số liệu thống kê toàn cổng cho trang tổng quan quản trị (chỉ đọc)."
+          }
+        },
+        {
+          "name": "GET /admin/subject-applications",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/subject-applications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "subject-applications"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "page_size",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "disabled": true
+                }
+              ],
+              "variable": []
+            },
+            "description": "Danh sách hồ sơ chủ thể (lọc trạng thái, tìm kiếm, phân trang)."
+          }
+        },
+        {
+          "name": "PATCH /admin/subject-applications/{application_id}/moderation",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/subject-applications/:application_id/moderation",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "subject-applications",
+                ":application_id",
+                "moderation"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "application_id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Duyệt hoặc từ chối (kèm lý do) hồ sơ chủ thể.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"approved\"\n}"
+            }
+          }
+        },
+        {
+          "name": "GET /admin/users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/users",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "users"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "role",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "is_active",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "page_size",
+                  "value": "",
+                  "disabled": true
+                }
+              ],
+              "variable": []
+            },
+            "description": "Danh sách tài khoản (tìm theo email/tên, lọc vai trò, trạng thái)."
+          }
+        },
+        {
+          "name": "PATCH /admin/users/{user_id}/status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/users/:user_id/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "users",
+                ":user_id",
+                "status"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "user_id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Khóa hoặc mở khóa tài khoản.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"is_active\": true\n}"
+            }
           }
         }
       ]

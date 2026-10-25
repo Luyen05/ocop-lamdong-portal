@@ -134,18 +134,30 @@ def image_storage_unavailable(reason: str) -> Exception:
     )
 
 
-async def cloudinary_upload(content: bytes, storage_path: str, file_name: str, content_type: str) -> str:
+def cloudinary_json(response: httpx.Response) -> dict:
+    """Nội dung JSON Cloudinary trả về; trả 200 mà không phải JSON object thì coi như dịch vụ lỗi (502)."""
+
+    try:
+        data = response.json()
+    except ValueError as error:
+        raise image_storage_unavailable("INVALID_RESPONSE") from error
+    if not isinstance(data, dict):
+        raise image_storage_unavailable("INVALID_RESPONSE")
+    return data
+
+
+def cloudinary_upload(content: bytes, storage_path: str, file_name: str, content_type: str) -> str:
     """Tải ảnh lên Cloudinary, trả về đường dẫn https công khai của ảnh."""
 
     settings = get_settings()
     signed = {"public_id": cloudinary_public_id(storage_path), "timestamp": str(int(time.time()))}
     data = {**signed, "api_key": settings.cloudinary_api_key, "signature": cloudinary_signature(signed)}
     try:
-        async with httpx.AsyncClient(
+        with httpx.Client(
             timeout=settings.cloudinary_timeout_seconds,
             transport=cloudinary_transport(),
         ) as client:
-            response = await client.post(
+            response = client.post(
                 cloudinary_api_url("upload"),
                 data=data,
                 files={"file": (file_name, content, content_type)},
@@ -154,7 +166,7 @@ async def cloudinary_upload(content: bytes, storage_path: str, file_name: str, c
         raise image_storage_unavailable(type(error).__name__) from error
     if response.status_code != 200:
         raise image_storage_unavailable(cloudinary_error_reason(response))
-    secure_url = response.json().get("secure_url")
+    secure_url = cloudinary_json(response).get("secure_url")
     if not isinstance(secure_url, str) or not secure_url.startswith("https://"):
         raise image_storage_unavailable("INVALID_RESPONSE")
     return secure_url
@@ -192,17 +204,26 @@ def cloudinary_destroy(storage_path: str) -> None:
         raise image_storage_unavailable(type(error).__name__) from error
     if response.status_code != 200:
         raise image_storage_unavailable(cloudinary_error_reason(response))
-    if response.json().get("result") not in {"ok", "not found"}:
+    if cloudinary_json(response).get("result") not in {"ok", "not found"}:
         raise image_storage_unavailable("INVALID_RESPONSE")
 
 
-async def store_subject_image(
+def public_upload_base_url(request_base_url: str) -> str:
+    """Gốc đường dẫn ảnh lưu cục bộ: PUBLIC_BASE_URL nếu có, nếu không thì địa chỉ của request."""
+
+    configured = get_settings().public_base_url
+    return (configured or request_base_url).rstrip("/")
+
+
+def store_subject_image(
     file: UploadFile,
     *,
     folder: str,
     subject_id: int,
     base_url: str,
 ) -> StoredImage:
+    """Lưu ảnh tải lên. Hàm đồng bộ (đọc ``file.file``), route gọi nó là ``def`` nên chạy trong threadpool."""
+
     settings = get_settings()
     content_type = (file.content_type or "").lower()
     image_config = ALLOWED_IMAGES.get(content_type)
@@ -214,7 +235,7 @@ async def store_subject_image(
         )
 
     extension, signature_matches = image_config
-    header = await file.read(16)
+    header = file.file.read(16)
     if not signature_matches(header):
         raise workflow_error(
             status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -225,7 +246,7 @@ async def store_subject_image(
     file_name = f"{uuid4().hex}.{extension}"
     storage_path = f"{folder}/{subject_id}/{file_name}"
     if settings.image_storage == "cloudinary":
-        return await store_in_cloudinary(
+        return store_in_cloudinary(
             file,
             header=header,
             storage_path=storage_path,
@@ -242,15 +263,15 @@ async def store_subject_image(
                 if total > settings.upload_max_bytes:
                     raise image_too_large()
                 output.write(chunk)
-                chunk = await file.read(1024 * 1024)
+                chunk = file.file.read(1024 * 1024)
     except Exception:
         target.unlink(missing_ok=True)
         raise
     finally:
-        await file.close()
+        file.file.close()
 
     return StoredImage(
-        image_url=f"{base_url.rstrip('/')}/uploads/{storage_path}",
+        image_url=f"{public_upload_base_url(base_url)}/uploads/{storage_path}",
         storage_path=storage_path,
         content_type=content_type,
         size_bytes=total,
@@ -266,7 +287,7 @@ def image_too_large() -> Exception:
     )
 
 
-async def store_in_cloudinary(
+def store_in_cloudinary(
     file: UploadFile,
     *,
     header: bytes,
@@ -280,16 +301,16 @@ async def store_in_cloudinary(
     chunks = [header]
     total = len(header)
     try:
-        chunk = await file.read(1024 * 1024)
+        chunk = file.file.read(1024 * 1024)
         while chunk:
             total += len(chunk)
             if total > limit:
                 raise image_too_large()
             chunks.append(chunk)
-            chunk = await file.read(1024 * 1024)
+            chunk = file.file.read(1024 * 1024)
     finally:
-        await file.close()
-    image_url = await cloudinary_upload(b"".join(chunks), storage_path, file_name, content_type)
+        file.file.close()
+    image_url = cloudinary_upload(b"".join(chunks), storage_path, file_name, content_type)
     return StoredImage(
         image_url=image_url,
         storage_path=storage_path,

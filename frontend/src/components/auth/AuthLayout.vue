@@ -10,15 +10,16 @@ defineProps<{
 <template>
   <main class="auth-page">
     <div class="container py-4 py-lg-5">
-      <RouterLink class="brand-link" to="/" aria-label="Về trang chủ">
-        <span class="brand-mark">O</span>
+      <RouterLink class="brand-link" to="/">
+        <span class="brand-mark"><img src="/assets/figma/home/icon-brand.svg" alt="" /></span>
         <span>
-          <strong>OCOP Lâm Đồng</strong>
-          <small>Cổng thông tin và bản đồ số</small>
+          <strong>LÂM ĐỒNG OCOP</strong>
+          <small>Nông sản OCOP và du lịch nông nghiệp</small>
+          <span class="visually-hidden">Về trang chủ</span>
         </span>
       </RouterLink>
 
-      <section class="auth-card mt-4 mt-lg-5">
+      <section class="auth-card ocop-enter mt-4 mt-lg-5">
         <div class="auth-intro d-none d-lg-flex">
           <div>
             <span class="eyebrow">Đặc sản từ cao nguyên</span>
@@ -81,13 +82,18 @@ defineProps<{
 
 .brand-mark {
   display: grid;
-  width: 2.75rem;
-  height: 2.75rem;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
   place-items: center;
-  border-radius: 50%;
-  background: var(--ocop-primary-700);
-  color: var(--ocop-white);
-  font-size: 1.55rem;
+  border-radius: var(--ocop-radius-md);
+  background: var(--ocop-mist-800);
+  box-shadow: inset 0 -4px 0 var(--ocop-daquy-400), 0 4px 8px color-mix(in srgb, var(--ocop-mist-800) 22%, transparent);
+}
+
+.brand-mark img {
+  width: 24px;
+  height: 24px;
 }
 
 .auth-card {

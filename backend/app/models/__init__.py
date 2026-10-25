@@ -7,9 +7,10 @@ from app.models.location import (
     location_ocop_products,
 )
 from app.models.product import Product, ProductChangeRequest, ProductImage
+from app.models.review import Review
 from app.models.role import Role
 from app.models.subject import Subject
-from app.models.user import User
+from app.models.user import SocialAccount, User
 
 __all__ = [
     "Category",
@@ -19,7 +20,9 @@ __all__ = [
     "ProductChangeRequest",
     "ProductImage",
     "ProductSource",
+    "Review",
     "Role",
+    "SocialAccount",
     "Subject",
     "TourismLocation",
     "TourismLocationChangeRequest",

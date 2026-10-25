@@ -145,7 +145,7 @@ INSERT INTO subjects (
 SELECT
   subject_user.id,
   reference_subjects.name,
-  'company',
+  'enterprise',
   reference_subjects.representative,
   reference_subjects.phone,
   reference_subjects.public_email,

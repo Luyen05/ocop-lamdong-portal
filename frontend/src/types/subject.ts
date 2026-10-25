@@ -12,6 +12,15 @@ export interface SubjectApplicationPayload {
   district: string
 }
 
+/** Chủ thể đã duyệt tự sửa thông tin liên hệ; tên, loại hình, mã số thuế do quản trị viên quản lý. */
+export interface SubjectProfileUpdatePayload {
+  representative?: string
+  phone?: string
+  email?: string | null
+  address?: string
+  district?: string
+}
+
 export interface SubjectApplication extends SubjectApplicationPayload {
   id: number
   user_id: number

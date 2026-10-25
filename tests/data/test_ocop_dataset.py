@@ -9,12 +9,15 @@ from datetime import date
 from pathlib import Path
 from xml.etree import ElementTree
 
+import pytest
+
 
 ROOT = Path(__file__).resolve().parents[2]
 DATASET_PATH = ROOT / "data" / "ocop" / "ocop_records.json"
 MANIFEST_PATH = ROOT / "data" / "ocop" / "source_manifest.csv"
 WORKBOOK_PATH = ROOT / "data" / "ocop" / "ocop_lamdong_2025_2026.xlsx"
-DOCX_PATH = ROOT / "docs" / "PHU_LUC_NGUON_DU_LIEU_OCOP_2025_2026.docx"
+# Phụ lục Word sinh bằng tools/build_ocop_appendix.py vào artifacts/ (không commit).
+DOCX_PATH = ROOT / "artifacts" / "PHU_LUC_NGUON_DU_LIEU_OCOP_2025_2026.docx"
 SEED_PATH = ROOT / "database" / "seed_ocop_2025_2026.sql"
 PUBLIC_ROUTE_PATH = ROOT / "backend" / "app" / "api" / "routes" / "products.py"
 
@@ -149,6 +152,8 @@ def test_workbook_contains_exact_required_sheets() -> None:
 
 
 def test_docx_contains_required_sections_and_disclaimer() -> None:
+    if not DOCX_PATH.exists():
+        pytest.skip("Chưa sinh phụ lục: chạy python tools/build_ocop_appendix.py")
     with zipfile.ZipFile(DOCX_PATH) as archive:
         document_xml = archive.read("word/document.xml").decode("utf-8")
 

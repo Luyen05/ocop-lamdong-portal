@@ -5,11 +5,13 @@ import axios from 'axios'
 
 import PresentationGallery from '@/components/products/PresentationGallery.vue'
 import ProductCard from '@/components/products/ProductCard.vue'
+import ReviewSection from '@/components/reviews/ReviewSection.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
 import { getApiErrorMessage } from '@/services/api-error'
 import { getProduct, getProducts } from '@/services/products'
 import type { ProductDetail, ProductListItem } from '@/types/product'
 import { safeExternalUrl } from '@/utils/location'
+import { absoluteUrl, applyPageSeo, clipDescription, productJsonLd } from '@/utils/seo'
 
 const route = useRoute()
 
@@ -55,7 +57,14 @@ async function loadProduct(slug: string): Promise<void> {
     const loadedProduct = await getProduct(slug)
     if (requestId !== latestRequestId) return
     product.value = loadedProduct
-    document.title = `${product.value.name} | OCOP Lâm Đồng`
+    const canonicalPath = `/san-pham/${loadedProduct.slug}`
+    applyPageSeo({
+      title: loadedProduct.star ? `${loadedProduct.name} – OCOP ${loadedProduct.star} sao` : loadedProduct.name,
+      description: clipDescription(loadedProduct.description),
+      image: loadedProduct.primary_image_url ?? loadedProduct.images[0]?.image_url,
+      path: canonicalPath,
+      jsonLd: productJsonLd(loadedProduct, absoluteUrl(canonicalPath)),
+    })
 
     try {
       const related = await getProducts({
@@ -96,13 +105,19 @@ watch(
 
 onUnmounted(() => {
   latestRequestId++
-  document.title = 'OCOP Lâm Đồng'
 })
+
+// Lỗi mạng hoặc máy chủ thì cho thử lại; không tìm thấy (404) thì chỉ quay lại danh sách.
+const canRetry = computed(() => errorTitle.value === 'Không thể tải sản phẩm')
+
+function retryLoad(): void {
+  void loadProduct(String(route.params.slug))
+}
 </script>
 
 <template>
   <main class="detail-page">
-    <div class="container py-4 py-lg-5">
+    <div class="container py-4 py-lg-5 stagger-in">
       <nav class="breadcrumb-nav mb-4" aria-label="Đường dẫn">
         <RouterLink to="/">Trang chủ</RouterLink>
         <span>/</span>
@@ -127,9 +142,10 @@ onUnmounted(() => {
         <span class="error-symbol">!</span>
         <h1>{{ errorTitle }}</h1>
         <p>{{ errorMessage }}</p>
-        <RouterLink class="btn btn-success" to="/san-pham">
-          Quay lại danh sách
-        </RouterLink>
+        <div class="error-actions">
+          <button v-if="canRetry" class="btn btn-success" type="button" @click="retryLoad">Thử lại</button>
+          <RouterLink class="btn btn-outline-secondary" to="/san-pham">Quay lại danh sách</RouterLink>
+        </div>
       </section>
 
       <template v-else-if="product">
@@ -256,6 +272,7 @@ onUnmounted(() => {
             <ProductCard v-for="item in relatedProducts" :key="item.id" :product="item" />
           </div>
         </section>
+        <ReviewSection target-type="product" :target-id="product.id" :owner-subject-id="product.subject.id" />
       </template>
     </div>
   </main>
@@ -513,6 +530,13 @@ onUnmounted(() => {
   color: var(--ocop-danger-strong);
   font-size: 1.4rem;
   font-weight: 800;
+}
+
+.error-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--ocop-space-3);
 }
 
 .error-state p {

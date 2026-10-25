@@ -1,6 +1,6 @@
 <template>
   <main class="not-found-page">
-    <section class="not-found-card" aria-labelledby="not-found-title">
+    <section class="not-found-card ocop-enter" aria-labelledby="not-found-title">
       <span class="error-code">404</span>
       <h1 id="not-found-title">Không tìm thấy trang</h1>
       <p>Địa chỉ bạn mở không tồn tại hoặc nội dung đã được chuyển sang vị trí khác.</p>

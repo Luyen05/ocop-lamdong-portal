@@ -43,14 +43,14 @@ def image_in_use(db: Session, subject_id: int, storage_path: str) -> bool:
 
 
 @router.post("", response_model=LocationImageUploadResponse, status_code=status.HTTP_201_CREATED)
-async def upload_location_image(
+def upload_location_image(
     request: Request,
     current_user: CurrentUser,
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
 ) -> LocationImageUploadResponse:
     subject = get_location_subject(db, current_user)
-    stored = await store_subject_image(
+    stored = store_subject_image(
         file,
         folder=LOCATION_IMAGE_FOLDER,
         subject_id=subject.id,

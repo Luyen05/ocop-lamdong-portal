@@ -56,6 +56,12 @@ const tasks = computed(() => [
     count: stats.value?.pending_subject_applications ?? 0,
     to: '/quan-tri/ho-so-chu-the',
   },
+  {
+    title: 'Đánh giá chờ duyệt',
+    description: 'Đọc nhận xét của người dùng trước khi hiển thị công khai.',
+    count: stats.value?.pending_reviews ?? 0,
+    to: '/quan-tri/danh-gia',
+  },
 ])
 
 const openTaskCount = computed(() => tasks.value.reduce((sum, task) => sum + task.count, 0))
@@ -64,7 +70,9 @@ function share(part: number, whole: number): number {
   return whole ? Math.round((part / whole) * 100) : 0
 }
 
-const approvedShare = computed(() => share(stats.value?.approved_products ?? 0, stats.value?.total_products ?? 0))
+// Sản phẩm thực sự hiện ở trang công khai (backend cũ chưa có public_products thì dùng số đã duyệt).
+const publicProducts = computed(() => stats.value?.public_products ?? stats.value?.approved_products ?? 0)
+const approvedShare = computed(() => share(publicProducts.value, stats.value?.total_products ?? 0))
 const missingDecisionShare = computed(() =>
   share(stats.value?.products_missing_decision ?? 0, stats.value?.total_products ?? 0),
 )
@@ -269,7 +277,7 @@ onMounted(() => {
           </div>
           <span class="task-count-badge">{{ loading ? '...' : `${openTaskCount} việc` }}</span>
         </div>
-        <ul class="task-list">
+        <ul class="task-list stagger-in">
           <li v-for="task in tasks" :key="task.title">
             <RouterLink class="task-item" :class="{ 'is-open': task.count > 0 }" :to="task.to">
               <span class="task-num">{{ loading ? '–' : task.count }}</span>
@@ -291,7 +299,7 @@ onMounted(() => {
           <span class="kpi-label">Tổng sản phẩm</span>
           <strong class="kpi-value">{{ loading ? '–' : (stats?.total_products ?? 0) }}</strong>
           <div class="kpi-meter"><div class="kpi-meter__fill" :style="{ width: `${approvedShare}%` }" /></div>
-          <span class="kpi-note">{{ stats?.approved_products ?? 0 }} đang công khai ({{ approvedShare }}%)</span>
+          <span class="kpi-note">{{ publicProducts }} đang công khai ({{ approvedShare }}%)</span>
         </article>
         <article class="ad-card kpi-card">
           <div class="kpi-icon-wrap is-success">
@@ -339,7 +347,7 @@ onMounted(() => {
       <div v-else-if="statistics" class="chart-grid stagger-in">
         <StatChart class="span-2" kind="stacked" title="Trạng thái hồ sơ sản phẩm" :description="`${statusTotal} hồ sơ, gồm cả bản nháp của chủ thể`" :items="statusItems" :summary="describe(statusItems, 'hồ sơ')" unit="hồ sơ" :height="40">
           <template #lead>
-            <p class="lead-figure"><strong>{{ percentText(approvedStatusCount, statusTotal) }}</strong> hồ sơ đã được duyệt và đang hiển thị công khai</p>
+            <p class="lead-figure"><strong>{{ percentText(approvedStatusCount, statusTotal) }}</strong> hồ sơ đã được duyệt</p>
           </template>
           <ul class="status-legend">
             <li v-for="item in statusItems" :key="item.label">
@@ -349,11 +357,11 @@ onMounted(() => {
             </li>
           </ul>
         </StatChart>
-        <StatChart title="Hạng sao OCOP" :description="`${publicTotal} sản phẩm đang công khai`" :items="starItems" :summary="describe(starItems)" :height="240" />
+        <StatChart title="Hạng sao OCOP" :description="`${publicTotal} sản phẩm đã duyệt có hạng sao`" :items="starItems" :summary="describe(starItems)" :height="240" />
         <StatChart kind="bar" title="Theo nhóm sản phẩm" description="Màu trùng với chip nhóm ở trang công khai" :items="categoryItems" :summary="describe(categoryItems)" :height="Math.max(200, categoryItems.length * 36)">
           <p v-if="emptyCategoryCount" class="note">{{ emptyCategoryCount }} nhóm chưa có sản phẩm được duyệt.</p>
         </StatChart>
-        <StatChart class="span-2" kind="bar" :title="`${districtItems.length} xã, phường có nhiều sản phẩm nhất`" description="Theo địa bàn của chủ thể, chỉ tính sản phẩm đang công khai" :items="districtItems" :summary="describe(districtItems)" :height="Math.max(200, districtItems.length * 34)" />
+        <StatChart class="span-2" kind="bar" :title="`${districtItems.length} xã, phường có nhiều sản phẩm nhất`" description="Theo địa bàn của chủ thể, chỉ tính sản phẩm đã duyệt" :items="districtItems" :summary="describe(districtItems)" :height="Math.max(200, districtItems.length * 34)" />
         <StatChart class="span-2" title="Sản phẩm được duyệt theo tháng" :description="monthItems.length ? `Theo ngày duyệt, ${monthRange}` : 'Chưa có sản phẩm nào được duyệt'" :items="monthItems" :summary="describe(monthItems.filter((item) => item.value > 0)) || 'Chưa có sản phẩm nào được duyệt'" :height="260">
           <p v-if="statistics.approved_without_review_date" class="note">{{ statistics.approved_without_review_date }} sản phẩm nhập sẵn không có ngày duyệt nên không nằm trong biểu đồ.</p>
         </StatChart>

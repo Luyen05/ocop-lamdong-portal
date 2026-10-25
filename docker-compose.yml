@@ -10,7 +10,7 @@ services:
       POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}"
 
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"  # chỉ máy này truy cập được database
 
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -36,7 +36,7 @@ services:
       PGADMIN_SERVER_JSON_FILE: /pgadmin4/servers.json
 
     ports:
-      - "5050:80"
+      - "127.0.0.1:5050:80"  # pgAdmin chỉ mở trên máy này
 
     # Giữ tài khoản, kết nối đã lưu và lịch sử truy vấn khi container bị tạo lại.
     volumes:
@@ -67,6 +67,7 @@ services:
       JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
       JWT_ACCESS_TOKEN_EXPIRE_MINUTES: ${JWT_ACCESS_TOKEN_EXPIRE_MINUTES:-60}
       UPLOAD_DIRECTORY: /app/uploads
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-}
       IMAGE_STORAGE: ${IMAGE_STORAGE:-local}
       CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME:-}
       CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY:-}
@@ -78,6 +79,12 @@ services:
       NEWS_CACHE_TTL_SECONDS: ${NEWS_CACHE_TTL_SECONDS:-900}
       OSRM_BASE_URL: ${OSRM_BASE_URL:-https://router.project-osrm.org}
       OSRM_TIMEOUT_SECONDS: ${OSRM_TIMEOUT_SECONDS:-8}
+      FRONTEND_BASE_URL: ${FRONTEND_BASE_URL:-http://localhost:5173}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      FACEBOOK_APP_ID: ${FACEBOOK_APP_ID:-}
+      FACEBOOK_APP_SECRET: ${FACEBOOK_APP_SECRET:-}
+      FACEBOOK_GRAPH_VERSION: ${FACEBOOK_GRAPH_VERSION:-v26.0}
 
     volumes:
       - ./backend/app:/app/app
@@ -119,6 +126,8 @@ services:
 
     environment:
       VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8000/api/v1}
+      # Vite chuyển /robots.txt và /sitemap.xml sang backend (trong mạng Docker).
+      VITE_BACKEND_ORIGIN: http://backend:8000
       CHOKIDAR_USEPOLLING: "true"
 
     volumes:

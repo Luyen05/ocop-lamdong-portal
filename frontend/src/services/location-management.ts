@@ -1,4 +1,4 @@
-import http from '@/services/http'
+import http, { UPLOAD_TIMEOUT_MS } from '@/services/http'
 import type {
   AdminLocationFilters,
   CoordinateParseResult,
@@ -73,7 +73,9 @@ export async function parseCoordinates(text: string): Promise<CoordinateParseRes
 export async function uploadLocationImage(file: File): Promise<LocationImageUpload> {
   const formData = new FormData()
   formData.append('file', file)
-  const response = await http.post<LocationImageUpload>('/subject/location-images', formData)
+  const response = await http.post<LocationImageUpload>('/subject/location-images', formData, {
+    timeout: UPLOAD_TIMEOUT_MS,
+  })
   return response.data
 }
 

@@ -16,7 +16,7 @@ const roleLabel = computed(() => {
 
 <template>
   <main class="forbidden-page">
-    <section class="forbidden-card" aria-labelledby="forbidden-title">
+    <section class="forbidden-card ocop-enter" aria-labelledby="forbidden-title">
       <span class="error-code">403</span>
       <span class="lock-icon" aria-hidden="true"><AppIcon name="lock" :size="42" /></span>
       <h1 id="forbidden-title">Bạn không có quyền truy cập</h1>

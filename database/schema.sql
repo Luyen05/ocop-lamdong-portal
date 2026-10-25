@@ -2,10 +2,15 @@ BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS postgis;
 
+-- Cập nhật updated_at khi sửa dòng; giữ nguyên nếu chỉ tăng lượt xem (views).
 CREATE OR REPLACE FUNCTION set_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
-  NEW.updated_at = CURRENT_TIMESTAMP;
+  IF (to_jsonb(NEW) - 'views' - 'updated_at') = (to_jsonb(OLD) - 'views' - 'updated_at') THEN
+    NEW.updated_at = OLD.updated_at;
+  ELSE
+    NEW.updated_at = CURRENT_TIMESTAMP;
+  END IF;
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -20,13 +25,26 @@ CREATE TABLE users (
   id BIGSERIAL PRIMARY KEY,
   role_id BIGINT NOT NULL REFERENCES roles(id) ON DELETE RESTRICT,
   email VARCHAR(150) NOT NULL UNIQUE,
-  hashed_password VARCHAR(255) NOT NULL,
+  hashed_password VARCHAR(255),
   full_name VARCHAR(150) NOT NULL,
   phone VARCHAR(20),
   avatar_url VARCHAR(500),
   is_active BOOLEAN NOT NULL DEFAULT TRUE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE user_social_accounts (
+  id BIGSERIAL PRIMARY KEY,
+  user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  provider VARCHAR(20) NOT NULL,
+  provider_user_id VARCHAR(255) NOT NULL,
+  email VARCHAR(150),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  last_login_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT user_social_accounts_provider_check CHECK (provider IN ('google', 'facebook')),
+  CONSTRAINT uq_social_account_provider_user UNIQUE (provider, provider_user_id),
+  CONSTRAINT uq_social_account_user_provider UNIQUE (user_id, provider)
 );
 
 CREATE TABLE subjects (
@@ -66,7 +84,11 @@ CREATE TABLE categories (
   name VARCHAR(150) NOT NULL UNIQUE,
   slug VARCHAR(150) NOT NULL UNIQUE,
   description TEXT,
-  icon VARCHAR(100)
+  icon VARCHAR(100),
+  -- Danh mục ẩn không còn trong bộ lọc công khai và ô chọn khi tạo sản phẩm mới;
+  -- sản phẩm đã thuộc danh mục vẫn hiển thị bình thường.
+  is_visible BOOLEAN NOT NULL DEFAULT TRUE,
+  sort_order INTEGER NOT NULL DEFAULT 0 CONSTRAINT categories_sort_order_check CHECK (sort_order >= 0)
 );
 
 CREATE TABLE data_sources (
@@ -274,11 +296,19 @@ CREATE TABLE reviews (
   comment TEXT NOT NULL,
   status VARCHAR(20) NOT NULL DEFAULT 'pending'
     CHECK (status IN ('pending', 'approved', 'rejected')),
+  -- Admin kiểm duyệt gần nhất; tài khoản admin bị xóa thì giữ lại đánh giá.
+  reviewed_by BIGINT REFERENCES users(id) ON DELETE SET NULL,
+  reviewed_at TIMESTAMPTZ,
+  rejection_reason TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT review_exactly_one_target CHECK (
     (product_id IS NOT NULL AND location_id IS NULL) OR
     (product_id IS NULL AND location_id IS NOT NULL)
+  ),
+  CONSTRAINT reviews_rejection_reason_check CHECK (
+    status <> 'rejected'
+    OR (rejection_reason IS NOT NULL AND length(trim(rejection_reason)) > 0)
   )
 );
 

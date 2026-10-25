@@ -3,9 +3,11 @@ import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import AuthLayout from '@/components/auth/AuthLayout.vue'
+import SocialLoginButtons from '@/components/auth/SocialLoginButtons.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
 import { getApiErrorMessage } from '@/services/api-error'
 import { authStore } from '@/stores/auth'
+import { getPasswordScore, getPasswordStrength } from '@/utils/password'
 
 const router = useRouter()
 
@@ -20,21 +22,8 @@ const acceptedTerms = ref(false)
 const isSubmitting = ref(false)
 const errorMessage = ref('')
 
-const passwordScore = computed(() => {
-  let score = 0
-  if (password.value.length >= 8) score += 1
-  if (/[a-z]/.test(password.value) && /[A-Z]/.test(password.value)) score += 1
-  if (/\d/.test(password.value)) score += 1
-  if (/[^A-Za-z0-9]/.test(password.value)) score += 1
-  return score
-})
-
-const passwordStrength = computed(() => {
-  if (!password.value) return { label: 'Chưa nhập', tone: 'muted' }
-  if (passwordScore.value <= 1) return { label: 'Yếu', tone: 'danger' }
-  if (passwordScore.value <= 2) return { label: 'Trung bình', tone: 'warning' }
-  return { label: 'Tốt', tone: 'success' }
-})
+const passwordScore = computed(() => getPasswordScore(password.value))
+const passwordStrength = computed(() => getPasswordStrength(password.value))
 
 const confirmationMismatch = computed(() =>
   Boolean(passwordConfirmation.value && password.value !== passwordConfirmation.value),
@@ -115,6 +104,9 @@ async function submit(): Promise<void> {
             v-model.trim="phone"
             class="form-control"
             type="tel"
+            inputmode="tel"
+            pattern="[0-9+][0-9 .\(\)\-]{7,19}"
+            title="Chỉ gồm chữ số, có thể có dấu +, khoảng trắng, dấu chấm, gạch ngang, ngoặc"
             autocomplete="tel"
             minlength="8"
             maxlength="20"
@@ -208,6 +200,11 @@ async function submit(): Promise<void> {
         />
         {{ isSubmitting ? 'Đang tạo tài khoản...' : 'Đăng ký' }}
       </button>
+
+      <SocialLoginButtons
+        heading="hoặc đăng ký nhanh bằng"
+        note="Khi tiếp tục, bạn đồng ý dùng tên và email của tài khoản Google/Facebook để tạo tài khoản. Hệ thống không đăng gì lên trang cá nhân của bạn."
+      />
 
       <p class="mb-0 text-center text-secondary">
         Đã có tài khoản?

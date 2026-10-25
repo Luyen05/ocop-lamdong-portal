@@ -4,6 +4,9 @@ import { AUTH_SESSION_EXPIRED_EVENT } from '@/services/token'
 import { authStore } from '@/stores/auth'
 import HomeView from '@/views/HomeView.vue'
 import { resolveRouteAccess } from '@/router/access'
+import { documentTitleFor } from '@/router/titles'
+import { scrollBehavior } from '@/utils/motion'
+import { applyPageSeo, ROUTE_DESCRIPTIONS } from '@/utils/seo'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -26,9 +29,22 @@ const router = createRouter({
       meta: { layout: 'auth', guestOnly: true },
     },
     {
+      // Google/Facebook trả người dùng về đây (FRONTEND_BASE_URL/dang-nhap/mang-xa-hoi/<google|facebook>).
+      path: '/dang-nhap/mang-xa-hoi/:provider(google|facebook)',
+      name: 'social-login-callback',
+      component: () => import('@/views/SocialLoginCallbackView.vue'),
+      meta: { layout: 'auth' },
+    },
+    {
       path: '/tai-khoan',
       name: 'profile',
       component: () => import('@/views/ProfileView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/tai-khoan/danh-gia',
+      name: 'my-reviews',
+      component: () => import('@/views/MyReviewsView.vue'),
       meta: { requiresAuth: true },
     },
     {
@@ -106,6 +122,24 @@ const router = createRouter({
           component: () => import('@/views/admin/AdminLocationsView.vue'),
           meta: { title: 'Duyệt điểm du lịch' },
         },
+        {
+          path: 'danh-gia',
+          name: 'admin-reviews',
+          component: () => import('@/views/admin/AdminReviewsView.vue'),
+          meta: { title: 'Duyệt đánh giá' },
+        },
+        {
+          path: 'nguoi-dung',
+          name: 'admin-users',
+          component: () => import('@/views/admin/AdminUsersView.vue'),
+          meta: { title: 'Quản lý người dùng' },
+        },
+        {
+          path: 'danh-muc',
+          name: 'admin-categories',
+          component: () => import('@/views/admin/AdminCategoriesView.vue'),
+          meta: { title: 'Quản lý danh mục' },
+        },
       ],
     },
     {
@@ -132,12 +166,12 @@ const router = createRouter({
           component: () => import('@/views/subject/SubjectProductEditorView.vue'),
         },
         {
-          path: 'san-pham/:id/chinh-sua',
+          path: 'san-pham/:id(\\d+)/chinh-sua',
           name: 'subject-product-edit',
           component: () => import('@/views/subject/SubjectProductEditorView.vue'),
         },
         {
-          path: 'yeu-cau/:requestId/chinh-sua',
+          path: 'yeu-cau/:requestId(\\d+)/chinh-sua',
           name: 'subject-product-request-edit',
           component: () => import('@/views/subject/SubjectProductEditorView.vue'),
         },
@@ -173,8 +207,11 @@ const router = createRouter({
       component: () => import('@/views/NotFoundView.vue'),
     },
   ],
-  scrollBehavior: (to) =>
-    to.hash ? { el: to.hash, behavior: 'smooth' } : { top: 0 },
+  // Quay lại trang trước thì giữ vị trí cuộn cũ; cuộn tới #neo thì mượt trừ khi người dùng giảm chuyển động.
+  scrollBehavior: (to, _from, savedPosition) => {
+    if (savedPosition) return savedPosition
+    return to.hash ? { el: to.hash, behavior: scrollBehavior() } : { top: 0 }
+  },
 })
 
 router.beforeEach(async (to) => {
@@ -201,9 +238,26 @@ router.beforeEach(async (to) => {
   return true
 })
 
-window.addEventListener(AUTH_SESSION_EXPIRED_EVENT, () => {
+// Trang không có nội dung cho tìm kiếm: cần đăng nhập, đăng nhập/đăng ký, lỗi.
+const NOINDEX_ROUTES = new Set(['forbidden', 'not-found', 'social-login-callback'])
+
+router.afterEach((to) => {
+  const name = typeof to.name === 'string' ? to.name : ''
+  applyPageSeo({
+    fullTitle: documentTitleFor(to.name, to.meta.title),
+    description: ROUTE_DESCRIPTIONS[name],
+    path: to.path,
+    noindex: Boolean(to.meta.requiresAuth) || to.meta.layout === 'auth' || NOINDEX_ROUTES.has(name) || !name,
+    // Trang chi tiết tự đặt lại thẻ SEO có tên cụ thể sau khi tải xong dữ liệu.
+  })
+})
+
+window.addEventListener(AUTH_SESSION_EXPIRED_EVENT, (event) => {
   const currentRoute = router.currentRoute.value
-  if (currentRoute.meta.requiresAuth) {
+  const locked = (event as CustomEvent<string>).detail === 'locked'
+  if (locked) {
+    void router.push({ name: 'login', query: { locked: '1' } })
+  } else if (currentRoute.meta.requiresAuth) {
     void router.push({
       name: 'login',
       query: { redirect: currentRoute.fullPath, expired: '1' },

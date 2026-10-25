@@ -51,6 +51,15 @@ function asset(name: string): string {
   return `/assets/figma/home/${name}`
 }
 
+// Mọi trang công khai có đúng một <main>; chuyển tiêu điểm vào đó (WCAG 2.4.1).
+function skipToContent(): void {
+  const main = document.querySelector('main')
+  if (!main) return
+  if (!main.id) main.id = 'noi-dung-chinh'
+  main.setAttribute('tabindex', '-1')
+  main.focus()
+}
+
 function closeMenu(): void {
   isMenuOpen.value = false
 }
@@ -99,6 +108,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
+  <a class="skip-link" href="#noi-dung-chinh" @click.prevent="skipToContent">Bỏ qua điều hướng, tới nội dung chính</a>
   <header class="site-header" :class="{ 'is-condensed': isCondensed }">
     <div class="announcement-bar">
       <div class="site-container announcement-inner">
@@ -115,7 +125,7 @@ onBeforeUnmount(() => {
 
     <div class="main-header">
       <div class="site-container header-inner">
-        <RouterLink class="site-brand" to="/" aria-label="Lâm Đồng OCOP - Trang chủ">
+        <RouterLink class="site-brand" to="/">
           <span class="brand-symbol">
             <img :src="asset('icon-brand.svg')" alt="" />
           </span>
@@ -124,6 +134,7 @@ onBeforeUnmount(() => {
               <strong>LÂM ĐỒNG OCOP</strong>
             </span>
             <span>Nông sản OCOP và du lịch nông nghiệp</span>
+            <span class="visually-hidden">Về trang chủ</span>
           </span>
         </RouterLink>
 
@@ -215,6 +226,27 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
+.skip-link {
+  position: fixed;
+  z-index: 1100;
+  top: var(--ocop-space-2);
+  left: var(--ocop-space-2);
+  padding: var(--ocop-space-2) var(--ocop-space-4);
+  border-radius: var(--ocop-radius-sm);
+  background: var(--ocop-mist-900);
+  color: var(--ocop-white);
+  font-weight: 700;
+  text-decoration: none;
+  transform: translateY(-200%);
+  transition: transform var(--ocop-duration-fast) var(--ocop-ease-out);
+}
+
+.skip-link:focus-visible {
+  transform: translateY(0);
+  outline: 3px solid var(--ocop-daquy-400);
+  outline-offset: 2px;
+}
+
 .site-header {
   position: sticky;
   z-index: 100;

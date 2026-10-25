@@ -25,7 +25,7 @@ const visibleServices = computed(() => props.location.services.slice(0, 3))
     <RouterLink
       class="location-media"
       :to="{ name: 'location-detail', params: { slug: location.slug } }"
-      :aria-label="`Xem chi tiết ${location.name}`"
+      :aria-label="`${location.type_label}: xem chi tiết ${location.name}`"
     >
       <img
         :src="imageUrl"

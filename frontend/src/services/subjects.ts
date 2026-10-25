@@ -6,7 +6,21 @@ import type {
   SubjectApplicationListResponse,
   SubjectApplicationPayload,
   SubjectModerationPayload,
+  SubjectProfileUpdatePayload,
 } from '@/types/subject'
+
+/** Hồ sơ đơn vị của chủ thể đã duyệt. */
+export async function getSubjectProfile(): Promise<SubjectApplication> {
+  const response = await http.get<SubjectApplication>('/subject/profile')
+  return response.data
+}
+
+export async function updateSubjectProfile(
+  payload: SubjectProfileUpdatePayload,
+): Promise<SubjectApplication> {
+  const response = await http.patch<SubjectApplication>('/subject/profile', payload)
+  return response.data
+}
 
 export async function createSubjectApplication(
   payload: SubjectApplicationPayload,

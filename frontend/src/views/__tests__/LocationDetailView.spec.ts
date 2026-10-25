@@ -20,6 +20,11 @@ vi.mock('@/services/locations', () => ({
   getLocation: vi.fn(),
 }))
 
+// Khối đánh giá có test riêng (components/reviews/__tests__); ở đây chỉ kiểm tra được gắn đúng đối tượng.
+vi.mock('@/components/reviews/ReviewSection.vue', () => ({
+  default: { name: 'ReviewSection', props: ['targetType', 'targetId', 'ownerSubjectId'], template: '<section class="review-section-stub" />' },
+}))
+
 const detail: LocationDetail = {
   id: 1,
   name: 'Cầu Đất Farm',
@@ -84,6 +89,11 @@ describe('LocationDetailView', () => {
     expect(wrapper.get('a[href*="google.com/maps/dir"]').attributes('href')).toContain('11.879583%2C108.547398')
     const map = wrapper.getComponent(LeafletMapStub)
     expect(map.props('features')[0].geometry.coordinates).toEqual([108.547398, 11.879583])
+    expect(wrapper.getComponent({ name: 'ReviewSection' }).props()).toMatchObject({
+      targetType: 'location',
+      targetId: 1,
+      ownerSubjectId: 1,
+    })
   })
 
   it('bao khong tim thay khi api tra 404', async () => {

@@ -3,15 +3,18 @@ from decimal import Decimal
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import and_, case, func, or_, select
+from sqlalchemy import and_, case, func, or_, select, update
 from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.core.database import get_db
+from app.core.search import LIKE_ESCAPE, contains_pattern
 from app.models.category import Category
 from app.models.data_source import ProductSource
 from app.models.location import TourismLocation, location_ocop_products
 from app.models.product import Product
 from app.models.subject import Subject
+from app.models.user import User
+from app.services.visibility import account_allows_public_content
 from app.schemas.error import ErrorResponse
 from app.schemas.product import (
     ProductCategoryRead,
@@ -54,15 +57,47 @@ def public_eligibility_filter():
     return or_(has_recognition_source, has_current_certificate)
 
 
+def subject_account_active_filter():
+    """Tài khoản của chủ thể còn hoạt động (hoặc là tài khoản dữ liệu nguồn công khai):
+    admin khóa tài khoản thì sản phẩm ngừng hiện công khai."""
+
+    return (
+        select(User.id)
+        .where(User.id == Subject.user_id, account_allows_public_content())
+        .correlate(Subject)
+        .exists()
+    )
+
+
 def public_product_filters():
+    """Cần join Product.subject trong câu truy vấn dùng các điều kiện này."""
+
     return (
         Product.status == "approved",
         Product.is_demo.is_(False),
         Subject.status == "approved",
+        subject_account_active_filter(),
         Product.star.is_not(None),
         Product.description.is_not(None),
         public_eligibility_filter(),
     )
+
+
+def increment_views(db: Session, model, row_id: int, current_views: int) -> int:
+    """Tăng lượt xem 1 đơn vị (UPDATE ... SET views = views + 1) cho trang chi tiết công khai.
+
+    Giữ nguyên updated_at ở phía ứng dụng; trên PostgreSQL trigger set_updated_at vẫn đặt lại
+    updated_at vì trigger chạy với mọi câu UPDATE.
+    """
+
+    db.execute(
+        update(model)
+        .where(model.id == row_id)
+        .values(views=model.views + 1, updated_at=model.updated_at)
+        .execution_options(synchronize_session=False)
+    )
+    db.commit()
+    return current_views + 1
 
 
 def to_product_list_item(product: Product) -> ProductListItem:
@@ -121,12 +156,12 @@ def list_products(
 
     filters = list(public_product_filters())
     if search:
-        keyword = f"%{search.strip()}%"
+        keyword = contains_pattern(search)
         filters.append(
             or_(
-                Product.name.ilike(keyword),
-                Product.description.ilike(keyword),
-                Subject.name.ilike(keyword),
+                Product.name.ilike(keyword, escape=LIKE_ESCAPE),
+                Product.description.ilike(keyword, escape=LIKE_ESCAPE),
+                Subject.name.ilike(keyword, escape=LIKE_ESCAPE),
             )
         )
     if category:
@@ -230,6 +265,7 @@ def get_product(slug: str, db: Session = Depends(get_db)) -> ProductDetail:
                 "details": {"slug": slug},
             },
         )
+    views = increment_views(db, Product, product.id, product.views)
 
     # Chỉ chọn các cột có từ schema gốc để trang sản phẩm không phụ thuộc migration 008.
     related_locations = db.execute(
@@ -262,7 +298,7 @@ def get_product(slug: str, db: Session = Depends(get_db)) -> ProductDetail:
         story=product.story,
         ingredients=product.ingredients,
         usage_instructions=product.usage_instructions,
-        views=product.views,
+        views=views,
         images=[
             ProductImageRead(
                 id=image.id,

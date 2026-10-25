@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import LocationCard from '@/components/locations/LocationCard.vue'
@@ -15,6 +15,7 @@ import type {
   LocationTypeOption,
 } from '@/types/location'
 import { isLocationType, sortVietnamese } from '@/utils/location'
+import { scrollBehavior } from '@/utils/motion'
 
 const route = useRoute()
 const router = useRouter()
@@ -126,7 +127,7 @@ async function clearFilters(): Promise<void> {
 async function goToPage(page: number): Promise<void> {
   if (page < 1 || page > totalPages.value || page === currentPage.value) return
   await router.push({ name: 'locations', query: filterQuery(page) })
-  window.scrollTo({ top: 0, behavior: 'smooth' })
+  window.scrollTo({ top: 0, behavior: scrollBehavior() })
 }
 
 watch(
@@ -143,16 +144,13 @@ onMounted(() => {
   document.title = 'Điểm du lịch nông nghiệp | OCOP Lâm Đồng'
 })
 
-onUnmounted(() => {
-  document.title = 'OCOP Lâm Đồng'
-})
 </script>
 
 <template>
   <main class="locations-page">
     <PhotoBanner :photo="heroPhoto">
       <span class="banner-eyebrow">Du lịch nông nghiệp Lâm Đồng</span>
-      <h1>Điểm đến trải nghiệm</h1>
+      <h1>Điểm du lịch nông nghiệp</h1>
       <p>Đồi chè, vườn cà phê, vườn dâu, vườn hoa và nông trại mở cửa đón khách tham quan.</p>
       <RouterLink class="ocop-btn-accent banner-action" :to="{ name: 'map' }">
         <AppIcon name="map" :size="16" /> Mở bản đồ số

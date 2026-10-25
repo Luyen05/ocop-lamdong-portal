@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from app.api.dependencies import CurrentUser
 from app.core.database import get_db
 from app.core.geometry import GeoPoint
+from app.core.search import LIKE_ESCAPE, contains_pattern
 from app.models.location import TourismLocation, TourismLocationChangeRequest
 from app.models.subject import Subject
 from app.schemas.location_management import (
@@ -58,8 +59,13 @@ def list_location_change_requests(
     if request_type:
         filters.append(TourismLocationChangeRequest.request_type == request_type)
     if search:
-        keyword = f"%{search.strip()}%"
-        filters.append(or_(TourismLocation.name.ilike(keyword), Subject.name.ilike(keyword)))
+        keyword = contains_pattern(search)
+        filters.append(
+            or_(
+                TourismLocation.name.ilike(keyword, escape=LIKE_ESCAPE),
+                Subject.name.ilike(keyword, escape=LIKE_ESCAPE),
+            )
+        )
 
     def base_query(*columns):
         return (

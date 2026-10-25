@@ -1,0 +1,63 @@
+name: Deploy
+
+# Chạy tay (Actions → Deploy → Run workflow). Cần đã chọn máy chủ và khai báo secrets bên dưới.
+#   DEPLOY_HOST, DEPLOY_USER, DEPLOY_SSH_KEY  (khóa riêng của tài khoản triển khai)
+#   DEPLOY_PATH (tùy chọn, mặc định /opt/ocop)
+# Máy chủ cần Docker, Git, và file .env.production đã điền (docs/CAU_HINH.md mục 4).
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Nhánh hoặc tag cần triển khai
+        default: main
+        required: true
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Kiểm tra secrets
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          test -n "$HOST" && test -n "$KEY" || { echo "Thiếu secret DEPLOY_HOST hoặc DEPLOY_SSH_KEY"; exit 1; }
+      - name: Cấu hình SSH
+        env:
+          KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          HOST: ${{ secrets.DEPLOY_HOST }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$KEY" > ~/.ssh/id_deploy && chmod 600 ~/.ssh/id_deploy
+          ssh-keyscan -H "$HOST" >> ~/.ssh/known_hosts
+      - name: Cập nhật mã nguồn, build và khởi động lại
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          REF: ${{ inputs.ref }}
+        run: |
+          ssh -i ~/.ssh/id_deploy "$DEPLOY_USER@$HOST" "REF='$REF' DEPLOY_PATH='${DEPLOY_PATH:-/opt/ocop}' bash -s" <<'REMOTE'
+          set -euo pipefail
+          cd "$DEPLOY_PATH"
+          git fetch --prune origin
+          git checkout --detach "origin/$REF" 2>/dev/null || git checkout --detach "$REF"
+          scripts/deploy/trien-khai.sh
+          REMOTE
+      - name: Kiểm tra sau triển khai
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+        run: |
+          for i in $(seq 1 15); do
+            curl -fsS "http://$HOST/healthz" >/dev/null && curl -fsS "http://$HOST/api/v1/products" >/dev/null && exit 0
+            sleep 4
+          done
+          echo "Website chưa phản hồi sau triển khai"; exit 1

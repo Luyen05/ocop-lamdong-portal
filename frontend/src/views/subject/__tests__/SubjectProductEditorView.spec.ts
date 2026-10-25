@@ -3,12 +3,23 @@ import { flushPromises, mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { getCategories } from '@/services/categories'
-import { uploadProductCertificate, uploadProductImage } from '@/services/product-management'
+import {
+  createProductDraft,
+  getMyProduct,
+  submitProduct,
+  updateProductDraft,
+  uploadProductCertificate,
+  uploadProductImage,
+} from '@/services/product-management'
+import type { ManagedProduct } from '@/types/product-management'
 import SubjectProductEditorView from '@/views/subject/SubjectProductEditorView.vue'
 
+const router = vi.hoisted(() => ({ push: vi.fn(), replace: vi.fn() }))
+const routeState = vi.hoisted(() => ({ params: {} as Record<string, string> }))
+
 vi.mock('vue-router', () => ({
-  useRoute: () => ({ params: {} }),
-  useRouter: () => ({ push: vi.fn() }),
+  useRoute: () => routeState,
+  useRouter: () => router,
 }))
 
 vi.mock('@/services/categories', () => ({
@@ -32,6 +43,7 @@ vi.mock('@/services/product-management', () => ({
 describe('SubjectProductEditorView', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    routeState.params = {}
     vi.mocked(getCategories).mockResolvedValue({
       items: [{ id: 1, name: 'Đồ uống', slug: 'do-uong', description: null, icon: null }],
       page: 1,
@@ -109,5 +121,119 @@ describe('SubjectProductEditorView', () => {
     expect(uploadProductCertificate).toHaveBeenCalledWith(file)
     expect(wrapper.text()).toContain('chung-nhan-ocop.pdf')
     expect(wrapper.text()).toContain('File riêng tư trên hệ thống')
+  })
+
+  it('tao nhap xong ma gui duyet loi thi lan sau sua ban nhap do, khong tao ban trung', async () => {
+    vi.mocked(uploadProductImage).mockResolvedValue({
+      image_url: 'http://localhost:8000/uploads/products/1/abc.png',
+      storage_path: 'products/1/0123456789abcdef0123456789abcdef.png',
+      content_type: 'image/png',
+      size_bytes: 8,
+    })
+    vi.mocked(uploadProductCertificate).mockResolvedValue({
+      storage_path: 'certificates/1/0123456789abcdef0123456789abcdef.pdf',
+      content_type: 'application/pdf',
+      size_bytes: 12,
+      original_filename: 'chung-nhan.pdf',
+    })
+    const draft = { id: 42, status: 'draft', category_id: 1, name: 'Trà atiso Đà Lạt' } as ManagedProduct
+    vi.mocked(createProductDraft).mockResolvedValue(draft)
+    vi.mocked(updateProductDraft).mockResolvedValue(draft)
+    vi.mocked(submitProduct)
+      .mockRejectedValueOnce(new Error('mất mạng'))
+      .mockResolvedValueOnce({ ...draft, status: 'pending' } as ManagedProduct)
+    router.replace.mockResolvedValue(undefined)
+    const wrapper = mount(SubjectProductEditorView, {
+      global: { stubs: { RouterLink: { template: '<a><slot /></a>' } } },
+    })
+    await flushPromises()
+
+    await wrapper.get('input[minlength="2"]').setValue('Trà atiso Đà Lạt')
+    await wrapper.get('textarea[minlength="10"]').setValue('Trà atiso sấy khô từ vùng trồng Đà Lạt.')
+    const selects = wrapper.findAll('select')
+    await selects[selects.length - 1]!.setValue('4')
+    const certificateInputs = wrapper.findAll('.form-grid input:not([type="file"])')
+    const byType = (type: string) => certificateInputs.filter((input) => input.attributes('type') === type)
+    await byType('date')[0]!.setValue('2026-01-10')
+    await byType('date')[1]!.setValue('2029-01-10')
+    const requiredText = wrapper.findAll('input[required]:not([type]):not([minlength])')
+    await requiredText[0]!.setValue('QĐ-123/UBND')
+    await requiredText[1]!.setValue('UBND tỉnh Lâm Đồng')
+    for (const [selector, file] of [
+      ['.upload-field input[type="file"]', new File([new Uint8Array([137, 80])], 'a.png', { type: 'image/png' })],
+      ['.certificate-upload input[type="file"]', new File([new Uint8Array([37, 80])], 'c.pdf', { type: 'application/pdf' })],
+    ] as const) {
+      const input = wrapper.get(selector)
+      Object.defineProperty(input.element, 'files', { value: [file] })
+      await input.trigger('change')
+      await flushPromises()
+    }
+    expect(wrapper.get('.primary-button').attributes('disabled')).toBeUndefined()
+
+    await wrapper.get('form.product-form').trigger('submit')
+    await flushPromises()
+
+    expect(createProductDraft).toHaveBeenCalledTimes(1)
+    expect(router.replace).toHaveBeenCalledWith({
+      name: 'subject-product-edit',
+      params: { id: '42' },
+      state: { productEditorError: expect.stringContaining('Đã lưu bản nháp nhưng chưa gửi duyệt được') },
+    })
+    expect(wrapper.get('[role="alert"]').text()).toBe('Không thể lưu thông tin sản phẩm.')
+
+    await wrapper.get('form.product-form').trigger('submit')
+    await flushPromises()
+
+    expect(createProductDraft).toHaveBeenCalledTimes(1)
+    expect(updateProductDraft).toHaveBeenCalledWith(42, expect.objectContaining({ name: 'Trà atiso Đà Lạt' }))
+    expect(submitProduct).toHaveBeenLastCalledWith(42)
+    expect(router.push).toHaveBeenCalledWith({ name: 'subject-products', query: { saved: 'submitted' } })
+  })
+
+  it('tao moi chi chon duoc danh muc dang hien', async () => {
+    const wrapper = mount(SubjectProductEditorView, {
+      global: { stubs: { RouterLink: { template: '<a><slot /></a>' } } },
+    })
+    await flushPromises()
+
+    const options = wrapper.get('select').findAll('option').map((option) => option.text())
+    expect(options).toEqual(['Đồ uống'])
+  })
+
+  it('sua san pham thuoc danh muc dang an van giu nguyen danh muc', async () => {
+    routeState.params = { id: '7' }
+    vi.mocked(getMyProduct).mockResolvedValue({
+      id: 7,
+      category_id: 9,
+      category: { id: 9, name: 'Sinh vật cảnh', slug: 'sinh-vat-canh' },
+      name: 'Lan hồ điệp',
+      star: null,
+      price: null,
+      unit: null,
+      cert_code: null,
+      cert_issued_at: null,
+      cert_expires_at: null,
+      issuing_authority: null,
+      certificate_url: null,
+      certificate_storage_path: null,
+      vietgap_code: null,
+      description: null,
+      story: null,
+      ingredients: null,
+      usage_instructions: null,
+      images: [],
+      status: 'draft',
+    } as unknown as ManagedProduct)
+    const wrapper = mount(SubjectProductEditorView, {
+      global: { stubs: { RouterLink: { template: '<a><slot /></a>' } } },
+    })
+    await flushPromises()
+
+    const select = wrapper.get('select').element as HTMLSelectElement
+    expect(Array.from(select.options).map((option) => option.text)).toEqual([
+      'Đồ uống',
+      'Sinh vật cảnh (đang tạm ẩn)',
+    ])
+    expect(select.value).toBe('9')
   })
 })

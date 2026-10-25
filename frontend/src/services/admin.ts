@@ -3,12 +3,16 @@ import http from '@/services/http'
 export interface AdminDashboardStats {
   total_products: number
   approved_products: number
+  /** Sản phẩm thực sự hiện ở trang công khai. */
+  public_products?: number
   pending_products: number
   pending_subject_applications: number
   pending_change_requests: number
   products_missing_decision: number
   pending_locations: number
   pending_location_change_requests: number
+  /** Đánh giá sản phẩm/điểm du lịch chờ duyệt (backend mặc định 0). */
+  pending_reviews?: number
 }
 
 export async function getAdminDashboard(): Promise<AdminDashboardStats> {

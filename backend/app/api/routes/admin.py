@@ -8,17 +8,22 @@ from app.core.roles import RoleName
 from app.models.data_source import DataSource, ProductSource
 from app.models.location import TourismLocation, TourismLocationChangeRequest
 from app.models.product import Product, ProductChangeRequest
+from app.models.review import Review
 from app.models.subject import Subject
+from app.api.routes.products import public_product_filters
 from app.schemas.access import AdminAccessResponse, AdminDashboardResponse
 from app.schemas.error import ErrorResponse
 from app.api.routes import (
+    admin_categories,
     admin_data_sources,
     admin_location_changes,
     admin_locations,
     admin_product_changes,
     admin_products,
+    admin_reviews,
     admin_statistics,
     admin_subject_applications,
+    admin_users,
 )
 
 
@@ -62,6 +67,9 @@ def get_admin_dashboard(db: Session = Depends(get_db)) -> AdminDashboardResponse
     return AdminDashboardResponse(
         total_products=count_products(),
         approved_products=count_products(Product.status == "approved"),
+        public_products=db.scalar(
+            select(func.count(Product.id)).join(Product.subject).where(*public_product_filters())
+        ) or 0,
         pending_products=count_products(Product.status == "pending"),
         pending_subject_applications=db.scalar(
             select(func.count(Subject.id)).where(Subject.status == "pending")
@@ -80,6 +88,9 @@ def get_admin_dashboard(db: Session = Depends(get_db)) -> AdminDashboardResponse
                 TourismLocationChangeRequest.status == "pending"
             )
         ) or 0,
+        pending_reviews=db.scalar(
+            select(func.count(Review.id)).where(Review.status == "pending")
+        ) or 0,
     )
 
 
@@ -93,3 +104,6 @@ router.include_router(admin_data_sources.router)
 router.include_router(admin_statistics.router)
 router.include_router(admin_locations.router)
 router.include_router(admin_location_changes.router)
+router.include_router(admin_users.router)
+router.include_router(admin_categories.router)
+router.include_router(admin_reviews.router)

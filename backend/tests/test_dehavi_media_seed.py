@@ -1,8 +1,15 @@
 """Media integration checks using the existing disposable PostGIS fixture."""
+import json
 import os
 from pathlib import Path
 
 from test_dehavi_seed import seeded_dehavi, PRODUCT, LOCATION
+
+
+def without_views(row_json: str) -> dict:
+    row = json.loads(row_json)
+    row.pop('views', None)
+    return row
 
 
 def test_official_media_seed_and_api(seeded_dehavi):
@@ -24,7 +31,8 @@ def test_official_media_seed_and_api(seeded_dehavi):
             for key, value in rows.items():
                 if table == 'tourism_locations' and key == target:
                     continue
-                assert current[key] == value, table
+                # Xem trang chi tiết ở vòng trước làm tăng lượt xem; chỉ cột đó được phép khác.
+                assert without_views(current[key]) == without_views(value), table
         for table, rows in links.items():
             assert db.execute(f'SELECT row_to_json(t)::text FROM {table} t ORDER BY 1').fetchall() == rows
         for endpoint, slug, page in [('products', PRODUCT, 'valley'), ('locations', LOCATION, 'cup-dehavi-showroom')]:

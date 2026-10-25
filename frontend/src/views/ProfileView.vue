@@ -1,9 +1,16 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useRoute } from 'vue-router'
+
+import PasswordSettings from '@/components/auth/PasswordSettings.vue'
+import SocialAccountLinks from '@/components/auth/SocialAccountLinks.vue'
 
 import { getApiErrorMessage } from '@/services/api-error'
 import { authStore } from '@/stores/auth'
+import { SOCIAL_PROVIDER_LABELS } from '@/utils/social-login'
 
+const route = useRoute()
+const justLinked = typeof route.query['lien-ket'] === 'string' ? route.query['lien-ket'] : null
 const user = authStore.currentUser
 const fullName = ref(user.value?.full_name ?? '')
 const phone = ref(user.value?.phone ?? '')
@@ -26,6 +33,14 @@ const joinedDate = computed(() => {
   return new Intl.DateTimeFormat('vi-VN', { dateStyle: 'long' }).format(
     new Date(user.value.created_at),
   )
+})
+
+/** Cách đăng nhập: mật khẩu và/hoặc tài khoản Google/Facebook đã liên kết. */
+const loginMethods = computed(() => {
+  if (!user.value) return ''
+  const methods = (user.value.social_providers ?? []).map((provider) => SOCIAL_PROVIDER_LABELS[provider])
+  if (user.value.has_password !== false) methods.unshift('Email và mật khẩu')
+  return methods.join(', ')
 })
 
 async function submit(): Promise<void> {
@@ -63,7 +78,7 @@ async function submit(): Promise<void> {
         </div>
       </div>
 
-      <div v-if="user" class="profile-grid">
+      <div v-if="user" class="profile-grid stagger-in">
         <aside class="profile-summary">
           <img
             v-if="user.avatar_url"
@@ -84,12 +99,20 @@ async function submit(): Promise<void> {
               <dd>{{ joinedDate }}</dd>
             </div>
             <div>
+              <dt>Đăng nhập bằng</dt>
+              <dd data-testid="login-methods">{{ loginMethods }}</dd>
+            </div>
+            <div>
               <dt>Trạng thái</dt>
               <dd class="text-success fw-semibold">Đang hoạt động</dd>
             </div>
           </dl>
+          <RouterLink class="ocop-btn-ghost profile-reviews-link" to="/tai-khoan/danh-gia">
+            Đánh giá của tôi
+          </RouterLink>
         </aside>
 
+        <div class="profile-main">
         <section class="profile-form-card">
           <h2 class="h4 mb-1">Chỉnh sửa hồ sơ</h2>
           <p class="mb-4 text-secondary">
@@ -136,6 +159,9 @@ async function submit(): Promise<void> {
                 v-model.trim="phone"
                 class="form-control"
                 type="tel"
+                inputmode="tel"
+                pattern="[0-9+][0-9 .\(\)\-]{7,19}"
+                title="Chỉ gồm chữ số, có thể có dấu +, khoảng trắng, dấu chấm, gạch ngang, ngoặc"
                 autocomplete="tel"
                 minlength="8"
                 maxlength="20"
@@ -168,6 +194,11 @@ async function submit(): Promise<void> {
             </div>
           </form>
         </section>
+
+        <PasswordSettings class="profile-form-card" />
+
+        <SocialAccountLinks class="profile-form-card" :just-linked="justLinked" />
+        </div>
       </div>
     </div>
   </main>
@@ -264,12 +295,30 @@ async function submit(): Promise<void> {
 }
 
 .profile-summary dt {
+  flex-shrink: 0;
   color: var(--ocop-slate);
   font-weight: 500;
 }
 
+.profile-summary dd {
+  text-align: right;
+}
+
+.profile-reviews-link {
+  width: 100%;
+  min-height: var(--ocop-control-md);
+  margin-top: 1.5rem;
+}
+
 .profile-form-card {
   padding: clamp(1.5rem, 4vw, 2.5rem);
+}
+
+.profile-main {
+  display: grid;
+  min-width: 0;
+  align-content: start;
+  gap: 1.5rem;
 }
 
 @media (min-width: 992px) {

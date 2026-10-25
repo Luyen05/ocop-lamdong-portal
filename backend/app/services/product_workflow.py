@@ -30,6 +30,10 @@ from app.schemas.product_management import (
 from app.core.config import get_settings
 
 
+# Yêu cầu sửa/ngừng hiển thị sản phẩm còn đang xử lý.
+ACTIVE_CHANGE_REQUEST_STATUSES = frozenset({"pending", "needs_revision"})
+
+
 def workflow_error(
     status_code: int,
     code: str,
@@ -144,7 +148,10 @@ def get_product_for_admin(db: Session, product_id: int, *, lock: bool = False) -
     return product
 
 
-def get_category(db: Session, category_id: int) -> Category:
+def get_category(db: Session, category_id: int, *, current_category_id: int | None = None) -> Category:
+    """Danh mục cho sản phẩm. Danh mục đang ẩn chỉ được giữ nguyên cho sản phẩm đã thuộc nó,
+    không nhận sản phẩm mới hay sản phẩm chuyển từ danh mục khác sang."""
+
     category = db.get(Category, category_id)
     if category is None:
         raise workflow_error(
@@ -153,7 +160,20 @@ def get_category(db: Session, category_id: int) -> Category:
             "Danh mục sản phẩm không tồn tại.",
             {"category_id": category_id},
         )
+    if not category.is_visible and category.id != current_category_id:
+        raise workflow_error(
+            status.HTTP_422_UNPROCESSABLE_ENTITY,
+            "CATEGORY_HIDDEN",
+            "Danh mục này đang tạm ẩn, vui lòng chọn danh mục khác.",
+            {"category_id": category_id},
+        )
     return category
+
+
+def stored_category_id(product: Product) -> int | None:
+    """Danh mục đang lưu trong database của sản phẩm (None với sản phẩm mới tạo)."""
+
+    return product.category_id if product.id is not None else None
 
 
 def build_unique_slug(db: Session, name: str, product_id: int | None = None) -> str:
@@ -254,7 +274,11 @@ def apply_product_payload(
     update_slug: bool,
 ) -> None:
     validate_certificate_storage(product, payload.certificate_storage_path)
-    product.category = get_category(db, payload.category_id)
+    product.category = get_category(
+        db,
+        payload.category_id,
+        current_category_id=stored_category_id(product),
+    )
     if update_slug:
         product.slug = build_unique_slug(db, payload.name, product.id)
     for field, value in payload.model_dump(
@@ -283,7 +307,11 @@ def apply_product_draft_payload(
                 "CATEGORY_REQUIRED",
                 "Danh mục sản phẩm không được để trống.",
             )
-        product.category = get_category(db, payload.category_id)
+        product.category = get_category(
+            db,
+            payload.category_id,
+            current_category_id=stored_category_id(product),
+        )
     if "certificate_storage_path" in fields:
         validate_certificate_storage(product, payload.certificate_storage_path)
     if "name" in values and values["name"] is None:

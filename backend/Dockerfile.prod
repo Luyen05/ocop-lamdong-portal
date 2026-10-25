@@ -1,0 +1,24 @@
+# Image chạy thật: không có thư mục tests, chạy bằng người dùng thường, không --reload.
+FROM python:3.12-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY app ./app
+
+# Ảnh tải lên nằm ở volume /app/uploads; người dùng thường phải ghi được vào đó.
+RUN useradd --create-home --uid 10001 ocop \
+    && mkdir -p /app/uploads \
+    && chown -R ocop:ocop /app/uploads
+USER ocop
+
+EXPOSE 8000
+
+# --proxy-headers: lấy địa chỉ IP và giao thức thật từ Nginx (giới hạn đăng nhập sai tính theo IP).
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2", "--proxy-headers", "--forwarded-allow-ips", "*"]
