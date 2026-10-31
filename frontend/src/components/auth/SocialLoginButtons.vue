@@ -73,7 +73,8 @@ async function start(provider: SocialProvider): Promise<void> {
         />
         <AppIcon v-else :name="provider" :size="18" />
         <span>
-          {{ activeProvider === provider ? 'Đang chuyển trang…' : `Tiếp tục với ${SOCIAL_PROVIDER_LABELS[provider]}` }}
+          <template v-if="activeProvider === provider">Đang chuyển trang…</template>
+          <template v-else><span class="visually-hidden">Tiếp tục với </span>{{ SOCIAL_PROVIDER_LABELS[provider] }}</template>
         </span>
       </button>
     </div>
@@ -106,6 +107,7 @@ async function start(provider: SocialProvider): Promise<void> {
 
 .social-buttons {
   display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
   gap: var(--ocop-space-2);
 }
 
@@ -117,8 +119,12 @@ async function start(provider: SocialProvider): Promise<void> {
 }
 
 .social-button {
+  display: inline-flex;
   width: 100%;
-  min-height: var(--ocop-control-lg);
+  min-height: var(--ocop-control-md);
+  align-items: center;
+  justify-content: center;
+  gap: var(--ocop-space-2);
   padding: 0 var(--ocop-space-3);
   color: var(--ocop-text-primary);
 }

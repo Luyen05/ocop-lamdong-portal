@@ -9,10 +9,19 @@ const focusableSelector = [
   '[tabindex]:not([tabindex="-1"])',
 ].join(',')
 
+// Nhiều hộp thoại có thể chồng nhau (ví dụ hộp xác nhận trên hộp duyệt): chỉ gỡ khóa cuộn khi hộp cuối cùng đóng.
+let openDialogCount = 0
+
+export interface DialogFocusOptions {
+  /** Bộ chọn CSS của phần tử nhận focus đầu tiên trong hộp thoại (mặc định: phần tử focus được đầu tiên). */
+  initialFocus?: string
+}
+
 export function useDialogFocus(
   isOpen: Readonly<Ref<boolean>>,
   dialogRef: Ref<HTMLElement | null>,
   close: () => void,
+  options: DialogFocusOptions = {},
 ): void {
   let activeDialog: HTMLElement | null = null
   let previousFocus: HTMLElement | null = null
@@ -45,10 +54,16 @@ export function useDialogFocus(
     }
   }
 
+  let counted = false
+
   function deactivate(restoreFocus = true): void {
     activeDialog?.removeEventListener('keydown', handleKeydown)
     activeDialog = null
-    document.body.classList.remove('has-modal-open')
+    if (counted) {
+      counted = false
+      openDialogCount = Math.max(0, openDialogCount - 1)
+    }
+    if (openDialogCount === 0) document.body.classList.remove('has-modal-open')
     if (restoreFocus) previousFocus?.focus()
     previousFocus = null
   }
@@ -62,11 +77,18 @@ export function useDialogFocus(
       }
 
       previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null
+      if (!counted) {
+        counted = true
+        openDialogCount += 1
+      }
       document.body.classList.add('has-modal-open')
       await nextTick()
       activeDialog = dialogRef.value
       activeDialog?.addEventListener('keydown', handleKeydown)
-      const firstFocusable = activeDialog?.querySelector<HTMLElement>(focusableSelector)
+      const preferred = options.initialFocus
+        ? activeDialog?.querySelector<HTMLElement>(options.initialFocus)
+        : null
+      const firstFocusable = preferred ?? activeDialog?.querySelector<HTMLElement>(focusableSelector)
       ;(firstFocusable ?? activeDialog)?.focus()
     },
     { flush: 'post' },

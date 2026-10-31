@@ -303,3 +303,51 @@ describe('ProductDetailView overlapping requests', () => {
     expect(wrapper.get('.related-card').text()).toBe(relatedB.name)
   })
 })
+
+describe('ProductDetailView source link, loading and error states', () => {
+  const longUrl = 'https://ocoplamdong.gov.vn/Media/admin/files/225%20Quye%CC%82%CC%81t%20%C4%91i%CC%A3nh_signed.pdf'
+
+  beforeEach(() => {
+    vi.resetAllMocks()
+    route.params.slug = product.slug
+    vi.mocked(getProducts).mockResolvedValue({ items: [], page: 1, page_size: 4, total: 0 })
+  })
+
+  it('nhan chuoi "Nguon: https://..." va hien nut Xem nguon chinh thuc thay vi URL tran', async () => {
+    vi.mocked(getProduct).mockResolvedValue({ ...product, story: `Đạt 69,00 điểm theo Quyết định 3981/QĐ-UBND. Nguồn: ${longUrl}` })
+    const wrapper = mountDetail()
+    await flushPromises()
+    expect(wrapper.get('.story-block p').text()).toBe('Đạt 69,00 điểm theo Quyết định 3981/QĐ-UBND.')
+    expect(wrapper.get('.story-block').text()).not.toContain('https://')
+    const link = wrapper.get('.story-source')
+    expect(link.text()).toBe('Xem nguồn chính thức')
+    expect(link.attributes('href')).toBe(longUrl)
+    expect(link.attributes('target')).toBe('_blank')
+    expect(link.attributes('rel')).toBe('noopener noreferrer')
+  })
+
+  it('khoi tai la role=status aria-busy', async () => {
+    const pending = deferred<ProductDetail>()
+    vi.mocked(getProduct).mockReturnValue(pending.promise)
+    const wrapper = mountDetail()
+    const loading = wrapper.get('.detail-loading')
+    expect(loading.attributes('role')).toBe('status')
+    expect(loading.attributes('aria-busy')).toBe('true')
+    expect(loading.text()).toContain('Đang tải')
+    pending.resolve(product)
+    await flushPromises()
+    expect(wrapper.find('.detail-loading').exists()).toBe(false)
+  })
+
+  it('khoi loi la role=alert, dau "!" an khoi trinh doc va tieu de tab doi theo loi', async () => {
+    document.title = 'Trà atiso Đà Lạt | OCOP Lâm Đồng'
+    vi.mocked(getProduct).mockRejectedValue(new Error('Network Error'))
+    const wrapper = mountDetail()
+    await flushPromises()
+    const alert = wrapper.get('.error-state')
+    expect(alert.attributes('role')).toBe('alert')
+    expect(alert.get('.error-symbol').attributes('aria-hidden')).toBe('true')
+    expect(document.title).toContain('Không thể tải sản phẩm')
+    expect(document.title).not.toContain('Trà atiso')
+  })
+})

@@ -2,10 +2,12 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 import { AUTH_SESSION_EXPIRED_EVENT } from '@/services/token'
 import { authStore } from '@/stores/auth'
+import { pageStatus } from '@/stores/page-status'
 import HomeView from '@/views/HomeView.vue'
 import { resolveRouteAccess } from '@/router/access'
 import { documentTitleFor } from '@/router/titles'
-import { scrollBehavior } from '@/utils/motion'
+import { resolveScroll } from '@/router/scroll'
+import { decideChunkRecovery, isChunkLoadError } from '@/utils/chunk-error'
 import { applyPageSeo, ROUTE_DESCRIPTIONS } from '@/utils/seo'
 
 const router = createRouter({
@@ -207,14 +209,12 @@ const router = createRouter({
       component: () => import('@/views/NotFoundView.vue'),
     },
   ],
-  // Quay lại trang trước thì giữ vị trí cuộn cũ; cuộn tới #neo thì mượt trừ khi người dùng giảm chuyển động.
-  scrollBehavior: (to, _from, savedPosition) => {
-    if (savedPosition) return savedPosition
-    return to.hash ? { el: to.hash, behavior: scrollBehavior() } : { top: 0 }
-  },
+  // Quy tắc cuộn nằm ở router/scroll.ts (Back giữ vị trí, #neo cuộn mượt, trang bản đồ đổi query không nhảy lên đầu).
+  scrollBehavior: resolveScroll,
 })
 
 router.beforeEach(async (to) => {
+  pageStatus.startNavigation()
   await authStore.initialize()
 
   const decision = resolveRouteAccess(
@@ -242,6 +242,7 @@ router.beforeEach(async (to) => {
 const NOINDEX_ROUTES = new Set(['forbidden', 'not-found', 'social-login-callback'])
 
 router.afterEach((to) => {
+  pageStatus.finishNavigation()
   const name = typeof to.name === 'string' ? to.name : ''
   applyPageSeo({
     fullTitle: documentTitleFor(to.name, to.meta.title),
@@ -250,6 +251,21 @@ router.afterEach((to) => {
     noindex: Boolean(to.meta.requiresAuth) || to.meta.layout === 'auth' || NOINDEX_ROUTES.has(name) || !name,
     // Trang chi tiết tự đặt lại thẻ SEO có tên cụ thể sau khi tải xong dữ liệu.
   })
+})
+
+// Không tải được mã của trang (mất mạng, hoặc vừa có bản mới nên tên tệp cũ không còn):
+// có mạng thì tải lại đúng trang đích một lần; còn lại báo người dùng và cho thử lại.
+router.onError((error, to) => {
+  if (!isChunkLoadError(error)) {
+    pageStatus.finishNavigation()
+    console.error(error)
+    return
+  }
+  if (decideChunkRecovery(pageStatus.online.value) === 'reload') {
+    window.location.assign(to.fullPath)
+    return
+  }
+  pageStatus.reportNavigationFailure(to.fullPath)
 })
 
 window.addEventListener(AUTH_SESSION_EXPIRED_EVENT, (event) => {

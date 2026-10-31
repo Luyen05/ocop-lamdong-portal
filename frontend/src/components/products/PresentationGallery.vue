@@ -14,46 +14,51 @@ interface Image {
 }
 const props = defineProps<{ images: Image[]; primaryUrl?: string | null; name: string; landscape?: boolean }>()
 const selected = ref<string | null>(null)
-const failed = ref(false)
-// Ảnh nhỏ lỗi thì ẩn nút đó thay vì hiện khung ảnh vỡ.
-const brokenThumbnails = ref<Set<string>>(new Set())
+// Ảnh (chính hoặc nhỏ) tải lỗi: ẩn nút ảnh nhỏ đó và tự chuyển ảnh chính sang ảnh hợp lệ kế tiếp.
+const failedUrls = ref<Set<string>>(new Set())
 const images = computed(() => [...props.images].sort((a, b) => Number(b.is_primary) - Number(a.is_primary) || a.sort_order - b.sort_order))
-const url = computed(() => selected.value || images.value[0]?.image_url || props.primaryUrl)
+const candidates = computed(() => {
+  const urls = images.value.map(image => image.image_url)
+  if (props.primaryUrl && !urls.includes(props.primaryUrl)) urls.push(props.primaryUrl)
+  return urls.filter(value => value && !failedUrls.value.has(value))
+})
+const url = computed(() => {
+  if (selected.value && !failedUrls.value.has(selected.value)) return selected.value
+  return candidates.value[0] ?? null
+})
 const active = computed(() => images.value.find(image => image.image_url === url.value))
 const source = computed(() => safeExternalUrl(active.value?.source_url))
 watch(() => [props.images, props.primaryUrl, props.name], () => {
   selected.value = null
-  failed.value = false
-  brokenThumbnails.value = new Set()
+  failedUrls.value = new Set()
 })
 
-function markThumbnailBroken(value: string): void {
-  brokenThumbnails.value = new Set(brokenThumbnails.value).add(value)
+function markFailed(value: string): void {
+  failedUrls.value = new Set(failedUrls.value).add(value)
 }
 
 function select(value: string): void {
   selected.value = value
-  failed.value = false
 }
 </script>
 
 <template>
-  <div class="gallery" :class="{ landscape, 'without-image': !url || failed }">
+  <div class="gallery" :class="{ landscape, 'without-image': !url }">
     <div class="main-image">
-      <img v-if="url && !failed" :src="url" :alt="name" @error="failed = true" />
+      <img v-if="url" :key="url" :src="url" :alt="name" @error="markFailed(url)" />
       <div v-else class="image-placeholder">
         <AppIcon :name="landscape ? 'map-pin' : 'package'" :size="24" aria-hidden="true" />
         <span>Ảnh {{ landscape ? 'điểm đến' : 'sản phẩm' }} đang cập nhật</span>
       </div>
     </div>
-    <p v-if="!failed && active && (source || active.credit || active.license)" class="image-credit">
+    <p v-if="active && (source || active.credit || active.license)" class="image-credit">
       <a v-if="source" :href="source" target="_blank" rel="noopener noreferrer">Nguồn ảnh</a>
       <span v-if="active.credit">{{ active.credit }}</span>
       <span v-if="active.license">{{ active.license }}</span>
     </p>
     <div v-if="images.length > 1" class="thumbnail-list" aria-label="Chọn ảnh">
-      <button v-for="(image, index) in images" v-show="!brokenThumbnails.has(image.image_url)" :key="image.id" type="button" class="thumbnail" :class="{ active: url === image.image_url }" :aria-label="`Xem ảnh ${index + 1} của ${name}`" :aria-pressed="url === image.image_url" @click="select(image.image_url)">
-        <img :src="image.image_url" alt="" loading="lazy" @error="markThumbnailBroken(image.image_url)" />
+      <button v-for="(image, index) in images" v-show="!failedUrls.has(image.image_url)" :key="image.id" type="button" class="thumbnail" :class="{ active: url === image.image_url }" :aria-label="`Xem ảnh ${index + 1} của ${name}`" :aria-pressed="url === image.image_url" @click="select(image.image_url)">
+        <img :src="image.image_url" alt="" loading="lazy" @error="markFailed(image.image_url)" />
       </button>
     </div>
   </div>

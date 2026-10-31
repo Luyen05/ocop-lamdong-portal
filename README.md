@@ -281,6 +281,8 @@ API REST dưới `/api/v1` (103 endpoint): danh sách đầy đủ, quyền, mã
 | [`docs/KIEN_TRUC.md`](docs/KIEN_TRUC.md) | Kiến trúc, cấu trúc mã nguồn, xác thực, lưu file, sơ đồ dữ liệu, migration, kiểm thử |
 | [`docs/DU_LIEU.md`](docs/DU_LIEU.md) | Dữ liệu, file seed, nguồn và mức xác minh, tài khoản demo, tái tạo dữ liệu |
 | [`docs/CAU_HINH.md`](docs/CAU_HINH.md) | Biến môi trường, Cloudinary, khóa Google/Facebook, triển khai thật (Docker, Nginx, HTTPS, sao lưu, CI/CD), SEO |
+| [`docs/design-system.md`](docs/design-system.md) | Token, kiểu dùng chung, component, trạng thái, trợ năng, cách dùng logo |
+| [`docs/ux-ui-audit.md`](docs/ux-ui-audit.md), [`docs/ux-ui-improvement-plan.md`](docs/ux-ui-improvement-plan.md), [`docs/ux-ui-improvement-report.md`](docs/ux-ui-improvement-report.md) | Đánh giá UX/UI, kế hoạch và báo cáo kết quả cải tiến |
 | [`docs/sources/ocop/`](docs/sources/ocop/README.md) | Văn bản hành chính dùng kiểm chứng dữ liệu OCOP |
 | [`CHANGELOG.md`](CHANGELOG.md) | Các thay đổi chính theo phiên bản |
 

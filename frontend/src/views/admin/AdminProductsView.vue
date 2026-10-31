@@ -1,11 +1,16 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import { useRoute, useRouter, type LocationQuery, type LocationQueryRaw } from 'vue-router'
 
 import ProductEvidenceManager from '@/components/admin/ProductEvidenceManager.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
+import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
 import StatusPanel from '@/components/ui/StatusPanel.vue'
+import { useConfirmDialog } from '@/composables/useConfirmDialog'
 import { useDialogFocus } from '@/composables/useDialogFocus'
+import { useFlashFocus } from '@/composables/useFlashFocus'
 import { getApiErrorMessage } from '@/services/api-error'
+import { getCategories } from '@/services/categories'
 import {
   downloadProductCertificate,
   getProductEvidence,
@@ -28,11 +33,13 @@ import type {
 } from '@/types/product-management'
 
 type EvidenceIssueFilter = '' | 'missing_decision' | 'missing_issued_at'
+/** Lọc theo hạn giấy chứng nhận: backend chưa có tham số này nên lọc phía trình duyệt trên sản phẩm đã duyệt. */
+type ExpiryFilter = '' | 'expired' | 'soon'
 type ComparableProductField = Exclude<keyof ProductWritePayload, 'images'>
 
 const comparisonFields: Array<{ key: ComparableProductField; label: string }> = [
   { key: 'name', label: 'Tên sản phẩm' },
-  { key: 'category_id', label: 'Mã danh mục' },
+  { key: 'category_id', label: 'Nhóm sản phẩm' },
   { key: 'star', label: 'Hạng sao' },
   { key: 'price', label: 'Giá tham khảo' },
   { key: 'unit', label: 'Đơn vị tính' },
@@ -44,16 +51,35 @@ const comparisonFields: Array<{ key: ComparableProductField; label: string }> = 
   { key: 'description', label: 'Mô tả' },
 ]
 
+const workflowStatuses: ProductWorkflowStatus[] = [
+  'pending',
+  'needs_revision',
+  'approved',
+  'draft',
+  'rejected',
+  'suspended',
+  'archived',
+]
+/** Số ngày coi là "sắp hết hạn", khớp EXPIRING_WINDOW_DAYS của backend (admin_statistics.py). */
+const EXPIRING_WINDOW_DAYS = 90
+const EXPIRY_PAGE_SIZE = 100
+const EXPIRY_MAX_PAGES = 10
+
+const route = useRoute()
+const router = useRouter()
+
 const products = ref<ManagedProduct[]>([])
 const productTotal = ref(0)
+/** Tổng sản phẩm đang chờ duyệt, độc lập với bộ lọc đang chọn (null: chưa đếm được). */
+const pendingProductTotal = ref<number | null>(null)
 const page = ref(1)
 const pageSize = 20
 const requests = ref<ProductChangeRequest[]>([])
 const loading = ref(true)
-const errorMessage = ref('')
 const loadError = ref('')
 const successMessage = ref('')
-const activeTab = ref<'products' | 'changes'>('products')
+/** Lỗi khi duyệt/từ chối: hiện ngay trong hộp thoại duyệt, không nằm sau lớp phủ. */
+const moderationError = ref('')
 const selectedProduct = ref<ManagedProduct | null>(null)
 const selectedRequest = ref<ProductChangeRequest | null>(null)
 const evidence = ref<ProductEvidenceResponse | null>(null)
@@ -67,15 +93,24 @@ const showAdvancedFilters = ref(false)
 const showExceptionalAction = ref(false)
 const downloadingCertificate = ref(false)
 const reviewDialog = ref<HTMLElement | null>(null)
+const categoryNames = ref(new Map<number, string>())
 
+// Bộ lọc đang gõ/chọn trên form (chỉ áp dụng khi bấm "Áp dụng"). Bộ lọc đã áp dụng nằm trên URL.
 const search = ref('')
 const workflowStatus = ref<ProductWorkflowStatus | ''>('pending')
 const verificationLevel = ref<VerificationLevel | ''>('')
 const verificationStatus = ref<ProductVerificationStatus | ''>('')
 const evidenceIssue = ref<EvidenceIssueFilter>('')
+const expiryFilter = ref<ExpiryFilter>('')
 
-const pendingProducts = computed(() => products.value.filter((item) => item.status === 'pending'))
+const confirm = useConfirmDialog()
+const { revealFlash } = useFlashFocus({ success: successMessage })
+
+const activeTab = computed<'products' | 'changes'>(() => (route.query.tab === 'changes' ? 'changes' : 'products'))
 const pendingRequests = computed(() => requests.value.filter((item) => item.status === 'pending'))
+const pendingBadgeTotal = computed(() =>
+  pendingProductTotal.value === null ? null : pendingProductTotal.value + pendingRequests.value.length,
+)
 const canModerateSelectedProduct = computed(() => selectedProduct.value?.status === 'pending')
 const canModerateSelectedRequest = computed(() => selectedRequest.value?.status === 'pending')
 const totalPages = computed(() => Math.max(1, Math.ceil(productTotal.value / pageSize)))
@@ -101,6 +136,87 @@ const selectedProductWarnings = computed(() => {
   if (product.subject.is_active === false) warnings.push('Tài khoản chủ thể đang bị khóa.')
   return warnings
 })
+const expiryLabel = computed(() =>
+  expiryFilter.value === 'expired'
+    ? 'Giấy chứng nhận đã hết hạn'
+    : expiryFilter.value === 'soon'
+      ? `Giấy chứng nhận hết hạn trong ${EXPIRING_WINDOW_DAYS} ngày tới`
+      : '',
+)
+
+// ---------- Bộ lọc <-> URL ----------
+function firstQuery(value: LocationQuery[string] | undefined): string {
+  const first = Array.isArray(value) ? value[0] : value
+  return typeof first === 'string' ? first : ''
+}
+
+/** Đọc bộ lọc đã áp dụng từ URL: thiếu `status` nghĩa là "Chờ duyệt", `status=all` là "Tất cả". */
+function readFiltersFromQuery(): void {
+  const query = route.query
+  const statusParam = firstQuery(query.status)
+  workflowStatus.value =
+    statusParam === 'all'
+      ? ''
+      : (workflowStatuses as string[]).includes(statusParam)
+        ? (statusParam as ProductWorkflowStatus)
+        : 'pending'
+  search.value = firstQuery(query.q).slice(0, 150)
+  const level = firstQuery(query.level)
+  verificationLevel.value = (['A', 'B1', 'B2', 'C'] as string[]).includes(level) ? (level as VerificationLevel) : ''
+  const verification = firstQuery(query.verification)
+  verificationStatus.value = (
+    ['verified_official_decision', 'verified_government_source', 'pending_verification'] as string[]
+  ).includes(verification)
+    ? (verification as ProductVerificationStatus)
+    : ''
+  const issue = firstQuery(query.issue)
+  evidenceIssue.value = issue === 'missing_decision' || issue === 'missing_issued_at' ? issue : ''
+  const expiry = firstQuery(query.expiry)
+  expiryFilter.value = expiry === 'expired' || expiry === 'soon' ? expiry : ''
+  // Lọc theo hạn chỉ có nghĩa với sản phẩm đã duyệt.
+  if (expiryFilter.value) workflowStatus.value = 'approved'
+  const pageParam = Number.parseInt(firstQuery(query.page), 10)
+  page.value = Number.isFinite(pageParam) && pageParam > 1 ? pageParam : 1
+  showAdvancedFilters.value = Boolean(
+    verificationLevel.value || verificationStatus.value || evidenceIssue.value,
+  )
+}
+
+function buildQuery(nextPage = 1): LocationQueryRaw {
+  const query: LocationQueryRaw = {}
+  if (activeTab.value === 'changes') query.tab = 'changes'
+  if (workflowStatus.value === '') query.status = 'all'
+  else if (workflowStatus.value !== 'pending') query.status = workflowStatus.value
+  const keyword = search.value.trim()
+  if (keyword) query.q = keyword
+  if (verificationLevel.value) query.level = verificationLevel.value
+  if (verificationStatus.value) query.verification = verificationStatus.value
+  if (evidenceIssue.value) query.issue = evidenceIssue.value
+  if (expiryFilter.value) query.expiry = expiryFilter.value
+  if (nextPage > 1) query.page = String(nextPage)
+  return query
+}
+
+function sameQuery(a: LocationQueryRaw, b: LocationQuery): boolean {
+  const left = Object.entries(a).map(([key, value]) => [key, String(value)]).sort()
+  const right = Object.entries(b).map(([key, value]) => [key, firstQuery(value)]).sort()
+  return JSON.stringify(left) === JSON.stringify(right)
+}
+
+/** Ghi bộ lọc vào URL; URL đổi thì watcher bên dưới tải lại, không đổi thì tải lại thủ công. */
+async function pushQuery(query: LocationQueryRaw): Promise<void> {
+  if (sameQuery(query, route.query)) {
+    readFiltersFromQuery()
+    await loadData()
+    return
+  }
+  await router.push({ query })
+}
+
+const filterKey = computed(() => {
+  const { status, q, level, verification, issue, expiry, page: pageParam } = route.query
+  return JSON.stringify([status, q, level, verification, issue, expiry, pageParam].map((value) => firstQuery(value)))
+})
 
 function buildProductFilters(): AdminProductFilters {
   const filters: AdminProductFilters = { page: page.value, page_size: pageSize }
@@ -114,6 +230,35 @@ function buildProductFilters(): AdminProductFilters {
   return filters
 }
 
+function isPendingOnlyFilter(filters: AdminProductFilters): boolean {
+  return Object.keys(filters).every((key) => ['page', 'page_size', 'status'].includes(key)) && filters.status === 'pending'
+}
+
+function matchesExpiry(product: ManagedProduct): boolean {
+  if (!product.cert_expires_at) return false
+  const today = new Date(new Date().toDateString())
+  const expires = new Date(product.cert_expires_at)
+  if (expiryFilter.value === 'expired') return expires < today
+  const limit = new Date(today)
+  limit.setDate(limit.getDate() + EXPIRING_WINDOW_DAYS)
+  return expires >= today && expires <= limit
+}
+
+/** Lấy lần lượt các trang sản phẩm đã duyệt (theo bộ lọc hiện có) rồi lọc theo hạn chứng nhận. */
+async function listByExpiry(): Promise<{ items: ManagedProduct[]; total: number }> {
+  const matched: ManagedProduct[] = []
+  for (let current = 1; current <= EXPIRY_MAX_PAGES; current += 1) {
+    const result = await listAdminProducts({ ...buildProductFilters(), page: current, page_size: EXPIRY_PAGE_SIZE })
+    matched.push(...result.items.filter(matchesExpiry))
+    if (current * EXPIRY_PAGE_SIZE >= result.total) break
+  }
+  matched.sort((a, b) => String(a.cert_expires_at).localeCompare(String(b.cert_expires_at)))
+  return {
+    items: matched.slice((page.value - 1) * pageSize, page.value * pageSize),
+    total: matched.length,
+  }
+}
+
 // Đếm lượt tải: chuyển trang/lọc nhanh thì chỉ kết quả của lượt mới nhất được hiển thị.
 let loadSequence = 0
 
@@ -122,14 +267,23 @@ async function loadData(): Promise<void> {
   loading.value = true
   loadError.value = ''
   try {
-    const [productData, requestData] = await Promise.all([
-      listAdminProducts(buildProductFilters()),
+    const filters = buildProductFilters()
+    const pendingOnly = isPendingOnlyFilter(filters)
+    const [productData, requestData, pendingTotal] = await Promise.all([
+      expiryFilter.value ? listByExpiry() : listAdminProducts(filters),
       listProductChangeRequests('admin'),
+      pendingOnly
+        ? Promise.resolve<number | null>(null)
+        : listAdminProducts({ status: 'pending', page: 1, page_size: 1 })
+            .then((result) => result.total)
+            .catch(() => null),
     ])
     if (sequence !== loadSequence) return
     products.value = productData.items
     productTotal.value = productData.total
     requests.value = requestData.items
+    pendingProductTotal.value = pendingOnly ? productData.total : pendingTotal
+    for (const product of productData.items) categoryNames.value.set(product.category.id, product.category.name)
   } catch (error) {
     if (sequence !== loadSequence) return
     loadError.value = getApiErrorMessage(error, 'Không thể tải dữ liệu quản lý sản phẩm.')
@@ -140,8 +294,7 @@ async function loadData(): Promise<void> {
 
 async function applyFilters(): Promise<void> {
   successMessage.value = ''
-  page.value = 1
-  await loadData()
+  await pushQuery(buildQuery(1))
 }
 
 async function resetFilters(): Promise<void> {
@@ -150,15 +303,40 @@ async function resetFilters(): Promise<void> {
   verificationLevel.value = ''
   verificationStatus.value = ''
   evidenceIssue.value = ''
+  expiryFilter.value = ''
   showAdvancedFilters.value = false
-  page.value = 1
-  await loadData()
+  await pushQuery(buildQuery(1))
+}
+
+async function clearExpiryFilter(): Promise<void> {
+  expiryFilter.value = ''
+  workflowStatus.value = 'approved'
+  await pushQuery(buildQuery(1))
 }
 
 async function changePage(nextPage: number): Promise<void> {
   if (nextPage < 1 || nextPage > totalPages.value || nextPage === page.value) return
-  page.value = nextPage
-  await loadData()
+  readFiltersFromQuery()
+  await pushQuery(buildQuery(nextPage))
+}
+
+async function setTab(tab: 'products' | 'changes'): Promise<void> {
+  if (tab === activeTab.value) return
+  const query: LocationQueryRaw = { ...route.query }
+  if (tab === 'changes') query.tab = 'changes'
+  else delete query.tab
+  await router.push({ query })
+}
+
+watch(filterKey, () => {
+  readFiltersFromQuery()
+  void loadData()
+})
+
+// ---------- Hộp thoại duyệt ----------
+function showModerationError(message: string): void {
+  moderationError.value = message
+  void revealFlash('modal-error')
 }
 
 async function openProduct(product: ManagedProduct): Promise<void> {
@@ -166,6 +344,7 @@ async function openProduct(product: ManagedProduct): Promise<void> {
   selectedProduct.value = product
   evidence.value = null
   evidenceError.value = ''
+  moderationError.value = ''
   decision.value = 'approved'
   reviewNote.value = ''
   showExceptionalAction.value = false
@@ -187,8 +366,10 @@ function openRequest(request: ProductChangeRequest): void {
   selectedProduct.value = null
   selectedRequest.value = request
   evidence.value = null
+  moderationError.value = ''
   decision.value = 'approved'
   reviewNote.value = ''
+  void resolveCategoryNames(request)
 }
 
 function closeModal(force = false): void {
@@ -197,9 +378,27 @@ function closeModal(force = false): void {
   selectedRequest.value = null
   evidence.value = null
   evidenceError.value = ''
+  moderationError.value = ''
 }
 
-useDialogFocus(isReviewDialogOpen, reviewDialog, () => closeModal())
+/** Đóng hộp thoại; nếu đã gõ phản hồi thì hỏi trước để không mất ghi chú (Esc, nút Hủy, nền). */
+async function requestClose(): Promise<void> {
+  if (submitting.value) return
+  const canModerate = canModerateSelectedProduct.value || canModerateSelectedRequest.value
+  if (canModerate && reviewNote.value.trim()) {
+    const discard = await confirm.ask({
+      title: 'Đóng và bỏ phản hồi đã nhập?',
+      message: 'Nội dung phản hồi cho chủ thể chưa được gửi sẽ bị mất.',
+      confirmLabel: 'Đóng và bỏ phản hồi',
+      cancelLabel: 'Tiếp tục soạn',
+      tone: 'danger',
+    })
+    if (!discard) return
+  }
+  closeModal()
+}
+
+useDialogFocus(isReviewDialogOpen, reviewDialog, () => void requestClose())
 
 async function openCertificate(scope: 'subject' | 'admin', productId: number): Promise<void> {
   downloadingCertificate.value = true
@@ -221,12 +420,14 @@ async function openCertificate(scope: 'subject' | 'admin', productId: number): P
 }
 
 async function submitDecision(): Promise<void> {
+  if (submitting.value) return
   if (selectedProduct.value && !canModerateSelectedProduct.value) return
   if (selectedRequest.value && !canModerateSelectedRequest.value) return
   if ((decision.value === 'needs_revision' || decision.value === 'rejected') && !reviewNote.value.trim()) {
-    errorMessage.value = 'Cần nhập nội dung phản hồi khi yêu cầu bổ sung hoặc từ chối.'
+    showModerationError('Cần nhập nội dung phản hồi khi yêu cầu bổ sung hoặc từ chối.')
     return
   }
+  moderationError.value = ''
   const targetLabel = selectedProduct.value
     ? `sản phẩm “${selectedProduct.value.name}”`
     : selectedRequest.value?.request_type === 'delete'
@@ -237,9 +438,14 @@ async function submitDecision(): Promise<void> {
     needs_revision: 'yêu cầu bổ sung',
     rejected: 'từ chối',
   }[decision.value]
-  if (!window.confirm(`Xác nhận ${actionLabel} ${targetLabel}?`)) return
+  const confirmed = await confirm.ask({
+    title: `Xác nhận ${actionLabel}?`,
+    message: `Bạn sắp ${actionLabel} ${targetLabel}.`,
+    confirmLabel: `Xác nhận ${actionLabel}`,
+    tone: decision.value === 'rejected' ? 'danger' : 'primary',
+  })
+  if (!confirmed) return
   submitting.value = true
-  errorMessage.value = ''
   try {
     const payload = { status: decision.value, note: reviewNote.value.trim() || null }
     if (selectedProduct.value) {
@@ -256,7 +462,7 @@ async function submitDecision(): Promise<void> {
     closeModal(true)
     await loadData()
   } catch (error) {
-    errorMessage.value = getApiErrorMessage(error, 'Không thể xử lý yêu cầu kiểm duyệt.')
+    showModerationError(getApiErrorMessage(error, 'Không thể xử lý yêu cầu kiểm duyệt.'))
   } finally {
     submitting.value = false
   }
@@ -287,16 +493,68 @@ function formatDateTime(value: string | null): string {
     : 'Chưa có'
 }
 
-function comparisonValue(
-  data: ProductWritePayload | ProductSnapshot | null,
-  field: ComparableProductField,
-): string {
+// ---------- Bảng so sánh yêu cầu cập nhật ----------
+const priceFormatter = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 })
+
+/** Tên nhóm sản phẩm lấy từ dữ liệu đã tải; chỉ gọi danh mục khi gặp mã chưa biết. */
+async function resolveCategoryNames(request: ProductChangeRequest): Promise<void> {
+  const ids = [request.current_data?.category_id, request.proposed_data?.category_id].filter(
+    (id): id is number => typeof id === 'number',
+  )
+  if (ids.every((id) => categoryNames.value.has(id))) return
+  try {
+    const result = await getCategories()
+    for (const category of result.items) categoryNames.value.set(category.id, category.name)
+  } catch {
+    // Không lấy được thì hiển thị "Nhóm số N", không chặn việc duyệt.
+  }
+}
+
+function shortenUrl(value: string): string {
+  try {
+    const url = new URL(value)
+    const file = decodeURIComponent(url.pathname.split('/').filter(Boolean).pop() ?? '')
+    const text = file ? `${url.hostname.replace(/^www\./, '')} › ${file}` : url.hostname.replace(/^www\./, '')
+    return text.length > 48 ? `${text.slice(0, 45)}…` : text
+  } catch {
+    return value.length > 48 ? `${value.slice(0, 45)}…` : value
+  }
+}
+
+interface ComparisonCell {
+  text: string
+  href?: string
+}
+
+function rawValue(data: ProductWritePayload | ProductSnapshot | null, field: ComparableProductField): string {
   const value = data?.[field]
-  return value === null || value === undefined ? '—' : String(value)
+  return value === null || value === undefined ? '' : String(value)
+}
+
+function comparisonCell(data: ProductWritePayload | ProductSnapshot | null, field: ComparableProductField): ComparisonCell {
+  const value = rawValue(data, field)
+  if (!value) return { text: '—' }
+  switch (field) {
+    case 'category_id':
+      return { text: categoryNames.value.get(Number(value)) ?? `Nhóm số ${value}` }
+    case 'price': {
+      const amount = Number(value)
+      return { text: Number.isFinite(amount) ? priceFormatter.format(amount) : value }
+    }
+    case 'star':
+      return { text: `${value} sao` }
+    case 'cert_issued_at':
+    case 'cert_expires_at':
+      return { text: formatDate(value) }
+    case 'certificate_url':
+      return { text: shortenUrl(value), href: value }
+    default:
+      return { text: value }
+  }
 }
 
 function fieldChanged(request: ProductChangeRequest, field: ComparableProductField): boolean {
-  return comparisonValue(request.current_data, field) !== comparisonValue(request.proposed_data, field)
+  return rawValue(request.current_data, field) !== rawValue(request.proposed_data, field)
 }
 
 function workflowLabel(status: ProductWorkflowStatus): string {
@@ -304,7 +562,7 @@ function workflowLabel(status: ProductWorkflowStatus): string {
     draft: 'Bản nháp',
     pending: 'Chờ duyệt',
     needs_revision: 'Cần bổ sung',
-    approved: 'Đã công khai',
+    approved: 'Đã duyệt',
     rejected: 'Bị từ chối',
     suspended: 'Tạm ẩn',
     archived: 'Đã lưu trữ',
@@ -319,7 +577,10 @@ function verificationLabel(status: ProductVerificationStatus): string {
   }[status]
 }
 
-onMounted(loadData)
+onMounted(() => {
+  readFiltersFromQuery()
+  void loadData()
+})
 </script>
 
 <template>
@@ -330,21 +591,28 @@ onMounted(loadData)
         <h1>Quản lý sản phẩm và chứng cứ</h1>
         <p>Quản trị viên đối chiếu nguồn công nhận, hồ sơ chứng nhận và quyết định trước khi công khai.</p>
       </div>
-      <div class="summary-badge">{{ pendingProducts.length + pendingRequests.length }} yêu cầu chờ xử lý</div>
+      <div v-if="pendingBadgeTotal !== null" class="summary-badge">{{ pendingBadgeTotal }} yêu cầu chờ xử lý</div>
     </header>
 
     <Transition name="ocop-rise">
-      <div v-if="errorMessage" class="alert alert-danger" role="alert">{{ errorMessage }}</div>
-    </Transition>
-    <Transition name="ocop-rise">
-      <div v-if="successMessage" class="alert alert-success" role="status">{{ successMessage }}</div>
+      <div v-if="successMessage" class="alert alert-success" role="status" data-flash="success" tabindex="-1">{{ successMessage }}</div>
     </Transition>
 
     <nav class="tab-list" aria-label="Loại dữ liệu sản phẩm">
-      <button :class="{ active: activeTab === 'products' }" type="button" @click="activeTab = 'products'">
+      <button
+        :class="{ active: activeTab === 'products' }"
+        type="button"
+        :aria-current="activeTab === 'products' ? 'page' : undefined"
+        @click="setTab('products')"
+      >
         Sản phẩm <span>{{ productTotal }}</span>
       </button>
-      <button :class="{ active: activeTab === 'changes' }" type="button" @click="activeTab = 'changes'">
+      <button
+        :class="{ active: activeTab === 'changes' }"
+        type="button"
+        :aria-current="activeTab === 'changes' ? 'page' : undefined"
+        @click="setTab('changes')"
+      >
         Sửa / ngừng hiển thị <span>{{ requests.length }}</span>
       </button>
     </nav>
@@ -359,7 +627,7 @@ onMounted(loadData)
             <option value="">Tất cả</option>
             <option value="pending">Chờ duyệt</option>
             <option value="needs_revision">Cần bổ sung</option>
-            <option value="approved">Đã công khai</option>
+            <option value="approved">Đã duyệt</option>
             <option value="draft">Bản nháp</option>
             <option value="rejected">Bị từ chối</option>
             <option value="suspended">Tạm ẩn</option>
@@ -400,6 +668,14 @@ onMounted(loadData)
           </select>
         </label>
       </div>
+      <p class="filter-hint">
+        “Đã duyệt” gồm cả sản phẩm chưa đủ điều kiện hiển thị công khai (như chủ thể không còn hoạt động hoặc hồ sơ thiếu thông tin bắt buộc).
+        Số sản phẩm đang công khai xem ở trang Tổng quan.
+      </p>
+      <p v-if="expiryFilter" class="active-filter">
+        <span>Đang lọc: {{ expiryLabel }}, trong số sản phẩm đã duyệt</span>
+        <button type="button" @click="clearExpiryFilter">Bỏ lọc này</button>
+      </p>
     </form>
 
     <section class="queue-panel stagger-in">
@@ -457,7 +733,7 @@ onMounted(loadData)
     </section>
 
     <Transition name="ocop-fade">
-    <div v-if="selectedProduct || selectedRequest" class="modal-backdrop" role="presentation" @click.self="closeModal()">
+    <div v-if="selectedProduct || selectedRequest" class="modal-backdrop" role="presentation" @click.self="requestClose()">
       <form
         ref="reviewDialog"
         class="review-modal"
@@ -472,7 +748,7 @@ onMounted(loadData)
             <span>Kiểm duyệt sản phẩm</span>
             <h2 id="product-review-title">{{ modalTitle }}</h2>
           </div>
-          <button type="button" aria-label="Đóng" @click="closeModal()"><AppIcon name="close" :size="17" /></button>
+          <button type="button" aria-label="Đóng" @click="requestClose()"><AppIcon name="close" :size="17" /></button>
         </header>
 
         <template v-if="selectedProduct">
@@ -551,23 +827,39 @@ onMounted(loadData)
           <section v-if="selectedRequest.request_type === 'update'" class="comparison-section">
             <div class="comparison-heading">
               <strong>So sánh nội dung thay đổi</strong>
-              <span>Ô màu vàng là dữ liệu đã thay đổi</span>
+              <span>Dòng nền vàng, có nhãn “Đã đổi”, là dữ liệu chủ thể muốn thay đổi</span>
             </div>
-            <div class="comparison-table" role="table" aria-label="So sánh dữ liệu sản phẩm">
-              <div class="comparison-row comparison-header" role="row">
-                <span>Trường dữ liệu</span><span>Đang công khai</span><span>Chủ thể đề xuất</span>
-              </div>
-              <div
-                v-for="field in comparisonFields"
-                :key="field.key"
-                class="comparison-row"
-                :class="{ changed: fieldChanged(selectedRequest, field.key) }"
-                role="row"
-              >
-                <strong>{{ field.label }}</strong>
-                <span>{{ comparisonValue(selectedRequest.current_data, field.key) }}</span>
-                <span>{{ comparisonValue(selectedRequest.proposed_data, field.key) }}</span>
-              </div>
+            <div class="comparison-scroll">
+              <table class="comparison-table">
+                <caption class="visually-hidden">So sánh dữ liệu sản phẩm đang công khai với đề xuất của chủ thể</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Trường dữ liệu</th>
+                    <th scope="col">Đang công khai</th>
+                    <th scope="col">Chủ thể đề xuất</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    v-for="field in comparisonFields"
+                    :key="field.key"
+                    :class="{ changed: fieldChanged(selectedRequest, field.key) }"
+                  >
+                    <th scope="row">
+                      {{ field.label }}
+                      <span v-if="fieldChanged(selectedRequest, field.key)" class="changed-tag">Đã đổi</span>
+                    </th>
+                    <td data-label="Đang công khai">
+                      <a v-if="comparisonCell(selectedRequest.current_data, field.key).href" :href="comparisonCell(selectedRequest.current_data, field.key).href" target="_blank" rel="noopener">{{ comparisonCell(selectedRequest.current_data, field.key).text }}</a>
+                      <template v-else>{{ comparisonCell(selectedRequest.current_data, field.key).text }}</template>
+                    </td>
+                    <td data-label="Chủ thể đề xuất">
+                      <a v-if="comparisonCell(selectedRequest.proposed_data, field.key).href" :href="comparisonCell(selectedRequest.proposed_data, field.key).href" target="_blank" rel="noopener">{{ comparisonCell(selectedRequest.proposed_data, field.key).text }}</a>
+                      <template v-else>{{ comparisonCell(selectedRequest.proposed_data, field.key).text }}</template>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </section>
           <p v-else class="warning-box">Nếu chấp thuận, sản phẩm sẽ bị ẩn khỏi API công khai và chuyển vào trạng thái lưu trữ. Dữ liệu không bị xóa cứng.</p>
@@ -592,8 +884,11 @@ onMounted(loadData)
             <textarea v-model="reviewNote" rows="3" :required="decision !== 'approved'" placeholder="Bắt buộc khi yêu cầu bổ sung hoặc từ chối" />
           </label>
         </section>
+        <div v-if="moderationError" class="modal-error" role="alert" data-flash="modal-error" tabindex="-1">
+          <AppIcon name="alert" :size="16" /> <span>{{ moderationError }}</span>
+        </div>
         <footer>
-          <button type="button" @click="closeModal()">{{ canModerateSelectedRequest || canModerateSelectedProduct ? 'Hủy' : 'Đóng' }}</button>
+          <button type="button" @click="requestClose()">{{ canModerateSelectedRequest || canModerateSelectedProduct ? 'Hủy' : 'Đóng' }}</button>
           <button v-if="canModerateSelectedRequest || canModerateSelectedProduct" class="submit-button" type="submit" :disabled="submitting">
             {{ submitting ? 'Đang xử lý...' : 'Xác nhận quyết định' }}
           </button>
@@ -601,6 +896,8 @@ onMounted(loadData)
       </form>
     </div>
     </Transition>
+
+    <ConfirmDialog v-bind="confirm.props" @confirm="confirm.accept" @cancel="confirm.dismiss" />
   </div>
 </template>
 
@@ -619,6 +916,7 @@ onMounted(loadData)
 .tab-list { display: flex; gap: 6px; }
 .tab-list button {
   display: inline-flex;
+  min-height: var(--admin-control-height);
   align-items: center;
   gap: 6px;
   padding: 9px 16px;
@@ -672,13 +970,15 @@ onMounted(loadData)
   background: var(--admin-card);
   color: var(--admin-text);
   font-size: var(--admin-font-sm);
-  outline: none;
   transition: border-color var(--admin-transition);
 }
-.filter-panel input:focus, .filter-panel select:focus { border-color: var(--admin-primary); }
+.filter-panel input:focus, .filter-panel select:focus { border-color: var(--admin-primary-dark); }
+.filter-hint { margin: 0; color: var(--admin-muted); font-size: var(--admin-font-xs); line-height: 1.5; }
+.active-filter { display: flex; flex-wrap: wrap; align-items: center; gap: var(--admin-space-2); margin: 0; padding: var(--admin-space-2) var(--admin-space-3); border-radius: var(--admin-radius-md); background: var(--admin-info-soft); color: var(--admin-info-text); font-size: var(--admin-font-sm); font-weight: 600; }
+.active-filter button { min-height: 44px; padding: 0 var(--admin-space-3); border: 1px solid var(--admin-info-border); border-radius: var(--admin-radius-sm); background: var(--admin-card); color: var(--admin-info-text); font-size: var(--admin-font-sm); font-weight: 700; cursor: pointer; }
 .filter-actions { display: flex; flex-wrap: wrap; gap: 7px; align-items: flex-end; }
 .filter-actions button {
-  height: var(--admin-control-height);
+  min-height: var(--admin-control-height);
   padding: 0 14px;
   border: 1px solid var(--admin-border);
   border-radius: var(--admin-radius-sm);
@@ -748,6 +1048,7 @@ onMounted(loadData)
 .queue-panel h2 { margin: 4px 0 3px; font-size: var(--admin-font-base); font-weight: 700; color: var(--admin-text); }
 .queue-panel p { margin: 0; color: var(--admin-muted); font-size: var(--admin-font-sm); }
 .queue-panel > button, .queue-panel button, .review-modal button {
+  min-height: 44px;
   padding: 8px 14px;
   border: 1px solid var(--admin-border);
   border-radius: var(--admin-radius-sm);
@@ -831,7 +1132,7 @@ onMounted(loadData)
 }
 .review-modal header > div > span { color: var(--admin-primary); font-size: var(--admin-font-xs); font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em; }
 .review-modal header h2 { margin: 3px 0 0; font-size: var(--admin-font-2xl); color: var(--admin-text); }
-.review-modal header > button { border: 0 !important; background: var(--admin-bg); color: var(--admin-muted); border-radius: var(--admin-radius-sm); width: 32px; height: 32px; display: grid; place-items: center; flex-shrink: 0; }
+.review-modal header > button { border: 0 !important; background: var(--admin-bg); color: var(--admin-muted); border-radius: var(--admin-radius-sm); width: 44px; height: 44px; display: grid; place-items: center; flex-shrink: 0; }
 .review-modal header > button:hover { color: var(--admin-danger); background: var(--admin-danger-soft); }
 
 /* Sections inside modal */
@@ -897,13 +1198,16 @@ onMounted(loadData)
 .comparison-heading { display: flex; align-items: center; justify-content: space-between; gap: var(--admin-space-3); }
 .comparison-heading strong { font-size: var(--admin-font-sm); font-weight: 700; color: var(--admin-text); }
 .comparison-heading span { color: var(--admin-muted); font-size: var(--admin-font-sm); }
-.comparison-table { overflow: hidden; border: 1px solid var(--admin-border); border-radius: var(--admin-radius-md); }
-.comparison-row { display: grid; padding: 9px 14px; grid-template-columns: 140px repeat(2, minmax(0, 1fr)); gap: var(--admin-space-3); border-bottom: 1px solid var(--admin-border-soft); font-size: var(--admin-font-sm); }
-.comparison-row:last-child { border-bottom: 0; }
-.comparison-row > span { overflow-wrap: anywhere; color: var(--admin-text); }
-.comparison-header { background: var(--admin-bg); color: var(--admin-muted); font-weight: 700; font-size: var(--admin-font-xs); text-transform: uppercase; letter-spacing: 0.04em; }
-.comparison-row.changed { background: var(--admin-highlight); }
-.comparison-row.changed > strong { color: var(--admin-warning-text); }
+.comparison-scroll { overflow-x: auto; border: 1px solid var(--admin-border); border-radius: var(--admin-radius-md); }
+.comparison-table { width: 100%; border-collapse: collapse; font-size: var(--admin-font-sm); }
+.comparison-table th, .comparison-table td { padding: 9px 14px; border-bottom: 1px solid var(--admin-border-soft); text-align: left; vertical-align: top; overflow-wrap: anywhere; color: var(--admin-text); }
+.comparison-table tbody tr:last-child th, .comparison-table tbody tr:last-child td { border-bottom: 0; }
+.comparison-table thead th { background: var(--admin-bg); color: var(--admin-muted); font-weight: 700; font-size: var(--admin-font-xs); text-transform: uppercase; letter-spacing: 0.04em; }
+.comparison-table tbody th { width: 160px; font-weight: 700; }
+.comparison-table td a { color: var(--admin-primary-dark); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+.comparison-table tr.changed th, .comparison-table tr.changed td { background: var(--admin-highlight); }
+.comparison-table tr.changed th { color: var(--admin-warning-text); }
+.changed-tag { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: var(--admin-radius-pill); background: var(--admin-warning-soft); color: var(--admin-warning-text); font-size: var(--admin-font-xs); font-weight: 800; }
 
 /* Decision box */
 .decision-box { display: grid; margin-top: var(--admin-space-4); gap: var(--admin-space-3); }
@@ -916,6 +1220,7 @@ onMounted(loadData)
 .decision-box label { display: grid; gap: 5px; color: var(--admin-muted); font-size: var(--admin-font-xs); font-weight: 700; }
 .decision-box select, .decision-box textarea { padding: 9px 12px; border: 1px solid var(--admin-border); border-radius: var(--admin-radius-sm); font-size: var(--admin-font-sm); color: var(--admin-text); }
 .decision-box textarea { resize: vertical; }
+.modal-error { display: flex; align-items: flex-start; gap: var(--admin-space-2); margin-top: var(--admin-space-4); padding: var(--admin-space-3) var(--admin-space-4); border: 1px solid var(--admin-danger-border); border-radius: var(--admin-radius-md); background: var(--admin-danger-soft); color: var(--admin-danger-text); font-size: var(--admin-font-sm); font-weight: 600; }
 .review-modal footer { display: flex; margin-top: var(--admin-space-4); justify-content: flex-end; gap: var(--admin-space-2); padding-top: var(--admin-space-4); border-top: 1px solid var(--admin-border-soft); }
 .review-modal .submit-button { border-color: var(--admin-primary) !important; background: var(--admin-primary) !important; color: var(--ocop-white) !important; }
 .review-modal .submit-button:hover { background: var(--admin-primary-dark) !important; }
@@ -939,8 +1244,12 @@ onMounted(loadData)
   .document-links { flex-direction: column; }
   .evidence-disclosure summary { align-items: flex-start; flex-direction: column; }
   .comparison-heading { align-items: flex-start; flex-direction: column; }
-  .comparison-header { display: none; }
-  .comparison-row { grid-template-columns: 1fr; gap: var(--admin-space-1); }
+  .comparison-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .comparison-table, .comparison-table tbody, .comparison-table tr, .comparison-table th, .comparison-table td { display: block; width: 100%; }
+  .comparison-table tbody th { width: 100%; padding-bottom: 2px; border-bottom: 0; }
+  .comparison-table td { padding-top: 2px; padding-bottom: 6px; }
+  .comparison-table td::before { content: attr(data-label) ': '; color: var(--admin-muted); font-weight: 700; }
+  .comparison-table tbody tr { border-bottom: 1px solid var(--admin-border-soft); }
   .decision-options { grid-template-columns: 1fr; }
 }
 </style>

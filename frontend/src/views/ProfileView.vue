@@ -170,7 +170,7 @@ async function submit(): Promise<void> {
             </div>
 
             <div>
-              <label class="form-label fw-semibold" for="profile-avatar">URL ảnh đại diện</label>
+              <label class="form-label fw-semibold" for="profile-avatar">Địa chỉ ảnh đại diện (không bắt buộc)</label>
               <input
                 id="profile-avatar"
                 v-model.trim="avatarUrl"
@@ -178,8 +178,12 @@ async function submit(): Promise<void> {
                 type="url"
                 maxlength="500"
                 placeholder="https://..."
+                aria-describedby="profile-avatar-help"
               />
-              <div class="form-text">Chức năng tải ảnh đại diện sẽ được bổ sung sau.</div>
+              <div id="profile-avatar-help" class="form-text">
+                Dán địa chỉ (bắt đầu bằng https://) của một ảnh có sẵn trên mạng. Để trống nếu không dùng.
+                Hiện chưa tải ảnh từ máy của bạn lên được.
+              </div>
             </div>
 
             <div class="d-flex justify-content-end pt-2">

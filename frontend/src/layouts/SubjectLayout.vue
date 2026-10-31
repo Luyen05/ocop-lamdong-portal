@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, type RouteLocationNormalizedLoaded } from 'vue-router'
 
 import PortalShell, { type PortalNavItem } from '@/layouts/PortalShell.vue'
 
@@ -30,6 +30,18 @@ const subtitles: Record<string, string> = {
   'subject-location-edit': 'Hồ sơ điểm du lịch',
 }
 
+/**
+ * Khóa dựng lại trang con. Mặc định theo đường dẫn để đổi sản phẩm/yêu cầu thì trang nạp mới.
+ * Riêng wizard khai báo điểm du lịch: "Tiếp tục" ở bước 1 tạo bản nháp rồi router.replace từ `khai-bao`
+ * sang `/:id`; hai route này dùng chung một khóa để trang giữ nguyên bước đang làm. Việc nạp lại khi đổi
+ * `id` do chính trang xử lý (watch trên tham số), nên chuyển giữa hai điểm vẫn không hiện dữ liệu cũ.
+ */
+function pageKey(childRoute: RouteLocationNormalizedLoaded): string {
+  const name = String(childRoute.name ?? '')
+  if (name === 'subject-location-create' || name === 'subject-location-edit') return 'subject-location-editor'
+  return childRoute.path
+}
+
 const pageTitle = computed(() => {
   if (typeof route.meta.title === 'string') return route.meta.title
   return titles[String(route.name)] ?? 'Cổng chủ thể'
@@ -51,7 +63,7 @@ const pageSubtitle = computed(() => subtitles[String(route.name)] ?? '')
   >
     <RouterView v-slot="{ Component, route: childRoute }">
       <Transition name="ocop-rise" mode="out-in">
-        <component :is="Component" :key="childRoute.path" />
+        <component :is="Component" :key="pageKey(childRoute)" />
       </Transition>
     </RouterView>
   </PortalShell>

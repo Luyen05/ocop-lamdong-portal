@@ -2,6 +2,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 
 import StatusPanel from '@/components/ui/StatusPanel.vue'
+import { SUPPORT_CONTACT } from '@/constants/contact'
 import { getApiErrorMessage } from '@/services/api-error'
 import { getSubjectProfile, updateSubjectProfile } from '@/services/subjects'
 import type { SubjectApplication, SubjectProfileUpdatePayload } from '@/types/subject'
@@ -173,7 +174,8 @@ onMounted(loadProfile)
         </dl>
         <p class="locked-note">
           Tên đơn vị, loại hình và mã số thuế đã được xác minh nên không tự sửa được.
-          Khi các thông tin này thay đổi, vui lòng liên hệ quản trị viên.
+          Khi các thông tin này thay đổi, vui lòng liên hệ quản trị viên
+          (<a :href="`mailto:${SUPPORT_CONTACT.email}`">{{ SUPPORT_CONTACT.email }}</a>).
         </p>
       </section>
 
@@ -277,7 +279,13 @@ onMounted(loadProfile)
       <aside class="profile-help">
         <div>
           <strong>Cần đổi tên đơn vị hoặc mã số thuế?</strong>
-          <p>Những thông tin này gắn với giấy tờ đã xác minh. Hãy liên hệ quản trị viên để được cập nhật.</p>
+          <p>
+            Những thông tin này gắn với giấy tờ đã xác minh. Hãy liên hệ quản trị viên để được cập nhật:
+            <a :href="`mailto:${SUPPORT_CONTACT.email}`">{{ SUPPORT_CONTACT.email }}</a>, điện thoại
+            <template v-for="(phone, index) in SUPPORT_CONTACT.phones" :key="phone.tel">
+              <template v-if="index > 0"> hoặc </template><a :href="`tel:${phone.tel}`">{{ phone.display }}</a>
+            </template>.
+          </p>
         </div>
         <RouterLink to="/">Về trang công khai</RouterLink>
       </aside>

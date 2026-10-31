@@ -25,10 +25,16 @@ const stats = [
 
       <div v-reveal class="footer-grid">
         <section class="footer-brand" aria-labelledby="footer-brand-title">
-          <h2 id="footer-brand-title">
-            <span><img src="/assets/figma/home/icon-brand.svg" alt="" /></span>
-            Cổng OCOP Lâm Đồng
-          </h2>
+          <img
+            class="footer-logo"
+            src="/assets/brand/logo-day-du-320.png"
+            alt="Logo Nông sản và Du lịch Lâm Đồng"
+            width="320"
+            height="350"
+            loading="lazy"
+            decoding="async"
+          />
+          <h2 id="footer-brand-title">Cổng OCOP Lâm Đồng</h2>
           <p>Cổng thông tin quảng bá sản phẩm OCOP và bản đồ số du lịch nông nghiệp tỉnh Lâm Đồng.</p>
           <address>
             <span><AppIcon name="map-pin" :size="14" /> Trung tâm Hành chính tỉnh Lâm Đồng, 36 Trần Phú, Đà Lạt</span>
@@ -144,25 +150,14 @@ const stats = [
   line-height: 1.4;
 }
 
-.footer-brand h2 {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-}
-
-.footer-brand h2 > span {
-  display: grid;
-  width: 28px;
-  height: 28px;
-  place-items: center;
-  border-radius: var(--ocop-radius-sm);
-  background: var(--ocop-tone-sky);
-  box-shadow: inset 0 -3px 0 var(--ocop-daquy-400);
-}
-
-.footer-brand h2 img {
-  width: 16px;
-  height: 16px;
+.footer-logo {
+  display: block;
+  width: auto;
+  height: 112px;
+  margin-bottom: var(--ocop-space-3);
+  justify-self: start;
+  align-self: start;
+  object-fit: contain;
 }
 
 .footer-grid p,

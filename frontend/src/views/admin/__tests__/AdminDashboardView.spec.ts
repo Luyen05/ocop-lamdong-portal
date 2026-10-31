@@ -55,7 +55,7 @@ const statistics: AdminStatistics = {
 
 function mountView() {
   return mount(AdminDashboardView, {
-    global: { stubs: { RouterLink: { template: '<a><slot /></a>' }, StatChart: StatChartStub } },
+    global: { stubs: { RouterLink: { props: ['to'], template: '<a :to="to"><slot /></a>' }, StatChart: StatChartStub } },
   })
 }
 
@@ -149,5 +149,51 @@ describe('AdminDashboardView', () => {
     await flushPromises()
     expect(getAdminStatistics).toHaveBeenCalledTimes(2)
     expect(wrapper.find('[role="alert"]').exists()).toBe(false)
+  })
+
+  it('lien ket so lieu mo dung bo loc cua danh sach san pham (A8)', async () => {
+    const wrapper = mountView()
+    await flushPromises()
+
+    const targets = wrapper.findAll('a').map((link) => link.attributes('to'))
+    expect(targets).toContain('/quan-tri/san-pham?status=pending')
+    expect(targets).toContain('/quan-tri/san-pham?tab=changes')
+    expect(targets).toContain('/quan-tri/san-pham?status=all&issue=missing_decision')
+    expect(targets).toContain('/quan-tri/san-pham?status=approved&expiry=expired')
+    const missing = wrapper.findAll('a').find((link) => link.text().includes('Bổ sung ngay'))
+    expect(missing?.attributes('to')).toBe('/quan-tri/san-pham?status=all&issue=missing_decision')
+  })
+
+  it('loi tai viec can xu ly: khong bao da duyet het, hien dau gach va thong bao (B13)', async () => {
+    vi.mocked(getAdminDashboard).mockRejectedValue(new Error('network'))
+    const wrapper = mountView()
+    await flushPromises()
+
+    expect(wrapper.get('.dash-summary').text()).toBe('Chưa tải được việc cần xử lý.')
+    expect(wrapper.text()).not.toContain('Mọi hồ sơ đã được duyệt')
+    expect(wrapper.text()).not.toContain('Không còn việc nào')
+    expect(wrapper.findAll('.task-num').every((node) => node.text() === '–')).toBe(true)
+    expect(wrapper.findAll('.kpi-value')[0].text()).toBe('–')
+    expect(wrapper.get('.task-count-badge').text()).toBe('Chưa có số liệu')
+    expect(wrapper.get('.ad-alert[role="alert"]').text()).toContain('Thử lại')
+  })
+
+  it('ghi ro so da duyet va so dang cong khai (B17)', async () => {
+    vi.mocked(getAdminDashboard).mockResolvedValue({
+      total_products: 79,
+      approved_products: 75,
+      public_products: 63,
+      pending_products: 1,
+      pending_subject_applications: 0,
+      pending_change_requests: 0,
+      products_missing_decision: 0,
+      pending_locations: 0,
+      pending_location_change_requests: 0,
+    })
+    const wrapper = mountView()
+    await flushPromises()
+    expect(wrapper.text()).toContain('63 đang công khai')
+    expect(wrapper.text()).toContain('75 đã duyệt')
+    expect(wrapper.text()).toContain('chưa đủ điều kiện hiển thị')
   })
 })

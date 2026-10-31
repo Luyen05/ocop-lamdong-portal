@@ -1,6 +1,7 @@
 import axios from 'axios'
 
 import { expireAccessToken, getAccessToken } from '@/services/token'
+import { pageStatus } from '@/stores/page-status'
 
 /**
  * Thời gian chờ riêng cho tải file lên/xuống (ảnh tối đa 5 MB, chứng nhận tối đa 10 MB):
@@ -17,6 +18,7 @@ const http = axios.create({
 })
 
 http.interceptors.request.use((config) => {
+  pageStatus.requestStarted()
   const token = getAccessToken()
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
@@ -25,8 +27,12 @@ http.interceptors.request.use((config) => {
 })
 
 http.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    pageStatus.requestFinished()
+    return response
+  },
   (error: unknown) => {
+    pageStatus.requestFinished()
     if (axios.isAxiosError(error) && getAccessToken()) {
       const status = error.response?.status
       const code = (error.response?.data as { code?: string } | undefined)?.code

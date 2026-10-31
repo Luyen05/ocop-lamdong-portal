@@ -3,8 +3,8 @@ import { computed, onMounted, ref } from 'vue'
 
 import StatChart, { type StatChartItem } from '@/components/admin/StatChart.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
+import { loadAdminDashboard } from '@/composables/useAdminDashboard'
 import {
-  getAdminDashboard,
   getAdminStatistics,
   type AdminDashboardStats,
   type AdminStatistics,
@@ -30,13 +30,13 @@ const tasks = computed(() => [
     title: 'Sản phẩm mới chờ duyệt',
     description: 'Đối chiếu chứng nhận rồi quyết định công khai hay trả lại.',
     count: stats.value?.pending_products ?? 0,
-    to: '/quan-tri/san-pham',
+    to: '/quan-tri/san-pham?status=pending',
   },
   {
     title: 'Yêu cầu sửa hoặc ngừng hiển thị sản phẩm',
     description: 'So sánh dữ liệu cũ và mới theo đề nghị của chủ thể.',
     count: stats.value?.pending_change_requests ?? 0,
-    to: '/quan-tri/san-pham',
+    to: '/quan-tri/san-pham?tab=changes',
   },
   {
     title: 'Điểm du lịch chờ duyệt',
@@ -63,6 +63,9 @@ const tasks = computed(() => [
     to: '/quan-tri/danh-gia',
   },
 ])
+
+// Chưa có số liệu (đang tải hoặc tải lỗi) thì hiện "–", không coi như bằng 0.
+const hasStats = computed(() => !loading.value && stats.value !== null)
 
 const openTaskCount = computed(() => tasks.value.reduce((sum, task) => sum + task.count, 0))
 
@@ -220,8 +223,9 @@ async function loadDashboard(): Promise<void> {
   loading.value = true
   errorMessage.value = ''
   try {
-    stats.value = await getAdminDashboard()
+    stats.value = await loadAdminDashboard()
   } catch (error) {
+    stats.value = null
     errorMessage.value = getApiErrorMessage(error, 'Không thể tải việc cần xử lý.')
   } finally {
     loading.value = false
@@ -253,6 +257,7 @@ onMounted(() => {
         <h1>Xin chào, {{ greetingName }}</h1>
         <p class="dash-summary" role="status">
           <template v-if="loading">Đang tải việc cần xử lý...</template>
+          <template v-else-if="errorMessage">Chưa tải được việc cần xử lý.</template>
           <template v-else-if="openTaskCount">Có <strong>{{ openTaskCount }}</strong> việc đang chờ bạn xử lý.</template>
           <template v-else>Không còn việc nào chờ xử lý. Mọi hồ sơ đã được duyệt.</template>
         </p>
@@ -275,12 +280,12 @@ onMounted(() => {
             <span class="card-icon" aria-hidden="true"><AppIcon name="checkCircle" :size="18" /></span>
             <h2>Việc cần xử lý</h2>
           </div>
-          <span class="task-count-badge">{{ loading ? '...' : `${openTaskCount} việc` }}</span>
+          <span class="task-count-badge">{{ loading ? '...' : hasStats ? `${openTaskCount} việc` : 'Chưa có số liệu' }}</span>
         </div>
         <ul class="task-list stagger-in">
           <li v-for="task in tasks" :key="task.title">
-            <RouterLink class="task-item" :class="{ 'is-open': task.count > 0 }" :to="task.to">
-              <span class="task-num">{{ loading ? '–' : task.count }}</span>
+            <RouterLink class="task-item" :class="{ 'is-open': hasStats && task.count > 0 }" :to="task.to">
+              <span class="task-num">{{ hasStats ? task.count : '–' }}</span>
               <span class="task-body">
                 <strong>{{ task.title }}</strong>
                 <span>{{ task.description }}</span>
@@ -297,9 +302,10 @@ onMounted(() => {
             <AppIcon name="package" :size="20" />
           </div>
           <span class="kpi-label">Tổng sản phẩm</span>
-          <strong class="kpi-value">{{ loading ? '–' : (stats?.total_products ?? 0) }}</strong>
-          <div class="kpi-meter"><div class="kpi-meter__fill" :style="{ width: `${approvedShare}%` }" /></div>
-          <span class="kpi-note">{{ publicProducts }} đang công khai ({{ approvedShare }}%)</span>
+          <strong class="kpi-value">{{ hasStats ? stats?.total_products : '–' }}</strong>
+          <div class="kpi-meter"><div class="kpi-meter__fill" :style="{ width: hasStats ? `${approvedShare}%` : '0%' }" /></div>
+          <span v-if="hasStats" class="kpi-note">{{ publicProducts }} đang công khai ({{ approvedShare }}%) · {{ stats?.approved_products ?? 0 }} đã duyệt</span>
+          <span v-else class="kpi-note">Chưa tải được số liệu</span>
         </article>
         <article class="ad-card kpi-card">
           <div class="kpi-icon-wrap is-success">
@@ -307,7 +313,7 @@ onMounted(() => {
           </div>
           <span class="kpi-label">Chủ thể đã duyệt</span>
           <strong class="kpi-value">{{ statisticsLoading ? '–' : approvedSubjects }}</strong>
-          <span class="kpi-note">{{ stats?.pending_subject_applications ?? 0 }} hồ sơ chờ xác minh</span>
+          <span class="kpi-note">{{ hasStats ? `${stats?.pending_subject_applications ?? 0} hồ sơ chờ xác minh` : 'Chưa tải được hồ sơ chờ xác minh' }}</span>
         </article>
         <article class="ad-card kpi-card">
           <div class="kpi-icon-wrap is-accent">
@@ -317,13 +323,13 @@ onMounted(() => {
           <strong class="kpi-value">{{ statisticsLoading ? '–' : locationTotal }}</strong>
           <span class="kpi-note">{{ locationItems.length }} loại hình trên bản đồ</span>
         </article>
-        <article class="ad-card kpi-card" :class="{ 'is-warning': (stats?.products_missing_decision ?? 0) > 0 }">
-          <div class="kpi-icon-wrap" :class="(stats?.products_missing_decision ?? 0) > 0 ? 'is-warning' : 'is-neutral'">
+        <article class="ad-card kpi-card" :class="{ 'is-warning': hasStats && (stats?.products_missing_decision ?? 0) > 0 }">
+          <div class="kpi-icon-wrap" :class="hasStats && (stats?.products_missing_decision ?? 0) > 0 ? 'is-warning' : 'is-neutral'">
             <AppIcon name="alert" :size="20" />
           </div>
           <span class="kpi-label">Thiếu số quyết định</span>
-          <strong class="kpi-value">{{ loading ? '–' : (stats?.products_missing_decision ?? 0) }}</strong>
-          <RouterLink class="kpi-link" to="/quan-tri/san-pham">Bổ sung ngay <AppIcon name="chevronRight" :size="12" /></RouterLink>
+          <strong class="kpi-value">{{ hasStats ? stats?.products_missing_decision : '–' }}</strong>
+          <RouterLink class="kpi-link" to="/quan-tri/san-pham?status=all&issue=missing_decision">Bổ sung ngay <AppIcon name="chevronRight" :size="12" /></RouterLink>
         </article>
       </div>
     </section>
@@ -348,6 +354,7 @@ onMounted(() => {
         <StatChart class="span-2" kind="stacked" title="Trạng thái hồ sơ sản phẩm" :description="`${statusTotal} hồ sơ, gồm cả bản nháp của chủ thể`" :items="statusItems" :summary="describe(statusItems, 'hồ sơ')" unit="hồ sơ" :height="40">
           <template #lead>
             <p class="lead-figure"><strong>{{ percentText(approvedStatusCount, statusTotal) }}</strong> hồ sơ đã được duyệt</p>
+            <p v-if="stats && approvedStatusCount !== publicProducts" class="lead-note">Trong {{ approvedStatusCount }} sản phẩm đã duyệt có {{ publicProducts }} sản phẩm đang công khai; số còn lại chưa đủ điều kiện hiển thị.</p>
           </template>
           <ul class="status-legend">
             <li v-for="item in statusItems" :key="item.label">
@@ -368,15 +375,20 @@ onMounted(() => {
         <StatChart kind="bar" title="Giấy chứng nhận OCOP" description="Số sản phẩm theo năm được công nhận" :items="certYearItems" :summary="describe(certYearItems)" :height="Math.max(140, certYearItems.length * 34)">
           <template #lead>
             <div class="cert-tiles">
-              <RouterLink class="cert-tile" :class="{ 'is-danger': statistics.certificates.expired > 0 }" to="/quan-tri/san-pham">
+              <RouterLink class="cert-tile" :class="{ 'is-danger': statistics.certificates.expired > 0 }" to="/quan-tri/san-pham?status=approved&expiry=expired">
                 <span>Đã hết hạn</span>
                 <strong>{{ statistics.certificates.expired }}</strong>
                 <span class="tile-cta">Xem sản phẩm <AppIcon name="chevronRight" :size="12" /></span>
               </RouterLink>
-              <div class="cert-tile">
+              <RouterLink v-if="statistics.certificates.expiring_soon" class="cert-tile" to="/quan-tri/san-pham?status=approved&expiry=soon">
                 <span>Hết hạn trong {{ statistics.certificates.expiring_window_days }} ngày</span>
                 <strong>{{ statistics.certificates.expiring_soon }}</strong>
-                <span class="tile-note">{{ statistics.certificates.expiring_soon ? 'Nên nhắc chủ thể gia hạn' : 'Chưa có sản phẩm nào' }}</span>
+                <span class="tile-cta">Xem sản phẩm <AppIcon name="chevronRight" :size="12" /></span>
+              </RouterLink>
+              <div v-else class="cert-tile">
+                <span>Hết hạn trong {{ statistics.certificates.expiring_window_days }} ngày</span>
+                <strong>{{ statistics.certificates.expiring_soon }}</strong>
+                <span class="tile-note">Chưa có sản phẩm nào</span>
               </div>
             </div>
           </template>
@@ -473,6 +485,7 @@ onMounted(() => {
 @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
 .lead-figure { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--admin-space-2); margin: 0; color: var(--admin-muted); font-size: var(--admin-font-base); }
+.lead-note { margin: var(--admin-space-2) 0 0; color: var(--admin-muted); font-size: var(--admin-font-sm); line-height: 1.5; }
 .lead-figure strong { color: var(--admin-success); font-size: 1.75rem; font-weight: 800; letter-spacing: -0.02em; }
 .status-legend { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: var(--admin-space-2); margin: 0; padding: 0; list-style: none; }
 .status-legend li { display: flex; flex-direction: column; gap: 2px; padding: var(--admin-space-3); border-radius: var(--admin-radius-sm); background: var(--admin-bg); }

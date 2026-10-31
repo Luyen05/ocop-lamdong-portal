@@ -171,6 +171,9 @@ async function onModeKeydown(event: KeyboardEvent, index: number): Promise<void>
           </p>
         </details>
       </div>
+      <div class="hero-seal" aria-hidden="true">
+        <img src="/assets/brand/logo-day-du-320.png" alt="" width="320" height="350" decoding="async" />
+      </div>
     </div>
   </section>
 </template>
@@ -231,6 +234,35 @@ async function onModeKeydown(event: KeyboardEvent, index: number): Promise<void>
   min-height: 600px;
   padding: var(--ocop-space-12) 0 var(--ocop-space-16);
   align-items: center;
+}
+
+/* Tấm logo kính mờ bên phải, chỉ hiện khi đủ rộng để không chen vào khung tìm kiếm. */
+.hero-seal {
+  display: none;
+}
+
+@media (min-width: 1200px) {
+  .hero-inner {
+    justify-content: space-between;
+    gap: var(--ocop-space-8);
+  }
+
+  .hero-seal {
+    display: grid;
+    width: clamp(170px, 14vw, 230px);
+    padding: var(--ocop-space-5);
+    flex: 0 0 auto;
+    place-items: center;
+    border: 1px solid var(--ocop-glass-border);
+    border-radius: var(--ocop-radius-xl);
+    background: var(--ocop-glass-bg-solid);
+    box-shadow: var(--ocop-shadow-overlay);
+  }
+
+  .hero-seal img {
+    width: 100%;
+    height: auto;
+  }
 }
 
 /* Khung kính mờ (glassmorphism). */

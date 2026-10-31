@@ -27,7 +27,7 @@ async function loadProducts(): Promise<void> {
   isLoading.value = true
   errorMessage.value = ''
   try {
-    const response = await getProducts({ page: 1, page_size: 100, sort: 'rating' })
+    const response = await getProducts({ page: 1, page_size: 12, sort: 'rating' })
     products.value = response.items
   } catch (error) {
     products.value = []

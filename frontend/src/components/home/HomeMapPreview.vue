@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 
 import AppIcon from '@/components/ui/AppIcon.vue'
 import { getMapLocations } from '@/services/locations'
 import type { MapFeature } from '@/types/location'
+import { scheduleWhenIdle } from '@/utils/motion'
 import { locationTypeStyle } from '@/utils/location'
 
 const features = ref<MapFeature[]>([])
@@ -90,7 +91,13 @@ async function load(): Promise<void> {
   }
 }
 
-onMounted(load)
+let cancelScheduledLoad = () => {}
+
+onMounted(() => {
+  cancelScheduledLoad = scheduleWhenIdle(() => void load())
+})
+
+onBeforeUnmount(() => cancelScheduledLoad())
 </script>
 
 <template>

@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 
 import AppIcon from '@/components/ui/AppIcon.vue'
 import StatusPanel from '@/components/ui/StatusPanel.vue'
+import { useFlashFocus } from '@/composables/useFlashFocus'
 import { getCategories } from '@/services/categories'
 import { getApiErrorMessage } from '@/services/api-error'
 import {
@@ -37,6 +38,15 @@ const saving = ref(false)
 const uploadingImage = ref(false)
 const uploadingCertificate = ref(false)
 const errorMessage = ref('')
+/** Tên trống hoặc quá ngắn khi bấm lưu: đánh dấu ô tên bằng aria-invalid và dòng báo lỗi ngay dưới ô. */
+const nameInvalid = ref(false)
+const { revealFlash } = useFlashFocus()
+
+/** Đặt thông báo lỗi rồi cuộn vào khung nhìn và focus (kể cả khi lỗi trùng nội dung lần trước). */
+function showError(message: string): void {
+  errorMessage.value = message
+  void revealFlash('error')
+}
 // Lỗi khi mở biểu mẫu: không hiện form để tránh sửa trên dữ liệu rỗng hoặc hồ sơ đang khóa.
 const loadError = ref('')
 const loadRetryable = ref(true)
@@ -107,6 +117,22 @@ const completionItems = computed(() => [
   { label: 'Ảnh đại diện', complete: Boolean(form.images[0]?.image_url) },
 ])
 const isSubmissionReady = computed(() => completionItems.value.every((item) => item.complete))
+
+/** Từng mục còn thiếu để gửi duyệt, nêu cụ thể tên trường (khớp điều kiện của completionItems). */
+const missingFields = computed(() => {
+  const missing: string[] = []
+  if (form.name.trim().length < 2) missing.push('tên sản phẩm (tối thiểu 2 ký tự)')
+  if (!form.category_id) missing.push('danh mục')
+  if ((form.description?.trim().length || 0) < 10) missing.push('mô tả sản phẩm (tối thiểu 10 ký tự)')
+  if (!form.star) missing.push('hạng sao theo chứng nhận')
+  if (!form.cert_code?.trim()) missing.push('mã chứng nhận')
+  if (!form.cert_issued_at) missing.push('ngày cấp')
+  if (!form.cert_expires_at) missing.push('ngày hết hạn')
+  if (!form.issuing_authority?.trim()) missing.push('cơ quan công nhận')
+  if (!form.certificate_storage_path && !form.certificate_url) missing.push('bản chụp giấy chứng nhận')
+  if (!form.images[0]?.image_url) missing.push('ảnh đại diện')
+  return missing
+})
 
 function fillForm(product: ManagedProduct | ProductWritePayload): void {
   form.category_id = product.category_id
@@ -326,12 +352,13 @@ function takeSaveErrorFromHistory(): string {
 }
 
 async function save(submitAfterSave = false): Promise<void> {
-  if (form.name.trim().length < 2 || !form.category_id) {
-    errorMessage.value = 'Cần nhập tên và chọn danh mục trước khi lưu bản nháp.'
+  nameInvalid.value = form.name.trim().length < 2
+  if (nameInvalid.value || !form.category_id) {
+    showError('Cần nhập tên (tối thiểu 2 ký tự) và chọn danh mục trước khi lưu bản nháp.')
     return
   }
   if (submitAfterSave && !isSubmissionReady.value) {
-    errorMessage.value = 'Hồ sơ chưa đủ điều kiện gửi duyệt. Vui lòng hoàn thành các mục còn thiếu.'
+    showError(`Hồ sơ chưa đủ điều kiện gửi duyệt. Còn thiếu: ${missingFields.value.join(', ')}.`)
     return
   }
   saving.value = true
@@ -374,7 +401,7 @@ async function save(submitAfterSave = false): Promise<void> {
       },
     })
   } catch (error) {
-    errorMessage.value = getApiErrorMessage(error, 'Không thể lưu thông tin sản phẩm.')
+    showError(getApiErrorMessage(error, 'Không thể lưu thông tin sản phẩm.'))
   } finally {
     saving.value = false
   }
@@ -401,7 +428,7 @@ onMounted(load)
     </header>
 
     <Transition name="ocop-rise">
-      <div v-if="errorMessage" class="alert alert-danger" role="alert">{{ errorMessage }}</div>
+      <div v-if="errorMessage" class="alert alert-danger" role="alert" data-flash="error" tabindex="-1">{{ errorMessage }}</div>
     </Transition>
     <StatusPanel v-if="loading" class="loading-card" kind="loading" :rows="4" message="Đang tải biểu mẫu…" />
     <StatusPanel
@@ -431,18 +458,29 @@ onMounted(load)
           <small>Các trường có dấu * là bắt buộc</small>
         </div>
         <div class="form-grid">
-          <label class="wide">Tên sản phẩm *<input v-model.trim="form.name" required minlength="2" /></label>
+          <label class="wide">Tên sản phẩm *
+            <input
+              v-model.trim="form.name"
+              required
+              minlength="2"
+              maxlength="255"
+              :aria-invalid="nameInvalid ? 'true' : undefined"
+              :aria-describedby="nameInvalid ? 'product-name-error' : undefined"
+              @input="nameInvalid = false"
+            />
+            <small v-if="nameInvalid" id="product-name-error" class="field-error">Nhập tên sản phẩm, tối thiểu 2 ký tự.</small>
+          </label>
           <label>Danh mục *
             <select v-model.number="form.category_id" required>
               <option v-for="category in categories" :key="category.id" :value="category.id">{{ category.name }}</option>
             </select>
           </label>
-          <label>Giá tham khảo<input v-model="form.price" type="number" min="0" step="1000" placeholder="Để trống nếu cần liên hệ" /></label>
-          <label>Đơn vị tính<input v-model.trim="form.unit" placeholder="Hộp 500g" /></label>
-          <label class="wide">Mô tả sản phẩm *<textarea v-model.trim="form.description" rows="4" required minlength="10" /></label>
-          <label class="wide">Câu chuyện sản phẩm<textarea v-model="form.story" rows="3" /></label>
-          <label>Thành phần<textarea v-model="form.ingredients" rows="3" /></label>
-          <label>Hướng dẫn sử dụng<textarea v-model="form.usage_instructions" rows="3" /></label>
+          <label>Giá tham khảo (đồng)<input v-model="form.price" type="number" inputmode="numeric" min="0" max="9999999999" placeholder="Để trống nếu cần liên hệ" /></label>
+          <label>Đơn vị tính<input v-model.trim="form.unit" maxlength="50" placeholder="Hộp 500g" /></label>
+          <label class="wide">Mô tả sản phẩm *<textarea v-model.trim="form.description" rows="4" required minlength="10" maxlength="5000" /></label>
+          <label class="wide">Câu chuyện sản phẩm<textarea v-model="form.story" rows="3" maxlength="10000" /></label>
+          <label>Thành phần<textarea v-model="form.ingredients" rows="3" maxlength="5000" /></label>
+          <label>Hướng dẫn sử dụng<textarea v-model="form.usage_instructions" rows="3" maxlength="5000" /></label>
         </div>
       </section>
 
@@ -459,10 +497,10 @@ onMounted(load)
               <option :value="3">3 sao</option><option :value="4">4 sao</option><option :value="5">5 sao</option>
             </select>
           </label>
-          <label>Mã chứng nhận / số quyết định *<input v-model.trim="form.cert_code" required /></label>
+          <label>Mã chứng nhận / số quyết định *<input v-model.trim="form.cert_code" required maxlength="100" /></label>
           <label>Ngày cấp *<input v-model="form.cert_issued_at" type="date" required /></label>
           <label>Ngày hết hạn *<input v-model="form.cert_expires_at" type="date" required /></label>
-          <label class="wide">Cơ quan công nhận *<input v-model.trim="form.issuing_authority" required /></label>
+          <label class="wide">Cơ quan công nhận *<input v-model.trim="form.issuing_authority" required maxlength="255" /></label>
           <label class="wide certificate-upload">Bản chụp giấy chứng nhận *
             <input
               type="file"
@@ -478,7 +516,7 @@ onMounted(load)
             <span><AppIcon name="checkCircle" :size="16" /></span>
             <div><strong>{{ certificateFileName || 'Tài liệu chứng nhận đã liên kết' }}</strong><small>{{ form.certificate_storage_path ? 'File riêng tư trên hệ thống' : 'Tài liệu từ dữ liệu cũ' }}</small></div>
           </div>
-          <label class="wide">Mã VietGAP (nếu có)<input v-model="form.vietgap_code" /></label>
+          <label class="wide">Mã VietGAP (nếu có)<input v-model="form.vietgap_code" maxlength="100" /></label>
         </div>
       </section>
 
@@ -519,6 +557,9 @@ onMounted(load)
         </label>
       </section>
 
+      <p v-if="!isSubmissionReady" id="submit-missing" class="missing-hint">
+        Còn thiếu: {{ missingFields.join(', ') }}.
+      </p>
       <footer>
         <RouterLink to="/chu-the/san-pham">Hủy</RouterLink>
         <button
@@ -530,7 +571,12 @@ onMounted(load)
         >
           Lưu bản nháp
         </button>
-        <button class="primary-button" type="submit" :disabled="saving || uploadingImage || uploadingCertificate || !isSubmissionReady">
+        <button
+          class="primary-button"
+          type="submit"
+          :disabled="saving || uploadingImage || uploadingCertificate || !isSubmissionReady"
+          :aria-describedby="!isSubmissionReady ? 'submit-missing' : undefined"
+        >
           {{ saving ? 'Đang lưu...' : isRequestRevision ? 'Gửi lại yêu cầu' : isApprovedUpdate ? 'Gửi yêu cầu cập nhật' : 'Lưu và gửi duyệt' }}
         </button>
       </footer>
@@ -579,7 +625,10 @@ textarea { resize: vertical; }
 .image-preview, .image-placeholder { width: 180px; height: 130px; border-radius: 10px; object-fit: cover; }
 .image-placeholder { display: grid; place-items: center; background: linear-gradient(135deg, var(--ocop-success-soft), var(--ocop-text-on-dark)); color: var(--ocop-primary-700); font-size: 22px; font-weight: 800; }
 footer { display: flex; padding: var(--ocop-space-4) 0 30px; align-items: center; justify-content: flex-end; gap: 9px; }
-footer a, footer button { padding: 10px 15px; border: 1px solid var(--ocop-border); border-radius: 9px; background: var(--ocop-card); color: var(--ocop-navy); font-size: var(--ocop-font-size-caption); font-weight: 700; text-decoration: none; }
+footer a, footer button { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; padding: 10px 15px; border: 1px solid var(--ocop-border); border-radius: 9px; background: var(--ocop-card); color: var(--ocop-navy); font-size: var(--ocop-font-size-caption); font-weight: 700; text-decoration: none; }
+.missing-hint { margin: 0; padding: var(--ocop-space-3) var(--ocop-space-4); border: 1px solid var(--ocop-warning-border); border-radius: var(--ocop-radius-md); background: var(--ocop-warning-soft); color: var(--ocop-warning-strong); font-size: var(--ocop-font-size-small); }
+.field-error { color: var(--ocop-danger-strong) !important; font-weight: 700; }
+input[aria-invalid='true'] { border-color: var(--ocop-danger-strong); }
 .primary-button { border-color: var(--ocop-primary-700) !important; background: var(--ocop-primary-700) !important; color: var(--ocop-white) !important; }
 .secondary-button { color: var(--ocop-primary-700) !important; }
 @media (max-width: 640px) {

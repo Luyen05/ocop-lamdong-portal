@@ -146,4 +146,59 @@ describe('PortalShell', () => {
     await flushPromises()
     expect(wrapper.find('#portal-sidebar').classes()).not.toContain('is-open')
   })
+  describe('ngan keo menu tren dien thoai (hop thoai)', () => {
+    beforeEach(() => {
+      Object.defineProperty(HTMLElement.prototype, 'offsetParent', {
+        configurable: true,
+        get() {
+          return this.parentNode
+        },
+      })
+    })
+
+    it('mo: focus vao muc dau, nen inert + aria-hidden, khoa cuon, role dialog', async () => {
+      const wrapper = await mountShell()
+      const toggle = wrapper.find('.ps-topbar__toggle')
+      ;(toggle.element as HTMLElement).focus()
+      await toggle.trigger('click')
+      await flushPromises()
+
+      const sidebar = wrapper.find('#portal-sidebar')
+      expect(sidebar.attributes('role')).toBe('dialog')
+      expect(sidebar.attributes('aria-modal')).toBe('true')
+      const main = wrapper.find('.ps-main')
+      expect(main.attributes('aria-hidden')).toBe('true')
+      expect(main.attributes('inert')).toBeDefined()
+      expect(document.activeElement).toBe(wrapper.find('.ps-nav__item').element)
+      expect(document.body.classList.contains('has-modal-open')).toBe(true)
+      wrapper.unmount()
+    })
+
+    it('giu Tab trong ngan keo va Esc dong roi tra focus ve nut menu', async () => {
+      const wrapper = await mountShell()
+      const toggle = wrapper.find('.ps-topbar__toggle').element as HTMLElement
+      toggle.focus()
+      await wrapper.find('.ps-topbar__toggle').trigger('click')
+      await flushPromises()
+
+      const focusables = Array.from(
+        wrapper.find('#portal-sidebar').element.querySelectorAll<HTMLElement>('a[href], button:not([disabled])'),
+      )
+      const last = focusables[focusables.length - 1]
+      last.focus()
+      await wrapper.find('#portal-sidebar').trigger('keydown', { key: 'Tab' })
+      expect(document.activeElement).toBe(focusables[0])
+      await wrapper.find('#portal-sidebar').trigger('keydown', { key: 'Tab', shiftKey: true })
+      expect(document.activeElement).toBe(last)
+
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
+      await flushPromises()
+      expect(wrapper.find('#portal-sidebar').classes()).not.toContain('is-open')
+      expect(wrapper.find('.ps-main').attributes('inert')).toBeUndefined()
+      expect(wrapper.find('.ps-main').attributes('aria-hidden')).toBeUndefined()
+      expect(document.activeElement).toBe(toggle)
+      expect(document.body.classList.contains('has-modal-open')).toBe(false)
+      wrapper.unmount()
+    })
+  })
 })

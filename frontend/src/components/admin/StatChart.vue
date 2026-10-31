@@ -194,7 +194,6 @@ onBeforeUnmount(() => chart?.destroy())
       <button
         class="table-toggle"
         type="button"
-        :aria-pressed="showTable"
         :aria-controls="tableId"
         @click="showTable = !showTable"
       >

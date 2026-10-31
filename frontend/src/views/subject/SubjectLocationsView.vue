@@ -2,7 +2,10 @@
 import { computed, onMounted, ref } from 'vue'
 
 import AppIcon from '@/components/ui/AppIcon.vue'
+import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
+import { useConfirmDialog } from '@/composables/useConfirmDialog'
 import { useDialogFocus } from '@/composables/useDialogFocus'
+import { useFlashFocus } from '@/composables/useFlashFocus'
 import { getApiErrorMessage } from '@/services/api-error'
 import {
   cancelLocationChangeRequest,
@@ -33,6 +36,9 @@ const actionError = ref('')
 const successMessage = ref('')
 const actionId = ref<number | null>(null)
 const tab = ref<Tab>('all')
+const confirm = useConfirmDialog()
+// Thông báo nằm đầu trang: cuộn vào khung nhìn và focus để người dùng thấy ngay sau khi thao tác.
+const { revealFlash } = useFlashFocus({ error: actionError, success: successMessage })
 
 const deletionTarget = ref<ManagedLocation | null>(null)
 const deletionRevision = ref<LocationChangeRequest | null>(null)
@@ -110,7 +116,13 @@ async function loadData(): Promise<void> {
 }
 
 async function removeLocation(location: ManagedLocation): Promise<void> {
-  if (!window.confirm(`Xóa điểm “${location.name}”? Thao tác này không hoàn tác được.`)) return
+  const confirmed = await confirm.ask({
+    title: 'Xóa điểm du lịch?',
+    message: `Điểm “${location.name}” sẽ bị xóa và không khôi phục được.`,
+    confirmLabel: 'Xóa điểm',
+    tone: 'danger',
+  })
+  if (!confirmed) return
   actionId.value = location.id
   actionError.value = ''
   try {
@@ -126,7 +138,15 @@ async function removeLocation(location: ManagedLocation): Promise<void> {
 
 async function cancelRequest(location: ManagedLocation): Promise<void> {
   const request = requestOf(location)
-  if (!request || !window.confirm('Hủy yêu cầu đang chờ xử lý?')) return
+  if (!request) return
+  const confirmed = await confirm.ask({
+    title: 'Hủy yêu cầu đang chờ xử lý?',
+    message: 'Điểm giữ nguyên như hiện tại. Bạn có thể gửi yêu cầu mới sau.',
+    confirmLabel: 'Hủy yêu cầu',
+    cancelLabel: 'Giữ yêu cầu',
+    tone: 'danger',
+  })
+  if (!confirmed) return
   actionId.value = location.id
   actionError.value = ''
   try {
@@ -194,8 +214,8 @@ onMounted(loadData)
       </RouterLink>
     </header>
 
-    <p v-if="successMessage" class="notice is-success" role="status">{{ successMessage }}</p>
-    <p v-if="actionError" class="notice is-error" role="alert">{{ actionError }}</p>
+    <p v-if="successMessage" class="notice is-success" role="status" data-flash="success" tabindex="-1">{{ successMessage }}</p>
+    <p v-if="actionError" class="notice is-error" role="alert" data-flash="error" tabindex="-1">{{ actionError }}</p>
 
     <div class="tabs" role="group" aria-label="Lọc theo trạng thái">
       <button
@@ -338,6 +358,8 @@ onMounted(loadData)
         </div>
       </form>
     </div>
+
+    <ConfirmDialog v-bind="confirm.props" @confirm="confirm.accept" @cancel="confirm.dismiss" />
   </div>
 </template>
 
@@ -361,13 +383,26 @@ onMounted(loadData)
 .btn-line.is-danger { border-color: var(--ocop-danger-border); }
 .btn-danger { border: 0; background: var(--ocop-danger-strong); color: var(--ocop-white); }
 button:disabled { cursor: not-allowed; opacity: 0.6; }
-:is(a, button):focus-visible { outline: 3px solid var(--ocop-daquy-400); outline-offset: 2px; }
+:is(a, button):focus-visible { outline: 3px solid var(--admin-primary-dark); outline-offset: 2px; }
+.notice:focus-visible { outline-offset: 0; }
 
 .notice { margin: 0; padding: var(--ocop-space-3) var(--ocop-space-4); border-radius: var(--ocop-radius-sm); font-size: var(--ocop-font-size-small); }
 .notice.is-success { background: var(--ocop-success-soft); color: var(--ocop-success); }
 .notice.is-error { background: var(--ocop-danger-soft); color: var(--ocop-danger-strong); }
 
-.tabs { display: flex; gap: var(--ocop-space-1); overflow-x: auto; border-bottom: 1px solid var(--ocop-mist-200); scrollbar-width: thin; }
+.tabs {
+  display: flex;
+  gap: var(--ocop-space-1);
+  overflow-x: auto;
+  border-bottom: 1px solid var(--ocop-mist-200);
+  scrollbar-width: thin;
+  /* Mép mờ ở phía còn nội dung cuộn được: nền "local" che bóng khi đã cuộn tới đầu/cuối. */
+  background:
+    linear-gradient(to right, var(--admin-bg) 30%, transparent) left center / 32px 100% no-repeat local,
+    linear-gradient(to left, var(--admin-bg) 30%, transparent) right center / 32px 100% no-repeat local,
+    linear-gradient(to right, color-mix(in srgb, var(--ocop-mist-950) 22%, transparent), transparent) left center / 16px 100% no-repeat scroll,
+    linear-gradient(to left, color-mix(in srgb, var(--ocop-mist-950) 22%, transparent), transparent) right center / 16px 100% no-repeat scroll;
+}
 .tabs button { display: inline-flex; min-height: var(--ocop-control-lg); margin-bottom: -1px; padding: 0 var(--ocop-space-4); flex: 0 0 auto; align-items: center; gap: var(--ocop-space-2); border: 0; border-bottom: 3px solid transparent; background: transparent; color: var(--ocop-mist-700); font-size: var(--ocop-font-size-body); }
 .tabs button.active { border-bottom-color: var(--ocop-mist-950); color: var(--ocop-mist-950); font-weight: 700; }
 .count { min-width: 24px; padding: 0 var(--ocop-space-2); border-radius: var(--ocop-radius-pill); background: var(--ocop-mist-100); font-size: var(--ocop-font-size-caption); font-weight: 700; }
