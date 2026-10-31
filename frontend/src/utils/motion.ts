@@ -15,3 +15,17 @@ export function scrollBehavior(): ScrollBehavior {
 export function scrollToTop(): void {
   window.scrollTo({ top: 0, behavior: scrollBehavior() })
 }
+
+/**
+ * Defer non-critical work until the browser is idle without delaying unsupported environments.
+ * The timeout keeps below-the-fold content from waiting indefinitely on a busy main thread.
+ */
+export function scheduleWhenIdle(callback: () => void, timeout = 1200): () => void {
+  if (typeof window === 'undefined' || typeof window.requestIdleCallback !== 'function') {
+    callback()
+    return () => {}
+  }
+
+  const idleId = window.requestIdleCallback(callback, { timeout })
+  return () => window.cancelIdleCallback(idleId)
+}

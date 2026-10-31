@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
 
 import NewsCard from '@/components/news/NewsCard.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
 import { getNews } from '@/services/news'
 import type { NewsItem } from '@/types/news'
+import { scheduleWhenIdle } from '@/utils/motion'
 
 const articles = ref<NewsItem[]>([])
 const isLoading = ref(true)
@@ -24,7 +25,13 @@ async function loadNews(): Promise<void> {
   }
 }
 
-onMounted(() => void loadNews())
+let cancelScheduledLoad = () => {}
+
+onMounted(() => {
+  cancelScheduledLoad = scheduleWhenIdle(() => void loadNews())
+})
+
+onBeforeUnmount(() => cancelScheduledLoad())
 </script>
 
 <template>

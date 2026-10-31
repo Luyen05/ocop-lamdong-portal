@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { prefersReducedMotion, scrollBehavior, scrollToTop } from '@/utils/motion'
+import { prefersReducedMotion, scheduleWhenIdle, scrollBehavior, scrollToTop } from '@/utils/motion'
 
 function mockReducedMotion(reduce: boolean): void {
   vi.stubGlobal('matchMedia', vi.fn().mockReturnValue({ matches: reduce }))
@@ -24,5 +24,20 @@ describe('motion utils', () => {
     const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined)
     scrollToTop()
     expect(scrollTo).toHaveBeenCalledWith({ top: 0, behavior: 'auto' })
+  })
+
+  it('lên lịch việc không gấp khi trình duyệt hỗ trợ idle callback', () => {
+    const requestIdleCallback = vi.fn().mockReturnValue(7)
+    const cancelIdleCallback = vi.fn()
+    vi.stubGlobal('requestIdleCallback', requestIdleCallback)
+    vi.stubGlobal('cancelIdleCallback', cancelIdleCallback)
+    const callback = vi.fn()
+
+    const cancel = scheduleWhenIdle(callback, 900)
+    cancel()
+
+    expect(requestIdleCallback).toHaveBeenCalledWith(callback, { timeout: 900 })
+    expect(cancelIdleCallback).toHaveBeenCalledWith(7)
+    expect(callback).not.toHaveBeenCalled()
   })
 })

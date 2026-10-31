@@ -6,6 +6,7 @@ import AppIcon from '@/components/ui/AppIcon.vue'
 import { hydrangeaPhoto, strawberryPhoto, teaPhoto } from '@/constants/photos'
 import { getLocations } from '@/services/locations'
 import type { LocationListItem } from '@/types/location'
+import { scheduleWhenIdle } from '@/utils/motion'
 
 // Lối tắt theo loại hình, mở danh sách điểm du lịch đã lọc sẵn. Ảnh là cảnh quan minh họa chung.
 const experiences = [
@@ -36,6 +37,7 @@ async function loadLocations(): Promise<void> {
 const track = ref<HTMLElement | null>(null)
 const activeIndex = ref(0)
 const canScroll = ref(false)
+let cancelScheduledLoad = () => {}
 
 function slides(): HTMLElement[] {
   return track.value ? (Array.from(track.value.children) as HTMLElement[]) : []
@@ -66,12 +68,18 @@ function goTo(index: number): void {
 
 onMounted(async () => {
   window.addEventListener('resize', updateCarousel, { passive: true })
-  await loadLocations()
-  await nextTick()
-  updateCarousel()
+  cancelScheduledLoad = scheduleWhenIdle(() => {
+    void loadLocations().then(async () => {
+      await nextTick()
+      updateCarousel()
+    })
+  })
 })
 
-onBeforeUnmount(() => window.removeEventListener('resize', updateCarousel))
+onBeforeUnmount(() => {
+  cancelScheduledLoad()
+  window.removeEventListener('resize', updateCarousel)
+})
 </script>
 
 <template>
