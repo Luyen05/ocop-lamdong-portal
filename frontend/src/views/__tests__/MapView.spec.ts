@@ -54,6 +54,8 @@ function feature(slug: string, name: string, coordinates: [number, number]): Map
       ticket_price: null,
       rating_avg: 0,
       primary_image_url: null,
+      subject: { id: 1, name: 'HTX Chè Cầu Đất', district: 'Đà Lạt' },
+      products: [{ id: 10, name: 'Trà xanh Cầu Đất', slug: 'tra-xanh-cau-dat', star: 4, primary_image_url: null }],
     },
   }
 }
@@ -129,6 +131,8 @@ describe('MapView', () => {
     expect(router.replace).toHaveBeenCalledWith({ name: 'map', query: { diem: 'cau-dat-farm' } })
     expect(map.props('selectedSlug')).toBe('cau-dat-farm')
     expect(wrapper.get('#selected-title').text()).toBe('Cầu Đất Farm')
+    expect(wrapper.get('.selected-facts').text()).toContain('HTX Chè Cầu Đất')
+    expect(wrapper.get('.selected-products').text()).toContain('Trà xanh Cầu Đất')
     expect(wrapper.get('.external-directions').attributes('href')).toContain('11.879583%2C108.547398')
 
     map.vm.$emit('select', 'vuon-hong-nha-tom')
@@ -477,7 +481,7 @@ describe('MapView', () => {
     await flushPromises()
 
     expect(wrapper.findAll('.panel-message')).toHaveLength(1)
-    expect(wrapper.get('.selected-card .panel-message').text()).toContain('Bạn chưa cho phép truy cập vị trí')
+    expect(wrapper.get('.map-info-overlay .panel-message').text()).toContain('Bạn chưa cho phép truy cập vị trí')
     expect(getRoute).not.toHaveBeenCalled()
   })
 

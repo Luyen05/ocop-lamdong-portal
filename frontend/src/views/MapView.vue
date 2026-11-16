@@ -5,6 +5,7 @@ import { useRoute, useRouter } from 'vue-router'
 import LeafletMap from '@/components/map/LeafletMap.vue'
 import MapLegend from '@/components/map/MapLegend.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
+import { locationFallbackPhoto } from '@/constants/photos'
 import { getApiErrorMessage } from '@/services/api-error'
 import {
   getLocationFilterOptions,
@@ -63,6 +64,7 @@ const districts = ref<string[]>([])
 const isLoading = ref(false)
 const errorMessage = ref('')
 const selectedSlug = ref<string | null>(null)
+const selectedMarkerPosition = ref<{ x: number; y: number; width: number; height: number } | null>(null)
 
 const userPosition = ref<Coordinate | null>(null)
 const isLocating = ref(false)
@@ -79,7 +81,7 @@ let latestNearbyId = 0
 
 const isCompact = ref(false)
 const selectedCard = ref<HTMLElement | null>(null)
-const mapCanvas = ref<HTMLElement | null>(null)
+const selectedImageFailed = ref(false)
 const allLocationsTitle = ref<HTMLElement | null>(null)
 let compactQuery: MediaQueryList | null = null
 
@@ -110,6 +112,18 @@ const displayFeatures = computed(() => {
   const present = new Set(features.value.map((feature) => feature.properties.slug))
   return [...features.value, ...extraFeatures.value.filter((feature) => !present.has(feature.properties.slug))]
 })
+const selectedFallbackPhoto = computed(() =>
+  selectedFeature.value ? locationFallbackPhoto(selectedFeature.value.properties.type) : null,
+)
+const selectedImageUrl = computed(() => {
+  if (selectedFeature.value?.properties.primary_image_url && !selectedImageFailed.value) {
+    return selectedFeature.value.properties.primary_image_url
+  }
+  return selectedFallbackPhoto.value?.src ?? ''
+})
+const selectedHasOwnImage = computed(
+  () => Boolean(selectedFeature.value?.properties.primary_image_url) && !selectedImageFailed.value,
+)
 const selectedFeature = computed(
   () => displayFeatures.value.find((feature) => feature.properties.slug === selectedSlug.value) ?? null,
 )
@@ -140,6 +154,24 @@ const districtOptions = computed(() =>
     : districts.value,
 )
 const hasNearbyFilters = computed(() => Boolean(applied.search || applied.district))
+const mapInfoStyle = computed(() => {
+  const position = selectedMarkerPosition.value
+  if (isCompact.value || !position) return undefined
+  const placeRight = position.x < position.width / 2
+  const placeBelow = position.y < 230
+  return {
+    left: `${position.x}px`,
+    top: `${position.y}px`,
+    transform: `${placeRight ? 'translateX(24px)' : 'translateX(calc(-100% - 24px))'} ${
+      placeBelow ? 'translateY(24px)' : 'translateY(calc(-100% - 24px))'
+    }`,
+  }
+})
+const mapInfoPlacement = computed(() => {
+  const position = selectedMarkerPosition.value
+  if (isCompact.value || !position) return 'default'
+  return `${position.x < position.width / 2 ? 'right' : 'left'}-${position.y < 230 ? 'below' : 'above'}`
+})
 
 /** Ghi bộ lọc/điểm chọn lên URL nhưng giữ các tham số còn lại; không gọi router khi query không đổi. */
 function writeQuery(patch: Record<string, string | undefined>, mode: 'push' | 'replace' = 'replace'): void {
@@ -221,6 +253,8 @@ function clearRoute(): void {
 
 function clearSelection(): void {
   selectedSlug.value = null
+  selectedMarkerPosition.value = null
+  selectedImageFailed.value = false
   keepExtras(() => false)
   clearRoute()
   writeQuery({ diem: undefined, action: undefined })
@@ -239,6 +273,7 @@ function selectLocation(slug: string): void {
     return
   }
   selectedSlug.value = slug
+  selectedImageFailed.value = false
   keepExtras((feature) => feature.properties.slug === slug)
   clearRoute()
   writeQuery({ diem: slug, action: undefined })
@@ -281,13 +316,6 @@ async function revealSelectedCard(): Promise<void> {
   if (rect.top >= top - 1 && rect.bottom <= bottom + 1) return
   const delta = rect.top < top ? rect.top - top : rect.bottom - bottom
   window.scrollBy({ top: delta, behavior: scrollBehavior() })
-}
-
-function showMap(): void {
-  const canvas = mapCanvas.value
-  if (canvas && typeof canvas.scrollIntoView === 'function') {
-    canvas.scrollIntoView({ block: 'start', behavior: scrollBehavior() })
-  }
 }
 
 function geolocationErrorMessage(error: GeolocationPositionError): string {
@@ -532,7 +560,6 @@ onBeforeUnmount(() => {
 
       <section
         v-if="selectedFeature"
-        ref="selectedCard"
         class="panel-section selected-card"
         aria-labelledby="selected-title"
         aria-live="polite"
@@ -547,6 +574,15 @@ onBeforeUnmount(() => {
           <button class="close-button" type="button" aria-label="Bỏ chọn điểm" @click="closeSelection">
             <AppIcon name="close" :size="13" />
           </button>
+        </div>
+        <div class="selected-media" aria-hidden="true">
+          <img
+            v-if="selectedImageUrl"
+            :src="selectedImageUrl"
+            :alt="selectedHasOwnImage ? selectedFeature.properties.name : ''"
+            :style="{ objectPosition: selectedHasOwnImage ? 'center' : selectedFallbackPhoto?.position }"
+            @error="selectedImageFailed = true"
+          />
         </div>
         <h2 id="selected-title">{{ selectedFeature.properties.name }}</h2>
         <p class="selected-address"><AppIcon name="map-pin" :size="13" /> {{ selectedFeature.properties.address }}</p>
@@ -565,7 +601,26 @@ onBeforeUnmount(() => {
             <dt>Giá vé</dt>
             <dd>{{ formatTicketPrice(selectedFeature.properties.ticket_price) }}</dd>
           </div>
+          <div v-if="selectedFeature.properties.subject">
+            <dt>Chủ thể</dt>
+            <dd>{{ selectedFeature.properties.subject.name }}</dd>
+          </div>
+          <div>
+            <dt>Sản phẩm OCOP</dt>
+            <dd>{{ selectedFeature.properties.products?.length ?? 0 }}</dd>
+          </div>
         </dl>
+        <div v-if="selectedFeature.properties.products?.length" class="selected-products">
+          <h3>Sản phẩm tại điểm</h3>
+          <ul>
+            <li v-for="product in selectedFeature.properties.products" :key="product.id">
+              <RouterLink :to="{ name: 'product-detail', params: { slug: product.slug } }">
+                {{ product.name }}
+              </RouterLink>
+              <span>{{ product.star }} sao</span>
+            </li>
+          </ul>
+        </div>
 
         <p v-if="routeIntent && !routeResult" class="panel-hint" data-test="route-intent" role="status">Điểm đến đã chọn. Bấm “Lấy vị trí &amp; chỉ đường” để xác nhận dùng vị trí hiện tại và tìm tuyến đường.</p>
         <div class="selected-actions">
@@ -584,9 +639,6 @@ onBeforeUnmount(() => {
           >
             Xem chi tiết
           </RouterLink>
-          <button v-if="isCompact && selectedCoordinates" class="btn btn-outline-success" type="button" @click="showMap">
-            <AppIcon name="map-pin" :size="15" /> Xem trên bản đồ
-          </button>
         </div>
 
         <div v-if="routeResult" class="route-summary" role="status">
@@ -594,7 +646,6 @@ onBeforeUnmount(() => {
           <span>khoảng {{ formatDuration(routeResult.duration_s) }} lái xe</span>
           <button class="btn-link-reset" type="button" @click="clearRoute">Ẩn tuyến</button>
         </div>
-        <p v-if="routeMessage" class="panel-message" role="alert">{{ routeMessage }}</p>
         <a v-if="selectedCoordinates" class="external-directions" :href="directionsUrl" target="_blank" rel="noopener noreferrer">
           Mở chỉ đường bằng Google Maps
         </a>
@@ -618,14 +669,20 @@ onBeforeUnmount(() => {
               :class="{ active: feature.properties.slug === selectedSlug }"
               @click="selectLocation(feature.properties.slug)"
             >
-              <i
-                class="type-dot"
-                :style="{ background: locationTypeStyle(feature.properties.type).color }"
-                aria-hidden="true"
+              <img
+                v-if="feature.properties.primary_image_url"
+                class="location-thumb"
+                :src="feature.properties.primary_image_url"
+                alt=""
+                loading="lazy"
               />
+              <i v-else class="type-dot" :style="{ background: locationTypeStyle(feature.properties.type).color }" aria-hidden="true" />
               <span>
                 <strong>{{ feature.properties.name }}</strong>
-                <small>{{ feature.properties.type_label }} · {{ feature.properties.district }}</small>
+                <small>
+                  {{ feature.properties.type_label }} · {{ feature.properties.district }}
+                  <template v-if="feature.properties.products?.length"> · {{ feature.properties.products.length }} sản phẩm OCOP</template>
+                </small>
               </span>
             </button>
           </li>
@@ -637,14 +694,94 @@ onBeforeUnmount(() => {
       </p>
     </aside>
 
-    <section ref="mapCanvas" class="map-canvas" aria-label="Bản đồ">
+    <section class="map-canvas" aria-label="Bản đồ">
       <LeafletMap
         :features="displayFeatures"
         :selected-slug="selectedSlug"
         :user-position="userPosition"
         :route="routeLine"
         @select="selectLocation"
+        @selected-position="selectedMarkerPosition = $event"
       />
+      <section
+        v-if="selectedFeature"
+        ref="selectedCard"
+        class="map-info-overlay"
+        :class="`placement-${mapInfoPlacement}`"
+        :style="mapInfoStyle"
+        aria-labelledby="map-selected-title"
+        aria-live="polite"
+      >
+        <div class="map-info-head">
+          <span
+            class="type-badge"
+            :style="{ '--type-color': locationTypeStyle(selectedFeature.properties.type).color }"
+          >
+            {{ selectedFeature.properties.type_label }}
+          </span>
+          <button class="close-button" type="button" aria-label="Bỏ chọn điểm" @click="closeSelection">
+            <AppIcon name="close" :size="13" />
+          </button>
+        </div>
+        <div class="map-info-content">
+          <img
+            v-if="selectedImageUrl"
+            class="map-info-image"
+            :src="selectedImageUrl"
+            :alt="selectedHasOwnImage ? selectedFeature.properties.name : ''"
+            :style="{ objectPosition: selectedHasOwnImage ? 'center' : selectedFallbackPhoto?.position }"
+            @error="selectedImageFailed = true"
+          />
+          <div class="map-info-body">
+            <h2 id="map-selected-title">{{ selectedFeature.properties.name }}</h2>
+            <p class="selected-address">
+              <AppIcon name="map-pin" :size="13" /> {{ selectedFeature.properties.address }}
+            </p>
+            <p v-if="selectedFeature.properties.subject" class="map-info-subject">
+              Chủ thể: {{ selectedFeature.properties.subject.name }}
+            </p>
+            <p class="map-info-meta">
+              <span v-if="selectedFeature.properties.rating_avg">★ {{ selectedFeature.properties.rating_avg.toFixed(1) }}</span>
+              <span v-if="selectedFeature.properties.products?.length"> · {{ selectedFeature.properties.products.length }} sản phẩm OCOP</span>
+              <span v-if="selectedFeature.properties.opening_hours"> · {{ selectedFeature.properties.opening_hours }}</span>
+            </p>
+            <p v-if="selectedFeature.properties.description" class="map-info-description">
+              {{ selectedFeature.properties.description }}
+            </p>
+            <ul v-if="selectedFeature.properties.services?.length" class="map-info-services" aria-label="Dịch vụ">
+              <li v-for="service in selectedFeature.properties.services.slice(0, 3)" :key="service">{{ service }}</li>
+            </ul>
+            <ul v-if="selectedFeature.properties.products?.length" class="map-info-products" aria-label="Sản phẩm OCOP tại điểm">
+              <li v-for="product in selectedFeature.properties.products.slice(0, 3)" :key="product.id">
+                <img v-if="product.primary_image_url" :src="product.primary_image_url" :alt="`Ảnh ${product.name}`" loading="lazy" />
+                <span>
+                  <strong>{{ product.name }}</strong>
+                  <small>OCOP {{ product.star }} sao</small>
+                </span>
+              </li>
+            </ul>
+            <div class="map-info-actions">
+              <button
+                v-if="selectedCoordinates"
+                class="btn btn-success"
+                type="button"
+                :disabled="isRouting || isLocating"
+                @click="showRoute"
+              >
+                <AppIcon name="navigation" :size="15" />
+                {{ isRouting ? 'Đang tìm đường...' : 'Chỉ đường' }}
+              </button>
+              <RouterLink
+                class="btn btn-outline-success"
+                :to="{ name: 'location-detail', params: { slug: selectedFeature.properties.slug } }"
+              >
+                Xem chi tiết
+              </RouterLink>
+            </div>
+            <p v-if="routeMessage" class="panel-message" role="alert">{{ routeMessage }}</p>
+          </div>
+        </div>
+      </section>
     </section>
   </main>
 </template>
@@ -848,9 +985,187 @@ onBeforeUnmount(() => {
   border-radius: 50%;
 }
 
+.location-thumb {
+  width: 44px;
+  height: 36px;
+  flex: 0 0 auto;
+  border-radius: var(--ocop-radius-xs);
+  object-fit: cover;
+}
+
+.map-info-overlay {
+  position: absolute;
+  z-index: 1100;
+  top: var(--ocop-space-6);
+  left: var(--ocop-space-6);
+  width: min(390px, calc(100% - var(--ocop-space-12)));
+  max-height: calc(100% - var(--ocop-space-12));
+  overflow-y: auto;
+  box-shadow: var(--ocop-shadow-overlay);
+  transform-origin: center;
+}
+
+.map-panel > .selected-card {
+  display: none;
+}
+
 .selected-card {
   border-color: var(--ocop-mint-border);
-  box-shadow: var(--ocop-shadow-sm);
+}
+
+.map-info-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ocop-space-2);
+  padding: var(--ocop-space-3);
+  border-bottom: 1px solid var(--ocop-border);
+  background: var(--ocop-card);
+}
+
+.map-info-content {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  background: var(--ocop-card);
+}
+
+.map-info-image {
+  width: 112px;
+  height: 100%;
+  min-height: 150px;
+  object-fit: cover;
+}
+
+.map-info-body {
+  min-width: 0;
+  padding: var(--ocop-space-3);
+}
+
+.map-info-body h2 {
+  margin: 0;
+  color: var(--ocop-navy);
+  font-size: var(--ocop-font-size-title-sm);
+  line-height: 1.3;
+}
+
+.map-info-body .selected-address {
+  margin: var(--ocop-space-2) 0;
+}
+
+.map-info-subject,
+.map-info-meta {
+  margin: 0;
+  color: var(--ocop-slate);
+  font-size: var(--ocop-font-size-caption);
+}
+
+.map-info-description {
+  display: -webkit-box;
+  margin: var(--ocop-space-2) 0 0;
+  overflow: hidden;
+  color: var(--ocop-slate);
+  font-size: var(--ocop-font-size-caption);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.map-info-services {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ocop-space-1);
+  margin: var(--ocop-space-2) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.map-info-services li {
+  padding: 3px 8px;
+  border-radius: var(--ocop-radius-pill);
+  background: var(--ocop-mint-soft);
+  color: var(--ocop-primary-900);
+  font-size: var(--ocop-font-size-caption);
+}
+
+.map-info-products {
+  display: grid;
+  gap: var(--ocop-space-1);
+  margin: var(--ocop-space-2) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.map-info-products li {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: var(--ocop-space-2);
+  padding: 5px 0;
+  border-top: 1px solid var(--ocop-border);
+}
+
+.map-info-products img {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
+  border-radius: var(--ocop-radius-xs);
+  object-fit: cover;
+}
+
+.map-info-products span {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.map-info-products strong,
+.map-info-products small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.map-info-products strong {
+  color: var(--ocop-primary-900);
+  font-size: var(--ocop-font-size-caption);
+}
+
+.map-info-products small {
+  color: var(--ocop-slate);
+  font-size: var(--ocop-font-size-caption);
+}
+
+.map-info-subject {
+  color: var(--ocop-primary-900);
+  font-weight: 700;
+}
+
+.map-info-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ocop-space-2);
+  margin-top: var(--ocop-space-3);
+}
+
+.map-info-actions .btn {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  gap: 5px;
+  padding-inline: var(--ocop-space-3);
+}
+
+.selected-media {
+  aspect-ratio: 16 / 7;
+  overflow: hidden;
+  margin: 0 0 var(--ocop-space-3);
+  border-radius: var(--ocop-radius-sm);
+  background: var(--ocop-mint-soft);
+}
+
+.selected-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .selected-card h2 {
@@ -899,6 +1214,48 @@ onBeforeUnmount(() => {
   margin: 0;
   font-size: var(--ocop-font-size-small);
   font-weight: 650;
+}
+
+.selected-products {
+  margin: 0 0 var(--ocop-space-3);
+  padding: var(--ocop-space-3);
+  border-radius: var(--ocop-radius-sm);
+  background: var(--ocop-surface-subtle);
+}
+
+.selected-products h3 {
+  margin: 0 0 var(--ocop-space-2);
+  color: var(--ocop-navy);
+  font-size: var(--ocop-font-size-small);
+}
+
+.selected-products ul {
+  display: grid;
+  gap: var(--ocop-space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.selected-products li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--ocop-space-2);
+  font-size: var(--ocop-font-size-small);
+}
+
+.selected-products a {
+  min-width: 0;
+  color: var(--ocop-primary-700);
+  font-weight: 700;
+}
+
+.selected-products span {
+  flex: 0 0 auto;
+  color: var(--ocop-warning);
+  font-size: var(--ocop-font-size-caption);
+  font-weight: 700;
 }
 
 .selected-actions {
@@ -951,10 +1308,23 @@ onBeforeUnmount(() => {
   order: -1;
 }
 
-/* Màn hẹp: thẻ điểm chọn lên ngay dưới bản đồ để thấy được mà không phải cuộn qua bộ lọc. */
 @media (max-width: 991.98px) {
-  .selected-card {
-    order: -1;
+  .map-info-overlay {
+    top: auto;
+    left: var(--ocop-space-3);
+    right: var(--ocop-space-3);
+    bottom: var(--ocop-space-3);
+    width: auto;
+    max-height: min(70%, 520px);
+  }
+
+  .map-info-content {
+    grid-template-columns: 88px minmax(0, 1fr);
+  }
+
+  .map-info-image {
+    width: 88px;
+    min-height: 132px;
   }
 }
 

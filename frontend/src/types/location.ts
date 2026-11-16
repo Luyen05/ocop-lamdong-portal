@@ -93,7 +93,25 @@ export interface MapFeatureProperties {
   address: string
   opening_hours: string | null
   ticket_price: number | null
+  services?: string[]
+  description?: string | null
   rating_avg: number
+  primary_image_url: string | null
+  subject?: MapSubject | null
+  products?: MapProduct[]
+}
+
+export interface MapSubject {
+  id: number
+  name: string
+  district: string
+}
+
+export interface MapProduct {
+  id: number
+  name: string
+  slug: string
+  star: number
   primary_image_url: string | null
 }
 

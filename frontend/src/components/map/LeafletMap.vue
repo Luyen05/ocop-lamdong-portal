@@ -29,7 +29,18 @@ const props = withDefaults(
   },
 )
 
-const emit = defineEmits<{ select: [slug: string] }>()
+interface MarkerPosition {
+  slug: string
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
+const emit = defineEmits<{
+  select: [slug: string]
+  'selected-position': [position: MarkerPosition]
+}>()
 
 const LAM_DONG_CENTER: L.LatLngTuple = [11.9404, 108.4583]
 const OSM_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -231,10 +242,14 @@ function focusSelected(previousSlug: string | null = null): void {
 
   const showTooltip = () => marker.openTooltip()
   if (clusterLayer) {
-    clusterLayer.zoomToShowLayer(marker, showTooltip)
+    clusterLayer.zoomToShowLayer(marker, () => {
+      showTooltip()
+      emitSelectedPosition()
+    })
   } else {
     map.setView(marker.getLatLng(), Math.max(map.getZoom(), 13))
     showTooltip()
+    emitSelectedPosition()
   }
 }
 
@@ -247,6 +262,21 @@ function keepSelectedInView(): void {
 
 function selectedLatLng(): L.LatLng | null {
   return (props.selectedSlug ? markers.get(props.selectedSlug)?.getLatLng() : null) ?? null
+}
+
+function emitSelectedPosition(): void {
+  if (!map || !props.selectedSlug) return
+  const marker = markers.get(props.selectedSlug)
+  if (!marker) return
+  const point = map.latLngToContainerPoint(marker.getLatLng())
+  const size = map.getSize()
+  emit('selected-position', {
+    slug: props.selectedSlug,
+    x: point.x,
+    y: point.y,
+    width: size.x,
+    height: size.y,
+  })
 }
 
 function renderUserPosition(): void {
@@ -320,6 +350,7 @@ async function initialize(): Promise<void> {
     renderMarkers(true)
     renderUserPosition()
     renderRoute()
+    map.on('moveend zoomend', emitSelectedPosition)
 
     if (typeof ResizeObserver !== 'undefined') {
       resizeObserver = new ResizeObserver(() => {

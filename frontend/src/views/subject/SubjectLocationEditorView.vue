@@ -1017,13 +1017,27 @@ onBeforeUnmount(() => {
           <section v-show="sectionVisible(4)" class="card" aria-labelledby="s-prod">
             <div class="card-head">
               <h2 id="s-prod">6. Sản phẩm OCOP có tại điểm</h2>
-              <p>Chỉ hiện sản phẩm của đơn vị đã được duyệt. Không bắt buộc.</p>
+              <p id="s-prod-help">Chỉ hiện sản phẩm của đơn vị đã được duyệt. Sản phẩm được chọn sẽ xuất hiện trong card của điểm trên bản đồ.</p>
             </div>
             <p v-if="!approvedProducts.length" class="muted-text">Đơn vị chưa có sản phẩm OCOP nào được duyệt.</p>
-            <label v-for="product in approvedProducts" :key="product.id" class="check-row">
-              <input v-model="form.product_ids" type="checkbox" :value="product.id" />
-              {{ product.name }}
-            </label>
+            <div v-else class="product-options" aria-describedby="s-prod-help">
+              <label v-for="product in approvedProducts" :key="product.id" class="product-option">
+                <input v-model="form.product_ids" type="checkbox" :value="product.id" />
+                <img
+                  v-if="product.images.find((image) => image.is_primary)?.image_url"
+                  :src="product.images.find((image) => image.is_primary)?.image_url"
+                  :alt="`Ảnh ${product.name}`"
+                  loading="lazy"
+                />
+                <span class="product-option-info">
+                  <strong>{{ product.name }}</strong>
+                  <small>{{ product.category.name }} · {{ product.star ? `OCOP ${product.star} sao` : 'Chưa cập nhật hạng sao' }}</small>
+                </span>
+              </label>
+            </div>
+            <p v-if="form.product_ids.length" class="selected-product-count" role="status">
+              Đã chọn {{ form.product_ids.length }} sản phẩm để hiển thị tại điểm này.
+            </p>
           </section>
 
           <section v-if="isRequestMode" v-show="sectionVisible(4)" class="card" aria-labelledby="s-reason">
@@ -1209,6 +1223,15 @@ button:disabled { cursor: not-allowed; opacity: 0.65; }
 .radio { display: inline-flex; min-height: var(--ocop-control-md); align-items: center; gap: var(--ocop-space-2); font-size: var(--ocop-font-size-caption); }
 .radio input, .check-row input { width: 20px; height: 20px; accent-color: var(--admin-primary); }
 .check-row { display: flex; min-height: var(--ocop-control-md); padding: 0 var(--ocop-space-3); align-items: center; gap: var(--ocop-space-3); border: 1px solid var(--ocop-mist-200); border-radius: var(--ocop-radius-sm); font-weight: 400; }
+.product-options { display: grid; gap: var(--ocop-space-2); }
+.product-option { display: flex; min-height: 68px; align-items: center; gap: var(--ocop-space-3); padding: var(--ocop-space-2) var(--ocop-space-3); border: 1px solid var(--ocop-mist-200); border-radius: var(--ocop-radius-sm); background: var(--ocop-card); cursor: pointer; }
+.product-option:has(input:checked) { border-color: var(--ocop-mint-border); background: var(--ocop-mint-soft); }
+.product-option input { width: 20px; height: 20px; flex: 0 0 auto; accent-color: var(--admin-primary); }
+.product-option img { width: 48px; height: 48px; flex: 0 0 auto; border-radius: var(--ocop-radius-xs); object-fit: cover; }
+.product-option-info { display: grid; gap: 3px; min-width: 0; }
+.product-option-info strong { overflow: hidden; color: var(--ocop-navy); text-overflow: ellipsis; white-space: nowrap; }
+.product-option-info small { color: var(--ocop-mist-700); font-size: var(--ocop-font-size-caption); }
+.selected-product-count { margin: var(--ocop-space-2) 0 0; color: var(--ocop-primary-700); font-size: var(--ocop-font-size-small); font-weight: 700; }
 .muted-text { margin: 0; color: var(--ocop-mist-700); font-size: var(--ocop-font-size-small); }
 
 .status-card { position: sticky; top: var(--ocop-space-6); gap: var(--ocop-space-4); padding: var(--ocop-space-5); }

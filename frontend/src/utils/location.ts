@@ -204,6 +204,10 @@ export function nearbyToFeature(item: NearbyLocation): MapFeature {
       ticket_price: item.ticket_price,
       rating_avg: item.rating_avg,
       primary_image_url: item.primary_image_url,
+      services: item.services,
+      description: item.description,
+      subject: null,
+      products: [],
     },
   }
 }
