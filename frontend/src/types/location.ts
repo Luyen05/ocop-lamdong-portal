@@ -162,6 +162,26 @@ export interface ProductLocationResponse {
   items: ProductLocationItem[]
 }
 
+/** Tuyến tham quan (GET /tours): chuỗi điểm theo thứ tự. */
+export interface TourListItem {
+  id: number
+  slug: string
+  name: string
+  description: string | null
+  duration_text: string | null
+  stop_count: number
+}
+
+export interface TourStop {
+  position: number
+  note: string | null
+  location: LocationListItem
+}
+
+export interface TourDetail extends TourListItem {
+  stops: TourStop[]
+}
+
 /** Chủ thể kèm mọi điểm và sản phẩm công khai (GET /subjects/{id}). */
 export interface PublicSubjectDetail {
   id: number

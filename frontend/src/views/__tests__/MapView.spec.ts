@@ -13,6 +13,8 @@ import {
   getProductLocations,
   getPublicSubject,
   getRoute,
+  getTour,
+  getTours,
 } from '@/services/locations'
 import type { MapFeature, NearbyLocation } from '@/types/location'
 
@@ -34,6 +36,8 @@ vi.mock('@/services/locations', () => ({
   getProductLocations: vi.fn(),
   getPublicSubject: vi.fn(),
   getRoute: vi.fn(),
+  getTour: vi.fn(),
+  getTours: vi.fn(),
 }))
 
 vi.mock('@/services/categories', () => ({
@@ -144,6 +148,7 @@ describe('MapView', () => {
       types: [{ value: 'tea_coffee_farm', label: 'Đồi chè & cà phê' }],
       districts: ['Đà Lạt'],
     })
+    vi.mocked(getTours).mockResolvedValue([])
     vi.mocked(getCategories).mockResolvedValue({
       items: [{ id: 1, name: 'Đồ uống', slug: 'do-uong', description: null, icon: null }],
       page: 1,
@@ -644,6 +649,51 @@ describe('MapView', () => {
 
       expect(getMapLocations).toHaveBeenLastCalledWith(expect.objectContaining({ category: 'do-uong' }))
       expect(router.push).toHaveBeenCalledWith({ name: 'map', query: { category: 'do-uong' } })
+    })
+
+    it('tuyen tham quan: liet ke tuyen, chon tuyen chi hien cac chang va noi theo thu tu', async () => {
+      vi.mocked(getTours).mockResolvedValue([
+        { id: 1, slug: 'hanh-trinh-dau-tay', name: 'Hành trình dâu tây', description: null, duration_text: 'Nửa ngày', stop_count: 2 },
+      ])
+      vi.mocked(getTour).mockResolvedValue({
+        id: 1,
+        slug: 'hanh-trinh-dau-tay',
+        name: 'Hành trình dâu tây',
+        description: 'Gợi ý của nhóm.',
+        duration_text: 'Nửa ngày',
+        stop_count: 2,
+        stops: [
+          { position: 1, note: 'Nơi sản xuất', location: { ...mixed[2].properties, latitude: 11.99, longitude: 108.34 } as never },
+          { position: 2, note: 'Mua quà', location: { ...mixed[1].properties, latitude: 11.94, longitude: 108.44 } as never },
+        ],
+      })
+      const wrapper = mountView()
+      await flushPromises()
+
+      expect(wrapper.get('[data-test="tour-item"]').text()).toContain('2 chặng · Nửa ngày')
+      await wrapper.get('[data-test="tour-item"]').trigger('click')
+      await flushPromises()
+
+      expect(router.push).toHaveBeenCalledWith({ name: 'map', query: { tour: 'hanh-trinh-dau-tay' } })
+      expect(getTour).toHaveBeenCalledWith('hanh-trinh-dau-tay')
+      const map = wrapper.getComponent(LeafletMapStub)
+      expect(map.props('features').map((item: MapFeature) => item.properties.slug)).toEqual(['cua-hang-yersin', 'co-so-pang-tieng'])
+      expect(map.props('links')).toEqual([['co-so-pang-tieng', 'cua-hang-yersin']])
+      const stops = wrapper.get('[data-test="tour-stops"]').findAll('li')
+      expect(stops).toHaveLength(2)
+      expect(stops[0]!.text()).toContain('Cơ sở Păng Tiêng')
+      expect(stops[0]!.text()).toContain('Nơi sản xuất')
+      expect(wrapper.find('[data-test="tour-list"]').exists()).toBe(false)
+    })
+
+    it('tuyen khong con cong khai thi bo loc tuyen va bao cho nguoi dung', async () => {
+      route.query = { tour: 'khong-ton-tai' }
+      vi.mocked(getTour).mockRejectedValue(new Error('404'))
+      const wrapper = mountView()
+      await flushPromises()
+
+      expect(wrapper.get('[data-test="context-message"]').text()).toContain('Không tìm thấy tuyến')
+      expect(wrapper.getComponent(LeafletMapStub).props('features')).toHaveLength(3)
     })
 
     it('che do Chi tiet hien dia chi, mo ta va dich vu trong danh sach', async () => {

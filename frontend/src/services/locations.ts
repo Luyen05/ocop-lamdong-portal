@@ -13,6 +13,8 @@ import type {
   ProductLocationResponse,
   PublicSubjectDetail,
   RouteResponse,
+  TourDetail,
+  TourListItem,
 } from '@/types/location'
 
 export async function getLocations(filters: LocationFilters = {}): Promise<LocationListResponse> {
@@ -78,5 +80,16 @@ export async function getProductLocations(slug: string): Promise<ProductLocation
 /** Chủ thể đã duyệt cùng mọi điểm và sản phẩm công khai của chủ thể. */
 export async function getPublicSubject(id: number): Promise<PublicSubjectDetail> {
   const response = await http.get<PublicSubjectDetail>(`/subjects/${id}`)
+  return response.data
+}
+
+/** Các tuyến tham quan đang công khai. */
+export async function getTours(): Promise<TourListItem[]> {
+  const response = await http.get<TourListItem[]>('/tours')
+  return response.data
+}
+
+export async function getTour(slug: string): Promise<TourDetail> {
+  const response = await http.get<TourDetail>(`/tours/${encodeURIComponent(slug)}`)
   return response.data
 }

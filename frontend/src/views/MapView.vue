@@ -15,6 +15,8 @@ import {
   getProductLocations,
   getPublicSubject,
   getRoute,
+  getTour,
+  getTours,
 } from '@/services/locations'
 import type { Category } from '@/types/category'
 import type {
@@ -25,6 +27,8 @@ import type {
   MapFeature,
   NearbyLocation,
   RouteResponse,
+  TourDetail,
+  TourListItem,
 } from '@/types/location'
 import {
   externalDirectionsUrl,
@@ -68,6 +72,8 @@ interface MapFilterState {
   subject: string
   /** Slug nhóm sản phẩm: chỉ hiện điểm có sản phẩm thuộc nhóm. */
   category: string
+  /** Slug tuyến tham quan: chỉ hiện các chặng của tuyến, nối theo thứ tự. */
+  tour: string
 }
 
 interface ProductContext {
@@ -93,6 +99,8 @@ const extraFeatures = ref<MapFeature[]>([])
 const typeOptions = ref<LocationTypeOption[]>([])
 const categories = ref<Category[]>([])
 const productContext = ref<ProductContext | null>(null)
+const tours = ref<TourListItem[]>([])
+const tourDetail = ref<TourDetail | null>(null)
 const subjectContext = ref<SubjectContext | null>(null)
 const contextMessage = ref('')
 const viewMode = ref<'list' | 'detail'>('list')
@@ -137,6 +145,7 @@ function filtersFromQuery(query: Record<string, unknown>): MapFilterState {
     product: queryText(query.product).slice(0, 255),
     subject: /^\d{1,12}$/.test(subject) ? subject : '',
     category: queryText(query.category).slice(0, 150),
+    tour: queryText(query.tour).slice(0, 255),
   }
 }
 
@@ -148,11 +157,15 @@ function sameFilters(first: MapFilterState, second: MapFilterState): boolean {
 const filters = reactive<MapFilterState>(filtersFromQuery(route.query))
 const applied = reactive<MapFilterState>({ ...filters })
 
-const features = computed(() =>
-  applied.kind === 'all'
-    ? allFeatures.value
-    : allFeatures.value.filter((feature) => featureKind(feature) === applied.kind),
-)
+const features = computed(() => {
+  const byKind =
+    applied.kind === 'all'
+      ? allFeatures.value
+      : allFeatures.value.filter((feature) => featureKind(feature) === applied.kind)
+  if (!applied.tour || !tourDetail.value) return byKind
+  const stopSlugs = new Set(tourDetail.value.stops.map((stop) => stop.location.slug))
+  return byKind.filter((feature) => stopSlugs.has(feature.properties.slug))
+})
 const kindCounts = computed(() => {
   const counts = { all: allFeatures.value.length, attraction: 0, shop: 0 }
   for (const feature of allFeatures.value) counts[featureKind(feature)] += 1
@@ -163,6 +176,12 @@ const linkedProductRole = (feature: MapFeature) =>
   feature.properties.products?.find((product) => product.slug === applied.product)?.role
 /** Khi lọc theo sản phẩm: nối từng nơi sản xuất với nơi bán bằng đường nét đứt (tối đa 12 cặp). */
 const productLinks = computed<Array<[string, string]>>(() => {
+  if (applied.tour && tourDetail.value) {
+    // Tuyến tham quan: nối các chặng liên tiếp theo thứ tự (chỉ chặng đang hiển thị).
+    const present = new Set(features.value.map((feature) => feature.properties.slug))
+    const slugs = tourDetail.value.stops.map((stop) => stop.location.slug).filter((slug) => present.has(slug))
+    return slugs.slice(1).map((slug, index) => [slugs[index], slug] as [string, string])
+  }
   if (!applied.product) return []
   const producers = features.value.filter((feature) => linkedProductRole(feature) === 'produced_here')
   const sellers = features.value.filter((feature) => linkedProductRole(feature) === 'sold_here')
@@ -214,7 +233,15 @@ const directionsUrl = computed(() =>
     : '',
 )
 const hasFilters = computed(() =>
-  Boolean(filters.search || filters.type || filters.district || filters.product || filters.subject || filters.category),
+  Boolean(
+    filters.search ||
+      filters.type ||
+      filters.district ||
+      filters.product ||
+      filters.subject ||
+      filters.category ||
+      filters.tour,
+  ),
 )
 const districtOptions = computed(() =>
   filters.district && !districts.value.includes(filters.district)
@@ -299,6 +326,18 @@ async function resolveContexts(): Promise<void> {
       writeQuery({ product: undefined })
     }
   }
+  if (!applied.tour) tourDetail.value = null
+  else if (tourDetail.value?.slug !== applied.tour) {
+    try {
+      tourDetail.value = await getTour(applied.tour)
+    } catch {
+      tourDetail.value = null
+      contextMessage.value = 'Không tìm thấy tuyến tham quan này nên bản đồ đang hiện tất cả địa điểm.'
+      applied.tour = ''
+      filters.tour = ''
+      writeQuery({ tour: undefined })
+    }
+  }
   if (!applied.subject) subjectContext.value = null
   else if (String(subjectContext.value?.id ?? '') !== applied.subject) {
     try {
@@ -316,6 +355,14 @@ async function resolveContexts(): Promise<void> {
       filters.subject = ''
       writeQuery({ subject: undefined })
     }
+  }
+}
+
+async function loadTours(): Promise<void> {
+  try {
+    tours.value = await getTours()
+  } catch {
+    tours.value = []
   }
 }
 
@@ -353,6 +400,7 @@ async function applyFilters(urlMode: 'push' | 'replace' | false = 'replace'): Pr
         product: applied.product,
         subject: applied.subject,
         category: applied.category,
+        tour: applied.tour,
       },
       urlMode,
     )
@@ -362,7 +410,7 @@ async function applyFilters(urlMode: 'push' | 'replace' | false = 'replace'): Pr
 }
 
 async function clearFilters(): Promise<void> {
-  Object.assign(filters, { search: '', type: '', district: '', product: '', subject: '', category: '' })
+  Object.assign(filters, { search: '', type: '', district: '', product: '', subject: '', category: '', tour: '' })
   await applyFilters('push')
 }
 
@@ -384,6 +432,13 @@ async function selectCategory(slug: string): Promise<void> {
 async function clearProductFilter(): Promise<void> {
   filters.product = ''
   filters.subject = ''
+  filters.tour = ''
+  await applyFilters('push')
+}
+
+/** Chọn một tuyến: bỏ các bộ lọc khác để đủ mọi chặng của tuyến hiện trên bản đồ. */
+async function selectTour(slug: string): Promise<void> {
+  Object.assign(filters, { search: '', type: '', district: '', product: '', subject: '', category: '', tour: slug })
   await applyFilters('push')
 }
 
@@ -620,6 +675,7 @@ onMounted(() => {
   window.addEventListener('keydown', onKeydown)
   void loadFilterOptions()
   void loadCategories()
+  void loadTours()
   void loadFeatures()
 })
 
@@ -680,22 +736,47 @@ onBeforeUnmount(() => {
       </div>
 
       <section
-        v-if="productContext || subjectContext"
+        v-if="productContext || subjectContext || tourDetail"
         class="panel-section context-banner"
         aria-label="Bộ lọc đang áp dụng"
         data-test="context-banner"
       >
         <span class="context-eyebrow">
-          {{ productContext ? 'Đang xem nơi mua và sản xuất' : 'Đang xem các điểm của chủ thể' }}
+          {{
+            tourDetail
+              ? 'Đang xem tuyến tham quan'
+              : productContext
+                ? 'Đang xem nơi mua và sản xuất'
+                : 'Đang xem các điểm của chủ thể'
+          }}
         </span>
-        <strong v-if="productContext">{{ productContext.name }}</strong>
+        <strong v-if="tourDetail">{{ tourDetail.name }}</strong>
+        <strong v-else-if="productContext">{{ productContext.name }}</strong>
         <strong v-else-if="subjectContext">{{ subjectContext.name }}</strong>
+        <template v-if="tourDetail">
+          <span class="context-meta">
+            {{ tourDetail.stop_count }} chặng<template v-if="tourDetail.duration_text"> · {{ tourDetail.duration_text }}</template>
+          </span>
+          <p v-if="tourDetail.description" class="context-meta">{{ tourDetail.description }}</p>
+          <ol class="tour-stops" aria-label="Các chặng của tuyến" data-test="tour-stops">
+            <li v-for="stop in tourDetail.stops" :key="stop.location.slug">
+              <button type="button" :class="{ active: stop.location.slug === selectedSlug }" @click="selectLocation(stop.location.slug)">
+                <span class="tour-number" aria-hidden="true">{{ stop.position }}</span>
+                <span class="tour-stop-text">
+                  <strong>{{ stop.location.name }}</strong>
+                  <small>{{ stop.location.type_label }}</small>
+                  <small v-if="stop.note">{{ stop.note }}</small>
+                </span>
+              </button>
+            </li>
+          </ol>
+        </template>
         <span v-if="subjectContext && !productContext" class="context-meta">
           {{ subjectContext.locationCount }} địa điểm · {{ subjectContext.productCount }} sản phẩm OCOP
         </span>
         <div class="context-actions">
           <RouterLink
-            v-if="productContext"
+            v-if="productContext && !tourDetail"
             class="btn btn-outline-success btn-sm"
             :to="{ name: 'product-detail', params: { slug: productContext.slug } }"
           >
@@ -709,6 +790,20 @@ onBeforeUnmount(() => {
       <p v-if="contextMessage" class="panel-section panel-message" role="status" data-test="context-message">
         {{ contextMessage }}
       </p>
+
+      <section v-if="tours.length && !tourDetail" class="panel-section tour-list" aria-labelledby="tour-list-title" data-test="tour-list">
+        <h2 id="tour-list-title">Tuyến tham quan</h2>
+        <ul>
+          <li v-for="tour in tours" :key="tour.slug">
+            <button type="button" data-test="tour-item" @click="selectTour(tour.slug)">
+              <strong>{{ tour.name }}</strong>
+              <small>
+                {{ tour.stop_count }} chặng<template v-if="tour.duration_text"> · {{ tour.duration_text }}</template>
+              </small>
+            </button>
+          </li>
+        </ul>
+      </section>
 
       <form class="panel-section filter-form" role="search" @submit.prevent="applyFilters('replace')">
         <label class="visually-hidden" for="map-search">Tìm địa điểm</label>
@@ -1581,6 +1676,69 @@ onBeforeUnmount(() => {
 .context-meta {
   color: var(--ocop-text-muted);
   font-size: var(--ocop-font-size-small);
+}
+
+.tour-list h2 {
+  margin-bottom: var(--ocop-space-2);
+}
+
+.tour-list ul,
+.tour-stops {
+  display: grid;
+  gap: var(--ocop-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tour-list button,
+.tour-stops button {
+  display: flex;
+  width: 100%;
+  min-height: 44px;
+  align-items: flex-start;
+  gap: var(--ocop-space-2);
+  padding: var(--ocop-space-2) var(--ocop-space-3);
+  border: 1px solid var(--ocop-border);
+  border-radius: var(--ocop-radius-sm);
+  background: var(--ocop-card);
+  color: var(--ocop-navy);
+  text-align: left;
+}
+
+.tour-list button {
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tour-list small,
+.tour-stop-text small {
+  color: var(--ocop-text-muted);
+  font-size: var(--ocop-font-size-caption);
+}
+
+.tour-stops button.active {
+  border-color: var(--ocop-primary-700);
+  background: var(--ocop-mint-soft);
+}
+
+.tour-number {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--ocop-mist-900);
+  color: var(--ocop-white);
+  font-size: var(--ocop-font-size-small);
+  font-weight: 800;
+}
+
+.tour-stop-text {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
 }
 
 .context-actions {
