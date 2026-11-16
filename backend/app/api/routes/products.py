@@ -27,7 +27,12 @@ from app.schemas.product import (
     ProductRelatedLocation,
     ProductSubjectRead,
 )
-from app.services.location_catalog import location_type_label, public_location_filters
+from app.schemas.location import ProductLocationItem, ProductLocationResponse
+from app.services.location_catalog import (
+    location_type_label,
+    public_location_filters,
+    to_location_list_item,
+)
 
 
 router = APIRouter(prefix="/products", tags=["Products"])
@@ -234,6 +239,44 @@ def get_product_filter_options(db: Session = Depends(get_db)) -> ProductFilterOp
         ).all()
     )
     return ProductFilterOptions(districts=districts)
+
+
+@router.get(
+    "/{slug}/locations",
+    response_model=ProductLocationResponse,
+    responses={status.HTTP_404_NOT_FOUND: {"model": ErrorResponse}},
+)
+def get_product_locations(slug: str, db: Session = Depends(get_db)) -> ProductLocationResponse:
+    """Nơi mua, xem hoặc sản xuất một sản phẩm (cửa hàng và điểm du lịch đã duyệt)."""
+
+    product = db.scalar(
+        select(Product).join(Product.subject).where(Product.slug == slug, *public_product_filters())
+    )
+    if product is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={
+                "code": "PRODUCT_NOT_FOUND",
+                "message": "Không tìm thấy sản phẩm.",
+                "details": {"slug": slug},
+            },
+        )
+    rows = db.execute(
+        select(TourismLocation, location_ocop_products.c.role)
+        .join(location_ocop_products, location_ocop_products.c.location_id == TourismLocation.id)
+        .where(location_ocop_products.c.product_id == product.id, *public_location_filters())
+        .options(selectinload(TourismLocation.images))
+        .order_by(TourismLocation.name.asc(), TourismLocation.id.asc())
+    ).all()
+    return ProductLocationResponse(
+        product_id=product.id,
+        product_name=product.name,
+        product_slug=product.slug,
+        items=[
+            ProductLocationItem(**to_location_list_item(location).model_dump(), role=role)
+            for location, role in rows
+        ],
+    )
 
 
 @router.get(

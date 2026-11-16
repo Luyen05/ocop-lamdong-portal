@@ -343,6 +343,7 @@ def test_map_locations_return_geojson_in_longitude_latitude_order(
             "slug": "tra-xanh-cau-dat",
             "star": 4,
             "primary_image_url": None,
+            "role": "sold_here",
         }
     ]
     assert {item["properties"]["slug"] for item in filtered.json()["features"]} == {

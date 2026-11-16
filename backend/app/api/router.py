@@ -12,6 +12,7 @@ from app.api.routes import (
     reviews,
     subject,
     subject_applications,
+    subjects,
     system,
 )
 
@@ -29,3 +30,4 @@ api_router.include_router(products.router)
 api_router.include_router(locations.router)
 api_router.include_router(reviews.router)
 api_router.include_router(maps.router)
+api_router.include_router(subjects.router)

@@ -41,6 +41,8 @@ LOCATION_STATUSES = ("draft", "pending", "needs_revision", "approved", "rejected
 LOCATION_INCOMPLETE_STATUSES = ("draft", "needs_revision")
 # Cách lấy vị trí: admin_import là dữ liệu nhóm nhập từ nguồn công khai, còn lại do chủ thể khai báo.
 LOCATION_SOURCES = ("admin_import", "map_pin", "device_gps", "coordinates", "google_maps_link")
+# Vai trò của sản phẩm tại điểm: sản xuất tại đây, bán tại đây, hoặc chỉ trưng bày/giới thiệu.
+LOCATION_PRODUCT_ROLES = ("produced_here", "sold_here", "displayed")
 CHANGE_REQUEST_TYPES = ("update", "delete")
 CHANGE_REQUEST_STATUSES = ("pending", "needs_revision", "approved", "rejected", "cancelled")
 
@@ -66,6 +68,8 @@ location_ocop_products = Table(
         ForeignKey("ocop_products.id", ondelete="CASCADE"),
         primary_key=True,
     ),
+    Column("role", String(20), nullable=False, default="sold_here", server_default="sold_here"),
+    CheckConstraint(_in("role", LOCATION_PRODUCT_ROLES), name="location_ocop_products_role_check"),
 )
 
 

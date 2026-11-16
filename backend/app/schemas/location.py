@@ -22,6 +22,7 @@ class LocationListItem(BaseModel):
     slug: str
     type: str
     type_label: str
+    kind: Literal["attraction", "shop"] = "attraction"
     district: str
     address: str
     latitude: float
@@ -70,6 +71,32 @@ class MapProductRead(BaseModel):
     slug: str
     star: int
     primary_image_url: str | None
+    # Vai trò của sản phẩm tại điểm: produced_here, sold_here hoặc displayed.
+    role: Literal["produced_here", "sold_here", "displayed"] = "sold_here"
+
+
+class ProductLocationItem(LocationListItem):
+    """Điểm bán hoặc giới thiệu một sản phẩm, kèm vai trò của sản phẩm tại điểm."""
+
+    role: Literal["produced_here", "sold_here", "displayed"]
+
+
+class ProductLocationResponse(BaseModel):
+    product_id: int
+    product_name: str
+    product_slug: str
+    items: list[ProductLocationItem]
+
+
+class PublicSubjectDetail(BaseModel):
+    """Chủ thể đã duyệt cùng mọi điểm và sản phẩm công khai của chủ thể đó."""
+
+    id: int
+    name: str
+    district: str
+    address: str
+    locations: list[LocationListItem]
+    products: list[ProductListItem]
 
 
 class LocationDetail(LocationListItem):
@@ -94,6 +121,7 @@ class MapFeatureProperties(BaseModel):
     name: str
     type: str
     type_label: str
+    kind: Literal["attraction", "shop"] = "attraction"
     district: str
     address: str
     opening_hours: str | None

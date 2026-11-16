@@ -19,7 +19,9 @@ from app.schemas.location import (
 )
 from app.services.location_catalog import (
     LOCATION_TYPES,
+    LocationKindFilter,
     LocationTypeCode,
+    kind_filter_value,
     public_location_filters,
     to_location_list_item,
 )
@@ -41,6 +43,7 @@ def list_locations(
     search: str | None = Query(default=None, min_length=1, max_length=150),
     location_type: LocationTypeCode | None = Query(default=None, alias="type"),
     district: str | None = Query(default=None, min_length=1, max_length=100),
+    kind: LocationKindFilter = Query(default="attraction"),
     sort: SortOption = Query(default="name"),
     db: Session = Depends(get_db),
 ) -> LocationListResponse:
@@ -48,6 +51,7 @@ def list_locations(
         search=search,
         location_type=location_type,
         district=district,
+        kind=kind_filter_value(kind),
     )
     total = db.scalar(select(func.count(TourismLocation.id)).where(*filters)) or 0
     sort_columns = {
@@ -73,8 +77,11 @@ def list_locations(
 
 
 @router.get("/filter-options", response_model=LocationFilterOptions)
-def get_location_filter_options(db: Session = Depends(get_db)) -> LocationFilterOptions:
-    filters = public_location_filters()
+def get_location_filter_options(
+    kind: LocationKindFilter = Query(default="attraction"),
+    db: Session = Depends(get_db),
+) -> LocationFilterOptions:
+    filters = public_location_filters(kind=kind_filter_value(kind))
     used_types = set(
         db.scalars(select(TourismLocation.type).where(*filters).distinct()).all()
     )

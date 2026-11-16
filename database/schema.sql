@@ -284,7 +284,11 @@ CREATE TABLE tourism_location_change_requests (
 CREATE TABLE location_ocop_products (
   location_id BIGINT NOT NULL REFERENCES tourism_locations(id) ON DELETE CASCADE,
   product_id BIGINT NOT NULL REFERENCES ocop_products(id) ON DELETE CASCADE,
-  PRIMARY KEY (location_id, product_id)
+  -- Vai trò của sản phẩm tại điểm: sản xuất tại đây, bán tại đây, hoặc chỉ trưng bày/giới thiệu.
+  role VARCHAR(20) NOT NULL DEFAULT 'sold_here',
+  PRIMARY KEY (location_id, product_id),
+  CONSTRAINT location_ocop_products_role_check
+    CHECK (role IN ('produced_here', 'sold_here', 'displayed'))
 );
 
 CREATE TABLE reviews (

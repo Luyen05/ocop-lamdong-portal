@@ -31,6 +31,8 @@ ALLOWED_TYPES = {
     "vegetable_farm",
     "craft_village",
     "farmstay",
+    "ocop_store",
+    "workshop",
     "other",
 }
 # Khung bao tỉnh Lâm Đồng sau sắp xếp năm 2025 (gồm Bình Thuận, Đắk Nông trước đây).
