@@ -128,6 +128,8 @@ class MapFeatureProperties(BaseModel):
     ticket_price: float | None
     services: list[str] = []
     description: str | None = None
+    contact_phone: str | None = None
+    website: str | None = None
     rating_avg: float
     primary_image_url: str | None
     subject: MapSubjectRead | None = None

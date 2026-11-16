@@ -66,6 +66,8 @@ def _location(
         geom=geom,
         services=[],
         status=status,
+        contact_phone="0263 379 8888" if loc_type == "ocop_store" else None,
+        website="https://example.com/" if loc_type == "ocop_store" else None,
     )
 
 
@@ -163,6 +165,15 @@ def test_map_returns_attractions_and_shops_by_default(link_client: TestClient) -
         "cua-hang-ocop-trung-tam": "shop",
         "xuong-mut-da-lat": "shop",
     }
+
+
+def test_map_features_include_contact_phone_and_website(link_client: TestClient) -> None:
+    response = link_client.get("/api/v1/map/locations", params={"kind": "shop"})
+    features = {f["properties"]["slug"]: f["properties"] for f in response.json()["features"]}
+
+    assert features["cua-hang-ocop-trung-tam"]["contact_phone"] == "0263 379 8888"
+    assert features["cua-hang-ocop-trung-tam"]["website"] == "https://example.com/"
+    assert features["xuong-mut-da-lat"]["contact_phone"] is None
 
 
 def test_map_kind_filter_splits_attractions_and_shops(link_client: TestClient) -> None:

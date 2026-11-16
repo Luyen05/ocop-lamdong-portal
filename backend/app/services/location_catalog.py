@@ -198,6 +198,8 @@ def to_map_feature(location: TourismLocation) -> MapFeature:
             ),
             services=list(location.services or []),
             description=location.description,
+            contact_phone=location.contact_phone,
+            website=location.website,
             rating_avg=float(location.rating_avg or 0),
             primary_image_url=primary_image_url(location),
             subject=(
