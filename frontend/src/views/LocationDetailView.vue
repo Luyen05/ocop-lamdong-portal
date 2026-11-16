@@ -15,6 +15,7 @@ import type { LocationDetail, MapFeature } from '@/types/location'
 import {
   externalDirectionsUrl,
   formatTicketPrice,
+  locationKind,
   locationTypeStyle,
   safeExternalUrl,
 } from '@/utils/location'
@@ -159,7 +160,7 @@ function retryLoad(): void {
                 <dt><AppIcon name="clock" :size="15" /> Giờ mở cửa</dt>
                 <dd>{{ location.opening_hours || 'Chưa cập nhật' }}</dd>
               </div>
-              <div>
+              <div v-if="locationKind(location.type) === 'attraction'">
                 <dt><AppIcon name="checkCircle" :size="15" /> Giá vé tham khảo</dt>
                 <dd>{{ formatTicketPrice(location.ticket_price) }}</dd>
               </div>
@@ -197,6 +198,13 @@ function retryLoad(): void {
               <span>Đơn vị quản lý</span>
               <strong>{{ location.subject.name }}</strong>
               <small>{{ location.subject.district }}, Lâm Đồng</small>
+              <RouterLink
+                class="subject-map-link"
+                :to="{ name: 'map', query: { subject: String(location.subject.id) } }"
+                data-test="subject-map-link"
+              >
+                Xem các địa điểm của đơn vị này trên bản đồ
+              </RouterLink>
             </aside>
           </div>
         </section>
@@ -400,6 +408,15 @@ function retryLoad(): void {
   border-left: 4px solid var(--ocop-primary-700);
   border-radius: 0.75rem;
   background: var(--ocop-mint-soft);
+}
+
+.subject-map-link {
+  display: inline-flex;
+  min-height: var(--ocop-control-md);
+  align-items: center;
+  color: var(--ocop-primary-700);
+  font-size: 0.85rem;
+  font-weight: 700;
 }
 
 .subject-card span,

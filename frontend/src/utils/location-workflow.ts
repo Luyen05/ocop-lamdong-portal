@@ -41,6 +41,8 @@ export const LOCATION_TYPE_OPTIONS = [
   { value: 'vegetable_farm', label: 'Nông trại rau & nấm' },
   { value: 'craft_village', label: 'Làng nghề' },
   { value: 'farmstay', label: 'Farmstay & nghỉ dưỡng' },
+  { value: 'ocop_store', label: 'Cửa hàng OCOP' },
+  { value: 'workshop', label: 'Cơ sở sản xuất' },
   { value: 'other', label: 'Loại hình khác' },
 ] as const
 

@@ -5,10 +5,13 @@ import { defineComponent, reactive } from 'vue'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import MapView from '@/views/MapView.vue'
+import { getCategories } from '@/services/categories'
 import {
   getLocationFilterOptions,
   getMapLocations,
   getNearbyLocations,
+  getProductLocations,
+  getPublicSubject,
   getRoute,
 } from '@/services/locations'
 import type { MapFeature, NearbyLocation } from '@/types/location'
@@ -28,12 +31,18 @@ vi.mock('@/services/locations', () => ({
   getLocationFilterOptions: vi.fn(),
   getMapLocations: vi.fn(),
   getNearbyLocations: vi.fn(),
+  getProductLocations: vi.fn(),
+  getPublicSubject: vi.fn(),
   getRoute: vi.fn(),
+}))
+
+vi.mock('@/services/categories', () => ({
+  getCategories: vi.fn(),
 }))
 
 const LeafletMapStub = defineComponent({
   name: 'LeafletMap',
-  props: ['features', 'selectedSlug', 'userPosition', 'route'],
+  props: ['features', 'selectedSlug', 'userPosition', 'route', 'links'],
   emits: ['select'],
   template: '<div class="map-stub" />',
 })
@@ -96,6 +105,24 @@ function mockGeolocation(result: { latitude: number; longitude: number } | { cod
   return getCurrentPosition
 }
 
+function shopFeature(slug: string, name: string, coordinates: [number, number], role: 'produced_here' | 'sold_here'): MapFeature {
+  const base = feature(slug, name, coordinates)
+  return {
+    ...base,
+    properties: {
+      ...base.properties,
+      type: 'ocop_store',
+      type_label: 'Cửa hàng OCOP',
+      kind: 'shop',
+      contact_phone: '0263 379 8888',
+      website: 'https://example.com/',
+      products: [
+        { id: 10, name: 'Dâu tây sấy dẻo', slug: 'dau-tay-say-deo', star: 3, primary_image_url: null, role },
+      ],
+    },
+  }
+}
+
 enableAutoUnmount(afterEach)
 
 const mountView = () =>
@@ -117,6 +144,12 @@ describe('MapView', () => {
       types: [{ value: 'tea_coffee_farm', label: 'Đồi chè & cà phê' }],
       districts: ['Đà Lạt'],
     })
+    vi.mocked(getCategories).mockResolvedValue({
+      items: [{ id: 1, name: 'Đồ uống', slug: 'do-uong', description: null, icon: null }],
+      page: 1,
+      page_size: 100,
+      total: 1,
+    })
   })
 
   it('hien thi diem tren ban do va chon diem tu danh sach', async () => {
@@ -125,7 +158,7 @@ describe('MapView', () => {
 
     const map = wrapper.getComponent(LeafletMapStub)
     expect(map.props('features')).toHaveLength(2)
-    expect(wrapper.text()).toContain('2 điểm đến đang hiển thị')
+    expect(wrapper.text()).toContain('2 địa điểm đang hiển thị')
 
     await wrapper.findAll('.location-list button')[0].trigger('click')
     expect(router.replace).toHaveBeenCalledWith({ name: 'map', query: { diem: 'cau-dat-farm' } })
@@ -215,7 +248,7 @@ describe('MapView', () => {
 
     expect(getNearbyLocations).toHaveBeenCalledWith(
       { latitude: 11.9404, longitude: 108.4383 },
-      { radiusKm: 50, limit: 5, type: undefined },
+      { radiusKm: 50, limit: 5, type: undefined, kind: 'all' },
     )
     expect(wrapper.get('.nearby-list').text()).toContain('2,4 km')
     expect(wrapper.getComponent(LeafletMapStub).props('userPosition')).toEqual({
@@ -362,7 +395,7 @@ describe('MapView', () => {
     route.query = { search: 'khongco' }
     const wrapper = mountView()
     await flushPromises()
-    expect(wrapper.text()).toContain('Không có điểm du lịch phù hợp với bộ lọc')
+    expect(wrapper.text()).toContain('Không có địa điểm phù hợp với bộ lọc')
 
     vi.mocked(getMapLocations).mockResolvedValue({ type: 'FeatureCollection', features })
     await wrapper.get('.empty-state button').trigger('click')
@@ -382,7 +415,7 @@ describe('MapView', () => {
     const wrapper = mountView()
     await flushPromises()
 
-    expect(wrapper.text()).toContain('2 điểm đến đang hiển thị trên bản đồ')
+    expect(wrapper.text()).toContain('2 địa điểm đang hiển thị trên bản đồ')
     expect(wrapper.get('[data-test="unmappable-notice"]').text()).toContain('2 điểm chưa có tọa độ hợp lệ nên chưa hiển thị trên bản đồ')
     expect(wrapper.get('[data-test="unmappable-notice"]').attributes('role')).toBe('status')
     expect(wrapper.findAll('.location-list button')).toHaveLength(4)
@@ -420,7 +453,7 @@ describe('MapView', () => {
 
     expect(getNearbyLocations).toHaveBeenLastCalledWith(
       { latitude: 11.9404, longitude: 108.4383 },
-      { radiusKm: 50, limit: 50, type: 'fruit_garden' },
+      { radiusKm: 50, limit: 50, type: 'fruit_garden', kind: 'all' },
     )
     const names = wrapper.findAll('.nearby-list li').map((item) => item.text())
     expect(names).toHaveLength(1)
@@ -468,7 +501,7 @@ describe('MapView', () => {
     await flushPromises()
     expect(getNearbyLocations).toHaveBeenLastCalledWith(
       { latitude: 21.03, longitude: 105.85 },
-      { radiusKm: 100, limit: 5, type: undefined },
+      { radiusKm: 100, limit: 5, type: undefined, kind: 'all' },
     )
   })
 
@@ -499,5 +532,129 @@ describe('MapView', () => {
     await flushPromises()
     expect(wrapper.find('#selected-title').exists()).toBe(false)
     expect(router.replace).toHaveBeenLastCalledWith({ name: 'map', query: {} })
+  })
+  describe('lop diem du lich va cua hang, loc theo san pham va chu the', () => {
+    const mixed = [
+      feature('cau-dat-farm', 'Cầu Đất Farm', [108.547398, 11.879583]),
+      shopFeature('cua-hang-yersin', 'Cửa hàng Yersin', [108.4494, 11.9430], 'sold_here'),
+      shopFeature('co-so-pang-tieng', 'Cơ sở Păng Tiêng', [108.3474, 11.9908], 'produced_here'),
+    ]
+
+    beforeEach(() => {
+      vi.mocked(getMapLocations).mockResolvedValue({ type: 'FeatureCollection', features: mixed })
+    })
+
+    it('dem so diem moi lop va chuyen lop ma khong tai lai ban do', async () => {
+      const wrapper = mountView()
+      await flushPromises()
+      const map = wrapper.getComponent(LeafletMapStub)
+      expect(map.props('features')).toHaveLength(3)
+      expect(wrapper.get('[data-test="map-stats"]').text()).toContain('2')
+      expect(wrapper.get('[data-kind="shop"]').text()).toContain('2')
+      expect(wrapper.get('[data-kind="attraction"]').text()).toContain('1')
+
+      vi.mocked(getMapLocations).mockClear()
+      await wrapper.get('[data-kind="shop"]').trigger('click')
+      await flushPromises()
+
+      expect(getMapLocations).not.toHaveBeenCalled()
+      expect(map.props('features').map((item: MapFeature) => item.properties.slug)).toEqual([
+        'cua-hang-yersin',
+        'co-so-pang-tieng',
+      ])
+      expect(wrapper.get('[data-kind="shop"]').attributes('aria-checked')).toBe('true')
+      expect(router.push).toHaveBeenCalledWith({ name: 'map', query: { kind: 'shop' } })
+    })
+
+    it('doc lop tu URL va hien thong tin lien he cua cua hang da chon', async () => {
+      route.query = { kind: 'shop', diem: 'cua-hang-yersin' }
+      const wrapper = mountView()
+      await flushPromises()
+
+      expect(wrapper.getComponent(LeafletMapStub).props('features')).toHaveLength(2)
+      const card = wrapper.get('.map-info-overlay')
+      expect(card.text()).toContain('Cửa hàng OCOP')
+      expect(card.get('a[href="tel:02633798888"]').text()).toContain('0263 379 8888')
+      expect(card.get('a[href="https://example.com/"]').attributes('rel')).toContain('noopener')
+      expect(card.text()).toContain('Bán tại đây')
+      expect(card.text()).not.toContain('Vé:')
+    })
+
+    it('loc theo san pham: tra san pham, gui product_id, hien nhan vai tro va noi san xuat voi noi ban', async () => {
+      route.query = { product: 'dau-tay-say-deo' }
+      vi.mocked(getProductLocations).mockResolvedValue({
+        product_id: 10,
+        product_name: 'Dâu tây sấy dẻo',
+        product_slug: 'dau-tay-say-deo',
+        items: [],
+      })
+      const wrapper = mountView()
+      await flushPromises()
+
+      expect(getProductLocations).toHaveBeenCalledWith('dau-tay-say-deo')
+      expect(getMapLocations).toHaveBeenLastCalledWith(expect.objectContaining({ product_id: 10 }))
+      expect(wrapper.get('[data-test="context-banner"]').text()).toContain('Dâu tây sấy dẻo')
+      const badges = wrapper.findAll('[data-test="role-badge"]').map((badge) => badge.text())
+      expect(badges).toEqual(['Bán tại đây', 'Sản xuất tại đây'])
+      expect(wrapper.getComponent(LeafletMapStub).props('links')).toEqual([['co-so-pang-tieng', 'cua-hang-yersin']])
+
+      vi.mocked(getMapLocations).mockClear()
+      await wrapper.get('[data-test="clear-context"]').trigger('click')
+      await flushPromises()
+      expect(router.push).toHaveBeenCalledWith({ name: 'map', query: {} })
+      expect(getMapLocations).toHaveBeenLastCalledWith(expect.objectContaining({ product_id: undefined }))
+    })
+
+    it('loc theo chu the: gui subject_id va hien so diem, so san pham', async () => {
+      route.query = { subject: '1' }
+      vi.mocked(getPublicSubject).mockResolvedValue({
+        id: 1,
+        name: 'HTX Chè Cầu Đất',
+        district: 'Đà Lạt',
+        address: 'Đà Lạt',
+        locations: [],
+        products: [],
+      })
+      const wrapper = mountView()
+      await flushPromises()
+
+      expect(getPublicSubject).toHaveBeenCalledWith(1)
+      expect(getMapLocations).toHaveBeenLastCalledWith(expect.objectContaining({ subject_id: 1 }))
+      expect(wrapper.get('[data-test="context-banner"]').text()).toContain('HTX Chè Cầu Đất')
+    })
+
+    it('san pham khong con cong khai thi bo loc va bao cho nguoi dung', async () => {
+      route.query = { product: 'khong-ton-tai' }
+      vi.mocked(getProductLocations).mockRejectedValue(new Error('404'))
+      const wrapper = mountView()
+      await flushPromises()
+
+      expect(wrapper.find('[data-test="context-banner"]').exists()).toBe(false)
+      expect(wrapper.get('[data-test="context-message"]').text()).toContain('Không tìm thấy sản phẩm')
+      expect(getMapLocations).toHaveBeenLastCalledWith(expect.objectContaining({ product_id: undefined }))
+      expect(wrapper.getComponent(LeafletMapStub).props('features')).toHaveLength(3)
+    })
+
+    it('chip nhom san pham gui category len may chu', async () => {
+      const wrapper = mountView()
+      await flushPromises()
+
+      await wrapper.get('[data-test="category-chip"]').trigger('click')
+      await flushPromises()
+
+      expect(getMapLocations).toHaveBeenLastCalledWith(expect.objectContaining({ category: 'do-uong' }))
+      expect(router.push).toHaveBeenCalledWith({ name: 'map', query: { category: 'do-uong' } })
+    })
+
+    it('che do Chi tiet hien dia chi, mo ta va dich vu trong danh sach', async () => {
+      const wrapper = mountView()
+      await flushPromises()
+      expect(wrapper.find('.location-address').exists()).toBe(false)
+
+      await wrapper.get('[data-test="view-detail"]').trigger('click')
+
+      expect(wrapper.find('.location-list.is-detail').exists()).toBe(true)
+      expect(wrapper.findAll('.location-address').length).toBe(3)
+    })
   })
 })

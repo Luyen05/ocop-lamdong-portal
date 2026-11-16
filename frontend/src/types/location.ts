@@ -8,7 +8,15 @@ export type LocationType =
   | 'vegetable_farm'
   | 'craft_village'
   | 'farmstay'
+  | 'ocop_store'
+  | 'workshop'
   | 'other'
+
+/** Nhóm điểm trên bản đồ: điểm du lịch hoặc cửa hàng (cửa hàng OCOP, cơ sở sản xuất). */
+export type LocationKind = 'attraction' | 'shop'
+export type LocationKindFilter = LocationKind | 'all'
+/** Vai trò của sản phẩm tại điểm. */
+export type ProductRole = 'produced_here' | 'sold_here' | 'displayed'
 
 export type LocationSort = 'name' | '-name' | 'newest' | 'rating'
 
@@ -28,6 +36,7 @@ export interface LocationListItem {
   slug: string
   type: LocationType
   type_label: string
+  kind?: LocationKind
   district: string
   address: string
   latitude: number
@@ -48,6 +57,7 @@ export interface LocationListResponse {
 }
 
 export interface LocationFilters {
+  kind?: LocationKindFilter
   page?: number
   page_size?: number
   search?: string
@@ -89,12 +99,15 @@ export interface MapFeatureProperties {
   name: string
   type: LocationType
   type_label: string
+  kind?: LocationKind
   district: string
   address: string
   opening_hours: string | null
   ticket_price: number | null
   services?: string[]
   description?: string | null
+  contact_phone?: string | null
+  website?: string | null
   rating_avg: number
   primary_image_url: string | null
   subject?: MapSubject | null
@@ -113,6 +126,7 @@ export interface MapProduct {
   slug: string
   star: number
   primary_image_url: string | null
+  role?: ProductRole
 }
 
 export interface MapFeature {
@@ -130,6 +144,32 @@ export interface MapFilters {
   search?: string
   type?: LocationType
   district?: string
+  kind?: LocationKindFilter
+  product_id?: number
+  category?: string
+  subject_id?: number
+}
+
+/** Điểm bán hoặc giới thiệu một sản phẩm (GET /products/{slug}/locations). */
+export interface ProductLocationItem extends LocationListItem {
+  role: ProductRole
+}
+
+export interface ProductLocationResponse {
+  product_id: number
+  product_name: string
+  product_slug: string
+  items: ProductLocationItem[]
+}
+
+/** Chủ thể kèm mọi điểm và sản phẩm công khai (GET /subjects/{id}). */
+export interface PublicSubjectDetail {
+  id: number
+  name: string
+  district: string
+  address: string
+  locations: LocationListItem[]
+  products: ProductListItem[]
 }
 
 export interface Coordinate {

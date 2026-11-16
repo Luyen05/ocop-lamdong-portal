@@ -6,7 +6,7 @@ import 'leaflet.markercluster/dist/MarkerCluster.Default.css'
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 import type { Coordinate, MapFeature } from '@/types/location'
-import { hasValidCoordinates, isInsideLamDong, locationTypeStyle } from '@/utils/location'
+import { featureKind, hasValidCoordinates, isInsideLamDong, locationTypeStyle } from '@/utils/location'
 
 const props = withDefaults(
   defineProps<{
@@ -15,6 +15,8 @@ const props = withDefaults(
     userPosition?: Coordinate | null
     /** Tọa độ tuyến đường theo thứ tự GeoJSON [kinh độ, vĩ độ]. */
     route?: Array<[number, number]> | null
+    /** Đường nét đứt nối các cặp điểm (vd. nơi sản xuất → nơi bán), mỗi cặp là hai slug. */
+    links?: Array<[string, string]>
     cluster?: boolean
     initialZoom?: number
     label?: string
@@ -23,6 +25,7 @@ const props = withDefaults(
     selectedSlug: null,
     userPosition: null,
     route: null,
+    links: () => [],
     cluster: true,
     initialZoom: 9,
     label: 'Bản đồ số điểm du lịch nông nghiệp Lâm Đồng',
@@ -80,6 +83,7 @@ let markerLayer: L.LayerGroup | null = null
 let clusterLayer: L.MarkerClusterGroup | null = null
 let userLayer: L.LayerGroup | null = null
 let routeLayer: L.Polyline | null = null
+let linkLayer: L.LayerGroup | null = null
 let tileLayer: L.TileLayer | null = null
 let resizeObserver: ResizeObserver | null = null
 let isUnmounted = false
@@ -108,15 +112,18 @@ function markerLabel(feature: MapFeature): string {
 
 function markerIcon(feature: MapFeature, selected: boolean): L.DivIcon {
   const style = locationTypeStyle(feature.properties.type)
+  const shop = featureKind(feature) === 'shop'
   // HTML chỉ ghép từ hằng số nội bộ; tên địa điểm được gắn qua textContent ở tooltip.
+  // Cửa hàng/cơ sở là ghim vuông bo góc (lớp is-shop), điểm du lịch là ghim giọt nước: khác hình, không chỉ khác màu.
   return labelledDivIcon(
     {
       className: 'ocop-marker-anchor',
-      html: `<span class="ocop-marker${selected ? ' is-selected' : ''}" style="--marker-color:${style.color}"><i class="bi bi-${style.markerIcon}" aria-hidden="true"></i></span>`,
+      html: `<span class="ocop-marker${shop ? ' is-shop' : ''}${selected ? ' is-selected' : ''}" style="--marker-color:${style.color};--marker-on:${style.onColor ?? 'var(--ocop-white)'}"><i class="bi bi-${style.markerIcon}" aria-hidden="true"></i></span>`,
       // Marker là hình vuông 34px xoay -45°, đỉnh nhọn nằm dưới tâm khoảng 24px.
       iconSize: [34, 34],
-      iconAnchor: [17, 40],
-      tooltipAnchor: [0, -38],
+      // Ghim vuông của cửa hàng neo ở tâm.
+      iconAnchor: shop ? [17, 17] : [17, 40],
+      tooltipAnchor: shop ? [0, -22] : [0, -38],
     },
     markerLabel(feature),
   )
@@ -305,6 +312,20 @@ function renderUserPosition(): void {
   }
 }
 
+function renderLinks(): void {
+  if (!map) return
+  linkLayer?.remove()
+  linkLayer = null
+  if (!props.links.length) return
+  const group = L.layerGroup()
+  for (const [fromSlug, toSlug] of props.links) {
+    const from = markers.get(fromSlug)?.getLatLng()
+    const to = markers.get(toSlug)?.getLatLng()
+    if (from && to) L.polyline([from, to], { className: 'ocop-link-line', weight: 3, dashArray: '2 9', opacity: 0.9 }).addTo(group)
+  }
+  linkLayer = group.addTo(map)
+}
+
 function renderRoute(): void {
   if (!map) return
   routeLayer?.remove()
@@ -350,6 +371,7 @@ async function initialize(): Promise<void> {
     renderMarkers(true)
     renderUserPosition()
     renderRoute()
+    renderLinks()
     map.on('moveend zoomend', emitSelectedPosition)
 
     if (typeof ResizeObserver !== 'undefined') {
@@ -364,7 +386,14 @@ async function initialize(): Promise<void> {
   }
 }
 
-watch(() => props.features, () => renderMarkers(true))
+watch(
+  () => props.features,
+  () => {
+    renderMarkers(true)
+    renderLinks()
+  },
+)
+watch(() => props.links, renderLinks)
 watch(() => props.selectedSlug, (_slug, previousSlug) => focusSelected(previousSlug ?? null))
 watch(() => props.userPosition, renderUserPosition)
 watch(() => props.route, renderRoute)
@@ -382,6 +411,7 @@ onBeforeUnmount(() => {
   clusterLayer = null
   userLayer = null
   routeLayer = null
+  linkLayer = null
   tileLayer = null
   markers.clear()
   featuresBySlug.clear()
@@ -434,6 +464,11 @@ onBeforeUnmount(() => {
   stroke: var(--ocop-location-route);
 }
 
+.ocop-link-line {
+  stroke: var(--ocop-mist-950);
+  stroke-linecap: round;
+}
+
 .leaflet-tooltip small {
   font-size: var(--ocop-font-size-caption);
 }
@@ -452,7 +487,7 @@ onBeforeUnmount(() => {
   border-radius: 50% 50% 50% var(--ocop-radius-xs);
   background: var(--marker-color, var(--ocop-primary-700));
   box-shadow: 0 6px 14px color-mix(in srgb, var(--ocop-neutral-900) 28%, transparent);
-  color: var(--ocop-white);
+  color: var(--marker-on, var(--ocop-white));
   font-size: var(--ocop-font-size-body);
   transform: rotate(-45deg);
   transition: transform 160ms ease;
@@ -460,6 +495,20 @@ onBeforeUnmount(() => {
 
 .ocop-marker i {
   transform: rotate(45deg);
+}
+
+/* Cửa hàng, cơ sở sản xuất: ghim vuông bo góc, không xoay. */
+.ocop-marker.is-shop {
+  border-radius: var(--ocop-radius-md);
+  transform: none;
+}
+
+.ocop-marker.is-shop i {
+  transform: none;
+}
+
+.ocop-marker.is-shop.is-selected {
+  transform: scale(1.18);
 }
 
 .ocop-marker.is-selected {

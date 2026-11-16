@@ -21,6 +21,11 @@ vi.mock('@/services/products', () => ({
   getProducts: vi.fn(),
 }))
 
+// Khối "Mua tại" có test riêng (components/products/__tests__); ở đây chỉ kiểm tra được gắn đúng sản phẩm.
+vi.mock('@/components/products/ProductWhereToBuy.vue', () => ({
+  default: { name: 'ProductWhereToBuy', props: ['slug', 'subject'], template: '<section class="where-stub" />' },
+}))
+
 // Khối đánh giá có test riêng (components/reviews/__tests__); ở đây chỉ kiểm tra được gắn đúng đối tượng.
 vi.mock('@/components/reviews/ReviewSection.vue', () => ({
   default: { name: 'ReviewSection', props: ['targetType', 'targetId', 'ownerSubjectId'], template: '<section class="review-section-stub" />' },

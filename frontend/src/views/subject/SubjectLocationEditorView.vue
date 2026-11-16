@@ -344,7 +344,7 @@ function markSaved(): void {
 
 async function loadReferenceData(): Promise<void> {
   const [options, products, application] = await Promise.allSettled([
-    getLocationFilterOptions(),
+    getLocationFilterOptions('all'),
     listMyProducts('approved'),
     getMySubjectApplication(),
   ])

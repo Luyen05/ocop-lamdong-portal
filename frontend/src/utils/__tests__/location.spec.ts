@@ -2,6 +2,10 @@ import { describe, expect, it } from 'vitest'
 
 import {
   externalDirectionsUrl,
+  featureKind,
+  locationKind,
+  productRoleLabel,
+  telephoneHref,
   formatDistance,
   formatDuration,
   formatTicketPrice,
@@ -158,5 +162,41 @@ describe('diem gan ban', () => {
     expect(feature.geometry.coordinates).toEqual([108.45, 11.93])
     expect(feature.properties.slug).toBe('vuon-dau')
     expect(hasValidCoordinates(feature)).toBe(true)
+  })
+})
+
+describe('nhom diem tren ban do', () => {
+  it('suy ra nhom cua hang tu loai hinh, mac dinh la diem du lich', () => {
+    expect(locationKind('ocop_store')).toBe('shop')
+    expect(locationKind('workshop')).toBe('shop')
+    expect(locationKind('tea_coffee_farm')).toBe('attraction')
+    expect(locationKind('loai-la')).toBe('attraction')
+  })
+
+  it('featureKind uu tien truong kind tu may chu', () => {
+    const base = { properties: { type: 'tea_coffee_farm' } } as Parameters<typeof featureKind>[0]
+    expect(featureKind(base)).toBe('attraction')
+    expect(featureKind({ properties: { type: 'ocop_store' } } as typeof base)).toBe('shop')
+    expect(featureKind({ properties: { type: 'ocop_store', kind: 'attraction' } } as typeof base)).toBe('attraction')
+  })
+
+  it('goi ten vai tro cua san pham tai diem, mac dinh la ban tai day', () => {
+    expect(productRoleLabel('produced_here')).toBe('Sản xuất tại đây')
+    expect(productRoleLabel('displayed')).toBe('Giới thiệu tại đây')
+    expect(productRoleLabel(undefined)).toBe('Bán tại đây')
+  })
+
+  it('chi tao lien ket tel: cho so dien thoai hop le', () => {
+    expect(telephoneHref('0263 379 8888')).toBe('tel:02633798888')
+    expect(telephoneHref('+84 263 379 888')).toBe('tel:+84263379888')
+    expect(telephoneHref('Liên hệ chủ thể')).toBeNull()
+    expect(telephoneHref('javascript:alert(1)')).toBeNull()
+    expect(telephoneHref(null)).toBeNull()
+  })
+
+  it('cua hang dung mau vang nen kem mau chu toi, diem du lich giu mau theo loai', () => {
+    expect(locationTypeStyle('ocop_store').onColor).toBe('var(--ocop-mist-950)')
+    expect(locationTypeStyle('workshop').color).toBe('var(--ocop-daquy-400)')
+    expect(locationTypeStyle('tea_coffee_farm').onColor).toBeUndefined()
   })
 })

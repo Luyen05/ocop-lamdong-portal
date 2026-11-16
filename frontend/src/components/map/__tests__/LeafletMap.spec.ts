@@ -46,6 +46,33 @@ describe('LeafletMap', () => {
     wrapper.unmount()
   })
 
+  it('cua hang ve ghim vuong (is-shop) va duong noi san xuat - ban nam tren ban do', async () => {
+    const shop: MapFeature = {
+      ...features[0],
+      geometry: { type: 'Point', coordinates: [108.4494, 11.943] },
+      properties: { ...features[0].properties, slug: 'cua-hang', name: 'Cửa hàng', type: 'ocop_store', type_label: 'Cửa hàng OCOP', kind: 'shop' },
+    }
+    const workshop: MapFeature = {
+      ...shop,
+      geometry: { type: 'Point', coordinates: [108.3474, 11.9908] },
+      properties: { ...shop.properties, slug: 'co-so', name: 'Cơ sở', type: 'workshop', type_label: 'Cơ sở sản xuất' },
+    }
+    const wrapper = mount(LeafletMap, {
+      attachTo: document.body,
+      props: { features: [features[0], shop, workshop], cluster: false, links: [['co-so', 'cua-hang']] },
+    })
+    await flushPromises()
+
+    expect(wrapper.findAll('.ocop-marker')).toHaveLength(3)
+    expect(wrapper.findAll('.ocop-marker.is-shop')).toHaveLength(2)
+    expect(wrapper.find('.ocop-marker.is-shop .bi-bag-fill').exists()).toBe(true)
+    expect(wrapper.findAll('path.ocop-link-line')).toHaveLength(1)
+
+    await wrapper.setProps({ links: [] })
+    expect(wrapper.findAll('path.ocop-link-line')).toHaveLength(0)
+    wrapper.unmount()
+  })
+
   function pointAt(slug: string, name: string, coordinates: unknown): MapFeature {
     return {
       ...features[0],

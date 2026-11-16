@@ -1,4 +1,12 @@
-import type { Coordinate, LocationType, MapFeature, NearbyLocation } from '@/types/location'
+import type {
+  Coordinate,
+  LocationKind,
+  LocationListItem,
+  LocationType,
+  MapFeature,
+  NearbyLocation,
+  ProductRole,
+} from '@/types/location'
 
 interface LocationTypeStyle {
   /** Tên icon cho AppIcon. */
@@ -6,6 +14,8 @@ interface LocationTypeStyle {
   /** Tên Bootstrap Icons dùng trực tiếp trong marker Leaflet. */
   markerIcon: string
   color: string
+  /** Màu chữ/biểu tượng đặt trên `color` (đủ tương phản). */
+  onColor?: string
   illustration: string
 }
 
@@ -25,7 +35,37 @@ const typeStyles: Record<LocationType, LocationTypeStyle> = {
   vegetable_farm: { icon: 'wheat', markerIcon: 'flower3', color: 'var(--ocop-location-vegetable)', illustration: '/assets/images/tourism-farm.svg' },
   craft_village: { icon: 'palette', markerIcon: 'palette-fill', color: 'var(--ocop-location-craft)', illustration: '/assets/images/tourism-farm.svg' },
   farmstay: { icon: 'home', markerIcon: 'house-fill', color: 'var(--ocop-location-farmstay)', illustration: '/assets/images/tourism-farm.svg' },
+  // Cửa hàng và cơ sở sản xuất: nền vàng dã quỳ (chữ/biểu tượng tối), ghim vuông để không chỉ phân biệt bằng màu.
+  ocop_store: { icon: 'store', markerIcon: 'bag-fill', color: 'var(--ocop-daquy-400)', onColor: 'var(--ocop-mist-950)', illustration: '/assets/images/tourism-farm.svg' },
+  workshop: { icon: 'building', markerIcon: 'building-fill', color: 'var(--ocop-daquy-400)', onColor: 'var(--ocop-mist-950)', illustration: '/assets/images/tourism-farm.svg' },
   other: defaultStyle,
+}
+
+const SHOP_TYPES: ReadonlySet<string> = new Set(['ocop_store', 'workshop'])
+
+/** Nhóm điểm suy ra từ loại hình, giống quy tắc ở backend (SHOP_LOCATION_TYPES). */
+export function locationKind(type: string): LocationKind {
+  return SHOP_TYPES.has(type) ? 'shop' : 'attraction'
+}
+
+export function featureKind(feature: Pick<MapFeature, 'properties'>): LocationKind {
+  return feature.properties.kind ?? locationKind(feature.properties.type)
+}
+
+const PRODUCT_ROLE_LABELS: Record<ProductRole, string> = {
+  produced_here: 'Sản xuất tại đây',
+  sold_here: 'Bán tại đây',
+  displayed: 'Giới thiệu tại đây',
+}
+
+export function productRoleLabel(role: ProductRole | undefined): string {
+  return PRODUCT_ROLE_LABELS[role ?? 'sold_here']
+}
+
+/** Số điện thoại chỉ gồm chữ số, dấu +, dấu cách, chấm, gạch: dùng được cho liên kết tel:. */
+export function telephoneHref(value: string | null | undefined): string | null {
+  const digits = (value ?? '').replace(/[^\d+]/g, '')
+  return /^\+?\d{8,15}$/.test(digits) ? `tel:${digits}` : null
 }
 
 export function isLocationType(value: unknown): value is LocationType {
@@ -187,8 +227,8 @@ export function matchesNearbyFilters(
   return [item.name, item.description, item.address].some((text) => normalizeText(text).includes(keyword))
 }
 
-/** Dựng feature bản đồ từ kết quả "điểm gần bạn" để vẫn hiển thị được điểm nằm ngoài bộ lọc hiện tại. */
-export function nearbyToFeature(item: NearbyLocation): MapFeature {
+/** Dựng feature bản đồ từ một điểm trong danh sách (điểm gần bạn, nơi mua sản phẩm...). */
+export function locationToFeature(item: NearbyLocation | LocationListItem): MapFeature {
   return {
     type: 'Feature',
     geometry: { type: 'Point', coordinates: [item.longitude, item.latitude] },
@@ -198,6 +238,7 @@ export function nearbyToFeature(item: NearbyLocation): MapFeature {
       name: item.name,
       type: item.type,
       type_label: item.type_label,
+      kind: item.kind,
       district: item.district,
       address: item.address,
       opening_hours: item.opening_hours,
@@ -211,3 +252,6 @@ export function nearbyToFeature(item: NearbyLocation): MapFeature {
     },
   }
 }
+
+/** Dựng feature bản đồ từ kết quả "điểm gần bạn" để vẫn hiển thị được điểm nằm ngoài bộ lọc hiện tại. */
+export const nearbyToFeature = locationToFeature

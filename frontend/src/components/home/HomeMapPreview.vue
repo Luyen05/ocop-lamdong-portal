@@ -82,7 +82,7 @@ async function load(): Promise<void> {
   isLoading.value = true
   loadFailed.value = false
   try {
-    features.value = (await getMapLocations()).features
+    features.value = (await getMapLocations({ kind: 'attraction' })).features
   } catch {
     features.value = []
     loadFailed.value = true

@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 
 import type { LocationType, MapFeature } from '@/types/location'
-import { countFeaturesByType, locationTypeStyle } from '@/utils/location'
+import { countFeaturesByType, locationKind, locationTypeStyle } from '@/utils/location'
 
 const props = defineProps<{
   /** Các điểm đang hiển thị (đã lọc, có tọa độ hợp lệ). */
@@ -32,7 +32,12 @@ function toggle(type: LocationType): void {
           :aria-pressed="activeType === entry.type"
           @click="toggle(entry.type)"
         >
-          <span class="legend-swatch" :style="{ '--legend-color': locationTypeStyle(entry.type).color }" aria-hidden="true">
+          <span
+            class="legend-swatch"
+            :class="{ 'is-shop': locationKind(entry.type) === 'shop' }"
+            :style="{ '--legend-color': locationTypeStyle(entry.type).color, '--legend-on': locationTypeStyle(entry.type).onColor }"
+            aria-hidden="true"
+          >
             <i :class="`bi bi-${locationTypeStyle(entry.type).markerIcon}`" />
           </span>
           <span class="legend-label">{{ entry.label }}</span>
@@ -105,7 +110,7 @@ ul {
   place-items: center;
   border-radius: 50%;
   background: var(--legend-color);
-  color: var(--ocop-white);
+  color: var(--legend-on, var(--ocop-white));
   font-size: var(--ocop-font-size-caption);
 }
 
@@ -122,6 +127,10 @@ ul {
   color: var(--ocop-primary-700);
   font-size: var(--ocop-font-size-small);
   font-weight: 800;
+}
+
+.legend-swatch.is-shop {
+  border-radius: var(--ocop-radius-xs);
 }
 
 .legend-hint {

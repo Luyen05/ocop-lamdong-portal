@@ -7,14 +7,19 @@ import MapLegend from '@/components/map/MapLegend.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
 import { locationFallbackPhoto } from '@/constants/photos'
 import { getApiErrorMessage } from '@/services/api-error'
+import { getCategories } from '@/services/categories'
 import {
   getLocationFilterOptions,
   getMapLocations,
   getNearbyLocations,
+  getProductLocations,
+  getPublicSubject,
   getRoute,
 } from '@/services/locations'
+import type { Category } from '@/types/category'
 import type {
   Coordinate,
+  LocationKindFilter,
   LocationType,
   LocationTypeOption,
   MapFeature,
@@ -23,6 +28,7 @@ import type {
 } from '@/types/location'
 import {
   externalDirectionsUrl,
+  featureKind,
   formatDistance,
   formatDuration,
   formatTicketPrice,
@@ -34,8 +40,11 @@ import {
   matchesNearbyFilters,
   mergeQuery,
   nearbyToFeature,
+  productRoleLabel,
+  safeExternalUrl,
   sortVietnamese,
   splitMappableFeatures,
+  telephoneHref,
 } from '@/utils/location'
 import { scrollBehavior } from '@/utils/motion'
 
@@ -51,15 +60,42 @@ interface MapFilterState {
   search: string
   type: LocationType | ''
   district: string
+  /** Lớp bản đồ: điểm du lịch, cửa hàng hoặc tất cả (lọc phía client trên dữ liệu đã tải). */
+  kind: LocationKindFilter
+  /** Slug sản phẩm: chỉ hiện nơi bán, nơi sản xuất, nơi giới thiệu sản phẩm này. */
+  product: string
+  /** Mã chủ thể (số): chỉ hiện các điểm của chủ thể này. */
+  subject: string
+  /** Slug nhóm sản phẩm: chỉ hiện điểm có sản phẩm thuộc nhóm. */
+  category: string
+}
+
+interface ProductContext {
+  id: number
+  name: string
+  slug: string
+}
+
+interface SubjectContext {
+  id: number
+  name: string
+  locationCount: number
+  productCount: number
 }
 
 const route = useRoute()
 const router = useRouter()
 
-const features = ref<MapFeature[]>([])
+// Mọi điểm theo bộ lọc gửi lên máy chủ; lớp (kind) lọc tiếp ở phía client để chuyển lớp tức thì và đếm đủ số điểm mỗi lớp.
+const allFeatures = ref<MapFeature[]>([])
 // Điểm chọn từ "Điểm gần bạn" nhưng nằm ngoài bộ lọc hiện tại: thêm tạm vào tập hiển thị.
 const extraFeatures = ref<MapFeature[]>([])
 const typeOptions = ref<LocationTypeOption[]>([])
+const categories = ref<Category[]>([])
+const productContext = ref<ProductContext | null>(null)
+const subjectContext = ref<SubjectContext | null>(null)
+const contextMessage = ref('')
+const viewMode = ref<'list' | 'detail'>('list')
 const districts = ref<string[]>([])
 const isLoading = ref(false)
 const errorMessage = ref('')
@@ -91,21 +127,51 @@ function queryText(value: unknown): string {
 
 function filtersFromQuery(query: Record<string, unknown>): MapFilterState {
   const type = queryText(query.type)
+  const kind = queryText(query.kind)
+  const subject = queryText(query.subject)
   return {
     search: queryText(query.search).slice(0, 150),
     type: isLocationType(type) ? type : '',
     district: queryText(query.district).slice(0, 100),
+    kind: kind === 'attraction' || kind === 'shop' ? kind : 'all',
+    product: queryText(query.product).slice(0, 255),
+    subject: /^\d{1,12}$/.test(subject) ? subject : '',
+    category: queryText(query.category).slice(0, 150),
   }
 }
 
 function sameFilters(first: MapFilterState, second: MapFilterState): boolean {
-  return first.search === second.search && first.type === second.type && first.district === second.district
+  return (Object.keys(first) as Array<keyof MapFilterState>).every((key) => first[key] === second[key])
 }
 
 // `filters` là giá trị trong ô nhập; `applied` là bộ lọc đã áp dụng (khớp URL và dữ liệu đang hiển thị).
 const filters = reactive<MapFilterState>(filtersFromQuery(route.query))
 const applied = reactive<MapFilterState>({ ...filters })
 
+const features = computed(() =>
+  applied.kind === 'all'
+    ? allFeatures.value
+    : allFeatures.value.filter((feature) => featureKind(feature) === applied.kind),
+)
+const kindCounts = computed(() => {
+  const counts = { all: allFeatures.value.length, attraction: 0, shop: 0 }
+  for (const feature of allFeatures.value) counts[featureKind(feature)] += 1
+  return counts
+})
+const districtCount = computed(() => new Set(allFeatures.value.map((feature) => feature.properties.district)).size)
+const linkedProductRole = (feature: MapFeature) =>
+  feature.properties.products?.find((product) => product.slug === applied.product)?.role
+/** Khi lọc theo sản phẩm: nối từng nơi sản xuất với nơi bán bằng đường nét đứt (tối đa 12 cặp). */
+const productLinks = computed<Array<[string, string]>>(() => {
+  if (!applied.product) return []
+  const producers = features.value.filter((feature) => linkedProductRole(feature) === 'produced_here')
+  const sellers = features.value.filter((feature) => linkedProductRole(feature) === 'sold_here')
+  const pairs: Array<[string, string]> = []
+  for (const producer of producers) {
+    for (const seller of sellers) pairs.push([producer.properties.slug, seller.properties.slug])
+  }
+  return pairs.slice(0, 12)
+})
 const displayFeatures = computed(() => {
   // Không có điểm tạm thì trả đúng mảng gốc: LeafletMap chỉ vẽ lại marker khi tham chiếu mảng đổi.
   if (!extraFeatures.value.length) return features.value
@@ -147,7 +213,9 @@ const directionsUrl = computed(() =>
     ? externalDirectionsUrl(selectedCoordinates.value.latitude, selectedCoordinates.value.longitude)
     : '',
 )
-const hasFilters = computed(() => Boolean(filters.search || filters.type || filters.district))
+const hasFilters = computed(() =>
+  Boolean(filters.search || filters.type || filters.district || filters.product || filters.subject || filters.category),
+)
 const districtOptions = computed(() =>
   filters.district && !districts.value.includes(filters.district)
     ? [...districts.value, filters.district]
@@ -185,13 +253,18 @@ async function loadFeatures(): Promise<void> {
   isLoading.value = true
   errorMessage.value = ''
   try {
+    await resolveContexts()
+    if (requestId !== latestRequestId) return
     const collection = await getMapLocations({
       search: applied.search || undefined,
       type: applied.type || undefined,
       district: applied.district || undefined,
+      product_id: applied.product ? productContext.value?.id : undefined,
+      subject_id: applied.subject ? subjectContext.value?.id : undefined,
+      category: applied.category || undefined,
     })
     if (requestId !== latestRequestId) return
-    features.value = collection.features
+    allFeatures.value = collection.features
     // Chỉ giữ điểm "ngoài bộ lọc" khi nó vẫn đang được chọn và chưa nằm trong kết quả mới.
     keepExtras((extra) =>
       extra.properties.slug === selectedSlug.value &&
@@ -200,16 +273,64 @@ async function loadFeatures(): Promise<void> {
     if (selectedSlug.value && !selectedFeature.value) clearSelection()
   } catch (error) {
     if (requestId !== latestRequestId) return
-    features.value = []
+    allFeatures.value = []
     errorMessage.value = getApiErrorMessage(error, 'Không thể tải dữ liệu bản đồ. Vui lòng thử lại.')
   } finally {
     if (requestId === latestRequestId) isLoading.value = false
   }
 }
 
+/**
+ * Bộ lọc theo sản phẩm hoặc chủ thể cần mã số và tên để hiển thị: tra một lần rồi nhớ lại.
+ * Sản phẩm/chủ thể không còn công khai thì bỏ bộ lọc đó và báo cho người dùng.
+ */
+async function resolveContexts(): Promise<void> {
+  contextMessage.value = ''
+  if (!applied.product) productContext.value = null
+  else if (productContext.value?.slug !== applied.product) {
+    try {
+      const result = await getProductLocations(applied.product)
+      productContext.value = { id: result.product_id, name: result.product_name, slug: result.product_slug }
+    } catch {
+      productContext.value = null
+      contextMessage.value = 'Không tìm thấy sản phẩm này nên bản đồ đang hiện tất cả địa điểm.'
+      applied.product = ''
+      filters.product = ''
+      writeQuery({ product: undefined })
+    }
+  }
+  if (!applied.subject) subjectContext.value = null
+  else if (String(subjectContext.value?.id ?? '') !== applied.subject) {
+    try {
+      const result = await getPublicSubject(Number(applied.subject))
+      subjectContext.value = {
+        id: result.id,
+        name: result.name,
+        locationCount: result.locations.length,
+        productCount: result.products.length,
+      }
+    } catch {
+      subjectContext.value = null
+      contextMessage.value = 'Không tìm thấy chủ thể này nên bản đồ đang hiện tất cả địa điểm.'
+      applied.subject = ''
+      filters.subject = ''
+      writeQuery({ subject: undefined })
+    }
+  }
+}
+
+async function loadCategories(): Promise<void> {
+  try {
+    categories.value = (await getCategories()).items
+  } catch {
+    categories.value = []
+  }
+}
+
 async function loadFilterOptions(): Promise<void> {
   try {
-    const options = await getLocationFilterOptions()
+    // Lấy cả hai lớp để danh sách loại hình có đủ điểm du lịch lẫn cửa hàng.
+    const options = await getLocationFilterOptions('all')
     typeOptions.value = options.types
     districts.value = sortVietnamese(options.districts)
   } catch {
@@ -223,14 +344,46 @@ async function applyFilters(urlMode: 'push' | 'replace' | false = 'replace'): Pr
   filters.search = filters.search.trim()
   Object.assign(applied, filters)
   if (urlMode) {
-    writeQuery({ search: applied.search, type: applied.type, district: applied.district }, urlMode)
+    writeQuery(
+      {
+        search: applied.search,
+        type: applied.type,
+        district: applied.district,
+        kind: applied.kind === 'all' ? undefined : applied.kind,
+        product: applied.product,
+        subject: applied.subject,
+        category: applied.category,
+      },
+      urlMode,
+    )
   }
   await loadFeatures()
   if (userPosition.value) await loadNearby(userPosition.value)
 }
 
 async function clearFilters(): Promise<void> {
-  Object.assign(filters, { search: '', type: '', district: '' })
+  Object.assign(filters, { search: '', type: '', district: '', product: '', subject: '', category: '' })
+  await applyFilters('push')
+}
+
+/** Chuyển lớp (tất cả, điểm du lịch, cửa hàng): lọc phía client nên không cần tải lại bản đồ. */
+async function selectKind(kind: LocationKindFilter): Promise<void> {
+  if (applied.kind === kind) return
+  filters.kind = kind
+  applied.kind = kind
+  writeQuery({ kind: kind === 'all' ? undefined : kind }, 'push')
+  if (selectedSlug.value && !selectedFeature.value) clearSelection()
+  if (userPosition.value) await loadNearby(userPosition.value)
+}
+
+async function selectCategory(slug: string): Promise<void> {
+  filters.category = filters.category === slug ? '' : slug
+  await applyFilters('push')
+}
+
+async function clearProductFilter(): Promise<void> {
+  filters.product = ''
+  filters.subject = ''
   await applyFilters('push')
 }
 
@@ -344,7 +497,7 @@ function requestCurrentPosition(): Promise<Coordinate> {
 function emptyNearbyMessage(origin: Coordinate): string {
   const scope = hasNearbyFilters.value || applied.type ? ' phù hợp với bộ lọc' : ''
   const outside = isInsideLamDong(origin) ? '' : 'Bạn đang ở ngoài Lâm Đồng. '
-  return `${outside}Không có điểm du lịch nào${scope} trong bán kính ${radiusKm.value} km quanh bạn.${
+  return `${outside}Không có địa điểm nào${scope} trong bán kính ${radiusKm.value} km quanh bạn.${
     radiusKm.value < RADIUS_OPTIONS_KM[RADIUS_OPTIONS_KM.length - 1] ? ' Hãy thử chọn bán kính lớn hơn.' : ''
   }`
 }
@@ -361,6 +514,7 @@ async function loadNearby(origin: Coordinate, report = true): Promise<void> {
       radiusKm: radiusKm.value,
       limit: hasNearbyFilters.value ? NEARBY_FETCH_LIMIT : NEARBY_LIMIT,
       type: applied.type || undefined,
+      kind: applied.kind,
     })
     if (requestId !== latestNearbyId) return
     nearby.value = response.items
@@ -465,6 +619,7 @@ onMounted(() => {
   }
   window.addEventListener('keydown', onKeydown)
   void loadFilterOptions()
+  void loadCategories()
   void loadFeatures()
 })
 
@@ -480,8 +635,23 @@ onBeforeUnmount(() => {
     <aside class="map-panel" aria-label="Công cụ bản đồ">
       <header class="panel-header">
         <span class="eyebrow">Bản đồ số Lâm Đồng</span>
-        <h1>Khám phá du lịch nông nghiệp</h1>
-        <p>{{ mappableCount }} điểm đến đang hiển thị trên bản đồ.</p>
+        <h1>Bản đồ OCOP Lâm Đồng</h1>
+        <p>Tìm nơi tham quan và nơi mua sản phẩm OCOP.</p>
+        <dl class="map-stats" aria-label="Thống kê bản đồ" data-test="map-stats">
+          <div>
+            <dt>Điểm du lịch</dt>
+            <dd>{{ kindCounts.attraction }}</dd>
+          </div>
+          <div>
+            <dt>Cửa hàng, cơ sở</dt>
+            <dd>{{ kindCounts.shop }}</dd>
+          </div>
+          <div>
+            <dt>Địa bàn</dt>
+            <dd>{{ districtCount }}</dd>
+          </div>
+        </dl>
+        <p class="visually-hidden" role="status">{{ mappableCount }} địa điểm đang hiển thị trên bản đồ.</p>
         <p class="panel-notice" role="status" data-test="unmappable-notice">
           <template v-if="unmappableCount">
             {{ unmappableCount }} điểm chưa có tọa độ hợp lệ nên chưa hiển thị trên bản đồ (vẫn có trong danh sách).
@@ -489,8 +659,59 @@ onBeforeUnmount(() => {
         </p>
       </header>
 
+      <div class="kind-toggle" role="radiogroup" aria-label="Loại địa điểm" data-test="kind-toggle">
+        <button
+          v-for="option in [
+            { value: 'all', label: 'Tất cả', count: kindCounts.all },
+            { value: 'attraction', label: 'Du lịch', count: kindCounts.attraction },
+            { value: 'shop', label: 'Cửa hàng', count: kindCounts.shop },
+          ] as const"
+          :key="option.value"
+          type="button"
+          role="radio"
+          :aria-checked="applied.kind === option.value"
+          :class="{ active: applied.kind === option.value }"
+          :data-kind="option.value"
+          @click="selectKind(option.value)"
+        >
+          <span v-if="option.value !== 'all'" class="kind-swatch" :class="`is-${option.value}`" aria-hidden="true" />
+          {{ option.label }} <span class="kind-count">{{ option.count }}</span>
+        </button>
+      </div>
+
+      <section
+        v-if="productContext || subjectContext"
+        class="panel-section context-banner"
+        aria-label="Bộ lọc đang áp dụng"
+        data-test="context-banner"
+      >
+        <span class="context-eyebrow">
+          {{ productContext ? 'Đang xem nơi mua và sản xuất' : 'Đang xem các điểm của chủ thể' }}
+        </span>
+        <strong v-if="productContext">{{ productContext.name }}</strong>
+        <strong v-else-if="subjectContext">{{ subjectContext.name }}</strong>
+        <span v-if="subjectContext && !productContext" class="context-meta">
+          {{ subjectContext.locationCount }} địa điểm · {{ subjectContext.productCount }} sản phẩm OCOP
+        </span>
+        <div class="context-actions">
+          <RouterLink
+            v-if="productContext"
+            class="btn btn-outline-success btn-sm"
+            :to="{ name: 'product-detail', params: { slug: productContext.slug } }"
+          >
+            Xem sản phẩm
+          </RouterLink>
+          <button class="btn btn-outline-secondary btn-sm" type="button" data-test="clear-context" @click="clearProductFilter">
+            Bỏ lọc
+          </button>
+        </div>
+      </section>
+      <p v-if="contextMessage" class="panel-section panel-message" role="status" data-test="context-message">
+        {{ contextMessage }}
+      </p>
+
       <form class="panel-section filter-form" role="search" @submit.prevent="applyFilters('replace')">
-        <label class="visually-hidden" for="map-search">Tìm điểm du lịch</label>
+        <label class="visually-hidden" for="map-search">Tìm địa điểm</label>
         <div class="search-row">
           <input
             id="map-search"
@@ -498,7 +719,7 @@ onBeforeUnmount(() => {
             class="form-control"
             type="search"
             maxlength="150"
-            placeholder="Tìm đồi chè, vườn dâu..."
+            placeholder="Tìm đồi chè, cửa hàng, vườn dâu..."
           />
           <button class="btn btn-success" type="submit" :disabled="isLoading" aria-label="Tìm kiếm">
             <AppIcon name="search" :size="16" />
@@ -515,6 +736,20 @@ onBeforeUnmount(() => {
             <option value="">Mọi địa bàn</option>
             <option v-for="district in districtOptions" :key="district" :value="district">{{ district }}</option>
           </select>
+        </div>
+        <div v-if="categories.length" class="category-chips" role="group" aria-label="Có bán sản phẩm thuộc nhóm">
+          <span class="chips-label">Có bán sản phẩm thuộc nhóm</span>
+          <button
+            v-for="category in categories"
+            :key="category.slug"
+            type="button"
+            class="chip"
+            :aria-pressed="applied.category === category.slug"
+            data-test="category-chip"
+            @click="selectCategory(category.slug)"
+          >
+            {{ category.name }}
+          </button>
         </div>
         <button v-if="hasFilters" class="btn-link-reset" type="button" @click="clearFilters">Xóa bộ lọc</button>
       </form>
@@ -542,7 +777,7 @@ onBeforeUnmount(() => {
         </div>
         <p v-if="locationMessage" class="panel-message" role="status">{{ locationMessage }}</p>
         <p v-else-if="!userPosition" class="panel-hint">
-          Cho phép truy cập vị trí để tìm điểm du lịch gần nhất trong bán kính {{ radiusKm }} km.
+          Cho phép truy cập vị trí để tìm địa điểm gần nhất trong bán kính {{ radiusKm }} km.
         </p>
         <p v-if="isLoadingNearby" class="panel-hint">Đang tìm điểm gần nhất...</p>
         <ol v-else-if="nearby.length" class="nearby-list">
@@ -567,7 +802,10 @@ onBeforeUnmount(() => {
         <div class="section-title-row">
           <span
             class="type-badge"
-            :style="{ '--type-color': locationTypeStyle(selectedFeature.properties.type).color }"
+            :style="{
+              '--type-color': locationTypeStyle(selectedFeature.properties.type).color,
+              '--type-on': locationTypeStyle(selectedFeature.properties.type).onColor,
+            }"
           >
             {{ selectedFeature.properties.type_label }}
           </span>
@@ -652,17 +890,29 @@ onBeforeUnmount(() => {
       </section>
 
       <section class="panel-section" aria-labelledby="all-locations-title">
-        <h2 id="all-locations-title" ref="allLocationsTitle" tabindex="-1">Tất cả điểm đến</h2>
+        <div class="section-title-row">
+          <h2 id="all-locations-title" ref="allLocationsTitle" tabindex="-1">
+            {{ productContext ? 'Nơi có sản phẩm này' : 'Tất cả địa điểm' }}
+            <span class="list-count" role="status" data-test="list-count">{{ features.length }}</span>
+          </h2>
+          <div class="view-toggle" role="group" aria-label="Kiểu hiển thị danh sách">
+            <button type="button" :aria-pressed="viewMode === 'list'" data-test="view-list" @click="viewMode = 'list'">Danh sách</button>
+            <button type="button" :aria-pressed="viewMode === 'detail'" data-test="view-detail" @click="viewMode = 'detail'">Chi tiết</button>
+          </div>
+        </div>
         <p v-if="isLoading" class="panel-hint">Đang tải dữ liệu bản đồ...</p>
         <div v-else-if="!features.length && !errorMessage" class="empty-state">
           <p class="panel-hint">
-            {{ hasFilters ? 'Không có điểm du lịch phù hợp với bộ lọc.' : 'Chưa có điểm du lịch nào để hiển thị.' }}
+            {{ hasFilters || applied.kind !== 'all' ? 'Không có địa điểm phù hợp với bộ lọc.' : 'Chưa có địa điểm nào để hiển thị.' }}
           </p>
           <button v-if="hasFilters" class="btn btn-outline-success btn-sm" type="button" @click="clearFilters">
             Xóa bộ lọc
           </button>
+          <button v-else-if="applied.kind !== 'all'" class="btn btn-outline-success btn-sm" type="button" @click="selectKind('all')">
+            Xem tất cả địa điểm
+          </button>
         </div>
-        <ul v-else class="location-list">
+        <ul v-else class="location-list" :class="{ 'is-detail': viewMode === 'detail' }">
           <li v-for="feature in features" :key="feature.properties.slug">
             <button
               type="button"
@@ -676,13 +926,30 @@ onBeforeUnmount(() => {
                 alt=""
                 loading="lazy"
               />
-              <i v-else class="type-dot" :style="{ background: locationTypeStyle(feature.properties.type).color }" aria-hidden="true" />
-              <span>
+              <i
+                v-else
+                class="type-dot"
+                :class="{ 'is-shop': featureKind(feature) === 'shop' }"
+                :style="{ background: locationTypeStyle(feature.properties.type).color }"
+                aria-hidden="true"
+              />
+              <span class="location-text">
                 <strong>{{ feature.properties.name }}</strong>
                 <small>
                   {{ feature.properties.type_label }} · {{ feature.properties.district }}
                   <template v-if="feature.properties.products?.length"> · {{ feature.properties.products.length }} sản phẩm OCOP</template>
                 </small>
+                <span v-if="productContext && linkedProductRole(feature)" class="role-badge" data-test="role-badge">
+                  {{ productRoleLabel(linkedProductRole(feature)) }}
+                </span>
+                <template v-if="viewMode === 'detail'">
+                  <span class="location-address">{{ feature.properties.address }}</span>
+                  <span v-if="feature.properties.opening_hours" class="location-meta">Mở cửa {{ feature.properties.opening_hours }}</span>
+                  <span v-if="feature.properties.description" class="location-desc">{{ feature.properties.description }}</span>
+                  <span v-if="feature.properties.services?.length" class="location-meta">
+                    {{ feature.properties.services.slice(0, 3).join(' · ') }}
+                  </span>
+                </template>
               </span>
             </button>
           </li>
@@ -700,6 +967,7 @@ onBeforeUnmount(() => {
         :selected-slug="selectedSlug"
         :user-position="userPosition"
         :route="routeLine"
+        :links="productLinks"
         @select="selectLocation"
         @selected-position="selectedMarkerPosition = $event"
       />
@@ -715,7 +983,10 @@ onBeforeUnmount(() => {
         <div class="map-info-head">
           <span
             class="type-badge"
-            :style="{ '--type-color': locationTypeStyle(selectedFeature.properties.type).color }"
+            :style="{
+              '--type-color': locationTypeStyle(selectedFeature.properties.type).color,
+              '--type-on': locationTypeStyle(selectedFeature.properties.type).onColor,
+            }"
           >
             {{ selectedFeature.properties.type_label }}
           </span>
@@ -738,25 +1009,57 @@ onBeforeUnmount(() => {
               <AppIcon name="map-pin" :size="13" /> {{ selectedFeature.properties.address }}
             </p>
             <p v-if="selectedFeature.properties.subject" class="map-info-subject">
-              Chủ thể: {{ selectedFeature.properties.subject.name }}
+              Chủ thể:
+              <RouterLink
+                :to="{ name: 'map', query: { subject: String(selectedFeature.properties.subject.id) } }"
+                data-test="subject-link"
+              >
+                {{ selectedFeature.properties.subject.name }}
+              </RouterLink>
             </p>
             <p class="map-info-meta">
               <span v-if="selectedFeature.properties.rating_avg">★ {{ selectedFeature.properties.rating_avg.toFixed(1) }}</span>
               <span v-if="selectedFeature.properties.products?.length"> · {{ selectedFeature.properties.products.length }} sản phẩm OCOP</span>
               <span v-if="selectedFeature.properties.opening_hours"> · {{ selectedFeature.properties.opening_hours }}</span>
             </p>
+            <ul class="map-info-contact" aria-label="Thông tin liên hệ">
+              <li v-if="selectedFeature.properties.contact_phone">
+                <AppIcon name="phone" :size="13" />
+                <a v-if="telephoneHref(selectedFeature.properties.contact_phone)" :href="telephoneHref(selectedFeature.properties.contact_phone)!">
+                  {{ selectedFeature.properties.contact_phone }}
+                </a>
+                <span v-else>{{ selectedFeature.properties.contact_phone }}</span>
+              </li>
+              <li v-if="safeExternalUrl(selectedFeature.properties.website)">
+                <AppIcon name="map" :size="13" />
+                <a :href="safeExternalUrl(selectedFeature.properties.website)!" target="_blank" rel="noopener noreferrer">Trang web của đơn vị</a>
+              </li>
+              <li v-if="featureKind(selectedFeature) === 'attraction' && selectedFeature.properties.ticket_price !== null">
+                <AppIcon name="award" :size="13" /> Vé: {{ formatTicketPrice(selectedFeature.properties.ticket_price) }}
+              </li>
+            </ul>
             <p v-if="selectedFeature.properties.description" class="map-info-description">
               {{ selectedFeature.properties.description }}
             </p>
             <ul v-if="selectedFeature.properties.services?.length" class="map-info-services" aria-label="Dịch vụ">
-              <li v-for="service in selectedFeature.properties.services.slice(0, 3)" :key="service">{{ service }}</li>
+              <li v-for="service in selectedFeature.properties.services.slice(0, 4)" :key="service">{{ service }}</li>
             </ul>
             <ul v-if="selectedFeature.properties.products?.length" class="map-info-products" aria-label="Sản phẩm OCOP tại điểm">
-              <li v-for="product in selectedFeature.properties.products.slice(0, 3)" :key="product.id">
+              <li v-for="product in selectedFeature.properties.products.slice(0, 5)" :key="product.id">
                 <img v-if="product.primary_image_url" :src="product.primary_image_url" :alt="`Ảnh ${product.name}`" loading="lazy" />
                 <span>
-                  <strong>{{ product.name }}</strong>
-                  <small>OCOP {{ product.star }} sao</small>
+                  <RouterLink :to="{ name: 'product-detail', params: { slug: product.slug } }">
+                    <strong>{{ product.name }}</strong>
+                  </RouterLink>
+                  <small>OCOP {{ product.star }} sao · {{ productRoleLabel(product.role) }}</small>
+                  <RouterLink
+                    v-if="product.slug !== applied.product"
+                    class="product-where"
+                    :to="{ name: 'map', query: { product: product.slug } }"
+                    data-test="product-where"
+                  >
+                    Xem nơi mua và sản xuất
+                  </RouterLink>
                 </span>
               </li>
             </ul>
@@ -1176,9 +1479,246 @@ onBeforeUnmount(() => {
   padding: var(--ocop-space-1) 9px;
   border-radius: var(--ocop-radius-pill);
   background: var(--type-color, var(--ocop-primary-700));
-  color: var(--ocop-white);
+  color: var(--type-on, var(--ocop-white));
   font-size: var(--ocop-font-size-caption);
   font-weight: 700;
+}
+
+.map-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--ocop-space-2);
+  margin: var(--ocop-space-3) 0 0;
+}
+
+.map-stats div {
+  padding: var(--ocop-space-2);
+  border-radius: var(--ocop-radius-sm);
+  background: var(--ocop-surface-muted);
+}
+
+.map-stats dt {
+  color: var(--ocop-text-muted);
+  font-size: var(--ocop-font-size-caption);
+  font-weight: 650;
+}
+
+.map-stats dd {
+  margin: 0;
+  color: var(--ocop-navy);
+  font-size: var(--ocop-font-size-title-sm);
+  font-weight: 800;
+}
+
+.kind-toggle {
+  display: flex;
+  gap: var(--ocop-space-1);
+  padding: var(--ocop-space-1);
+  border-radius: var(--ocop-radius-md);
+  background: var(--ocop-surface-muted);
+}
+
+.kind-toggle button {
+  display: inline-flex;
+  min-height: 44px;
+  flex: 1 1 0;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 var(--ocop-space-2);
+  border: 0;
+  border-radius: var(--ocop-radius-sm);
+  background: transparent;
+  color: var(--ocop-text-muted);
+  font-size: var(--ocop-font-size-small);
+  font-weight: 650;
+}
+
+.kind-toggle button.active {
+  background: var(--ocop-card);
+  box-shadow: var(--ocop-shadow-sm);
+  color: var(--ocop-navy);
+  font-weight: 800;
+}
+
+.kind-count {
+  color: var(--ocop-text-muted);
+  font-weight: 650;
+}
+
+.kind-swatch {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--ocop-primary-700);
+}
+
+.kind-swatch.is-shop {
+  border-radius: var(--ocop-radius-xs);
+  background: var(--ocop-daquy-400);
+}
+
+.context-banner {
+  display: grid;
+  gap: var(--ocop-space-2);
+  border: 2px solid var(--ocop-daquy-500);
+  background: var(--ocop-daquy-50);
+}
+
+.context-eyebrow {
+  color: var(--ocop-daquy-700);
+  font-size: var(--ocop-font-size-caption);
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.context-banner strong {
+  color: var(--ocop-navy);
+  font-size: var(--ocop-font-size-body-lg);
+}
+
+.context-meta {
+  color: var(--ocop-text-muted);
+  font-size: var(--ocop-font-size-small);
+}
+
+.context-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ocop-space-2);
+}
+
+.context-actions .btn {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.category-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ocop-space-2);
+}
+
+.chips-label {
+  width: 100%;
+  color: var(--ocop-text-muted);
+  font-size: var(--ocop-font-size-caption);
+  font-weight: 700;
+}
+
+.chip {
+  min-height: 44px;
+  padding: 0 var(--ocop-space-3);
+  border: 1px solid var(--ocop-border);
+  border-radius: var(--ocop-radius-pill);
+  background: var(--ocop-card);
+  color: var(--ocop-navy);
+  font-size: var(--ocop-font-size-small);
+  font-weight: 600;
+}
+
+.chip[aria-pressed='true'] {
+  border-color: var(--ocop-daquy-500);
+  background: var(--ocop-daquy-100);
+  font-weight: 800;
+}
+
+.list-count {
+  margin-left: var(--ocop-space-1);
+  color: var(--ocop-text-muted);
+  font-size: var(--ocop-font-size-small);
+  font-weight: 650;
+}
+
+.view-toggle {
+  display: flex;
+  overflow: hidden;
+  border: 1px solid var(--ocop-mist-300);
+  border-radius: var(--ocop-radius-sm);
+}
+
+.view-toggle button {
+  min-height: 44px;
+  padding: 0 var(--ocop-space-3);
+  border: 0;
+  background: var(--ocop-card);
+  color: var(--ocop-mist-900);
+  font-size: var(--ocop-font-size-caption);
+  font-weight: 650;
+}
+
+.view-toggle button[aria-pressed='true'] {
+  background: var(--ocop-mist-900);
+  color: var(--ocop-white);
+  font-weight: 800;
+}
+
+.type-dot.is-shop {
+  border-radius: 3px;
+}
+
+.location-list.is-detail button {
+  align-items: flex-start;
+}
+
+.location-text {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.role-badge {
+  justify-self: start;
+  padding: 2px var(--ocop-space-2);
+  border-radius: var(--ocop-radius-pill);
+  background: var(--ocop-daquy-100);
+  color: var(--ocop-daquy-800);
+  font-size: var(--ocop-font-size-caption);
+  font-weight: 700;
+}
+
+.location-address,
+.location-meta,
+.location-desc {
+  color: var(--ocop-text-muted);
+  font-size: var(--ocop-font-size-caption);
+}
+
+.location-desc {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.map-info-contact {
+  display: grid;
+  gap: 2px;
+  margin: var(--ocop-space-2) 0 0;
+  padding: 0;
+  color: var(--ocop-text-muted);
+  font-size: var(--ocop-font-size-caption);
+  list-style: none;
+}
+
+.map-info-contact li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.map-info-contact a,
+.map-info-subject a,
+.product-where {
+  color: var(--ocop-primary-700);
+  font-weight: 700;
+}
+
+.product-where {
+  font-size: var(--ocop-font-size-caption);
 }
 
 .close-button {
