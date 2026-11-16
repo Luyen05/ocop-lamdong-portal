@@ -331,6 +331,20 @@ def test_map_locations_return_geojson_in_longitude_latitude_order(
         "type": "Point",
         "coordinates": [CAU_DAT.longitude, CAU_DAT.latitude],
     }
+    assert feature["properties"]["subject"] == {
+        "id": 1,
+        "name": "HTX Chè Cầu Đất",
+        "district": "Đà Lạt",
+    }
+    assert feature["properties"]["products"] == [
+        {
+            "id": 1,
+            "name": "Trà xanh Cầu Đất",
+            "slug": "tra-xanh-cau-dat",
+            "star": 4,
+            "primary_image_url": None,
+        }
+    ]
     assert {item["properties"]["slug"] for item in filtered.json()["features"]} == {
         "cau-dat-farm",
         "doi-che-tam-chau",

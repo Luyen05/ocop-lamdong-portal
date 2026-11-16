@@ -58,6 +58,20 @@ class LocationSubjectRead(BaseModel):
     district: str
 
 
+class MapSubjectRead(BaseModel):
+    id: int
+    name: str
+    district: str
+
+
+class MapProductRead(BaseModel):
+    id: int
+    name: str
+    slug: str
+    star: int
+    primary_image_url: str | None
+
+
 class LocationDetail(LocationListItem):
     contact_phone: str | None
     website: str | None
@@ -84,8 +98,12 @@ class MapFeatureProperties(BaseModel):
     address: str
     opening_hours: str | None
     ticket_price: float | None
+    services: list[str] = []
+    description: str | None = None
     rating_avg: float
     primary_image_url: str | None
+    subject: MapSubjectRead | None = None
+    products: list[MapProductRead] = []
 
 
 class MapFeature(BaseModel):

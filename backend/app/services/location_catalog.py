@@ -15,6 +15,7 @@ from app.services.visibility import account_allows_public_content
 from app.schemas.location import (
     LocationListItem,
     MapFeature,
+    MapSubjectRead,
     MapFeatureProperties,
     PointGeometryRead,
 )
@@ -137,7 +138,18 @@ def to_map_feature(location: TourismLocation) -> MapFeature:
             ticket_price=(
                 float(location.ticket_price) if location.ticket_price is not None else None
             ),
+            services=list(location.services or []),
+            description=location.description,
             rating_avg=float(location.rating_avg or 0),
             primary_image_url=primary_image_url(location),
+            subject=(
+                MapSubjectRead(
+                    id=location.subject.id,
+                    name=location.subject.name,
+                    district=location.subject.district,
+                )
+                if location.subject is not None and location.subject.status == "approved"
+                else None
+            ),
         ),
     )

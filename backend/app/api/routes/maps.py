@@ -1,10 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.core.database import get_db
 from app.core.geometry import GeoPoint, distance_meters, within_meters
-from app.models.location import TourismLocation
+from app.api.routes.products import public_product_filters
+from app.models.location import TourismLocation, location_ocop_products
+from app.models.product import Product
 from app.schemas.error import ErrorResponse
 from app.schemas.location import (
     Coordinate,
@@ -12,6 +14,7 @@ from app.schemas.location import (
     MapFeatureCollection,
     NearbyLocation,
     NearbyLocationResponse,
+    MapProductRead,
     RouteDestination,
     RouteResponse,
 )
@@ -22,6 +25,7 @@ from app.services.location_catalog import (
     to_location_list_item,
     to_map_feature,
 )
+from app.api.routes.products import public_product_filters
 from app.services.routing import (
     RouteNotFoundError,
     RoutingUnavailableError,
@@ -55,11 +59,42 @@ def get_map_locations(
                 district=district,
             )
         )
-        .options(selectinload(TourismLocation.images))
+        .options(
+            selectinload(TourismLocation.images),
+            joinedload(TourismLocation.subject),
+        )
         .order_by(TourismLocation.name.asc(), TourismLocation.id.asc())
         .limit(MAX_MAP_FEATURES)
     ).all()
-    return MapFeatureCollection(features=[to_map_feature(location) for location in locations])
+    features = [to_map_feature(location) for location in locations]
+    if not locations:
+        return MapFeatureCollection(features=features)
+
+    products_by_location: dict[int, list[MapProductRead]] = {location.id: [] for location in locations}
+    product_rows = db.execute(
+        select(location_ocop_products.c.location_id, Product)
+        .join(Product, Product.id == location_ocop_products.c.product_id)
+        .join(Product.subject)
+        .where(
+            location_ocop_products.c.location_id.in_(products_by_location),
+            *public_product_filters(),
+        )
+        .options(selectinload(Product.images))
+        .order_by(Product.name.asc(), Product.id.asc())
+    ).all()
+    for location_id, product in product_rows:
+        products_by_location[location_id].append(
+            MapProductRead(
+                id=product.id,
+                name=product.name,
+                slug=product.slug,
+                star=product.star,
+                primary_image_url=product.images[0].image_url if product.images else None,
+            )
+        )
+    for feature in features:
+        feature.properties.products = products_by_location[feature.properties.id]
+    return MapFeatureCollection(features=features)
 
 
 @router.get(
