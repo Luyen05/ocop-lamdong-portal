@@ -35,6 +35,7 @@ Database mới tạo bằng Docker tự chạy `schema.sql`, `seed_dev.sql`, `se
 | 8 | `seed_dalavi_reference.sql` | DaLaVi: 1 sản phẩm OCOP, 1 chủ thể, 2 cơ sở và quan hệ sản phẩm–địa điểm | 2 điểm, 4 nguồn |
 | 9 | `seed_product_drafts_public_sources.sql` | Sản phẩm tham khảo từ Aso Farm/DaLaVi và Dalat Hasfarm, lưu bản nháp | 16 bản nháp |
 | 10 | `seed_cua_hang_ban_do.sql` | **Dữ liệu minh họa** cho liên kết bản đồ: tối đa 8 cơ sở sản xuất (theo chủ thể có sản phẩm), 5 điểm giới thiệu OCOP, liên kết sản phẩm với vai trò sản xuất, bán, trưng bày | tối đa 13 điểm |
+| 11 | `seed_tuyen_tham_quan.sql` | **Dữ liệu minh họa**: 2 tuyến tham quan ghép từ điểm có sẵn (hành trình dâu tây Đà Lạt, trà và cà phê Cầu Đất) | 2 tuyến |
 
 Dữ liệu ở `seed_cua_hang_ban_do.sql` là **minh họa, chưa xác minh**: tên điểm ghi "(minh họa)" hoặc mô tả mở đầu bằng "[Dữ liệu minh họa]", vị trí là tọa độ trung tâm khu vực, không có `source_url`. Cần thay bằng dữ liệu thật trước khi công bố. Các số liệu dưới đây chưa tính file này.
 

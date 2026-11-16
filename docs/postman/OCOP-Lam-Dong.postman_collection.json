@@ -3569,6 +3569,61 @@
           }
         }
       ]
+    },
+    {
+      "name": "Tours",
+      "item": [
+        {
+          "name": "GET /tours",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tours",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tours"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "List Tours",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "GET /tours/{slug}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tours/:slug",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tours",
+                ":slug"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "slug",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Get Tour",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        }
+      ]
     }
   ]
 }

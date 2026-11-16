@@ -6,6 +6,7 @@ Các thay đổi đáng chú ý của dự án. Định dạng theo [Keep a Chan
 
 ### Thêm
 
+- Tuyến tham quan (backend): bảng `tourism_routes`, `tourism_route_stops` (migration `016_tuyen_tham_quan.sql`), `GET /tours` và `GET /tours/{slug}` (chỉ tuyến published, chỉ chặng còn công khai, đúng thứ tự), seed minh họa `seed_tuyen_tham_quan.sql`.
 - Bản đồ số mới (giao diện): lớp Tất cả / Du lịch / Cửa hàng với số điểm từng lớp (lọc phía client nên chuyển lớp tức thì, lớp lưu trên URL `kind`); ghim cửa hàng và cơ sở sản xuất là hình vuông bo góc màu vàng dã quỳ, điểm du lịch giữ ghim giọt nước theo loại hình (phân biệt bằng hình dạng, không chỉ màu); thống kê đầu panel; chip lọc theo nhóm sản phẩm (`category`); lọc theo sản phẩm (`product`) với nhãn vai trò "Bán/Sản xuất/Giới thiệu tại đây" và đường nét đứt nối nơi sản xuất với nơi bán; lọc theo chủ thể (`subject`); chế độ danh sách "Danh sách / Chi tiết"; thẻ điểm có thêm điện thoại, website, giá vé (chỉ điểm du lịch), toàn bộ dịch vụ, sản phẩm kèm vai trò và liên kết "Xem nơi mua và sản xuất", liên kết chủ thể. Bộ lọc sản phẩm hoặc chủ thể không còn công khai thì tự bỏ và báo cho người dùng.
 - Trang sản phẩm có mục "Mua sản phẩm này ở đâu" (danh sách điểm kèm vai trò, bản đồ nhỏ, liên kết sang bản đồ lớn theo sản phẩm và theo chủ thể); trang điểm du lịch ẩn "Giá vé" với cửa hàng và có liên kết xem các địa điểm của đơn vị trên bản đồ.
 - Bản đồ GeoJSON trả thêm `contact_phone`, `website` của điểm.
