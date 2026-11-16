@@ -192,4 +192,13 @@ JOIN ocop_products product ON product.slug = 'dau-tay-say-deo-dalavi'
 WHERE location.slug IN ('dalavi-co-so-pang-tieng', 'dalavi-cua-hang-yersin')
 ON CONFLICT (location_id, product_id) DO NOTHING;
 
+-- Phân loại cho bản đồ: cơ sở là nơi sản xuất, cửa hàng là nơi bán (migration 015).
+UPDATE tourism_locations SET type = 'workshop'
+WHERE slug = 'dalavi-co-so-pang-tieng' AND type = 'other';
+UPDATE tourism_locations SET type = 'ocop_store'
+WHERE slug = 'dalavi-cua-hang-yersin' AND type = 'other';
+UPDATE location_ocop_products lop SET role = 'produced_here'
+FROM tourism_locations l
+WHERE l.id = lop.location_id AND l.slug = 'dalavi-co-so-pang-tieng';
+
 COMMIT;
