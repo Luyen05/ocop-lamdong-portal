@@ -2,7 +2,7 @@
 
 Các thay đổi đáng chú ý của dự án. Định dạng theo [Keep a Changelog](https://keepachangelog.com/vi/1.1.0/).
 
-## [Chưa phát hành] — nhánh `2312682_HaLuyen_HoanThienDuAn`
+## [Chưa phát hành] — nhánh `2312682_HaLuyen_NangCapBanDo`
 
 ### Thêm
 
@@ -25,6 +25,16 @@ Các thay đổi đáng chú ý của dự án. Định dạng theo [Keep a Chan
 - `PUBLIC_BASE_URL` cho URL ảnh khi chạy sau proxy; favicon.
 - Migration tổng hợp `014_hoan_thien.sql`; công cụ kiểm tra database so cả kiểu cột, ràng buộc, index.
 - `tools/sinh_tai_lieu_api.py` sinh `docs/API.md` (103 endpoint) và bộ Postman từ OpenAPI.
+- Bản đồ GeoJSON bổ sung chủ thể và các sản phẩm OCOP công khai liên kết với từng điểm du lịch; panel bản đồ hiển thị ảnh, sản phẩm và liên kết chi tiết.
+- Thẻ thông tin điểm được hiển thị nổi trực tiếp trên vùng bản đồ theo kiểu popup/card; trên điện thoại chuyển thành bottom-sheet có nút đóng, chỉ đường và xem chi tiết.
+- Thẻ bản đồ neo theo marker, tự đổi phía khi marker gần mép khung nhìn; bổ sung mô tả, dịch vụ, đánh giá, giá vé và giờ mở cửa từ dữ liệu điểm đã duyệt.
+- Form điểm du lịch hiển thị ảnh, nhóm ngành và hạng sao khi chọn sản phẩm OCOP; card bản đồ liệt kê tối đa ba sản phẩm đã gắn, kèm hạng sao và ảnh đại diện.
+- Seed tham khảo DaLaVi: liên kết sản phẩm Dâu tây sấy dẻo 3 sao với cơ sở Păng Tiêng và cửa hàng 27/6E Yersin theo tọa độ Google Maps do nhóm cung cấp.
+- Thêm 16 sản phẩm tham khảo từ Aso Farm/DaLaVi và Dalat Hasfarm ở trạng thái bản nháp; không gán hạng sao OCOP và không công khai trước khi chủ thể hoàn thiện hồ sơ.
+- Sửa lỗi 500 ở danh sách hồ sơ chủ thể do email tài khoản kỹ thuật `.invalid` bị Pydantic từ chối; dùng domain ví dụ hợp lệ cho tài khoản bị khóa.
+- Chuyển hồ sơ Hasfarm từ tài khoản kỹ thuật sang tài khoản chủ thể thật do nhóm cung cấp; giữ nguyên hồ sơ pending và các sản phẩm bản nháp, chưa tự động duyệt.
+- Bổ sung ảnh chính CDN của Dalat Hasfarm cho 5 sản phẩm tham khảo, lưu nguồn, credit và quyền sử dụng; không thay đổi trạng thái bản nháp.
+- Bổ sung 17 ảnh công khai cho 11 sản phẩm AsoFarm/DaLaVi; tổng 16 sản phẩm tham khảo đều có ảnh chính, không thay đổi số sản phẩm OCOP công khai.
 
 ### Sửa
 

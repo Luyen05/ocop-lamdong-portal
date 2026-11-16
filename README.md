@@ -173,12 +173,12 @@ npm run dev
 **Phát triển và kiểm thử: nạp seed** (sản phẩm OCOP tham khảo có nguồn, sản phẩm ở đủ trạng thái, tài khoản demo):
 
 ```powershell
-foreach ($seed in 'seed_public_reference','seed_ocop_2025_2026','seed_product_workflow','seed_dehavi_demo','seed_dehavi_media') {
+foreach ($seed in 'seed_public_reference','seed_ocop_2025_2026','seed_product_workflow','seed_dehavi_demo','seed_dehavi_media','seed_dalavi_reference','seed_product_drafts_public_sources') {
   Get-Content ".\database\$seed.sql" -Raw -Encoding UTF8 | docker compose exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
 }
 ```
 
-Sau khi nạp: 61 sản phẩm và 10 điểm du lịch hiển thị công khai. Tài khoản demo (mật khẩu `DemoOCOP@2026`, **không dùng cho bản triển khai**): `admin.ocop.demo@example.com` (quản trị), `chuthe.ocop.demo@example.com` (chủ thể), `ungvien.ocop.demo@example.com` (người dùng có hồ sơ chủ thể đang chờ). Chi tiết: [`docs/DU_LIEU.md`](docs/DU_LIEU.md).
+Sau khi nạp: 62 sản phẩm và 12 điểm du lịch hiển thị công khai. Tài khoản demo (mật khẩu `DemoOCOP@2026`, **không dùng cho bản triển khai**): `admin.ocop.demo@example.com` (quản trị), `chuthe.ocop.demo@example.com` (chủ thể), `ungvien.ocop.demo@example.com` (người dùng có hồ sơ chủ thể đang chờ). Chi tiết: [`docs/DU_LIEU.md`](docs/DU_LIEU.md).
 
 ## Cấu hình
 
