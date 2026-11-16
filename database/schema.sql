@@ -291,6 +291,28 @@ CREATE TABLE location_ocop_products (
     CHECK (role IN ('produced_here', 'sold_here', 'displayed'))
 );
 
+-- Tuyến tham quan: chuỗi điểm theo thứ tự (migration 016). Chỉ tuyến published hiện công khai.
+CREATE TABLE tourism_routes (
+  id BIGSERIAL PRIMARY KEY,
+  slug VARCHAR(255) NOT NULL UNIQUE,
+  name VARCHAR(255) NOT NULL,
+  description TEXT,
+  duration_text VARCHAR(100),
+  status VARCHAR(20) NOT NULL DEFAULT 'draft'
+    CONSTRAINT tourism_routes_status_check CHECK (status IN ('draft', 'published', 'archived')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE tourism_route_stops (
+  route_id BIGINT NOT NULL REFERENCES tourism_routes(id) ON DELETE CASCADE,
+  location_id BIGINT NOT NULL REFERENCES tourism_locations(id) ON DELETE CASCADE,
+  position SMALLINT NOT NULL CONSTRAINT tourism_route_stops_position_check CHECK (position >= 1),
+  note TEXT,
+  PRIMARY KEY (route_id, location_id),
+  CONSTRAINT uq_tourism_route_stops_position UNIQUE (route_id, position)
+);
+CREATE INDEX idx_tourism_route_stops_location ON tourism_route_stops (location_id);
+
 CREATE TABLE reviews (
   id BIGSERIAL PRIMARY KEY,
   user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,

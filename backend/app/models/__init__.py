@@ -9,6 +9,7 @@ from app.models.location import (
 from app.models.product import Product, ProductChangeRequest, ProductImage
 from app.models.review import Review
 from app.models.role import Role
+from app.models.route import TourismRoute, TourismRouteStop
 from app.models.subject import Subject
 from app.models.user import SocialAccount, User
 
@@ -26,6 +27,8 @@ __all__ = [
     "Subject",
     "TourismLocation",
     "TourismLocationChangeRequest",
+    "TourismRoute",
+    "TourismRouteStop",
     "User",
     "location_ocop_products",
 ]
