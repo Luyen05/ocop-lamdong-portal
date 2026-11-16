@@ -116,7 +116,7 @@ Ngoài các quan hệ trên, nhiều bảng có cột `reviewed_by` trỏ tới 
 | `product_change_requests`, `tourism_location_change_requests` | Yêu cầu cập nhật/ngừng hiển thị; `proposed_data` JSONB, `base_version`; tối đa một yêu cầu đang mở mỗi đối tượng |
 | `data_sources`, `product_sources` | Văn bản/trang nguồn và vai trò dẫn chứng (công nhận, định danh, địa chỉ, bổ sung) với mức xác minh |
 | `tourism_locations` | Điểm du lịch: tọa độ PostGIS, loại hình, dịch vụ, giờ mở cửa, nguồn vị trí, trạng thái duyệt |
-| `location_ocop_products` | Sản phẩm bán/giới thiệu tại điểm (nhiều–nhiều) |
+| `location_ocop_products` | Sản phẩm tại điểm (nhiều–nhiều), cột `role`: `produced_here` (sản xuất), `sold_here` (bán), `displayed` (trưng bày) |
 | `reviews` | Đánh giá 1–5 sao cho đúng một trong sản phẩm/điểm; trạng thái duyệt, lý do từ chối |
 | `news`, `news_images` | Tin do admin đăng (chưa dùng; tin hiện lấy từ RSS) |
 

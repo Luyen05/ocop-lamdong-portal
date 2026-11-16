@@ -173,7 +173,7 @@ npm run dev
 **Phát triển và kiểm thử: nạp seed** (sản phẩm OCOP tham khảo có nguồn, sản phẩm ở đủ trạng thái, tài khoản demo):
 
 ```powershell
-foreach ($seed in 'seed_public_reference','seed_ocop_2025_2026','seed_product_workflow','seed_dehavi_demo','seed_dehavi_media','seed_dalavi_reference','seed_product_drafts_public_sources') {
+foreach ($seed in 'seed_public_reference','seed_ocop_2025_2026','seed_product_workflow','seed_dehavi_demo','seed_dehavi_media','seed_dalavi_reference','seed_product_drafts_public_sources','seed_cua_hang_ban_do') {
   Get-Content ".\database\$seed.sql" -Raw -Encoding UTF8 | docker compose exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
 }
 ```
@@ -221,7 +221,7 @@ Mọi cấu hình nằm trong `.env`; danh sách đầy đủ ở [`docs/CAU_HIN
 ## Kiểm thử
 
 ```powershell
-docker compose exec backend python -m pytest -q    # backend: 279 đạt, 9 bỏ qua
+docker compose exec backend python -m pytest -q    # backend: 289 đạt, 9 bỏ qua
 docker compose exec frontend npm test              # frontend: 281 test trong 60 file
 docker compose exec frontend npm run type-check
 docker compose exec frontend npm run build

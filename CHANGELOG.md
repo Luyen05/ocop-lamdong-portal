@@ -6,6 +6,7 @@ Các thay đổi đáng chú ý của dự án. Định dạng theo [Keep a Chan
 
 ### Thêm
 
+- Bản đồ liên kết điểm du lịch, cửa hàng, sản phẩm và chủ thể (backend): loại hình `ocop_store` (cửa hàng OCOP) và `workshop` (cơ sở sản xuất) tạo thành nhóm `shop`, suy ra từ loại hình nên không thêm cột; `location_ocop_products.role` (`produced_here`, `sold_here`, `displayed`); `/map/locations` và `/map/nearby` có tham số `kind`; `/map/locations` lọc thêm theo `product_id`, `category`, `subject_id`; `GET /products/{slug}/locations` (nơi mua, xem, sản xuất sản phẩm) và `GET /subjects/{id}` (điểm và sản phẩm của chủ thể). Danh sách `/locations` mặc định chỉ trả điểm du lịch. Migration `015_lien_ket_ban_do.sql`, seed minh họa `seed_cua_hang_ban_do.sql` (chưa xác minh, xem `docs/DU_LIEU.md`).
 - SEO: `robots.txt`, `sitemap.xml` (trang tĩnh + sản phẩm + điểm du lịch công khai), thẻ meta/Open Graph/Twitter Card/canonical theo từng trang, `noindex` cho khu riêng tư, dữ liệu có cấu trúc JSON-LD (`Product`, `TouristAttraction`); trang HTML tĩnh cho bot Facebook/Zalo không chạy JavaScript.
 - CI GitHub Actions (backend + PostGIS, dữ liệu, frontend, database khớp repo, tài liệu API, build image) và workflow triển khai tay qua SSH.
 - Bản chạy thật: `docker-compose.prod.yml`, `backend/Dockerfile.prod`, `frontend/Dockerfile.prod`, cấu hình Nginx (proxy API, cache, header bảo mật, giới hạn đăng nhập), `.env.production.example`, script triển khai và sao lưu.

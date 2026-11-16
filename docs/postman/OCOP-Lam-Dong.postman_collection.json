@@ -596,6 +596,35 @@
               "type": "noauth"
             }
           }
+        },
+        {
+          "name": "GET /products/{slug}/locations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/products/:slug/locations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products",
+                ":slug",
+                "locations"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "slug",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Nơi mua, xem hoặc sản xuất một sản phẩm (cửa hàng và điểm du lịch đã duyệt).",
+            "auth": {
+              "type": "noauth"
+            }
+          }
         }
       ]
     },
@@ -642,6 +671,11 @@
                   "disabled": true
                 },
                 {
+                  "key": "kind",
+                  "value": "",
+                  "disabled": true
+                },
+                {
                   "key": "sort",
                   "value": "",
                   "disabled": true
@@ -669,7 +703,13 @@
                 "locations",
                 "filter-options"
               ],
-              "query": [],
+              "query": [
+                {
+                  "key": "kind",
+                  "value": "",
+                  "disabled": true
+                }
+              ],
               "variable": []
             },
             "description": "Giá trị cho bộ lọc điểm du lịch (loại hình, địa bàn).",
@@ -740,11 +780,31 @@
                   "key": "district",
                   "value": "",
                   "disabled": true
+                },
+                {
+                  "key": "kind",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "product_id",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "category",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "subject_id",
+                  "value": "",
+                  "disabled": true
                 }
               ],
               "variable": []
             },
-            "description": "Trả các điểm đã duyệt dưới dạng GeoJSON FeatureCollection.",
+            "description": "Trả các điểm đã duyệt (điểm du lịch và cửa hàng) dưới dạng GeoJSON FeatureCollection.",
             "auth": {
               "type": "noauth"
             }
@@ -787,6 +847,11 @@
                 },
                 {
                   "key": "type",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "kind",
                   "value": "",
                   "disabled": true
                 }
@@ -3467,6 +3532,39 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"is_active\": true\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Subjects",
+      "item": [
+        {
+          "name": "GET /subjects/{subject_id}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/subjects/:subject_id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "subjects",
+                ":subject_id"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "subject_id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Từ một chủ thể truy ra mọi điểm (du lịch, cửa hàng) và sản phẩm công khai của chủ thể.",
+            "auth": {
+              "type": "noauth"
             }
           }
         }
