@@ -221,7 +221,7 @@ Mọi cấu hình nằm trong `.env`; danh sách đầy đủ ở [`docs/CAU_HIN
 ## Kiểm thử
 
 ```powershell
-docker compose exec backend python -m pytest -q    # backend: 289 đạt, 9 bỏ qua
+docker compose exec backend python -m pytest -q    # backend: 290 đạt, 9 bỏ qua
 docker compose exec frontend npm test              # frontend: 281 test trong 60 file
 docker compose exec frontend npm run type-check
 docker compose exec frontend npm run build
