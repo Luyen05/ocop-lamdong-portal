@@ -5,6 +5,10 @@ import 'leaflet.markercluster/dist/MarkerCluster.css'
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css'
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
+import {
+  LAM_DONG_BOUNDARY_LATLNGS,
+  LAM_DONG_OUTER_MASK_LATLNGS,
+} from '@/constants/lam-dong-boundary'
 import type { Coordinate, MapFeature } from '@/types/location'
 import { hasValidCoordinates, isInsideLamDong, locationTypeStyle } from '@/utils/location'
 
@@ -18,6 +22,8 @@ const props = withDefaults(
     cluster?: boolean
     initialZoom?: number
     label?: string
+    /** Hiển thị đường ranh giới và vùng làm nổi bật lãnh thổ tỉnh Lâm Đồng (kiểu cmap.vn). */
+    showBoundary?: boolean
   }>(),
   {
     selectedSlug: null,
@@ -26,12 +32,13 @@ const props = withDefaults(
     cluster: true,
     initialZoom: 9,
     label: 'Bản đồ số điểm du lịch nông nghiệp Lâm Đồng',
+    showBoundary: true,
   },
 )
 
 const emit = defineEmits<{ select: [slug: string] }>()
 
-const LAM_DONG_CENTER: L.LatLngTuple = [11.9404, 108.4583]
+const LAM_DONG_CENTER: L.LatLngTuple = [11.84, 108.12]
 const OSM_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
 
 interface TileProvider {
@@ -41,9 +48,6 @@ interface TileProvider {
 }
 
 // Nguồn ảnh nền theo thứ tự ưu tiên, đều là dữ liệu OpenStreetMap và không cần API key.
-// CARTO đã bị bỏ: từ 2026 CARTO trả ảnh có chữ "API KEY REQUIRED" (vẫn là mã 200 nên không
-// tự chuyển nguồn được). Nếu mạng chặn tile.openstreetmap.org thì tự chuyển sang bản
-// OSM Humanitarian; cần nguồn khác (có key) thì khai báo VITE_MAP_TILE_URL trong frontend/.env.
 const TILE_PROVIDERS: TileProvider[] = [
   ...(import.meta.env.VITE_MAP_TILE_URL
     ? [{ url: import.meta.env.VITE_MAP_TILE_URL, attribution: OSM_ATTRIBUTION, subdomains: 'abc' }]
@@ -65,6 +69,7 @@ const container = ref<HTMLDivElement | null>(null)
 const loadError = ref('')
 
 let map: L.Map | null = null
+let boundaryLayer: L.LayerGroup | null = null
 let markerLayer: L.LayerGroup | null = null
 let clusterLayer: L.MarkerClusterGroup | null = null
 let userLayer: L.LayerGroup | null = null
@@ -118,7 +123,7 @@ function clusterIcon(cluster: L.MarkerCluster): L.DivIcon {
     {
       html: `<div><span>${count}</span></div>`,
       className: `marker-cluster marker-cluster-${size}`,
-      iconSize: new L.Point(40, 40),
+      iconSize: new L.Point(42, 42),
     },
     `Nhóm ${count} điểm, bấm để phóng to`,
   )
@@ -134,7 +139,6 @@ function setMarkerSelected(slug: string, selected: boolean): void {
   const marker = markers.get(slug)
   const feature = featuresBySlug.get(slug)
   if (!marker || !feature) return
-  // Lưu icon mới cho lần Leaflet tạo lại phần tử (cụm tách/gộp), còn phần tử đang hiển thị chỉ đổi class.
   marker.options.icon = markerIcon(feature, selected)
   marker.getElement()?.querySelector('.ocop-marker')?.classList.toggle('is-selected', selected)
 }
@@ -174,6 +178,47 @@ function useTileProvider(index: number): void {
   tileLayer.addTo(map)
 }
 
+/**
+ * Vẽ lớp làm nổi bật ranh giới tỉnh Lâm Đồng (hiệu ứng Spotlight giống cmap.vn):
+ * - Mặt nạ đa giác có lỗ thủng bao ngoài làm dịu vùng ngoài tỉnh
+ * - Viền sáng kép quanh đường biên giới hành chính tỉnh Lâm Đồng
+ * Dùng interactive: false để không cản thao tác kéo/bấm bản đồ và không sinh class .leaflet-interactive.
+ */
+function renderBoundary(): void {
+  if (!map || !boundaryLayer) return
+  boundaryLayer.clearLayers()
+  if (!props.showBoundary) return
+
+  const outerRing = LAM_DONG_OUTER_MASK_LATLNGS.map(([lat, lng]) => [lat, lng] as L.LatLngTuple)
+  const provinceRing = LAM_DONG_BOUNDARY_LATLNGS.map(([lat, lng]) => [lat, lng] as L.LatLngTuple)
+
+  L.polygon([outerRing, provinceRing], {
+    interactive: false,
+    stroke: false,
+    fill: true,
+    fillOpacity: 0.24,
+    className: 'ocop-boundary-mask',
+  }).addTo(boundaryLayer)
+
+  L.polygon(provinceRing, {
+    interactive: false,
+    fill: true,
+    fillOpacity: 0.04,
+    weight: 6,
+    opacity: 0.45,
+    className: 'ocop-boundary-glow',
+  }).addTo(boundaryLayer)
+
+  L.polygon(provinceRing, {
+    interactive: false,
+    fill: false,
+    weight: 2.5,
+    opacity: 0.92,
+    dashArray: '6 4',
+    className: 'ocop-boundary-line',
+  }).addTo(boundaryLayer)
+}
+
 function renderMarkers(fitToFeatures: boolean): void {
   if (!map || !markerLayer) return
   markerLayer.clearLayers()
@@ -211,7 +256,7 @@ function renderMarkers(fitToFeatures: boolean): void {
   }
 
   if (fitToFeatures && drawn.length && !props.selectedSlug) {
-    map.fitBounds(L.latLngBounds(drawn), { padding: [32, 32], maxZoom: 13 })
+    map.fitBounds(L.latLngBounds(drawn), { padding: [36, 36], maxZoom: 13 })
   }
   focusSelected()
 }
@@ -225,7 +270,6 @@ function focusSelected(previousSlug: string | null = null): void {
   const slug = props.selectedSlug
   if (!slug) return
   const marker = markers.get(slug)
-  // Điểm không có tọa độ hợp lệ không có marker: thẻ thông tin vẫn hiện ở panel nhưng bản đồ không di chuyển.
   if (!marker) return
   setMarkerSelected(slug, true)
 
@@ -254,7 +298,6 @@ function renderUserPosition(): void {
   userLayer.clearLayers()
   if (!props.userPosition) return
   const position: L.LatLngTuple = [props.userPosition.latitude, props.userPosition.longitude]
-  // Màu viền và nền lấy từ token qua class .ocop-user-position (CSS ghi đè thuộc tính SVG).
   L.circleMarker(position, {
     radius: 9,
     weight: 3,
@@ -263,11 +306,10 @@ function renderUserPosition(): void {
   })
     .bindTooltip('Vị trí của bạn', { direction: 'top' })
     .addTo(userLayer)
-  if (props.route?.length) return // renderRoute tự căn khung theo tuyến đường.
+  if (props.route?.length) return
 
   const destination = selectedLatLng()
   if (destination) {
-    // Có điểm đang chọn: không kéo bản đồ về phía người dùng mà ôm cả hai điểm.
     markers.get(props.selectedSlug as string)?.closeTooltip()
     map.fitBounds(L.latLngBounds([position, destination]), { padding: [56, 56], maxZoom: 15 })
   } else if (isInsideLamDong(props.userPosition)) {
@@ -281,10 +323,45 @@ function renderRoute(): void {
   routeLayer = null
   if (!props.route?.length) return
   const points = props.route.map(([longitude, latitude]) => [latitude, longitude] as L.LatLngTuple)
-  routeLayer = L.polyline(points, { className: 'ocop-route-line', weight: 5, opacity: 0.85 }).addTo(map)
+  routeLayer = L.polyline(points, { className: 'ocop-route-line', weight: 5, opacity: 0.88 }).addTo(map)
   if (props.selectedSlug) markers.get(props.selectedSlug)?.closeTooltip()
   map.fitBounds(routeLayer.getBounds(), { padding: [40, 40] })
 }
+
+function zoomIn(): void {
+  map?.zoomIn()
+}
+
+function zoomOut(): void {
+  map?.zoomOut()
+}
+
+function resetView(): void {
+  if (!map) return
+  const coords: L.LatLngTuple[] = []
+  for (const marker of markers.values()) {
+    const ll = marker.getLatLng()
+    coords.push([ll.lat, ll.lng])
+  }
+  if (coords.length) {
+    map.fitBounds(L.latLngBounds(coords), { padding: [40, 40], maxZoom: 12 })
+  } else {
+    const provinceRing = LAM_DONG_BOUNDARY_LATLNGS.map(([lat, lng]) => [lat, lng] as L.LatLngTuple)
+    map.fitBounds(L.latLngBounds(provinceRing), { padding: [24, 24], maxZoom: 10 })
+  }
+}
+
+function invalidateSize(): void {
+  map?.invalidateSize()
+  keepSelectedInView()
+}
+
+defineExpose({
+  zoomIn,
+  zoomOut,
+  resetView,
+  invalidateSize,
+})
 
 async function initialize(): Promise<void> {
   if (!container.value) return
@@ -293,8 +370,10 @@ async function initialize(): Promise<void> {
     map.setView(LAM_DONG_CENTER, props.initialZoom)
     useTileProvider(0)
 
+    boundaryLayer = L.layerGroup().addTo(map)
+    renderBoundary()
+
     if (props.cluster) {
-      // Plugin gom cụm đọc biến toàn cục L theo chuẩn UMD.
       ;(window as unknown as { L: typeof L }).L = L
       await import('leaflet.markercluster')
       if (isUnmounted || !map) return
@@ -303,7 +382,6 @@ async function initialize(): Promise<void> {
         maxClusterRadius: 48,
         iconCreateFunction: clusterIcon,
       })
-      // Thư viện cụm chỉ xử lý Enter (clusterkeypress); bổ sung Space cho nhất quán với nút.
       clusterLayer.on('clusterkeypress', (event: L.LeafletEvent) => {
         const keyboardEvent = (event as L.LeafletKeyboardEvent).originalEvent
         if (keyboardEvent?.key !== ' ' && keyboardEvent?.keyCode !== 32) return
@@ -337,6 +415,7 @@ watch(() => props.features, () => renderMarkers(true))
 watch(() => props.selectedSlug, (_slug, previousSlug) => focusSelected(previousSlug ?? null))
 watch(() => props.userPosition, renderUserPosition)
 watch(() => props.route, renderRoute)
+watch(() => props.showBoundary, renderBoundary)
 
 onMounted(() => {
   void initialize()
@@ -347,6 +426,7 @@ onBeforeUnmount(() => {
   resizeObserver?.disconnect()
   map?.remove()
   map = null
+  boundaryLayer = null
   markerLayer = null
   clusterLayer = null
   userLayer = null
@@ -394,6 +474,19 @@ onBeforeUnmount(() => {
 </style>
 
 <style>
+.ocop-boundary-mask {
+  fill: var(--ocop-mist-950);
+}
+
+.ocop-boundary-glow {
+  stroke: var(--ocop-daquy-400);
+  fill: var(--ocop-daquy-100);
+}
+
+.ocop-boundary-line {
+  stroke: var(--ocop-primary-800);
+}
+
 .ocop-user-position {
   stroke: var(--ocop-white);
   fill: var(--ocop-location-user);
@@ -417,14 +510,14 @@ onBeforeUnmount(() => {
   width: 34px;
   height: 34px;
   place-items: center;
-  border: 2px solid var(--ocop-white);
+  border: 2.5px solid var(--ocop-white);
   border-radius: 50% 50% 50% var(--ocop-radius-xs);
   background: var(--marker-color, var(--ocop-primary-700));
-  box-shadow: 0 6px 14px color-mix(in srgb, var(--ocop-neutral-900) 28%, transparent);
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--ocop-neutral-900) 32%, transparent);
   color: var(--ocop-white);
   font-size: var(--ocop-font-size-body);
   transform: rotate(-45deg);
-  transition: transform 160ms ease;
+  transition: transform 160ms ease, box-shadow 160ms ease;
 }
 
 .ocop-marker i {
@@ -432,11 +525,42 @@ onBeforeUnmount(() => {
 }
 
 .ocop-marker.is-selected {
-  outline: 3px solid color-mix(in srgb, var(--ocop-star) 70%, transparent);
-  transform: rotate(-45deg) scale(1.18);
+  outline: 3px solid var(--ocop-daquy-400);
+  box-shadow:
+    0 0 0 6px color-mix(in srgb, var(--ocop-daquy-400) 35%, transparent),
+    0 8px 20px color-mix(in srgb, var(--ocop-neutral-900) 40%, transparent);
+  transform: rotate(-45deg) scale(1.22);
 }
 
 .leaflet-marker-icon:focus-visible .ocop-marker {
   outline: 3px solid color-mix(in srgb, var(--ocop-primary-500) 60%, transparent);
+}
+
+/* Cụm điểm kiểu cmap.vn nhưng đồng bộ bảng màu Sương sớm & dã quỳ */
+.leaflet-map .marker-cluster {
+  background: color-mix(in srgb, var(--ocop-primary-800) 24%, transparent);
+  border-radius: 50%;
+}
+
+.leaflet-map .marker-cluster div {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  margin: 4px;
+  place-items: center;
+  border: 2.5px solid var(--ocop-white);
+  border-radius: 50%;
+  background: var(--ocop-primary-800);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--ocop-mist-950) 32%, transparent);
+  color: var(--ocop-white);
+  font-family: var(--ocop-font-family-sans);
+  font-size: var(--ocop-font-size-small);
+  font-weight: 800;
+}
+
+.leaflet-map .marker-cluster:hover div,
+.leaflet-map .marker-cluster:focus-visible div {
+  background: var(--ocop-mist-950);
+  outline: 2px solid var(--ocop-daquy-400);
 }
 </style>

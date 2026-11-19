@@ -114,4 +114,18 @@ describe('LeafletMap', () => {
     expect(selected[0].element.closest('.leaflet-marker-icon')).toBe(after.find((item) => item.getAttribute('aria-label')?.startsWith('B,')))
     wrapper.unmount()
   })
+
+  it('ve lop ranh gioi tinh Lam Dong khong chan thao tac chuot va co the bat tat', async () => {
+    const wrapper = mount(LeafletMap, { attachTo: document.body, props: { features, cluster: false } })
+    await flushPromises()
+
+    expect(wrapper.find('path.ocop-boundary-mask').exists()).toBe(true)
+    expect(wrapper.find('path.ocop-boundary-line').exists()).toBe(true)
+    expect(wrapper.find('path.ocop-boundary-line').classes()).not.toContain('leaflet-interactive')
+
+    await wrapper.setProps({ showBoundary: false })
+    expect(wrapper.find('path.ocop-boundary-mask').exists()).toBe(false)
+    expect(wrapper.find('path.ocop-boundary-line').exists()).toBe(false)
+    wrapper.unmount()
+  })
 })
