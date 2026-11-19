@@ -325,6 +325,7 @@ async function closeSelection(): Promise<void> {
 function selectLocation(slug: string): void {
   if (slug === selectedSlug.value) {
     activeSidebarTab.value = 'detail'
+    leafletMapRef.value?.focusLocation(slug)
     void revealSelectedCard()
     return
   }
@@ -1388,6 +1389,17 @@ onBeforeUnmount(() => {
 }
 
 /* Thẻ tóm tắt nổi trên bản đồ khi chọn một điểm */
+@keyframes cmap-card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 .cmap-map-popup {
   position: absolute;
   z-index: 455;
@@ -1404,6 +1416,13 @@ onBeforeUnmount(() => {
   border-radius: var(--ocop-radius-md);
   background: var(--ocop-card);
   box-shadow: var(--ocop-shadow-card);
+  animation: cmap-card-enter 260ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cmap-map-popup {
+    animation: none;
+  }
 }
 
 .cmap-popup-thumb {

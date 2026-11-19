@@ -41,6 +41,7 @@ const LeafletMapStub = defineComponent({
       zoomOut: vi.fn(),
       resetView: vi.fn(),
       invalidateSize: vi.fn(),
+      focusLocation: vi.fn(),
     })
     return {}
   },

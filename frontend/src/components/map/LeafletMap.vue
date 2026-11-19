@@ -11,6 +11,7 @@ import {
 } from '@/constants/lam-dong-boundary'
 import type { Coordinate, MapFeature } from '@/types/location'
 import { hasValidCoordinates, isInsideLamDong, locationTypeStyle } from '@/utils/location'
+import { prefersReducedMotion } from '@/utils/motion'
 
 const props = withDefaults(
   defineProps<{
@@ -76,9 +77,28 @@ let userLayer: L.LayerGroup | null = null
 let routeLayer: L.Polyline | null = null
 let tileLayer: L.TileLayer | null = null
 let resizeObserver: ResizeObserver | null = null
+let focusMoveEndHandler: (() => void) | null = null
 let isUnmounted = false
 const markers = new Map<string, L.Marker>()
 const featuresBySlug = new Map<string, MapFeature>()
+
+/**
+ * Chỉ bật hiệu ứng bay mượt (flyTo / flyToBounds) khi người dùng không bật chế độ giảm chuyển động
+ * và khung bản đồ có kích thước thật (> 0px). Trong môi trường test jsdom (0x0), flyTo chia cho 0
+ * nên tự động dùng setView/fitBounds tức thì.
+ */
+function canAnimateMap(): boolean {
+  if (!map || prefersReducedMotion()) return false
+  const size = map.getSize()
+  return size.x > 0 && size.y > 0
+}
+
+function clearPendingFocusHandler(): void {
+  if (map && focusMoveEndHandler) {
+    map.off('moveend', focusMoveEndHandler)
+  }
+  focusMoveEndHandler = null
+}
 
 /**
  * DivIcon có nhãn đọc được: Leaflet chỉ đặt role="button" và tabindex cho phần tử icon, nên
@@ -263,6 +283,8 @@ function renderMarkers(fitToFeatures: boolean): void {
 
 function focusSelected(previousSlug: string | null = null): void {
   if (!map) return
+  clearPendingFocusHandler()
+
   if (previousSlug && previousSlug !== props.selectedSlug) {
     setMarkerSelected(previousSlug, false)
     markers.get(previousSlug)?.closeTooltip()
@@ -273,12 +295,59 @@ function focusSelected(previousSlug: string | null = null): void {
   if (!marker) return
   setMarkerSelected(slug, true)
 
-  const showTooltip = () => marker.openTooltip()
+  const targetLatLng = marker.getLatLng()
+  const targetZoom = Math.max(map.getZoom(), 15)
+
+  const showTooltip = () => {
+    if (!map || props.selectedSlug !== slug) return
+    setMarkerSelected(slug, true)
+    marker.openTooltip()
+  }
+
+  if (canAnimateMap()) {
+    const distance = map.getCenter().distanceTo(targetLatLng)
+    if (distance < 12 && map.getZoom() >= targetZoom) {
+      if (clusterLayer) {
+        clusterLayer.zoomToShowLayer(marker, showTooltip)
+      } else {
+        showTooltip()
+      }
+      return
+    }
+
+    map.stop()
+    focusMoveEndHandler = () => {
+      focusMoveEndHandler = null
+      if (!map || props.selectedSlug !== slug) return
+      if (clusterLayer) {
+        const visibleParent = clusterLayer.getVisibleParent(marker)
+        if (visibleParent && visibleParent !== marker) {
+          clusterLayer.zoomToShowLayer(marker, showTooltip)
+          return
+        }
+      }
+      showTooltip()
+    }
+    map.once('moveend', focusMoveEndHandler)
+    map.flyTo(targetLatLng, targetZoom, {
+      animate: true,
+      duration: 0.85,
+      easeLinearity: 0.22,
+    })
+    return
+  }
+
   if (clusterLayer) {
     clusterLayer.zoomToShowLayer(marker, showTooltip)
   } else {
-    map.setView(marker.getLatLng(), Math.max(map.getZoom(), 13))
+    map.setView(targetLatLng, Math.max(map.getZoom(), 13))
     showTooltip()
+  }
+}
+
+function focusLocation(slug: string): void {
+  if (slug === props.selectedSlug) {
+    focusSelected(null)
   }
 }
 
@@ -311,9 +380,19 @@ function renderUserPosition(): void {
   const destination = selectedLatLng()
   if (destination) {
     markers.get(props.selectedSlug as string)?.closeTooltip()
-    map.fitBounds(L.latLngBounds([position, destination]), { padding: [56, 56], maxZoom: 15 })
+    const bounds = L.latLngBounds([position, destination])
+    if (canAnimateMap()) {
+      map.flyToBounds(bounds, { padding: [56, 56], maxZoom: 15, duration: 0.85 })
+    } else {
+      map.fitBounds(bounds, { padding: [56, 56], maxZoom: 15 })
+    }
   } else if (isInsideLamDong(props.userPosition)) {
-    map.setView(position, Math.max(map.getZoom(), 11))
+    const zoom = Math.max(map.getZoom(), 12)
+    if (canAnimateMap()) {
+      map.flyTo(position, zoom, { duration: 0.8 })
+    } else {
+      map.setView(position, Math.max(map.getZoom(), 11))
+    }
   }
 }
 
@@ -325,29 +404,44 @@ function renderRoute(): void {
   const points = props.route.map(([longitude, latitude]) => [latitude, longitude] as L.LatLngTuple)
   routeLayer = L.polyline(points, { className: 'ocop-route-line', weight: 5, opacity: 0.88 }).addTo(map)
   if (props.selectedSlug) markers.get(props.selectedSlug)?.closeTooltip()
-  map.fitBounds(routeLayer.getBounds(), { padding: [40, 40] })
+  if (canAnimateMap()) {
+    map.flyToBounds(routeLayer.getBounds(), { padding: [44, 44], duration: 0.85 })
+  } else {
+    map.fitBounds(routeLayer.getBounds(), { padding: [40, 40] })
+  }
 }
 
 function zoomIn(): void {
-  map?.zoomIn()
+  map?.zoomIn(1, { animate: canAnimateMap() })
 }
 
 function zoomOut(): void {
-  map?.zoomOut()
+  map?.zoomOut(1, { animate: canAnimateMap() })
 }
 
 function resetView(): void {
   if (!map) return
+  clearPendingFocusHandler()
   const coords: L.LatLngTuple[] = []
   for (const marker of markers.values()) {
     const ll = marker.getLatLng()
     coords.push([ll.lat, ll.lng])
   }
   if (coords.length) {
-    map.fitBounds(L.latLngBounds(coords), { padding: [40, 40], maxZoom: 12 })
+    const bounds = L.latLngBounds(coords)
+    if (canAnimateMap()) {
+      map.flyToBounds(bounds, { padding: [40, 40], maxZoom: 12, duration: 0.85 })
+    } else {
+      map.fitBounds(bounds, { padding: [40, 40], maxZoom: 12 })
+    }
   } else {
     const provinceRing = LAM_DONG_BOUNDARY_LATLNGS.map(([lat, lng]) => [lat, lng] as L.LatLngTuple)
-    map.fitBounds(L.latLngBounds(provinceRing), { padding: [24, 24], maxZoom: 10 })
+    const bounds = L.latLngBounds(provinceRing)
+    if (canAnimateMap()) {
+      map.flyToBounds(bounds, { padding: [24, 24], maxZoom: 10, duration: 0.85 })
+    } else {
+      map.fitBounds(bounds, { padding: [24, 24], maxZoom: 10 })
+    }
   }
 }
 
@@ -361,12 +455,20 @@ defineExpose({
   zoomOut,
   resetView,
   invalidateSize,
+  focusLocation,
 })
 
 async function initialize(): Promise<void> {
   if (!container.value) return
   try {
-    map = L.map(container.value, { zoomControl: true, attributionControl: true })
+    map = L.map(container.value, {
+      zoomControl: true,
+      attributionControl: true,
+      zoomAnimation: true,
+      fadeAnimation: true,
+      markerZoomAnimation: true,
+      wheelPxPerZoomLevel: 80,
+    })
     map.setView(LAM_DONG_CENTER, props.initialZoom)
     useTileProvider(0)
 
@@ -380,6 +482,8 @@ async function initialize(): Promise<void> {
       clusterLayer = L.markerClusterGroup({
         showCoverageOnHover: false,
         maxClusterRadius: 48,
+        animate: true,
+        animateAddingMarkers: false,
         iconCreateFunction: clusterIcon,
       })
       clusterLayer.on('clusterkeypress', (event: L.LeafletEvent) => {
@@ -423,6 +527,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   isUnmounted = true
+  clearPendingFocusHandler()
   resizeObserver?.disconnect()
   map?.remove()
   map = null
@@ -517,11 +622,27 @@ onBeforeUnmount(() => {
   color: var(--ocop-white);
   font-size: var(--ocop-font-size-body);
   transform: rotate(-45deg);
-  transition: transform 160ms ease, box-shadow 160ms ease;
+  transition:
+    transform 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 320ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .ocop-marker i {
   transform: rotate(45deg);
+}
+
+@keyframes ocop-marker-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 5px color-mix(in srgb, var(--ocop-daquy-400) 38%, transparent),
+      0 8px 20px color-mix(in srgb, var(--ocop-neutral-900) 40%, transparent);
+  }
+  50% {
+    box-shadow:
+      0 0 0 10px color-mix(in srgb, var(--ocop-daquy-400) 16%, transparent),
+      0 10px 24px color-mix(in srgb, var(--ocop-neutral-900) 44%, transparent);
+  }
 }
 
 .ocop-marker.is-selected {
@@ -529,7 +650,18 @@ onBeforeUnmount(() => {
   box-shadow:
     0 0 0 6px color-mix(in srgb, var(--ocop-daquy-400) 35%, transparent),
     0 8px 20px color-mix(in srgb, var(--ocop-neutral-900) 40%, transparent);
-  transform: rotate(-45deg) scale(1.22);
+  transform: rotate(-45deg) scale(1.25);
+  animation: ocop-marker-pulse 2.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ocop-marker {
+    transition: none;
+  }
+
+  .ocop-marker.is-selected {
+    animation: none;
+  }
 }
 
 .leaflet-marker-icon:focus-visible .ocop-marker {
