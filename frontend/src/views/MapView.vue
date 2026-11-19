@@ -177,7 +177,7 @@ const legendEntries = computed(() => countFeaturesByType(mappable.value))
 const groupedLocations = computed<LocationGroup[]>(() => {
   const groups = new Map<LocationType, LocationGroup>()
   for (const feature of features.value) {
-    const type = feature.properties.type
+    const type: LocationType = isLocationType(feature.properties.type) ? feature.properties.type : 'other'
     const existing = groups.get(type)
     if (existing) {
       existing.items.push(feature)
@@ -827,7 +827,7 @@ onBeforeUnmount(() => {
               </option>
             </select>
             <select v-model="filters.district" class="form-select" aria-label="Lọc theo địa bàn" @change="applyFilters('push')">
-              <option value="">Mọi địa bàn ({{ mappableCount }})</option>
+              <option value="">Mọi địa bàn</option>
               <option v-for="district in districtOptions" :key="district" :value="district">{{ district }}</option>
             </select>
           </div>
@@ -1174,8 +1174,8 @@ onBeforeUnmount(() => {
   position: absolute;
   z-index: 450;
   top: 12px;
-  left: 54px;
-  max-width: calc(100% - 190px);
+  left: 12px;
+  max-width: calc(100% - 160px);
 }
 
 .cmap-scope-pill {
@@ -1505,6 +1505,8 @@ onBeforeUnmount(() => {
 
 .cmap-tabs {
   display: grid;
+  flex: 0 0 auto;
+  order: -2;
   grid-template-columns: 48px 1fr 1fr;
   overflow: hidden;
   border: 1px solid var(--ocop-border);
@@ -1954,10 +1956,14 @@ onBeforeUnmount(() => {
   }
 }
 
+.map-canvas :deep(.leaflet-top.leaflet-left .leaflet-control-zoom) {
+  display: none;
+}
+
 @media (min-width: 992px) {
   .map-page {
-    height: calc(100vh - 4.5rem);
-    min-height: 600px;
+    height: calc(100vh - 6.75rem);
+    min-height: 580px;
   }
 
   .cmap-sidebar-toggle {
