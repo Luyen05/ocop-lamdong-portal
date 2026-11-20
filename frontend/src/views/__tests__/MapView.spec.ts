@@ -33,8 +33,18 @@ vi.mock('@/services/locations', () => ({
 
 const LeafletMapStub = defineComponent({
   name: 'LeafletMap',
-  props: ['features', 'selectedSlug', 'userPosition', 'route'],
+  props: ['features', 'selectedSlug', 'userPosition', 'route', 'showBoundary'],
   emits: ['select'],
+  setup(_, { expose }) {
+    expose({
+      zoomIn: vi.fn(),
+      zoomOut: vi.fn(),
+      resetView: vi.fn(),
+      invalidateSize: vi.fn(),
+      focusLocation: vi.fn(),
+    })
+    return {}
+  },
   template: '<div class="map-stub" />',
 })
 
@@ -495,5 +505,28 @@ describe('MapView', () => {
     await flushPromises()
     expect(wrapper.find('#selected-title').exists()).toBe(false)
     expect(router.replace).toHaveBeenLastCalledWith({ name: 'map', query: {} })
+  })
+
+  it('ho tro thu gon thanh ben, bat tat lop ranh gioi va dong mo nhom accordion kieu cmap.vn', async () => {
+    const wrapper = mountView()
+    await flushPromises()
+
+    expect(wrapper.findAll('.cmap-kpi-pill')).toHaveLength(3)
+    expect(wrapper.find('.map-page').classes()).not.toContain('is-sidebar-collapsed')
+
+    await wrapper.get('.cmap-sidebar-toggle').trigger('click')
+    await flushPromises()
+    expect(wrapper.find('.map-page').classes()).toContain('is-sidebar-collapsed')
+
+    await wrapper.get('.cmap-layer-btn').trigger('click')
+    expect(wrapper.find('.cmap-layer-popover').exists()).toBe(true)
+    const boundaryCheckbox = wrapper.get('.cmap-switch-row input')
+    await boundaryCheckbox.setValue(false)
+    expect(wrapper.getComponent(LeafletMapStub).props('showBoundary')).toBe(false)
+
+    const accordionBtn = wrapper.get('.cmap-accordion-header')
+    expect(accordionBtn.attributes('aria-expanded')).toBe('true')
+    await accordionBtn.trigger('click')
+    expect(accordionBtn.attributes('aria-expanded')).toBe('false')
   })
 })

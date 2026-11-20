@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 
 import AppIcon from '@/components/ui/AppIcon.vue'
+import { buildLamDongSvgPath } from '@/constants/lam-dong-boundary'
 import { getMapLocations } from '@/services/locations'
 import type { MapFeature } from '@/types/location'
 import { scheduleWhenIdle } from '@/utils/motion'
@@ -11,6 +12,7 @@ const features = ref<MapFeature[]>([])
 const isLoading = ref(true)
 // Tải lỗi khác với chưa có điểm: không hiện "0 điểm đến" mà báo lỗi kèm nút "Thử lại".
 const loadFailed = ref(false)
+const provincePath = buildLamDongSvgPath(560, 320, 44, 22)
 
 // Ảnh xem trước dùng phép chiếu tuyến tính trong khung bao các điểm thật;
 // bản đồ tương tác đầy đủ nằm ở trang /ban-do.
@@ -58,6 +60,11 @@ const clusters = computed(() => {
 
 const singleMarkers = computed(() => clusters.value.filter((group) => group.items.length === 1).map((group) => group.items[0]))
 const groupedMarkers = computed(() => clusters.value.filter((group) => group.items.length > 1))
+
+const districtCount = computed(() => {
+  const unique = new Set(features.value.map((feature) => feature.properties.district?.trim()).filter(Boolean))
+  return unique.size
+})
 
 const legend = computed(() => {
   const seen = new Map<string, { label: string; icon: string; color: string; count: number }>()
@@ -107,22 +114,32 @@ onBeforeUnmount(() => cancelScheduledLoad())
         <p class="ocop-eyebrow">Bản đồ số</p>
         <h2 id="map-title">Du lịch nông nghiệp Lâm Đồng</h2>
       </div>
-      <span v-if="!isLoading && !loadFailed" class="count-badge">
-        <AppIcon name="map-pin" :size="14" />
-        {{ features.length }} điểm đến
-      </span>
+      <div v-if="!isLoading && !loadFailed" class="map-kpi-pills">
+        <span class="count-badge">
+          <AppIcon name="map-pin" :size="14" />
+          {{ features.length }} điểm đến
+        </span>
+        <span v-if="districtCount" class="count-badge is-district">
+          {{ districtCount }} địa bàn
+        </span>
+      </div>
     </div>
 
     <div class="map-preview">
       <svg class="map-art" viewBox="0 0 560 320" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
-        <rect class="land" width="560" height="320" />
+        <rect class="land-outer" width="560" height="320" />
         <path class="grid" d="M0 80 H560 M0 160 H560 M0 240 H560 M140 0 V320 M280 0 V320 M420 0 V320" />
-        <path class="hill-a" d="M0 230 C90 190 170 250 260 205 S430 150 560 190 L560 320 L0 320 Z" />
-        <path class="hill-b" d="M0 90 C120 60 190 120 300 85 S470 30 560 60 L560 0 L0 0 Z" />
-        <path class="road road-main" d="M-10 260 C120 230 220 170 330 160 S470 120 570 110" />
-        <path class="road" d="M300 -10 C320 80 360 150 420 210 S470 300 480 330" />
-        <ellipse class="lake" cx="410" cy="150" rx="26" ry="14" />
+        <!-- Ranh giới tỉnh Lâm Đồng làm nổi bật kiểu Spotlight (đồng bộ với trang /ban-do) -->
+        <path class="province-glow" :d="provincePath" />
+        <path class="province-land" :d="provincePath" />
+        <path class="hill-a" d="M70 235 C140 195 210 245 290 205 S420 155 495 188 L475 265 L95 270 Z" />
+        <path class="road road-main" d="M78 248 C175 220 265 168 355 152 S455 118 492 106" />
+        <path class="province-border" :d="provincePath" />
+        <ellipse class="lake" cx="408" cy="144" rx="22" ry="11" />
       </svg>
+
+      <span class="map-province-tag" aria-hidden="true">Tỉnh Lâm Đồng</span>
+
       <p v-if="isLoading" class="map-empty" role="status">Đang tải điểm đến...</p>
       <div v-else-if="loadFailed" class="map-empty map-error" role="alert">
         <p>Chưa tải được các điểm du lịch trên bản đồ.</p>
@@ -199,6 +216,13 @@ h2 {
   line-height: 1.3;
 }
 
+.map-kpi-pills {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--ocop-space-1);
+}
+
 .count-badge {
   display: inline-flex;
   min-height: 28px;
@@ -213,13 +237,19 @@ h2 {
   font-weight: 700;
 }
 
+.count-badge.is-district {
+  background: var(--ocop-daquy-100);
+  color: var(--ocop-daquy-800);
+}
+
 .map-preview {
   position: relative;
   min-height: 200px;
   flex: 1;
   overflow: hidden;
+  border: 1px solid var(--ocop-border);
   border-radius: var(--ocop-radius-md);
-  background: var(--ocop-mist-50);
+  background: var(--ocop-mist-200);
 }
 
 .map-art {
@@ -229,13 +259,41 @@ h2 {
   height: 100%;
 }
 
-.map-art .land { fill: var(--ocop-mist-50); }
-.map-art .grid { fill: none; stroke: var(--ocop-mist-100); stroke-width: 1; }
-.map-art .hill-a { fill: var(--ocop-tone-leaf-soft); }
-.map-art .hill-b { fill: var(--ocop-mist-100); }
-.map-art .road { fill: none; stroke: var(--ocop-card); stroke-linecap: round; stroke-width: 5; }
-.map-art .road-main { stroke-width: 6; }
-.map-art .lake { fill: var(--ocop-mist-200); }
+.map-art .land-outer { fill: var(--ocop-mist-200); }
+.map-art .grid { fill: none; stroke: color-mix(in srgb, var(--ocop-mist-400) 30%, transparent); stroke-width: 1; }
+.map-art .province-glow {
+  fill: none;
+  stroke: var(--ocop-daquy-300);
+  stroke-width: 8;
+  stroke-linejoin: round;
+  opacity: 0.65;
+}
+.map-art .province-land { fill: var(--ocop-mist-50); }
+.map-art .hill-a { fill: var(--ocop-tone-leaf-soft); opacity: 0.75; }
+.map-art .road { fill: none; stroke: var(--ocop-card); stroke-linecap: round; stroke-width: 4; }
+.map-art .road-main { stroke-width: 5; }
+.map-art .province-border {
+  fill: none;
+  stroke: var(--ocop-primary-800);
+  stroke-width: 2;
+  stroke-dasharray: 6 3;
+  stroke-linejoin: round;
+}
+.map-art .lake { fill: var(--ocop-mist-300); }
+
+.map-province-tag {
+  position: absolute;
+  z-index: 1;
+  top: 10px;
+  left: 10px;
+  padding: 2px 10px;
+  border: 1px solid var(--ocop-border);
+  border-radius: var(--ocop-radius-pill);
+  background: var(--ocop-glass-bg-solid);
+  color: var(--ocop-primary-900);
+  font-size: var(--ocop-font-size-caption);
+  font-weight: 800;
+}
 
 .map-marker {
   position: absolute;
