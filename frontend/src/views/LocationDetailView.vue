@@ -10,6 +10,7 @@ import ReviewSection from '@/components/reviews/ReviewSection.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
 import { getApiErrorMessage } from '@/services/api-error'
 import { getLocation } from '@/services/locations'
+import { locationFallbackPhoto } from '@/constants/photos'
 import { absoluteUrl, applyPageSeo, clipDescription, locationJsonLd } from '@/utils/seo'
 import type { LocationDetail, MapFeature } from '@/types/location'
 import {
@@ -28,6 +29,13 @@ const errorTitle = ref('Không thể tải điểm du lịch')
 const errorMessage = ref('')
 
 const typeStyle = computed(() => locationTypeStyle(location.value?.type ?? 'other'))
+const hasOwnPhoto = computed(() => Boolean(location.value?.primary_image_url) || Boolean(location.value?.images.length))
+const usesFallbackPhoto = computed(() => Boolean(location.value) && !hasOwnPhoto.value)
+const galleryPrimaryUrl = computed(() =>
+  hasOwnPhoto.value || !location.value
+    ? (location.value?.primary_image_url ?? null)
+    : locationFallbackPhoto(location.value.type).src,
+)
 const mapFeatures = computed<MapFeature[]>(() => {
   if (!location.value) return []
   const current = location.value
@@ -142,7 +150,10 @@ function retryLoad(): void {
 
       <template v-else-if="location">
         <section class="location-overview">
-          <PresentationGallery :images="location.images" :primary-url="location.primary_image_url" :name="location.name" landscape />
+          <PresentationGallery :images="location.images" :primary-url="galleryPrimaryUrl" :name="location.name" landscape />
+            <p v-if="usesFallbackPhoto" class="photo-note" data-test="photo-note">
+              Ảnh minh họa theo loại hình, chưa phải ảnh thực tế của điểm này.
+            </p>
 
           <div class="location-info">
             <span class="type-badge" :style="{ '--type-color': typeStyle.color }">
@@ -408,6 +419,12 @@ function retryLoad(): void {
   border-left: 4px solid var(--ocop-primary-700);
   border-radius: 0.75rem;
   background: var(--ocop-mint-soft);
+}
+
+.photo-note {
+  margin: 0.5rem 0 0;
+  color: var(--ocop-text-muted);
+  font-size: 0.8rem;
 }
 
 .subject-map-link {
