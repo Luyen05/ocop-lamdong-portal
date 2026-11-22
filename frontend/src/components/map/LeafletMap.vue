@@ -17,6 +17,8 @@ const props = withDefaults(
     route?: Array<[number, number]> | null
     /** Đường nét đứt nối các cặp điểm (vd. nơi sản xuất → nơi bán), mỗi cặp là hai slug. */
     links?: Array<[string, string]>
+    /** Phần đáy bản đồ bị thẻ thông tin che (px): marker đang chọn được giữ nằm trên phần này. */
+    bottomInset?: number
     cluster?: boolean
     initialZoom?: number
     label?: string
@@ -26,6 +28,7 @@ const props = withDefaults(
     userPosition: null,
     route: null,
     links: () => [],
+    bottomInset: 0,
     cluster: true,
     initialZoom: 9,
     label: 'Bản đồ số điểm du lịch nông nghiệp Lâm Đồng',
@@ -247,15 +250,16 @@ function focusSelected(previousSlug: string | null = null): void {
   if (!marker) return
   setMarkerSelected(slug, true)
 
-  const showTooltip = () => marker.openTooltip()
+  // Điểm đang chọn đã có thẻ thông tin nên không mở thêm tooltip trùng tên (dễ bị thẻ che mất một nửa).
+  marker.closeTooltip()
   if (clusterLayer) {
     clusterLayer.zoomToShowLayer(marker, () => {
-      showTooltip()
+      marker.closeTooltip()
+      keepSelectedInView()
       emitSelectedPosition()
     })
   } else {
     map.setView(marker.getLatLng(), Math.max(map.getZoom(), 13))
-    showTooltip()
     emitSelectedPosition()
   }
 }
@@ -264,7 +268,13 @@ function focusSelected(previousSlug: string | null = null): void {
 function keepSelectedInView(): void {
   if (!map || !props.selectedSlug) return
   const marker = markers.get(props.selectedSlug)
-  if (marker) map.panInside(marker.getLatLng(), { padding: [48, 48], animate: false })
+  if (marker) {
+    map.panInside(marker.getLatLng(), {
+      paddingTopLeft: [48, 56],
+      paddingBottomRight: [48, 48 + props.bottomInset],
+      animate: false,
+    })
+  }
 }
 
 function selectedLatLng(): L.LatLng | null {
@@ -394,6 +404,15 @@ watch(
   },
 )
 watch(() => props.links, renderLinks)
+// Đợi hoạt ảnh phóng to/di chuyển của bản đồ xong rồi mới dịch marker khỏi vùng thẻ che.
+let insetTimer: ReturnType<typeof setTimeout> | undefined
+watch(
+  () => props.bottomInset,
+  () => {
+    clearTimeout(insetTimer)
+    insetTimer = setTimeout(keepSelectedInView, 450)
+  },
+)
 watch(() => props.selectedSlug, (_slug, previousSlug) => focusSelected(previousSlug ?? null))
 watch(() => props.userPosition, renderUserPosition)
 watch(() => props.route, renderRoute)

@@ -125,6 +125,9 @@ let latestNearbyId = 0
 
 const isCompact = ref(false)
 const selectedCard = ref<HTMLElement | null>(null)
+const cardHeight = ref(0)
+const cardWidth = ref(0)
+let cardObserver: ResizeObserver | null = null
 const selectedImageFailed = ref(false)
 const allLocationsTitle = ref<HTMLElement | null>(null)
 let compactQuery: MediaQueryList | null = null
@@ -249,24 +252,32 @@ const districtOptions = computed(() =>
     : districts.value,
 )
 const hasNearbyFilters = computed(() => Boolean(applied.search || applied.district))
+/**
+ * Trên máy tính, thẻ nằm cạnh marker (bên phải nếu marker ở nửa trái, ngược lại bên trái) và được kẹp theo chiều dọc
+ * để không bao giờ bị cắt ở mép trên hay mép dưới khung bản đồ, dù thẻ cao bao nhiêu.
+ */
 const mapInfoStyle = computed(() => {
   const position = selectedMarkerPosition.value
   if (isCompact.value || !position) return undefined
   const placeRight = position.x < position.width / 2
-  const placeBelow = position.y < 230
-  return {
-    left: `${position.x}px`,
-    top: `${position.y}px`,
-    transform: `${placeRight ? 'translateX(24px)' : 'translateX(calc(-100% - 24px))'} ${
-      placeBelow ? 'translateY(24px)' : 'translateY(calc(-100% - 24px))'
-    }`,
-  }
+  const height = cardHeight.value || 320
+  const width = cardWidth.value || 390
+  const margin = 12
+  // Chừa 64px bên trái cho nút phóng to/thu nhỏ của bản đồ.
+  const controlsGap = 64
+  const top = Math.min(Math.max(position.y - height / 2, margin), Math.max(margin, position.height - height - margin))
+  const left = placeRight
+    ? Math.max(controlsGap, Math.min(position.x + 30, position.width - width - margin))
+    : Math.max(controlsGap, position.x - 30 - width)
+  return { left: `${left}px`, top: `${top}px` }
 })
 const mapInfoPlacement = computed(() => {
   const position = selectedMarkerPosition.value
   if (isCompact.value || !position) return 'default'
-  return `${position.x < position.width / 2 ? 'right' : 'left'}-${position.y < 230 ? 'below' : 'above'}`
+  return `${position.x < position.width / 2 ? 'right' : 'left'}-side`
 })
+// Trên điện thoại thẻ nằm đè phần dưới bản đồ: báo cho bản đồ chừa chỗ để marker đang chọn không bị che.
+const mapBottomInset = computed(() => (isCompact.value && selectedFeature.value ? cardHeight.value + 16 : 0))
 
 /** Ghi bộ lọc/điểm chọn lên URL nhưng giữ các tham số còn lại; không gọi router khi query không đổi. */
 function writeQuery(patch: Record<string, string | undefined>, mode: 'push' | 'replace' = 'replace'): void {
@@ -679,7 +690,23 @@ onMounted(() => {
   void loadFeatures()
 })
 
+// Đo chiều cao thẻ điểm (đổi theo nội dung, ảnh tải xong, xoay màn hình) để đặt thẻ không bị cắt.
+watch(selectedCard, (element) => {
+  cardObserver?.disconnect()
+  cardObserver = null
+  cardHeight.value = element?.offsetHeight ?? 0
+  cardWidth.value = element?.offsetWidth ?? 0
+  if (element && typeof ResizeObserver !== 'undefined') {
+    cardObserver = new ResizeObserver(() => {
+      cardHeight.value = element.offsetHeight
+      cardWidth.value = element.offsetWidth
+    })
+    cardObserver.observe(element)
+  }
+})
+
 onBeforeUnmount(() => {
+  cardObserver?.disconnect()
   window.removeEventListener('keydown', onKeydown)
   compactQuery?.removeEventListener?.('change', onCompactChange)
 })
@@ -699,7 +726,7 @@ onBeforeUnmount(() => {
             <dd>{{ kindCounts.attraction }}</dd>
           </div>
           <div>
-            <dt>Cửa hàng, cơ sở</dt>
+            <dt>Cửa hàng</dt>
             <dd>{{ kindCounts.shop }}</dd>
           </div>
           <div>
@@ -715,7 +742,7 @@ onBeforeUnmount(() => {
         </p>
       </header>
 
-      <div class="kind-toggle" role="radiogroup" aria-label="Loại địa điểm" data-test="kind-toggle">
+      <div class="kind-toggle" role="group" aria-label="Loại địa điểm" data-test="kind-toggle">
         <button
           v-for="option in [
             { value: 'all', label: 'Tất cả', count: kindCounts.all },
@@ -724,8 +751,7 @@ onBeforeUnmount(() => {
           ] as const"
           :key="option.value"
           type="button"
-          role="radio"
-          :aria-checked="applied.kind === option.value"
+          :aria-pressed="applied.kind === option.value"
           :class="{ active: applied.kind === option.value }"
           :data-kind="option.value"
           @click="selectKind(option.value)"
@@ -782,7 +808,7 @@ onBeforeUnmount(() => {
           >
             Xem sản phẩm
           </RouterLink>
-          <button class="btn btn-outline-secondary btn-sm" type="button" data-test="clear-context" @click="clearProductFilter">
+          <button class="btn btn-sm context-clear" type="button" data-test="clear-context" @click="clearProductFilter">
             Bỏ lọc
           </button>
         </div>
@@ -790,20 +816,6 @@ onBeforeUnmount(() => {
       <p v-if="contextMessage" class="panel-section panel-message" role="status" data-test="context-message">
         {{ contextMessage }}
       </p>
-
-      <section v-if="tours.length && !tourDetail" class="panel-section tour-list" aria-labelledby="tour-list-title" data-test="tour-list">
-        <h2 id="tour-list-title">Tuyến tham quan</h2>
-        <ul>
-          <li v-for="tour in tours" :key="tour.slug">
-            <button type="button" data-test="tour-item" @click="selectTour(tour.slug)">
-              <strong>{{ tour.name }}</strong>
-              <small>
-                {{ tour.stop_count }} chặng<template v-if="tour.duration_text"> · {{ tour.duration_text }}</template>
-              </small>
-            </button>
-          </li>
-        </ul>
-      </section>
 
       <form class="panel-section filter-form" role="search" @submit.prevent="applyFilters('replace')">
         <label class="visually-hidden" for="map-search">Tìm địa điểm</label>
@@ -814,7 +826,7 @@ onBeforeUnmount(() => {
             class="form-control"
             type="search"
             maxlength="150"
-            placeholder="Tìm đồi chè, cửa hàng, vườn dâu..."
+            placeholder="Tìm địa điểm, cửa hàng..."
           />
           <button class="btn btn-success" type="submit" :disabled="isLoading" aria-label="Tìm kiếm">
             <AppIcon name="search" :size="16" />
@@ -832,8 +844,12 @@ onBeforeUnmount(() => {
             <option v-for="district in districtOptions" :key="district" :value="district">{{ district }}</option>
           </select>
         </div>
-        <div v-if="categories.length" class="category-chips" role="group" aria-label="Có bán sản phẩm thuộc nhóm">
-          <span class="chips-label">Có bán sản phẩm thuộc nhóm</span>
+        <details v-if="categories.length" class="category-filter" :open="Boolean(applied.category)">
+          <summary>
+            Nhóm sản phẩm
+            <span v-if="applied.category" class="category-active">đang lọc</span>
+          </summary>
+          <div class="category-chips" role="group" aria-label="Có bán sản phẩm thuộc nhóm">
           <button
             v-for="category in categories"
             :key="category.slug"
@@ -845,48 +861,15 @@ onBeforeUnmount(() => {
           >
             {{ category.name }}
           </button>
-        </div>
+          </div>
+        </details>
         <button v-if="hasFilters" class="btn-link-reset" type="button" @click="clearFilters">Xóa bộ lọc</button>
       </form>
-
-      <MapLegend :features="mappable" :active-type="applied.type" @select="selectLegendType" />
 
       <div v-if="errorMessage" class="panel-section alert alert-danger mb-0" role="alert">
         {{ errorMessage }}
         <button class="btn btn-sm btn-outline-danger ms-2" type="button" @click="loadFeatures">Thử lại</button>
       </div>
-
-      <section class="panel-section" aria-labelledby="nearby-title">
-        <div class="section-title-row">
-          <h2 id="nearby-title">Điểm gần bạn</h2>
-          <button class="btn btn-sm btn-outline-success" type="button" :disabled="isLocating" @click="locateUser('nearby')">
-            <AppIcon name="navigation" :size="14" />
-            {{ isLocating ? 'Đang định vị...' : userPosition ? 'Cập nhật vị trí' : 'Định vị tôi' }}
-          </button>
-        </div>
-        <div class="radius-row">
-          <label for="nearby-radius">Bán kính tìm</label>
-          <select id="nearby-radius" v-model.number="radiusKm" class="form-select form-select-sm" @change="changeRadius">
-            <option v-for="option in RADIUS_OPTIONS_KM" :key="option" :value="option">{{ option }} km</option>
-          </select>
-        </div>
-        <p v-if="locationMessage" class="panel-message" role="status">{{ locationMessage }}</p>
-        <p v-else-if="!userPosition" class="panel-hint">
-          Cho phép truy cập vị trí để tìm địa điểm gần nhất trong bán kính {{ radiusKm }} km.
-        </p>
-        <p v-if="isLoadingNearby" class="panel-hint">Đang tìm điểm gần nhất...</p>
-        <ol v-else-if="nearby.length" class="nearby-list">
-          <li v-for="item in nearby" :key="item.id">
-            <button type="button" :class="{ active: item.slug === selectedSlug }" @click="selectNearby(item)">
-              <span>
-                <strong>{{ item.name }}</strong>
-                <small>{{ item.type_label }} · {{ item.district }}</small>
-              </span>
-              <em>{{ formatDistance(item.distance_m) }}</em>
-            </button>
-          </li>
-        </ol>
-      </section>
 
       <section
         v-if="selectedFeature"
@@ -1051,6 +1034,55 @@ onBeforeUnmount(() => {
         </ul>
       </section>
 
+      <section v-if="tours.length && !tourDetail" class="panel-section tour-list" aria-labelledby="tour-list-title" data-test="tour-list">
+        <h2 id="tour-list-title">Tuyến tham quan</h2>
+        <p class="panel-hint">Chọn một tuyến để xem các chặng theo thứ tự trên bản đồ.</p>
+        <ul>
+          <li v-for="tour in tours" :key="tour.slug">
+            <button type="button" data-test="tour-item" @click="selectTour(tour.slug)">
+              <strong>{{ tour.name }}</strong>
+              <small>
+                {{ tour.stop_count }} chặng<template v-if="tour.duration_text"> · {{ tour.duration_text }}</template>
+              </small>
+            </button>
+          </li>
+        </ul>
+      </section>
+
+      <MapLegend :features="mappable" :active-type="applied.type" @select="selectLegendType" />
+
+      <section class="panel-section" aria-labelledby="nearby-title">
+        <div class="section-title-row">
+          <h2 id="nearby-title">Điểm gần bạn</h2>
+          <button class="btn btn-sm btn-outline-success" type="button" :disabled="isLocating" @click="locateUser('nearby')">
+            <AppIcon name="navigation" :size="14" />
+            {{ isLocating ? 'Đang định vị...' : userPosition ? 'Cập nhật vị trí' : 'Định vị tôi' }}
+          </button>
+        </div>
+        <div class="radius-row">
+          <label for="nearby-radius">Bán kính tìm</label>
+          <select id="nearby-radius" v-model.number="radiusKm" class="form-select form-select-sm" @change="changeRadius">
+            <option v-for="option in RADIUS_OPTIONS_KM" :key="option" :value="option">{{ option }} km</option>
+          </select>
+        </div>
+        <p v-if="locationMessage" class="panel-message" role="status">{{ locationMessage }}</p>
+        <p v-else-if="!userPosition" class="panel-hint">
+          Cho phép truy cập vị trí để tìm địa điểm gần nhất trong bán kính {{ radiusKm }} km.
+        </p>
+        <p v-if="isLoadingNearby" class="panel-hint">Đang tìm điểm gần nhất...</p>
+        <ol v-else-if="nearby.length" class="nearby-list">
+          <li v-for="item in nearby" :key="item.id">
+            <button type="button" :class="{ active: item.slug === selectedSlug }" @click="selectNearby(item)">
+              <span>
+                <strong>{{ item.name }}</strong>
+                <small>{{ item.type_label }} · {{ item.district }}</small>
+              </span>
+              <em>{{ formatDistance(item.distance_m) }}</em>
+            </button>
+          </li>
+        </ol>
+      </section>
+
       <p class="panel-note">
         Dữ liệu điểm đến mang tính tham khảo. Tuyến đường do dịch vụ chỉ đường gợi ý (dữ liệu OpenStreetMap).
       </p>
@@ -1063,6 +1095,7 @@ onBeforeUnmount(() => {
         :user-position="userPosition"
         :route="routeLine"
         :links="productLinks"
+        :bottom-inset="mapBottomInset"
         @select="selectLocation"
         @selected-position="selectedMarkerPosition = $event"
       />
@@ -1262,6 +1295,7 @@ onBeforeUnmount(() => {
 
 .section-title-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: var(--ocop-space-2);
@@ -1616,17 +1650,19 @@ onBeforeUnmount(() => {
 .kind-toggle button {
   display: inline-flex;
   min-height: 44px;
+  min-width: 0;
   flex: 1 1 0;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 0 var(--ocop-space-2);
+  gap: 5px;
+  padding: 0 var(--ocop-space-1);
   border: 0;
   border-radius: var(--ocop-radius-sm);
   background: transparent;
   color: var(--ocop-text-muted);
   font-size: var(--ocop-font-size-small);
   font-weight: 650;
+  white-space: nowrap;
 }
 
 .kind-toggle button.active {
@@ -1709,6 +1745,15 @@ onBeforeUnmount(() => {
 .tour-list button {
   flex-direction: column;
   gap: 2px;
+}
+
+.tour-list .panel-hint {
+  margin-bottom: var(--ocop-space-2);
+}
+
+.tour-list ul {
+  max-height: 220px;
+  overflow-y: auto;
 }
 
 .tour-list small,
@@ -1801,6 +1846,7 @@ onBeforeUnmount(() => {
 .view-toggle button {
   min-height: 44px;
   padding: 0 var(--ocop-space-3);
+  white-space: nowrap;
   border: 0;
   background: var(--ocop-card);
   color: var(--ocop-mist-900);
@@ -1864,8 +1910,15 @@ onBeforeUnmount(() => {
 
 .map-info-contact li {
   display: flex;
+  min-height: 32px;
   align-items: center;
   gap: 6px;
+}
+
+.map-info-contact a {
+  display: inline-flex;
+  min-height: 32px;
+  align-items: center;
 }
 
 .map-info-contact a,
@@ -1876,7 +1929,56 @@ onBeforeUnmount(() => {
 }
 
 .product-where {
+  display: inline-flex;
+  min-height: 32px;
+  align-items: center;
   font-size: var(--ocop-font-size-caption);
+}
+
+.context-clear {
+  border: 1px solid var(--ocop-mist-700);
+  background: var(--ocop-card);
+  color: var(--ocop-mist-900);
+  font-weight: 650;
+}
+
+.category-filter summary::after {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 auto;
+  border-right: 2px solid currentcolor;
+  border-bottom: 2px solid currentcolor;
+  content: '';
+  transform: rotate(45deg);
+  transition: transform var(--ocop-duration-fast);
+}
+
+.category-filter[open] summary::after {
+  transform: rotate(-135deg);
+}
+
+.category-filter summary {
+  list-style: none;
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--ocop-navy);
+  font-size: var(--ocop-font-size-small);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.category-active {
+  padding: 2px var(--ocop-space-2);
+  border-radius: var(--ocop-radius-pill);
+  background: var(--ocop-daquy-100);
+  color: var(--ocop-daquy-800);
+  font-size: var(--ocop-font-size-caption);
+}
+
+.category-filter .category-chips {
+  padding-top: var(--ocop-space-1);
 }
 
 .close-button {
@@ -2002,7 +2104,7 @@ onBeforeUnmount(() => {
   /* Giữ các z-index của Leaflet (tới 1000) trong khung bản đồ: không đè lên header dính khi cuộn. */
   isolation: isolate;
   height: 62vh;
-  min-height: 360px;
+  min-height: 420px;
   order: -1;
 }
 
@@ -2011,25 +2113,52 @@ onBeforeUnmount(() => {
     top: auto;
     left: var(--ocop-space-3);
     right: var(--ocop-space-3);
-    bottom: var(--ocop-space-3);
+    bottom: 28px;
     width: auto;
-    max-height: min(70%, 520px);
+    max-height: min(52%, 300px);
   }
 
   .map-info-content {
-    grid-template-columns: 88px minmax(0, 1fr);
+    grid-template-columns: 72px minmax(0, 1fr);
   }
 
   .map-info-image {
-    width: 88px;
-    min-height: 132px;
+    width: 72px;
+    min-height: 100px;
+  }
+
+  /* Ưu tiên thông tin cần ngay: mô tả dài và dịch vụ xem ở trang chi tiết. */
+  .map-info-description,
+  .map-info-services {
+    display: none;
+  }
+
+  .map-info-actions {
+    flex-wrap: nowrap;
+    position: sticky;
+    z-index: 1;
+    bottom: calc(var(--ocop-space-3) * -1);
+    margin-inline: calc(var(--ocop-space-3) * -1);
+    padding: var(--ocop-space-2) var(--ocop-space-3);
+    background: var(--ocop-card);
+    box-shadow: 0 -6px 10px -8px color-mix(in srgb, var(--ocop-neutral-900) 35%, transparent);
+  }
+
+  .map-info-actions .btn {
+    flex: 1 1 0;
+    justify-content: center;
+    padding-inline: var(--ocop-space-2);
+    white-space: nowrap;
   }
 }
 
 @media (min-width: 992px) {
   .map-page {
     grid-template-columns: 380px minmax(0, 1fr);
-    height: calc(100vh - 4.5rem);
+    /* Thanh thông báo (2rem) và đầu trang (4.5rem) nằm trên bản đồ: trừ cả hai để đáy bản đồ và danh sách
+       không bị đẩy ra ngoài màn hình (trước đây thiếu 2rem nên phải cuộn trang mới thấy chú thích bản quyền). */
+    height: calc(100vh - 6.5rem);
+    height: calc(100dvh - 6.5rem);
     min-height: 560px;
   }
 

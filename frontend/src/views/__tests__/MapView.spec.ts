@@ -567,7 +567,7 @@ describe('MapView', () => {
         'cua-hang-yersin',
         'co-so-pang-tieng',
       ])
-      expect(wrapper.get('[data-kind="shop"]').attributes('aria-checked')).toBe('true')
+      expect(wrapper.get('[data-kind="shop"]').attributes('aria-pressed')).toBe('true')
       expect(router.push).toHaveBeenCalledWith({ name: 'map', query: { kind: 'shop' } })
     })
 
