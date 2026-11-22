@@ -45,6 +45,13 @@ Các thay đổi đáng chú ý của dự án. Định dạng theo [Keep a Chan
 
 ### Sửa
 
+- Rà soát giao diện và trải nghiệm toàn bộ, tập trung bản đồ (axe: không còn lỗi trên các trang đã quét):
+  - Bản đồ: thẻ điểm không còn bị cắt ở mép trên/dưới (tự kẹp theo chiều cao thẻ, đặt cạnh marker, chừa chỗ cho nút phóng to); trên điện thoại thẻ gọn hơn, nút Chỉ đường luôn thấy, bản đồ tự dịch để marker đang chọn không bị thẻ che, thẻ không che dòng ghi nguồn OpenStreetMap; bỏ tooltip trùng tên bị thẻ che mất một nửa.
+  - Bản đồ: chiều cao khung bản đồ trừ đủ thanh thông báo và đầu trang (trước đây đáy bản đồ, danh sách và chú thích bản quyền bị đẩy ra ngoài màn hình); nút chọn lớp không còn xuống dòng, nhãn thống kê ngắn gọn, danh sách địa điểm lên trước, tuyến tham quan gập gọn, chip nhóm sản phẩm gập trong mục "Nhóm sản phẩm", nút Danh sách/Chi tiết không xuống dòng; lớp bản đồ dùng nút bật/tắt (aria-pressed) thay cho radiogroup không có phím mũi tên.
+  - Liên kết số điện thoại, website và "Xem nơi mua và sản xuất" có vùng bấm đủ lớn; nút "Bỏ lọc" ở banner đủ tương phản.
+  - Trang điểm du lịch: chưa có ảnh thì dùng ảnh minh họa theo loại hình kèm ghi chú thay vì khung trống; mini map ở trang sản phẩm gom cụm để ghim không đè nhau; ô tìm kiếm, nút mở tìm kiếm và nút menu ở đầu trang đạt vùng bấm 40–44px.
+  - README: thêm hướng dẫn đặt `$OutputEncoding` UTF-8 khi nạp seed/migration bằng PowerShell 5.1 (nguyên nhân làm tiếng Việt thành dấu `?`), và các migration 015, 016.
+
 - Trang chủ chỉ tải 12 sản phẩm để chọn 8 sản phẩm nổi bật, đồng thời rút ngắn hiệu ứng hiện nội dung để giảm thời gian chờ cảm nhận.
 - Các API bản đồ xem trước, tin tức và điểm du lịch trên trang chủ được lên lịch khi trình duyệt rảnh để ưu tiên nội dung đầu trang.
 - Trang đăng nhập/đăng ký vừa màn hình laptop (Windows 125–150%, trình duyệt 100%): không còn tràn theo chiều dọc ở 1536×784 và 1366×650 (đăng nhập), vẫn giữ ba dòng lợi ích ở cột trái và ghi chú quyền riêng tư (chỉ ẩn ghi chú khi cao dưới 700 px); thanh thông báo đầu trang tự gọn khi màn hình thấp; nút Google/Facebook xếp hai cột.
