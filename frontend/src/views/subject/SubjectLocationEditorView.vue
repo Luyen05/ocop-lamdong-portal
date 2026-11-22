@@ -1024,8 +1024,8 @@ onBeforeUnmount(() => {
               <label v-for="product in approvedProducts" :key="product.id" class="product-option">
                 <input v-model="form.product_ids" type="checkbox" :value="product.id" />
                 <img
-                  v-if="product.images.find((image) => image.is_primary)?.image_url"
-                  :src="product.images.find((image) => image.is_primary)?.image_url"
+                  v-if="product.images?.find((image) => image.is_primary)?.image_url"
+                  :src="product.images?.find((image) => image.is_primary)?.image_url"
                   :alt="`Ảnh ${product.name}`"
                   loading="lazy"
                 />
