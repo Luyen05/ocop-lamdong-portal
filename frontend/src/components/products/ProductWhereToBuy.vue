@@ -116,7 +116,7 @@ onBeforeUnmount(() => {
         <LeafletMap
           :features="features"
           :links="links"
-          :cluster="false"
+          :cluster="true"
           :initial-zoom="11"
           label="Bản đồ nhỏ: nơi mua và sản xuất sản phẩm"
         />

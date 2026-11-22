@@ -91,7 +91,7 @@ describe('ProductWhereToBuy', () => {
     const map = wrapper.getComponent(LeafletMapStub)
     expect(map.props('features')).toHaveLength(2)
     expect(map.props('links')).toEqual([['dalavi-co-so-pang-tieng', 'dalavi-cua-hang-yersin']])
-    expect(map.props('cluster')).toBe(false)
+    expect(map.props('cluster')).toBe(true)
   })
 
   it('co lien ket sang ban do lon theo san pham, theo chu the va chi duong tung diem', async () => {
