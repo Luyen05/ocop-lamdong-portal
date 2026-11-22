@@ -418,8 +418,8 @@ onBeforeUnmount(() => {
 
 .search-toggle {
   display: inline-flex;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   margin-left: auto;
   padding: 0;
   align-items: center;
@@ -441,7 +441,7 @@ onBeforeUnmount(() => {
 
 .responsive-search input {
   min-width: 0;
-  height: 40px;
+  height: 44px;
   padding: var(--ocop-space-2) var(--ocop-space-3);
   border: 1px solid var(--ocop-border);
   border-radius: var(--ocop-radius-sm);
@@ -454,7 +454,7 @@ onBeforeUnmount(() => {
 }
 
 .responsive-search button {
-  min-height: 40px;
+  min-height: 44px;
   padding: var(--ocop-space-2) 14px;
   border: 0;
   border-radius: var(--ocop-radius-sm);
@@ -474,7 +474,7 @@ onBeforeUnmount(() => {
 
 .header-search input {
   width: 100%;
-  height: 36px;
+  height: 40px;
   padding: 6px var(--ocop-space-3) 6px 36px;
   border: 1px solid var(--ocop-border);
   border-radius: var(--ocop-radius-sm);
@@ -623,6 +623,9 @@ onBeforeUnmount(() => {
 }
 
 .guest-actions .register-button {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
   padding: var(--ocop-space-2) var(--ocop-space-3);
   border-radius: var(--ocop-radius-sm);
   background: var(--ocop-primary-700);
@@ -631,8 +634,8 @@ onBeforeUnmount(() => {
 
 .menu-toggle {
   display: none;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   margin-left: auto;
   padding: 0;
   border: 1px solid var(--ocop-border);
