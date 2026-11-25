@@ -1267,6 +1267,26 @@ onBeforeUnmount(() => {
   gap: var(--ocop-space-2);
 }
 
+.search-row .form-control,
+.search-row .btn,
+.select-row .form-select {
+  min-height: 44px;
+}
+
+.search-row .btn {
+  min-width: 44px;
+}
+
+/* Nút đang khóa giữ màu chủ đạo (mờ đi), không nhảy sang xanh lá mặc định của Bootstrap. */
+.search-row .btn:disabled {
+  --bs-btn-disabled-bg: var(--ocop-primary-700);
+  --bs-btn-disabled-border-color: var(--ocop-primary-700);
+}
+
+.alert .btn {
+  min-height: 44px;
+}
+
 .select-row .form-select {
   min-width: 0;
 }

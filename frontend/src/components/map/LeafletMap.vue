@@ -492,6 +492,24 @@ onBeforeUnmount(() => {
   font-size: var(--ocop-font-size-caption);
 }
 
+/* Cụm ghim: màu trung tính của hệ thiết kế, không dùng xanh/vàng mặc định vì vàng là màu của cửa hàng. */
+.leaflet-container .marker-cluster {
+  background: color-mix(in srgb, var(--ocop-mist-900) 24%, transparent);
+}
+
+.leaflet-container .marker-cluster div {
+  background: var(--ocop-mist-900);
+  color: var(--ocop-white);
+  font-weight: 600;
+}
+
+/* Nút phóng to, thu nhỏ đủ vùng chạm. */
+.leaflet-container .leaflet-control-zoom a {
+  width: 44px;
+  height: 44px;
+  line-height: 44px;
+}
+
 .ocop-marker-anchor {
   border: 0;
   background: transparent;
