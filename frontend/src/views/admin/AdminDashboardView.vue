@@ -252,7 +252,7 @@ onMounted(() => {
     <header class="dash-head">
       <div>
         <p class="dash-date">{{ todayLabel }}</p>
-        <h1>Tổng quan quản trị</h1>
+        <h1>Tình hình hôm nay</h1>
         <p class="dash-summary" role="status">
           <template v-if="loading">Đang tải việc cần xử lý...</template>
           <template v-else-if="errorMessage">Chưa tải được việc cần xử lý.</template>
