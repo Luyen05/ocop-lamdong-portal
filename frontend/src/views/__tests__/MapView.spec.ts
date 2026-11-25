@@ -554,7 +554,6 @@ describe('MapView', () => {
       await flushPromises()
       const map = wrapper.getComponent(LeafletMapStub)
       expect(map.props('features')).toHaveLength(3)
-      expect(wrapper.get('[data-test="map-stats"]').text()).toContain('2')
       expect(wrapper.get('[data-kind="shop"]').text()).toContain('2')
       expect(wrapper.get('[data-kind="attraction"]').text()).toContain('1')
 

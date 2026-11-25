@@ -174,7 +174,6 @@ const kindCounts = computed(() => {
   for (const feature of allFeatures.value) counts[featureKind(feature)] += 1
   return counts
 })
-const districtCount = computed(() => new Set(allFeatures.value.map((feature) => feature.properties.district)).size)
 const linkedProductRole = (feature: MapFeature) =>
   feature.properties.products?.find((product) => product.slug === applied.product)?.role
 /** Khi lọc theo sản phẩm: nối từng nơi sản xuất với nơi bán bằng đường nét đứt (tối đa 12 cặp). */
@@ -194,6 +193,8 @@ const productLinks = computed<Array<[string, string]>>(() => {
   }
   return pairs.slice(0, 12)
 })
+/** Chưa tải xong hoặc tải lỗi thì chưa biết số lượng: không hiện "0". */
+const hasCounts = computed(() => !isLoading.value && !errorMessage.value)
 const displayFeatures = computed(() => {
   // Không có điểm tạm thì trả đúng mảng gốc: LeafletMap chỉ vẽ lại marker khi tham chiếu mảng đổi.
   if (!extraFeatures.value.length) return features.value
@@ -717,24 +718,9 @@ onBeforeUnmount(() => {
   <main class="map-page">
     <aside class="map-panel" aria-label="Công cụ bản đồ">
       <header class="panel-header">
-        <span class="eyebrow">Bản đồ số Lâm Đồng</span>
         <h1>Bản đồ OCOP Lâm Đồng</h1>
         <p>Tìm nơi tham quan và nơi mua sản phẩm OCOP.</p>
-        <dl class="map-stats" aria-label="Thống kê bản đồ" data-test="map-stats">
-          <div>
-            <dt>Điểm du lịch</dt>
-            <dd>{{ kindCounts.attraction }}</dd>
-          </div>
-          <div>
-            <dt>Cửa hàng</dt>
-            <dd>{{ kindCounts.shop }}</dd>
-          </div>
-          <div>
-            <dt>Địa bàn</dt>
-            <dd>{{ districtCount }}</dd>
-          </div>
-        </dl>
-        <p class="visually-hidden" role="status">{{ mappableCount }} địa điểm đang hiển thị trên bản đồ.</p>
+        <p v-if="hasCounts" class="visually-hidden" role="status">{{ mappableCount }} địa điểm đang hiển thị trên bản đồ.</p>
         <p class="panel-notice" role="status" data-test="unmappable-notice">
           <template v-if="unmappableCount">
             {{ unmappableCount }} điểm chưa có tọa độ hợp lệ nên chưa hiển thị trên bản đồ (vẫn có trong danh sách).
@@ -757,7 +743,7 @@ onBeforeUnmount(() => {
           @click="selectKind(option.value)"
         >
           <span v-if="option.value !== 'all'" class="kind-swatch" :class="`is-${option.value}`" aria-hidden="true" />
-          {{ option.label }} <span class="kind-count">{{ option.count }}</span>
+          {{ option.label }} <span v-if="hasCounts" class="kind-count">{{ option.count }}</span>
         </button>
       </div>
 
@@ -968,10 +954,10 @@ onBeforeUnmount(() => {
       </section>
 
       <section class="panel-section" aria-labelledby="all-locations-title">
-        <div class="section-title-row">
+        <div class="section-title-row list-head">
           <h2 id="all-locations-title" ref="allLocationsTitle" tabindex="-1">
             {{ productContext ? 'Nơi có sản phẩm này' : 'Tất cả địa điểm' }}
-            <span class="list-count" role="status" data-test="list-count">{{ features.length }}</span>
+            <span v-if="hasCounts" class="list-count" role="status" data-test="list-count">{{ features.length }}</span>
           </h2>
           <div class="view-toggle" role="group" aria-label="Kiểu hiển thị danh sách">
             <button type="button" :aria-pressed="viewMode === 'list'" data-test="view-list" @click="viewMode = 'list'">Danh sách</button>
@@ -1257,13 +1243,6 @@ onBeforeUnmount(() => {
   font-size: var(--ocop-font-size-small);
 }
 
-.eyebrow {
-  color: var(--ocop-primary-700);
-  font-size: var(--ocop-font-size-caption);
-  font-weight: 800;
-  text-transform: uppercase;
-}
-
 .panel-section {
   padding: 14px;
   border: 1px solid var(--ocop-border);
@@ -1307,6 +1286,14 @@ onBeforeUnmount(() => {
   min-height: 44px;
   align-items: center;
   gap: 5px;
+}
+
+.list-head {
+  flex-wrap: nowrap;
+}
+
+.list-head h2 {
+  min-width: 0;
 }
 
 .radius-row {
@@ -1611,32 +1598,6 @@ onBeforeUnmount(() => {
   color: var(--type-on, var(--ocop-white));
   font-size: var(--ocop-font-size-caption);
   font-weight: 700;
-}
-
-.map-stats {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--ocop-space-2);
-  margin: var(--ocop-space-3) 0 0;
-}
-
-.map-stats div {
-  padding: var(--ocop-space-2);
-  border-radius: var(--ocop-radius-sm);
-  background: var(--ocop-surface-muted);
-}
-
-.map-stats dt {
-  color: var(--ocop-text-muted);
-  font-size: var(--ocop-font-size-caption);
-  font-weight: 650;
-}
-
-.map-stats dd {
-  margin: 0;
-  color: var(--ocop-navy);
-  font-size: var(--ocop-font-size-title-sm);
-  font-weight: 800;
 }
 
 .kind-toggle {
