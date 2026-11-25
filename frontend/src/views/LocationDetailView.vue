@@ -150,13 +150,15 @@ function retryLoad(): void {
 
       <template v-else-if="location">
         <section class="location-overview">
-          <PresentationGallery :images="location.images" :primary-url="galleryPrimaryUrl" :name="location.name" landscape />
+          <div class="location-media">
+            <PresentationGallery :images="location.images" :primary-url="galleryPrimaryUrl" :name="location.name" landscape />
             <p v-if="usesFallbackPhoto" class="photo-note" data-test="photo-note">
               Ảnh minh họa theo loại hình, chưa phải ảnh thực tế của điểm này.
             </p>
+          </div>
 
           <div class="location-info">
-            <span class="type-badge" :style="{ '--type-color': typeStyle.color }">
+            <span class="type-badge" :style="{ '--type-color': typeStyle.color, '--type-on': typeStyle.onColor }">
               <AppIcon :name="typeStyle.icon" :size="14" /> {{ location.type_label }}
             </span>
             <h1>{{ location.name }}</h1>
@@ -234,7 +236,6 @@ function retryLoad(): void {
         </section>
 
         <section v-if="location.products.length" class="products-block" aria-labelledby="location-products-title">
-          <span class="section-eyebrow">Sản phẩm OCOP tại điểm đến</span>
           <h2 id="location-products-title">Sản phẩm OCOP tại điểm này</h2>
           <div class="product-grid" :class="{ 'product-grid-spacious': location.products.length <= 2 }">
             <div v-for="product in location.products" :key="product.id" class="related-product">
@@ -270,6 +271,13 @@ function retryLoad(): void {
   gap: 0.45rem;
   color: var(--ocop-slate);
   font-size: 0.86rem;
+}
+
+.breadcrumb-nav a,
+.breadcrumb-nav span {
+  display: inline-flex;
+  min-height: var(--ocop-control-md);
+  align-items: center;
 }
 
 .breadcrumb-nav a {
@@ -331,9 +339,13 @@ function retryLoad(): void {
   padding: 5px 10px;
   border-radius: var(--ocop-radius-pill);
   background: var(--type-color, var(--ocop-primary-700));
-  color: var(--ocop-white);
+  color: var(--type-on, var(--ocop-white));
   font-size: var(--ocop-font-size-caption);
   font-weight: 700;
+}
+
+.location-media {
+  min-width: 0;
 }
 
 .location-info h1 {
@@ -372,6 +384,12 @@ function retryLoad(): void {
   font-weight: 700;
 }
 
+.info-list a {
+  display: inline-flex;
+  min-height: var(--ocop-control-md);
+  align-items: center;
+}
+
 .info-list dd {
   margin: 0;
   color: var(--ocop-navy);
@@ -405,8 +423,11 @@ function retryLoad(): void {
   gap: 0.6rem;
 }
 
-.action-row .btn {
+.action-row .btn,
+.error-actions .btn,
+.related-product-cta {
   display: inline-flex;
+  min-height: var(--ocop-control-md);
   align-items: center;
   gap: 6px;
 }
@@ -416,8 +437,8 @@ function retryLoad(): void {
   gap: 0.15rem;
   margin-top: 1.25rem;
   padding: 1rem;
-  border-left: 4px solid var(--ocop-primary-700);
-  border-radius: 0.75rem;
+  border: 1px solid var(--ocop-mint-border);
+  border-radius: var(--ocop-radius-md);
   background: var(--ocop-mint-soft);
 }
 
@@ -453,14 +474,6 @@ function retryLoad(): void {
   color: var(--ocop-primary-950);
   font-size: 1.4rem;
   font-weight: 800;
-}
-
-.section-eyebrow {
-  color: var(--ocop-primary-700);
-  font-size: 0.76rem;
-  font-weight: 750;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
 }
 
 .mini-map {
