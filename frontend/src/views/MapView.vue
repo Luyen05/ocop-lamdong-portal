@@ -193,6 +193,7 @@ const productLinks = computed<Array<[string, string]>>(() => {
   }
   return pairs.slice(0, 12)
 })
+const mapPanel = ref<HTMLElement | null>(null)
 /** Chưa tải xong hoặc tải lỗi thì chưa biết số lượng: không hiện "0". */
 const hasCounts = computed(() => !isLoading.value && !errorMessage.value)
 const displayFeatures = computed(() => {
@@ -452,6 +453,10 @@ async function clearProductFilter(): Promise<void> {
 async function selectTour(slug: string): Promise<void> {
   Object.assign(filters, { search: '', type: '', district: '', product: '', subject: '', category: '', tour: slug })
   await applyFilters('push')
+  // Nút vừa bấm nằm cuối bảng và biến mất: đưa về đầu để thấy bản đồ và danh sách chặng.
+  await nextTick()
+  if (mapPanel.value) mapPanel.value.scrollTop = 0
+  if (isCompact.value) window.scrollTo({ top: 0 })
 }
 
 async function selectLegendType(type: LocationType | ''): Promise<void> {
@@ -716,7 +721,7 @@ onBeforeUnmount(() => {
 
 <template>
   <main class="map-page">
-    <aside class="map-panel" aria-label="Công cụ bản đồ">
+    <aside ref="mapPanel" class="map-panel" aria-label="Công cụ bản đồ">
       <header class="panel-header">
         <h1>Bản đồ OCOP Lâm Đồng</h1>
         <p>Tìm nơi tham quan và nơi mua sản phẩm OCOP.</p>
@@ -770,6 +775,7 @@ onBeforeUnmount(() => {
             {{ tourDetail.stop_count }} chặng<template v-if="tourDetail.duration_text"> · {{ tourDetail.duration_text }}</template>
           </span>
           <p v-if="tourDetail.description" class="context-meta">{{ tourDetail.description }}</p>
+          <p class="context-meta">Đường chấm trên bản đồ chỉ nối các chặng theo thứ tự, không phải đường đi thực tế.</p>
           <ol class="tour-stops" aria-label="Các chặng của tuyến" data-test="tour-stops">
             <li v-for="stop in tourDetail.stops" :key="stop.location.slug">
               <button type="button" :class="{ active: stop.location.slug === selectedSlug }" @click="selectLocation(stop.location.slug)">
