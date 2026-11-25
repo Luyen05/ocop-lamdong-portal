@@ -72,7 +72,7 @@ describe('SubjectLocationEditorView', () => {
     route.params = {}
     vi.mocked(getLocationFilterOptions).mockResolvedValue({ types: [], districts: ['Đà Lạt', 'Lạc Dương'] })
     vi.mocked(listMyProducts).mockResolvedValue({
-      items: [{ id: 6, name: 'Hồng treo gió Đà Lạt' } as never],
+      items: [{ id: 6, name: 'Hồng treo gió Đà Lạt', category: { name: 'Thực phẩm' }, images: [] } as never],
       page: 1,
       page_size: 100,
       total: 1,

@@ -59,6 +59,10 @@ const clusters = computed(() => {
 const singleMarkers = computed(() => clusters.value.filter((group) => group.items.length === 1).map((group) => group.items[0]))
 const groupedMarkers = computed(() => clusters.value.filter((group) => group.items.length > 1))
 
+const districtCount = computed(
+  () => new Set(features.value.map((feature) => feature.properties.district?.trim()).filter(Boolean)).size,
+)
+
 const legend = computed(() => {
   const seen = new Map<string, { label: string; icon: string; color: string; count: number }>()
   for (const feature of features.value) {
@@ -82,7 +86,7 @@ async function load(): Promise<void> {
   isLoading.value = true
   loadFailed.value = false
   try {
-    features.value = (await getMapLocations()).features
+    features.value = (await getMapLocations({ kind: 'attraction' })).features
   } catch {
     features.value = []
     loadFailed.value = true
@@ -109,7 +113,7 @@ onBeforeUnmount(() => cancelScheduledLoad())
       </div>
       <span v-if="!isLoading && !loadFailed" class="count-badge">
         <AppIcon name="map-pin" :size="14" />
-        {{ features.length }} điểm đến
+        {{ features.length }} điểm đến<template v-if="districtCount"> · {{ districtCount }} địa bàn</template>
       </span>
     </div>
 

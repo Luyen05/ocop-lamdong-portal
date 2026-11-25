@@ -13,9 +13,9 @@ const errorMessage = ref('')
 
 const featuredProducts = computed(() => {
   const certified = products.value.filter((product) => product.star >= 4)
-  // Chỉ lấy sản phẩm 4–5 sao (sửa của Thuận, PR #5), hiển thị tối đa 8 thẻ. API chỉ sắp theo điểm
-  // đánh giá nên lấy tối đa 100 sản phẩm (giới hạn của API) rồi lọc ở đây để đủ thẻ.
-  return certified.slice(0, 8)
+  const remaining = products.value.filter((product) => product.star < 4)
+  // Ưu tiên sản phẩm 4–5 sao nhưng vẫn hiển thị sản phẩm hợp lệ khác khi chưa đủ 8 thẻ.
+  return [...certified, ...remaining].slice(0, 8)
 })
 
 // Tiêu đề trung thực: chỉ ghi "4–5 sao" khi mọi thẻ đang hiện đều đạt 4 sao trở lên.
@@ -74,7 +74,7 @@ onMounted(loadProducts)
       <span class="state-icon" aria-hidden="true"><AppIcon :name="errorMessage ? 'refresh' : 'star'" :size="22" /></span>
       <div class="state-copy">
         <strong>{{ errorMessage || 'Chưa có sản phẩm nổi bật.' }}</strong>
-        <p>Sản phẩm 4–5 sao đã được duyệt sẽ xuất hiện tại đây.</p>
+        <p>Sản phẩm đã được duyệt sẽ xuất hiện tại đây.</p>
       </div>
       <button v-if="errorMessage" class="ocop-btn-main" type="button" @click="loadProducts">
         <AppIcon name="refresh" :size="16" /> Thử lại

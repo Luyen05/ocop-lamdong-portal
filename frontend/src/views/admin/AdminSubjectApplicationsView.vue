@@ -344,10 +344,10 @@ onMounted(loadApplications)
 
 /* ── Page heading ── */
 .page-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--admin-space-4); flex-wrap: wrap; }
-.page-heading > div > span { color: var(--admin-primary); font-size: var(--admin-font-xs); font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em; }
-.page-heading h1 { margin: 4px 0 4px; font-size: 1.625rem; font-weight: 800; color: var(--admin-text); }
+.page-heading > div > span { color: var(--admin-primary); font-size: var(--admin-font-xs); font-weight: var(--ocop-font-weight-semibold); text-transform: uppercase; letter-spacing: 0.07em; }
+.page-heading h1 { margin: 4px 0 4px; font-size: 1.625rem; font-weight: var(--ocop-font-weight-semibold); color: var(--admin-text); }
 .page-heading p { margin: 0; color: var(--admin-muted); font-size: var(--admin-font-sm); }
-.page-heading > strong { padding: 5px 14px; border-radius: var(--admin-radius-pill); background: var(--admin-primary-soft); color: var(--admin-primary); font-size: var(--admin-font-xs); font-weight: 800; }
+.page-heading > strong { padding: 5px 14px; border-radius: var(--admin-radius-pill); background: var(--admin-primary-soft); color: var(--admin-primary); font-size: var(--admin-font-xs); font-weight: var(--ocop-font-weight-semibold); }
 
 /* ── Filter bar ── */
 .filter-bar {
@@ -386,7 +386,7 @@ onMounted(loadApplications)
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
-  transition: all var(--admin-transition);
+  transition: background-color var(--admin-transition), border-color var(--admin-transition), color var(--admin-transition), box-shadow var(--admin-transition), opacity var(--admin-transition);
   background: var(--admin-card);
   color: var(--admin-text);
 }
@@ -421,7 +421,7 @@ onMounted(loadApplications)
   background: var(--admin-bg);
   color: var(--admin-muted);
   font-size: var(--admin-font-xs);
-  font-weight: 700;
+  font-weight: var(--ocop-font-weight-semibold);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   white-space: nowrap;
@@ -438,14 +438,14 @@ onMounted(loadApplications)
 }
 .table tbody tr:last-child td { border-bottom: 0; }
 .table tbody tr:hover td { background: var(--admin-bg); }
-.table td strong { display: block; font-weight: 700; }
+.table td strong { display: block; font-weight: var(--ocop-font-weight-semibold); }
 .table td small { display: block; margin-top: 3px; color: var(--admin-muted); font-size: var(--admin-font-xs); }
 .align-middle td { vertical-align: middle; }
 .mb-0 { margin-bottom: 0; }
 .ms-2 { margin-left: 8px; }
 
 /* ── Status badge ── */
-.status-badge { display: inline-flex; padding: 3px 10px; border-radius: var(--admin-radius-pill); font-size: var(--admin-font-xs); font-weight: 700; white-space: nowrap; }
+.status-badge { display: inline-flex; padding: 3px 10px; border-radius: var(--admin-radius-pill); font-size: var(--admin-font-xs); font-weight: var(--ocop-font-weight-semibold); white-space: nowrap; }
 .status-pending { background: var(--admin-badge-pending-bg); color: var(--admin-badge-pending-text); }
 .status-approved { background: var(--admin-badge-approved-bg); color: var(--admin-badge-approved-text); }
 .status-rejected { background: var(--admin-badge-rejected-bg); color: var(--admin-badge-rejected-text); }
@@ -471,19 +471,19 @@ onMounted(loadApplications)
   box-shadow: var(--admin-shadow-modal);
 }
 .moderation-dialog header { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--admin-space-4); padding-bottom: var(--admin-space-4); border-bottom: 1px solid var(--admin-border-soft); }
-.moderation-dialog header span { color: var(--admin-primary); font-size: var(--admin-font-xs); font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; }
+.moderation-dialog header span { color: var(--admin-primary); font-size: var(--admin-font-xs); font-weight: var(--ocop-font-weight-semibold); text-transform: uppercase; letter-spacing: 0.06em; }
 .moderation-dialog h2 { margin: 3px 0 0; font-size: var(--admin-font-2xl); color: var(--admin-text); }
 .moderation-dialog header button { display: grid; width: 44px; height: 44px; place-items: center; border: 0; border-radius: var(--admin-radius-sm); background: var(--admin-bg); color: var(--admin-muted); cursor: pointer; }
 .moderation-dialog header button:hover { color: var(--admin-danger); background: var(--admin-danger-soft); }
 
 .detail-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 22px; margin: var(--admin-space-5) 0; padding: var(--admin-space-4); border-radius: var(--admin-radius-md); background: var(--admin-bg); }
 .detail-grid div { display: grid; gap: 3px; }
-.detail-grid dt { color: var(--admin-muted); font-size: var(--admin-font-xs); font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+.detail-grid dt { color: var(--admin-muted); font-size: var(--admin-font-xs); font-weight: var(--ocop-font-weight-semibold); text-transform: uppercase; letter-spacing: 0.04em; }
 .detail-grid dd { margin: 0; font-size: var(--admin-font-sm); font-weight: 600; color: var(--admin-text); }
 .full-row { grid-column: 1 / -1; }
 
-.moderation-dialog form label { display: grid; gap: 6px; color: var(--admin-muted); font-size: var(--admin-font-xs); font-weight: 700; }
-.moderation-dialog form label span { color: var(--admin-muted); font-size: var(--admin-font-xs); font-weight: 700; text-transform: uppercase; }
+.moderation-dialog form label { display: grid; gap: 6px; color: var(--admin-muted); font-size: var(--admin-font-xs); font-weight: var(--ocop-font-weight-semibold); }
+.moderation-dialog form label span { color: var(--admin-muted); font-size: var(--admin-font-xs); font-weight: var(--ocop-font-weight-semibold); text-transform: uppercase; }
 .moderation-dialog form .form-control { height: auto; padding: 10px 12px; resize: vertical; }
 .dialog-actions { display: flex; justify-content: flex-end; gap: var(--admin-space-2); margin-top: var(--admin-space-4); padding-top: var(--admin-space-4); border-top: 1px solid var(--admin-border-soft); }
 
@@ -504,7 +504,7 @@ onMounted(loadApplications)
   .applications-table tr { display: grid; gap: var(--admin-space-2); padding: var(--admin-space-4); border: 1px solid var(--admin-border); border-radius: var(--admin-radius-md); background: var(--admin-card); }
   .applications-table tbody tr:hover td { background: transparent; }
   .applications-table td { display: grid; grid-template-columns: minmax(80px, 28%) minmax(0, 1fr); gap: var(--admin-space-2); padding: 0; border: 0; text-align: left; overflow-wrap: anywhere; }
-  .applications-table td::before { content: attr(data-label); color: var(--admin-muted); font-size: var(--admin-font-xs); font-weight: 700; }
+  .applications-table td::before { content: attr(data-label); color: var(--admin-muted); font-size: var(--admin-font-xs); font-weight: var(--ocop-font-weight-semibold); }
   .applications-table td.cell-main { grid-template-columns: 1fr; }
   .applications-table td.cell-main::before { content: none; }
   .applications-table td.cell-actions { grid-template-columns: 1fr; padding-top: var(--admin-space-2); border-top: 1px solid var(--admin-border-soft); }

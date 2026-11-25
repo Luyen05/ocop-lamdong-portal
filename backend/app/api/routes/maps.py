@@ -1,10 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.core.database import get_db
 from app.core.geometry import GeoPoint, distance_meters, within_meters
-from app.models.location import TourismLocation
+from app.api.routes.products import public_product_filters
+from app.models.location import TourismLocation, location_ocop_products
+from app.models.product import Product
 from app.schemas.error import ErrorResponse
 from app.schemas.location import (
     Coordinate,
@@ -12,11 +14,14 @@ from app.schemas.location import (
     MapFeatureCollection,
     NearbyLocation,
     NearbyLocationResponse,
+    MapProductRead,
     RouteDestination,
     RouteResponse,
 )
 from app.services.location_catalog import (
+    LocationKindFilter,
     LocationTypeCode,
+    kind_filter_value,
     public_location_filters,
     public_point,
     to_location_list_item,
@@ -42,9 +47,17 @@ def get_map_locations(
     search: str | None = Query(default=None, min_length=1, max_length=150),
     location_type: LocationTypeCode | None = Query(default=None, alias="type"),
     district: str | None = Query(default=None, min_length=1, max_length=100),
+    kind: LocationKindFilter = Query(default="all"),
+    product_id: int | None = Query(default=None, ge=1),
+    category: str | None = Query(default=None, min_length=1, max_length=150),
+    subject_id: int | None = Query(default=None, ge=1),
     db: Session = Depends(get_db),
 ) -> MapFeatureCollection:
-    """Trả các điểm đã duyệt dưới dạng GeoJSON FeatureCollection."""
+    """Trả các điểm đã duyệt (điểm du lịch và cửa hàng) dưới dạng GeoJSON FeatureCollection.
+
+    `kind` chọn nhóm điểm; `product_id`, `category` (slug nhóm sản phẩm) và `subject_id`
+    chỉ giữ các điểm có sản phẩm tương ứng hoặc thuộc chủ thể tương ứng.
+    """
 
     locations = db.scalars(
         select(TourismLocation)
@@ -53,13 +66,49 @@ def get_map_locations(
                 search=search,
                 location_type=location_type,
                 district=district,
+                kind=kind_filter_value(kind),
+                product_id=product_id,
+                category_slug=category,
+                subject_id=subject_id,
             )
         )
-        .options(selectinload(TourismLocation.images))
+        .options(
+            selectinload(TourismLocation.images),
+            joinedload(TourismLocation.subject),
+        )
         .order_by(TourismLocation.name.asc(), TourismLocation.id.asc())
         .limit(MAX_MAP_FEATURES)
     ).all()
-    return MapFeatureCollection(features=[to_map_feature(location) for location in locations])
+    features = [to_map_feature(location) for location in locations]
+    if not locations:
+        return MapFeatureCollection(features=features)
+
+    products_by_location: dict[int, list[MapProductRead]] = {location.id: [] for location in locations}
+    product_rows = db.execute(
+        select(location_ocop_products.c.location_id, location_ocop_products.c.role, Product)
+        .join(Product, Product.id == location_ocop_products.c.product_id)
+        .join(Product.subject)
+        .where(
+            location_ocop_products.c.location_id.in_(products_by_location),
+            *public_product_filters(),
+        )
+        .options(selectinload(Product.images))
+        .order_by(Product.name.asc(), Product.id.asc())
+    ).all()
+    for location_id, role, product in product_rows:
+        products_by_location[location_id].append(
+            MapProductRead(
+                id=product.id,
+                name=product.name,
+                slug=product.slug,
+                star=product.star,
+                primary_image_url=product.images[0].image_url if product.images else None,
+                role=role,
+            )
+        )
+    for feature in features:
+        feature.properties.products = products_by_location[feature.properties.id]
+    return MapFeatureCollection(features=features)
 
 
 @router.get(
@@ -73,6 +122,7 @@ def get_nearby_locations(
     radius_km: float = Query(default=25, gt=0, le=200),
     limit: int = Query(default=10, ge=1, le=50),
     location_type: LocationTypeCode | None = Query(default=None, alias="type"),
+    kind: LocationKindFilter = Query(default="all"),
     db: Session = Depends(get_db),
 ) -> NearbyLocationResponse:
     """Tìm điểm đã duyệt gần nhất trong bán kính, sắp xếp theo khoảng cách."""
@@ -82,7 +132,7 @@ def get_nearby_locations(
     rows = db.execute(
         select(TourismLocation, distance.label("distance_m"))
         .where(
-            *public_location_filters(location_type=location_type),
+            *public_location_filters(location_type=location_type, kind=kind_filter_value(kind)),
             within_meters(TourismLocation.geom, longitude, latitude, radius_m),
         )
         .options(selectinload(TourismLocation.images))

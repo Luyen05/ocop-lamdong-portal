@@ -202,6 +202,9 @@
   --ocop-font-size-title-md: 1.5rem;
   --ocop-font-size-title-lg: clamp(2rem, 4vw, 2.875rem);
 
+  /* Độ đậm: tối đa 600 ở các trang quản trị và chủ thể */
+  --ocop-font-weight-semibold: 600;
+
   /* Chiều cao control, đổ bóng, chuyển động */
   --ocop-control-sm: 40px;
   --ocop-control-md: 44px;

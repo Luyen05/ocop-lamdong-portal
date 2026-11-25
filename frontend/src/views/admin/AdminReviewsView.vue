@@ -326,10 +326,10 @@ onUnmounted(() => {
 
 /* ── Tiêu đề trang (giống trang hồ sơ chủ thể) ── */
 .page-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--admin-space-4); flex-wrap: wrap; }
-.page-heading > div > span { color: var(--admin-primary); font-size: var(--admin-font-xs); font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em; }
-.page-heading h1 { margin: var(--admin-space-1) 0; font-size: var(--admin-font-2xl); font-weight: 800; color: var(--admin-text); }
+.page-heading > div > span { color: var(--admin-primary); font-size: var(--admin-font-xs); font-weight: var(--ocop-font-weight-semibold); text-transform: uppercase; letter-spacing: 0.07em; }
+.page-heading h1 { margin: var(--admin-space-1) 0; font-size: var(--admin-font-2xl); font-weight: var(--ocop-font-weight-semibold); color: var(--admin-text); }
 .page-heading p { margin: 0; color: var(--admin-muted); font-size: var(--admin-font-sm); }
-.page-heading > strong { padding: var(--admin-space-1) var(--admin-space-3); border-radius: var(--admin-radius-pill); background: var(--admin-primary-soft); color: var(--admin-primary-dark); font-size: var(--admin-font-xs); font-weight: 800; }
+.page-heading > strong { padding: var(--admin-space-1) var(--admin-space-3); border-radius: var(--admin-radius-pill); background: var(--admin-primary-soft); color: var(--admin-primary-dark); font-size: var(--admin-font-xs); font-weight: var(--ocop-font-weight-semibold); }
 
 /* ── Bộ lọc ── */
 .filter-bar {
@@ -344,7 +344,7 @@ onUnmounted(() => {
   box-shadow: var(--admin-shadow-sm);
 }
 .filter-bar label { display: grid; gap: var(--admin-space-1); margin: 0; }
-.filter-label { color: var(--admin-muted); font-size: var(--admin-font-xs); font-weight: 700; }
+.filter-label { color: var(--admin-muted); font-size: var(--admin-font-xs); font-weight: var(--ocop-font-weight-semibold); }
 .form-control, .form-select {
   width: 100%;
   height: var(--admin-control-height);
@@ -402,7 +402,7 @@ onUnmounted(() => {
   background: var(--admin-bg);
   color: var(--admin-muted);
   font-size: var(--admin-font-xs);
-  font-weight: 700;
+  font-weight: var(--ocop-font-weight-semibold);
   letter-spacing: 0.05em;
   text-align: left;
   text-transform: uppercase;
@@ -418,14 +418,14 @@ onUnmounted(() => {
 }
 .table tbody tr:last-child td { border-bottom: 0; }
 .table tbody tr:hover td { background: var(--admin-bg); }
-.table td strong { display: block; font-weight: 700; }
+.table td strong { display: block; font-weight: var(--ocop-font-weight-semibold); }
 .table td small { display: block; margin-top: var(--admin-space-1); color: var(--admin-muted); font-size: var(--admin-font-xs); }
 .comment-cell { min-width: 260px; max-width: 420px; }
 .comment-text { margin: var(--admin-space-1) 0 0; white-space: pre-line; overflow-wrap: anywhere; }
-.target-link { display: inline-flex; min-height: var(--admin-control-height); align-items: center; color: var(--admin-primary-dark); font-weight: 700; }
+.target-link { display: inline-flex; min-height: var(--admin-control-height); align-items: center; color: var(--admin-primary-dark); font-weight: var(--ocop-font-weight-semibold); }
 .table td small.reason { color: var(--admin-danger-text); }
 
-.status-badge { display: inline-flex; padding: 3px 10px; border-radius: var(--admin-radius-pill); font-size: var(--admin-font-xs); font-weight: 700; white-space: nowrap; }
+.status-badge { display: inline-flex; padding: 3px 10px; border-radius: var(--admin-radius-pill); font-size: var(--admin-font-xs); font-weight: var(--ocop-font-weight-semibold); white-space: nowrap; }
 .status-pending { background: var(--admin-badge-pending-bg); color: var(--admin-badge-pending-text); }
 .status-approved { background: var(--admin-badge-approved-bg); color: var(--admin-badge-approved-text); }
 .status-rejected { background: var(--admin-badge-rejected-bg); color: var(--admin-badge-rejected-text); }
@@ -438,7 +438,7 @@ onUnmounted(() => {
 .modal-layer { position: fixed; z-index: 200; inset: 0; display: grid; padding: var(--admin-space-5); place-items: center; overflow-y: auto; background: var(--admin-scrim); }
 .moderation-dialog { width: min(100%, 560px); max-height: calc(100vh - 40px); padding: var(--admin-space-6); overflow-y: auto; border-radius: var(--admin-radius-lg); background: var(--admin-card); box-shadow: var(--admin-shadow-modal); }
 .moderation-dialog header { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--admin-space-4); padding-bottom: var(--admin-space-4); border-bottom: 1px solid var(--admin-border-soft); }
-.moderation-dialog header span { color: var(--admin-primary-dark); font-size: var(--admin-font-xs); font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; }
+.moderation-dialog header span { color: var(--admin-primary-dark); font-size: var(--admin-font-xs); font-weight: var(--ocop-font-weight-semibold); letter-spacing: 0.06em; text-transform: uppercase; }
 .moderation-dialog h2 { margin: var(--admin-space-1) 0 0; color: var(--admin-text); font-size: var(--admin-font-xl); }
 .moderation-dialog header button { display: grid; width: var(--admin-control-height); height: var(--admin-control-height); flex: 0 0 auto; place-items: center; border: 0; border-radius: var(--admin-radius-sm); background: var(--admin-bg); color: var(--admin-muted); cursor: pointer; }
 .moderation-dialog header button:hover { background: var(--admin-danger-soft); color: var(--admin-danger-text); }
@@ -446,7 +446,7 @@ onUnmounted(() => {
 .quoted-review p { margin: 0; color: var(--admin-text); white-space: pre-line; overflow-wrap: anywhere; }
 .quoted-review small { color: var(--admin-muted); }
 .moderation-dialog form { display: grid; gap: var(--admin-space-2); }
-.moderation-dialog form label span { color: var(--admin-text); font-size: var(--admin-font-sm); font-weight: 700; }
+.moderation-dialog form label span { color: var(--admin-text); font-size: var(--admin-font-sm); font-weight: var(--ocop-font-weight-semibold); }
 .moderation-dialog textarea.form-control { height: auto; padding: var(--admin-space-3); resize: vertical; }
 .hint { margin: 0; color: var(--admin-muted); font-size: var(--admin-font-xs); }
 .dialog-actions { display: flex; justify-content: flex-end; gap: var(--admin-space-2); margin-top: var(--admin-space-2); padding-top: var(--admin-space-4); border-top: 1px solid var(--admin-border-soft); }

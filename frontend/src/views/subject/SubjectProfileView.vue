@@ -296,14 +296,14 @@ onMounted(loadProfile)
 <style scoped>
 .profile-page { display: grid; max-width: 980px; margin-inline: auto; gap: 18px; }
 .page-heading { display: flex; align-items: end; justify-content: space-between; gap: var(--ocop-space-5); }
-.page-heading span, .card-heading span { color: var(--ocop-primary-700); font-size: var(--ocop-font-size-caption); font-weight: 800; letter-spacing: .05em; }
+.page-heading span, .card-heading span { color: var(--ocop-primary-700); font-size: var(--ocop-font-size-caption); font-weight: var(--ocop-font-weight-semibold); letter-spacing: .05em; }
 .page-heading h1 { margin: var(--ocop-space-1) 0; color: var(--ocop-navy); font-size: 30px; }
 .page-heading p { margin: 0; color: var(--ocop-slate); font-size: var(--ocop-font-size-small); }
-.account-link, .profile-help a { display: inline-flex; min-height: 44px; padding: 10px 14px; align-items: center; justify-content: center; border: 1px solid var(--ocop-primary-700); border-radius: 9px; color: var(--ocop-primary-700); font-size: var(--ocop-font-size-caption); font-weight: 750; text-decoration: none; white-space: nowrap; }
+.account-link, .profile-help a { display: inline-flex; min-height: 44px; padding: 10px 14px; align-items: center; justify-content: center; border: 1px solid var(--ocop-primary-700); border-radius: 9px; color: var(--ocop-primary-700); font-size: var(--ocop-font-size-caption); font-weight: var(--ocop-font-weight-semibold); text-decoration: none; white-space: nowrap; }
 .summary-card, .details-card, .review-note, .profile-help { border: 1px solid var(--ocop-border); border-radius: 14px; background: var(--ocop-card); }
 .summary-card { display: grid; padding: 22px; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: var(--ocop-space-4); }
-.subject-mark { display: grid; width: 54px; height: 54px; place-items: center; border-radius: 14px; background: var(--ocop-success-soft); color: var(--ocop-primary-700); font-size: 22px; font-weight: 800; }
-.status-badge { display: inline-flex; width: fit-content; padding: 3px var(--ocop-space-2); border-radius: var(--ocop-radius-pill); background: var(--ocop-warning-surface); color: var(--ocop-warning-strong); font-size: var(--ocop-font-size-caption); font-weight: 800; text-transform: uppercase; }
+.subject-mark { display: grid; width: 54px; height: 54px; place-items: center; border-radius: 14px; background: var(--ocop-success-soft); color: var(--ocop-primary-700); font-size: 22px; font-weight: var(--ocop-font-weight-semibold); }
+.status-badge { display: inline-flex; width: fit-content; padding: 3px var(--ocop-space-2); border-radius: var(--ocop-radius-pill); background: var(--ocop-warning-surface); color: var(--ocop-warning-strong); font-size: var(--ocop-font-size-caption); font-weight: var(--ocop-font-weight-semibold); text-transform: uppercase; }
 .status-approved { background: var(--ocop-success-soft); color: var(--ocop-success); }
 .status-rejected { background: var(--ocop-danger-soft); color: var(--ocop-danger); }
 .subject-name h2 { margin: 5px 0 2px; color: var(--ocop-navy); font-size: 20px; }
@@ -323,7 +323,7 @@ dl { display: grid; margin: 0; padding-top: var(--ocop-space-5); grid-template-c
 dl div { display: grid; gap: var(--ocop-space-1); }
 .wide { grid-column: 1 / -1; }
 dt { color: var(--ocop-slate); font-size: var(--ocop-font-size-caption); }
-dd { margin: 0; color: var(--ocop-navy); font-size: var(--ocop-font-size-small); font-weight: 700; overflow-wrap: anywhere; }
+dd { margin: 0; color: var(--ocop-navy); font-size: var(--ocop-font-size-small); font-weight: var(--ocop-font-weight-semibold); overflow-wrap: anywhere; }
 .locked-note { margin: var(--ocop-space-4) 0 0; color: var(--ocop-slate); font-size: var(--ocop-font-size-caption); }
 .contact-form { display: grid; padding-top: var(--ocop-space-5); grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--ocop-space-4) var(--ocop-space-5); }
 .contact-form .form-control { min-height: 44px; }

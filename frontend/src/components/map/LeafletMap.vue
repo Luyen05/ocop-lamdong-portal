@@ -6,7 +6,8 @@ import 'leaflet.markercluster/dist/MarkerCluster.Default.css'
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 import type { Coordinate, MapFeature } from '@/types/location'
-import { hasValidCoordinates, isInsideLamDong, locationTypeStyle } from '@/utils/location'
+import { featureKind, hasValidCoordinates, isInsideLamDong, locationTypeStyle } from '@/utils/location'
+import { prefersReducedMotion } from '@/utils/motion'
 
 const props = withDefaults(
   defineProps<{
@@ -15,6 +16,8 @@ const props = withDefaults(
     userPosition?: Coordinate | null
     /** Tọa độ tuyến đường theo thứ tự GeoJSON [kinh độ, vĩ độ]. */
     route?: Array<[number, number]> | null
+    /** Đường nét đứt nối các cặp điểm (vd. nơi sản xuất → nơi bán), mỗi cặp là hai slug. */
+    links?: Array<[string, string]>
     cluster?: boolean
     initialZoom?: number
     label?: string
@@ -23,13 +26,25 @@ const props = withDefaults(
     selectedSlug: null,
     userPosition: null,
     route: null,
+    links: () => [],
     cluster: true,
     initialZoom: 9,
     label: 'Bản đồ số điểm du lịch nông nghiệp Lâm Đồng',
   },
 )
 
-const emit = defineEmits<{ select: [slug: string] }>()
+interface MarkerPosition {
+  slug: string
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
+const emit = defineEmits<{
+  select: [slug: string]
+  'selected-position': [position: MarkerPosition]
+}>()
 
 const LAM_DONG_CENTER: L.LatLngTuple = [11.9404, 108.4583]
 const OSM_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -69,11 +84,33 @@ let markerLayer: L.LayerGroup | null = null
 let clusterLayer: L.MarkerClusterGroup | null = null
 let userLayer: L.LayerGroup | null = null
 let routeLayer: L.Polyline | null = null
+let linkLayer: L.LayerGroup | null = null
 let tileLayer: L.TileLayer | null = null
 let resizeObserver: ResizeObserver | null = null
 let isUnmounted = false
 const markers = new Map<string, L.Marker>()
 const featuresBySlug = new Map<string, MapFeature>()
+
+let pendingFocus: (() => void) | null = null
+
+/** Chỉ bay mượt khi người dùng không chọn giảm chuyển động và khung có kích thước thật (jsdom là 0x0). */
+function canAnimateMap(): boolean {
+  if (!map || prefersReducedMotion()) return false
+  const size = map.getSize()
+  return size.x > 0 && size.y > 0
+}
+
+/** Hủy việc đang chờ bay xong, để lần di chuyển khác (tuyến đường, toàn cảnh) không bị kéo ngược lại. */
+function cancelPendingFocus(): void {
+  if (map && pendingFocus) map.off('moveend', pendingFocus)
+  pendingFocus = null
+}
+
+function moveToBounds(bounds: L.LatLngBounds, options: L.FitBoundsOptions): void {
+  if (!map) return
+  if (canAnimateMap()) map.flyToBounds(bounds, { ...options, duration: 0.85 })
+  else map.fitBounds(bounds, options)
+}
 
 /**
  * DivIcon có nhãn đọc được: Leaflet chỉ đặt role="button" và tabindex cho phần tử icon, nên
@@ -97,15 +134,18 @@ function markerLabel(feature: MapFeature): string {
 
 function markerIcon(feature: MapFeature, selected: boolean): L.DivIcon {
   const style = locationTypeStyle(feature.properties.type)
+  const shop = featureKind(feature) === 'shop'
   // HTML chỉ ghép từ hằng số nội bộ; tên địa điểm được gắn qua textContent ở tooltip.
+  // Cửa hàng/cơ sở là ghim vuông bo góc (lớp is-shop), điểm du lịch là ghim giọt nước: khác hình, không chỉ khác màu.
   return labelledDivIcon(
     {
       className: 'ocop-marker-anchor',
-      html: `<span class="ocop-marker${selected ? ' is-selected' : ''}" style="--marker-color:${style.color}"><i class="bi bi-${style.markerIcon}" aria-hidden="true"></i></span>`,
+      html: `<span class="ocop-marker${shop ? ' is-shop' : ''}${selected ? ' is-selected' : ''}" style="--marker-color:${style.color};--marker-on:${style.onColor ?? 'var(--ocop-white)'}"><i class="bi bi-${style.markerIcon}" aria-hidden="true"></i></span>`,
       // Marker là hình vuông 34px xoay -45°, đỉnh nhọn nằm dưới tâm khoảng 24px.
       iconSize: [34, 34],
-      iconAnchor: [17, 40],
-      tooltipAnchor: [0, -38],
+      // Ghim vuông của cửa hàng neo ở tâm.
+      iconAnchor: shop ? [17, 17] : [17, 40],
+      tooltipAnchor: shop ? [0, -22] : [0, -38],
     },
     markerLabel(feature),
   )
@@ -218,6 +258,7 @@ function renderMarkers(fitToFeatures: boolean): void {
 
 function focusSelected(previousSlug: string | null = null): void {
   if (!map) return
+  cancelPendingFocus()
   if (previousSlug && previousSlug !== props.selectedSlug) {
     setMarkerSelected(previousSlug, false)
     markers.get(previousSlug)?.closeTooltip()
@@ -229,24 +270,72 @@ function focusSelected(previousSlug: string | null = null): void {
   if (!marker) return
   setMarkerSelected(slug, true)
 
-  const showTooltip = () => marker.openTooltip()
-  if (clusterLayer) {
-    clusterLayer.zoomToShowLayer(marker, showTooltip)
-  } else {
-    map.setView(marker.getLatLng(), Math.max(map.getZoom(), 13))
-    showTooltip()
+  // Điểm đang chọn đã có thẻ thông tin nên không mở thêm tooltip trùng tên (dễ bị thẻ che mất một nửa).
+  marker.closeTooltip()
+  const reveal = () => {
+    if (!map || props.selectedSlug !== slug) return
+    if (clusterLayer) {
+      clusterLayer.zoomToShowLayer(marker, () => {
+        marker.closeTooltip()
+        keepSelectedInView()
+        emitSelectedPosition()
+      })
+    } else {
+      emitSelectedPosition()
+    }
   }
+
+  const target = marker.getLatLng()
+  const targetZoom = Math.max(map.getZoom(), 14)
+  if (!canAnimateMap()) {
+    if (!clusterLayer) map.setView(target, Math.max(map.getZoom(), 13))
+    reveal()
+    return
+  }
+  // Đã đứng đúng chỗ thì không bay lại (flyTo với quãng đường bằng 0 làm bản đồ giật).
+  if (map.getCenter().distanceTo(target) < 12 && map.getZoom() >= targetZoom) {
+    reveal()
+    return
+  }
+  map.stop()
+  pendingFocus = () => {
+    pendingFocus = null
+    reveal()
+  }
+  map.once('moveend', pendingFocus)
+  map.flyTo(target, targetZoom, { duration: 0.85 })
 }
 
 /** Sau khi đổi kích thước khung, đảm bảo marker đang chọn vẫn nằm trong tầm nhìn. */
 function keepSelectedInView(): void {
   if (!map || !props.selectedSlug) return
   const marker = markers.get(props.selectedSlug)
-  if (marker) map.panInside(marker.getLatLng(), { padding: [48, 48], animate: false })
+  if (marker) {
+    map.panInside(marker.getLatLng(), {
+      paddingTopLeft: [48, 56],
+      paddingBottomRight: [48, 48],
+      animate: false,
+    })
+  }
 }
 
 function selectedLatLng(): L.LatLng | null {
   return (props.selectedSlug ? markers.get(props.selectedSlug)?.getLatLng() : null) ?? null
+}
+
+function emitSelectedPosition(): void {
+  if (!map || !props.selectedSlug) return
+  const marker = markers.get(props.selectedSlug)
+  if (!marker) return
+  const point = map.latLngToContainerPoint(marker.getLatLng())
+  const size = map.getSize()
+  emit('selected-position', {
+    slug: props.selectedSlug,
+    x: point.x,
+    y: point.y,
+    width: size.x,
+    height: size.y,
+  })
 }
 
 function renderUserPosition(): void {
@@ -264,15 +353,30 @@ function renderUserPosition(): void {
     .bindTooltip('Vị trí của bạn', { direction: 'top' })
     .addTo(userLayer)
   if (props.route?.length) return // renderRoute tự căn khung theo tuyến đường.
+  cancelPendingFocus()
 
   const destination = selectedLatLng()
   if (destination) {
     // Có điểm đang chọn: không kéo bản đồ về phía người dùng mà ôm cả hai điểm.
     markers.get(props.selectedSlug as string)?.closeTooltip()
-    map.fitBounds(L.latLngBounds([position, destination]), { padding: [56, 56], maxZoom: 15 })
+    moveToBounds(L.latLngBounds([position, destination]), { padding: [56, 56], maxZoom: 15 })
   } else if (isInsideLamDong(props.userPosition)) {
     map.setView(position, Math.max(map.getZoom(), 11))
   }
+}
+
+function renderLinks(): void {
+  if (!map) return
+  linkLayer?.remove()
+  linkLayer = null
+  if (!props.links.length) return
+  const group = L.layerGroup()
+  for (const [fromSlug, toSlug] of props.links) {
+    const from = markers.get(fromSlug)?.getLatLng()
+    const to = markers.get(toSlug)?.getLatLng()
+    if (from && to) L.polyline([from, to], { className: 'ocop-link-line', weight: 3, dashArray: '2 9', opacity: 0.9 }).addTo(group)
+  }
+  linkLayer = group.addTo(map)
 }
 
 function renderRoute(): void {
@@ -283,8 +387,20 @@ function renderRoute(): void {
   const points = props.route.map(([longitude, latitude]) => [latitude, longitude] as L.LatLngTuple)
   routeLayer = L.polyline(points, { className: 'ocop-route-line', weight: 5, opacity: 0.85 }).addTo(map)
   if (props.selectedSlug) markers.get(props.selectedSlug)?.closeTooltip()
-  map.fitBounds(routeLayer.getBounds(), { padding: [40, 40] })
+  cancelPendingFocus()
+  moveToBounds(routeLayer.getBounds(), { padding: [40, 40] })
 }
+
+/** Đưa khung nhìn về toàn bộ các điểm đang hiển thị; chưa có điểm nào thì về vị trí ban đầu. */
+function resetView(): void {
+  if (!map) return
+  cancelPendingFocus()
+  const points = [...markers.values()].map((marker) => marker.getLatLng())
+  if (points.length) moveToBounds(L.latLngBounds(points), { padding: [40, 40], maxZoom: 12 })
+  else map.setView(LAM_DONG_CENTER, props.initialZoom)
+}
+
+defineExpose({ resetView })
 
 async function initialize(): Promise<void> {
   if (!container.value) return
@@ -320,6 +436,8 @@ async function initialize(): Promise<void> {
     renderMarkers(true)
     renderUserPosition()
     renderRoute()
+    renderLinks()
+    map.on('moveend zoomend', emitSelectedPosition)
 
     if (typeof ResizeObserver !== 'undefined') {
       resizeObserver = new ResizeObserver(() => {
@@ -333,7 +451,14 @@ async function initialize(): Promise<void> {
   }
 }
 
-watch(() => props.features, () => renderMarkers(true))
+watch(
+  () => props.features,
+  () => {
+    renderMarkers(true)
+    renderLinks()
+  },
+)
+watch(() => props.links, renderLinks)
 watch(() => props.selectedSlug, (_slug, previousSlug) => focusSelected(previousSlug ?? null))
 watch(() => props.userPosition, renderUserPosition)
 watch(() => props.route, renderRoute)
@@ -344,6 +469,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   isUnmounted = true
+  cancelPendingFocus()
   resizeObserver?.disconnect()
   map?.remove()
   map = null
@@ -351,6 +477,7 @@ onBeforeUnmount(() => {
   clusterLayer = null
   userLayer = null
   routeLayer = null
+  linkLayer = null
   tileLayer = null
   markers.clear()
   featuresBySlug.clear()
@@ -403,8 +530,31 @@ onBeforeUnmount(() => {
   stroke: var(--ocop-location-route);
 }
 
+.ocop-link-line {
+  stroke: var(--ocop-mist-950);
+  stroke-linecap: round;
+}
+
 .leaflet-tooltip small {
   font-size: var(--ocop-font-size-caption);
+}
+
+/* Cụm ghim: màu trung tính của hệ thiết kế, không dùng xanh/vàng mặc định vì vàng là màu của cửa hàng. */
+.leaflet-container .marker-cluster {
+  background: color-mix(in srgb, var(--ocop-mist-900) 24%, transparent);
+}
+
+.leaflet-container .marker-cluster div {
+  background: var(--ocop-mist-900);
+  color: var(--ocop-white);
+  font-weight: var(--ocop-font-weight-semibold);
+}
+
+/* Nút phóng to, thu nhỏ đủ vùng chạm. */
+.leaflet-container .leaflet-control-zoom a {
+  width: 44px;
+  height: 44px;
+  line-height: 44px;
 }
 
 .ocop-marker-anchor {
@@ -421,7 +571,7 @@ onBeforeUnmount(() => {
   border-radius: 50% 50% 50% var(--ocop-radius-xs);
   background: var(--marker-color, var(--ocop-primary-700));
   box-shadow: 0 6px 14px color-mix(in srgb, var(--ocop-neutral-900) 28%, transparent);
-  color: var(--ocop-white);
+  color: var(--marker-on, var(--ocop-white));
   font-size: var(--ocop-font-size-body);
   transform: rotate(-45deg);
   transition: transform 160ms ease;
@@ -429,6 +579,20 @@ onBeforeUnmount(() => {
 
 .ocop-marker i {
   transform: rotate(45deg);
+}
+
+/* Cửa hàng, cơ sở sản xuất: ghim vuông bo góc, không xoay. */
+.ocop-marker.is-shop {
+  border-radius: var(--ocop-radius-md);
+  transform: none;
+}
+
+.ocop-marker.is-shop i {
+  transform: none;
+}
+
+.ocop-marker.is-shop.is-selected {
+  transform: scale(1.18);
 }
 
 .ocop-marker.is-selected {

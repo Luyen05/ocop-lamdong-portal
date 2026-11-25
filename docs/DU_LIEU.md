@@ -32,8 +32,10 @@ Database mới tạo bằng Docker tự chạy `schema.sql`, `seed_dev.sql`, `se
 | 5 | `seed_product_workflow.sql` | 6 sản phẩm và 3 tài khoản để trình diễn quy trình kiểm duyệt (mục 6) | 77 sản phẩm, 10 điểm |
 | 6 | `seed_dehavi_demo.sql` | Ví dụ đầy đủ sản phẩm → chủ thể → điểm Dehavi Showroom (mục 7) | 11 điểm, 22 nguồn |
 | 7 | `seed_dehavi_media.sql` | Ảnh chính thức có ghi nguồn cho Dehavi Valley và Dehavi Showroom | |
+| 8 | `seed_dalavi_reference.sql` | DaLaVi: 1 sản phẩm OCOP, 1 chủ thể, 2 cơ sở và quan hệ sản phẩm–địa điểm | 2 điểm, 4 nguồn |
+| 9 | `seed_product_drafts_public_sources.sql` | Sản phẩm tham khảo từ Aso Farm/DaLaVi và Dalat Hasfarm, lưu bản nháp | 16 bản nháp |
 
-Nạp đủ 7 file: **61 sản phẩm** và **10 điểm du lịch** hiển thị công khai (còn lại là dữ liệu demo, nháp, chờ duyệt hoặc thiếu nguồn công nhận).
+Nạp đủ 8 file: **62 sản phẩm** và **12 điểm du lịch** hiển thị công khai (còn lại là dữ liệu demo, nháp, chờ duyệt hoặc thiếu nguồn công nhận).
 
 **Tài khoản kỹ thuật `@local.invalid`:** chủ thể nhập từ nguồn công khai được gắn với tài khoản kỹ thuật luôn ở trạng thái khóa, không đăng nhập được. Nội dung của chúng vẫn hiển thị (xem `docs/NGHIEP_VU.md` mục 3).
 
@@ -98,6 +100,7 @@ Cà phê pha phin Dehavi Valley (OCOP 4 sao, nguồn B1)
 - Chỉ dùng ảnh có giấy phép (Unsplash, ghi nguồn trong `frontend/src/constants/photos.ts`), ảnh do đơn vị cho phép, hoặc ảnh nhóm tự chụp. Ảnh minh họa luôn có nhãn "Ảnh minh họa".
 - Mỗi ảnh lưu được nguồn (`source_url`), tác giả (`credit`), giấy phép (`license`); để trống `license` khi chưa rõ quyền dùng, không suy diễn.
 - Ảnh Dehavi (`seed_dehavi_media.sql`) là ảnh CDN chính thức của đơn vị, credit "Dehavi Coffee / Công ty TNHH Cà phê Hân Vinh", `license` để trống. `storage_path` dạng `external/...` chỉ để định danh, không phải file tải lên.
+- Ảnh 5 sản phẩm Hasfarm và 11 sản phẩm AsoFarm/DaLaVi trong `seed_product_drafts_public_sources.sql` dùng URL ảnh công khai từ trang nguồn, có `source_url`, credit và ghi nhận quyền sử dụng cho đồ án; các sản phẩm vẫn là bản nháp.
 - Ảnh tải lên lưu cục bộ (`backend/uploads`) hoặc Cloudinary (xem `docs/CAU_HINH.md`). Luôn có ảnh dự phòng khi ảnh lỗi.
 
 ## 9. Tái tạo dữ liệu

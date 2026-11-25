@@ -172,13 +172,16 @@ npm run dev
 
 **Phát triển và kiểm thử: nạp seed** (sản phẩm OCOP tham khảo có nguồn, sản phẩm ở đủ trạng thái, tài khoản demo):
 
+> **Quan trọng với Windows PowerShell 5.1:** đặt `$OutputEncoding` về UTF-8 trước khi chuyển dữ liệu qua pipe (dòng đầu của các khối lệnh dưới đây). Mặc định PowerShell gửi ASCII nên chữ tiếng Việt bị đổi thành dấu `?` trong database (đã từng làm hỏng tên, địa chỉ và nguồn của dữ liệu DaLaVi).
+
 ```powershell
-foreach ($seed in 'seed_public_reference','seed_ocop_2025_2026','seed_product_workflow','seed_dehavi_demo','seed_dehavi_media') {
+$OutputEncoding = [System.Text.UTF8Encoding]::new($false)
+foreach ($seed in 'seed_public_reference','seed_ocop_2025_2026','seed_product_workflow','seed_dehavi_demo','seed_dehavi_media','seed_dalavi_reference','seed_product_drafts_public_sources') {
   Get-Content ".\database\$seed.sql" -Raw -Encoding UTF8 | docker compose exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
 }
 ```
 
-Sau khi nạp: 61 sản phẩm và 10 điểm du lịch hiển thị công khai. Tài khoản demo (mật khẩu `DemoOCOP@2026`, **không dùng cho bản triển khai**): `admin.ocop.demo@example.com` (quản trị), `chuthe.ocop.demo@example.com` (chủ thể), `ungvien.ocop.demo@example.com` (người dùng có hồ sơ chủ thể đang chờ). Chi tiết: [`docs/DU_LIEU.md`](docs/DU_LIEU.md).
+Sau khi nạp: 62 sản phẩm và 12 điểm du lịch hiển thị công khai. Tài khoản demo (mật khẩu `DemoOCOP@2026`, **không dùng cho bản triển khai**): `admin.ocop.demo@example.com` (quản trị), `chuthe.ocop.demo@example.com` (chủ thể), `ungvien.ocop.demo@example.com` (người dùng có hồ sơ chủ thể đang chờ). Chi tiết: [`docs/DU_LIEU.md`](docs/DU_LIEU.md).
 
 ## Cấu hình
 
@@ -197,12 +200,16 @@ Mọi cấu hình nằm trong `.env`; danh sách đầy đủ ở [`docs/CAU_HIN
 - **Database đã có dữ liệu** (sau mỗi lần cập nhật code): chạy migration tổng hợp. File chạy trong một transaction, chạy lặp lại an toàn, đưa database ở bất kỳ phiên bản cũ nào lên phiên bản hiện tại:
 
   ```powershell
+  $OutputEncoding = [System.Text.UTF8Encoding]::new($false)
   Get-Content .\database\migrations\014_hoan_thien.sql -Raw -Encoding UTF8 | docker compose exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
   ```
+
+  Sau 014, chạy lần lượt `015_lien_ket_ban_do.sql` (vai trò sản phẩm tại điểm, cửa hàng) và `016_tuyen_tham_quan.sql` (tuyến tham quan) theo cùng cách.
 
 - **Kiểm tra database khớp repo:** chạy `tools/kiem-tra-database.sql` trong pgAdmin (Query Tool) hoặc:
 
   ```powershell
+  $OutputEncoding = [System.Text.UTF8Encoding]::new($false)
   Get-Content .\tools\kiem-tra-database.sql -Raw -Encoding UTF8 | docker compose exec -T postgres sh -lc 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
   ```
 
@@ -221,8 +228,8 @@ Mọi cấu hình nằm trong `.env`; danh sách đầy đủ ở [`docs/CAU_HIN
 ## Kiểm thử
 
 ```powershell
-docker compose exec backend python -m pytest -q    # backend: 279 đạt, 9 bỏ qua
-docker compose exec frontend npm test              # frontend: 281 test trong 60 file
+docker compose exec backend python -m pytest -q    # backend: 295 đạt, 9 bỏ qua
+docker compose exec frontend npm test              # frontend: 437 test trong 78 file
 docker compose exec frontend npm run type-check
 docker compose exec frontend npm run build
 python -m pytest -q tests/data                     # dữ liệu OCOP gốc (cần Python trên máy)

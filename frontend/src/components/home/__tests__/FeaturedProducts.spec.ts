@@ -47,15 +47,24 @@ describe('FeaturedProducts', () => {
 
     const cards = wrapper.findAll('.stub-card')
     expect(cards).toHaveLength(8)
-    expect(cards.every((card) => !card.text().endsWith('-3'))).toBe(true)
+    expect(cards.map((card) => card.text())).toEqual([
+      'Sản phẩm 2-5',
+      'Sản phẩm 3-4',
+      'Sản phẩm 4-5',
+      'Sản phẩm 5-4',
+      'Sản phẩm 6-5',
+      'Sản phẩm 7-4',
+      'Sản phẩm 8-5',
+      'Sản phẩm 9-4',
+    ])
     expect(getProducts).toHaveBeenCalledWith({ page: 1, page_size: 12, sort: 'rating' })
   })
 })
 
-describe('FeaturedProducts certification filter', () => {
+describe('FeaturedProducts fallback products', () => {
   it.each([
-    { stars: [3, 3], expectedNames: [] },
-    { stars: [3, 4, 3, 5], expectedNames: [product(2, 4).name, product(4, 5).name] },
+    { stars: [3, 3], expectedNames: [product(1, 3).name, product(2, 3).name] },
+    { stars: [3, 4, 3, 5], expectedNames: [product(2, 4).name, product(4, 5).name, product(1, 3).name, product(3, 3).name] },
     { stars: [], expectedNames: [] },
   ])('shows only certified cards for $stars', async ({ stars, expectedNames }) => {
     const items = stars.map((star, index) => product(index + 1, star))

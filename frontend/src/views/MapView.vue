@@ -6,22 +6,32 @@ import LeafletMap from '@/components/map/LeafletMap.vue'
 import MapLegend from '@/components/map/MapLegend.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
 import { getApiErrorMessage } from '@/services/api-error'
+import { getCategories } from '@/services/categories'
 import {
   getLocationFilterOptions,
   getMapLocations,
   getNearbyLocations,
+  getProductLocations,
+  getPublicSubject,
   getRoute,
+  getTour,
+  getTours,
 } from '@/services/locations'
+import type { Category } from '@/types/category'
 import type {
   Coordinate,
+  LocationKindFilter,
   LocationType,
   LocationTypeOption,
   MapFeature,
   NearbyLocation,
   RouteResponse,
+  TourDetail,
+  TourListItem,
 } from '@/types/location'
 import {
   externalDirectionsUrl,
+  featureKind,
   formatDistance,
   formatDuration,
   formatTicketPrice,
@@ -33,8 +43,11 @@ import {
   matchesNearbyFilters,
   mergeQuery,
   nearbyToFeature,
+  productRoleLabel,
+  safeExternalUrl,
   sortVietnamese,
   splitMappableFeatures,
+  telephoneHref,
 } from '@/utils/location'
 import { scrollBehavior } from '@/utils/motion'
 
@@ -50,19 +63,51 @@ interface MapFilterState {
   search: string
   type: LocationType | ''
   district: string
+  /** Lớp bản đồ: điểm du lịch, cửa hàng hoặc tất cả (lọc phía client trên dữ liệu đã tải). */
+  kind: LocationKindFilter
+  /** Slug sản phẩm: chỉ hiện nơi bán, nơi sản xuất, nơi giới thiệu sản phẩm này. */
+  product: string
+  /** Mã chủ thể (số): chỉ hiện các điểm của chủ thể này. */
+  subject: string
+  /** Slug nhóm sản phẩm: chỉ hiện điểm có sản phẩm thuộc nhóm. */
+  category: string
+  /** Slug tuyến tham quan: chỉ hiện các chặng của tuyến, nối theo thứ tự. */
+  tour: string
+}
+
+interface ProductContext {
+  id: number
+  name: string
+  slug: string
+}
+
+interface SubjectContext {
+  id: number
+  name: string
+  locationCount: number
+  productCount: number
 }
 
 const route = useRoute()
 const router = useRouter()
 
-const features = ref<MapFeature[]>([])
+// Mọi điểm theo bộ lọc gửi lên máy chủ; lớp (kind) lọc tiếp ở phía client để chuyển lớp tức thì và đếm đủ số điểm mỗi lớp.
+const allFeatures = ref<MapFeature[]>([])
 // Điểm chọn từ "Điểm gần bạn" nhưng nằm ngoài bộ lọc hiện tại: thêm tạm vào tập hiển thị.
 const extraFeatures = ref<MapFeature[]>([])
 const typeOptions = ref<LocationTypeOption[]>([])
+const categories = ref<Category[]>([])
+const productContext = ref<ProductContext | null>(null)
+const tours = ref<TourListItem[]>([])
+const tourDetail = ref<TourDetail | null>(null)
+const subjectContext = ref<SubjectContext | null>(null)
+const contextMessage = ref('')
+const viewMode = ref<'list' | 'detail'>('list')
 const districts = ref<string[]>([])
 const isLoading = ref(false)
 const errorMessage = ref('')
 const selectedSlug = ref<string | null>(null)
+const selectedMarkerPosition = ref<{ x: number; y: number; width: number; height: number } | null>(null)
 
 const userPosition = ref<Coordinate | null>(null)
 const isLocating = ref(false)
@@ -79,8 +124,16 @@ let latestNearbyId = 0
 
 const isCompact = ref(false)
 const selectedCard = ref<HTMLElement | null>(null)
-const mapCanvas = ref<HTMLElement | null>(null)
+const cardHeight = ref(0)
+const cardWidth = ref(0)
+let cardObserver: ResizeObserver | null = null
+const selectedImageFailed = ref(false)
 const allLocationsTitle = ref<HTMLElement | null>(null)
+const leafletMap = ref<InstanceType<typeof LeafletMap> | null>(null)
+const panelToggle = ref<HTMLButtonElement | null>(null)
+const nearbyTitle = ref<HTMLElement | null>(null)
+/** Máy tính: ẩn bảng bên trái để xem bản đồ rộng hơn. */
+const isPanelCollapsed = ref(false)
 let compactQuery: MediaQueryList | null = null
 
 function queryText(value: unknown): string {
@@ -89,30 +142,100 @@ function queryText(value: unknown): string {
 
 function filtersFromQuery(query: Record<string, unknown>): MapFilterState {
   const type = queryText(query.type)
+  const kind = queryText(query.kind)
+  const subject = queryText(query.subject)
   return {
     search: queryText(query.search).slice(0, 150),
     type: isLocationType(type) ? type : '',
     district: queryText(query.district).slice(0, 100),
+    kind: kind === 'attraction' || kind === 'shop' ? kind : 'all',
+    product: queryText(query.product).slice(0, 255),
+    subject: /^\d{1,12}$/.test(subject) ? subject : '',
+    category: queryText(query.category).slice(0, 150),
+    tour: queryText(query.tour).slice(0, 255),
   }
 }
 
 function sameFilters(first: MapFilterState, second: MapFilterState): boolean {
-  return first.search === second.search && first.type === second.type && first.district === second.district
+  return (Object.keys(first) as Array<keyof MapFilterState>).every((key) => first[key] === second[key])
 }
 
 // `filters` là giá trị trong ô nhập; `applied` là bộ lọc đã áp dụng (khớp URL và dữ liệu đang hiển thị).
 const filters = reactive<MapFilterState>(filtersFromQuery(route.query))
 const applied = reactive<MapFilterState>({ ...filters })
 
+const features = computed(() => {
+  const byKind =
+    applied.kind === 'all'
+      ? allFeatures.value
+      : allFeatures.value.filter((feature) => featureKind(feature) === applied.kind)
+  if (!applied.tour || !tourDetail.value) return byKind
+  const stopSlugs = new Set(tourDetail.value.stops.map((stop) => stop.location.slug))
+  return byKind.filter((feature) => stopSlugs.has(feature.properties.slug))
+})
+const kindCounts = computed(() => {
+  const counts = { all: allFeatures.value.length, attraction: 0, shop: 0 }
+  for (const feature of allFeatures.value) counts[featureKind(feature)] += 1
+  return counts
+})
+const linkedProductRole = (feature: MapFeature) =>
+  feature.properties.products?.find((product) => product.slug === applied.product)?.role
+/** Khi lọc theo sản phẩm: nối từng nơi sản xuất với nơi bán bằng đường nét đứt (tối đa 12 cặp). */
+const productLinks = computed<Array<[string, string]>>(() => {
+  if (applied.tour && tourDetail.value) {
+    // Tuyến tham quan: nối các chặng liên tiếp theo thứ tự (chỉ chặng đang hiển thị).
+    const present = new Set(features.value.map((feature) => feature.properties.slug))
+    const slugs = tourDetail.value.stops.map((stop) => stop.location.slug).filter((slug) => present.has(slug))
+    return slugs.slice(1).map((slug, index) => [slugs[index], slug] as [string, string])
+  }
+  if (!applied.product) return []
+  const producers = features.value.filter((feature) => linkedProductRole(feature) === 'produced_here')
+  const sellers = features.value.filter((feature) => linkedProductRole(feature) === 'sold_here')
+  const pairs: Array<[string, string]> = []
+  for (const producer of producers) {
+    for (const seller of sellers) pairs.push([producer.properties.slug, seller.properties.slug])
+  }
+  return pairs.slice(0, 12)
+})
+const mapPanel = ref<HTMLElement | null>(null)
+/** Danh sách gom theo loại hình, giữ thứ tự xuất hiện; mỗi nhóm đóng mở được. */
+const groupedLocations = computed(() => {
+  const groups = new Map<string, { type: string; label: string; items: MapFeature[] }>()
+  for (const feature of features.value) {
+    const { type, type_label: label } = feature.properties
+    const group = groups.get(type)
+    if (group) group.items.push(feature)
+    else groups.set(type, { type, label, items: [feature] })
+  }
+  return [...groups.values()]
+})
+const collapsedGroups = reactive<Record<string, boolean>>({})
+/** Chưa tải xong hoặc tải lỗi thì chưa biết số lượng: không hiện "0". */
+const hasCounts = computed(() => !isLoading.value && !errorMessage.value)
 const displayFeatures = computed(() => {
   // Không có điểm tạm thì trả đúng mảng gốc: LeafletMap chỉ vẽ lại marker khi tham chiếu mảng đổi.
   if (!extraFeatures.value.length) return features.value
   const present = new Set(features.value.map((feature) => feature.properties.slug))
   return [...features.value, ...extraFeatures.value.filter((feature) => !present.has(feature.properties.slug))]
 })
+const selectedHasOwnImage = computed(
+  () => Boolean(selectedFeature.value?.properties.primary_image_url) && !selectedImageFailed.value,
+)
 const selectedFeature = computed(
   () => displayFeatures.value.find((feature) => feature.properties.slug === selectedSlug.value) ?? null,
 )
+/** Đánh giá, số sản phẩm, giờ mở cửa: chỉ nối mục có dữ liệu để không thừa dấu chấm ở đầu dòng. */
+const selectedMeta = computed(() => {
+  const properties = selectedFeature.value?.properties
+  if (!properties) return ''
+  return [
+    properties.rating_avg ? `★ ${properties.rating_avg.toFixed(1)}` : '',
+    properties.products?.length ? `${properties.products.length} sản phẩm OCOP` : '',
+    properties.opening_hours ?? '',
+  ]
+    .filter(Boolean)
+    .join(' · ')
+})
 const isOutsideFilter = computed(
   () =>
     Boolean(selectedFeature.value) &&
@@ -133,14 +256,47 @@ const directionsUrl = computed(() =>
     ? externalDirectionsUrl(selectedCoordinates.value.latitude, selectedCoordinates.value.longitude)
     : '',
 )
-const hasFilters = computed(() => Boolean(filters.search || filters.type || filters.district))
+const hasFilters = computed(() =>
+  Boolean(
+    filters.search ||
+      filters.type ||
+      filters.district ||
+      filters.product ||
+      filters.subject ||
+      filters.category ||
+      filters.tour,
+  ),
+)
 const districtOptions = computed(() =>
   filters.district && !districts.value.includes(filters.district)
     ? [...districts.value, filters.district]
     : districts.value,
 )
 const hasNearbyFilters = computed(() => Boolean(applied.search || applied.district))
-
+/**
+ * Trên máy tính, thẻ nằm cạnh marker (bên phải nếu marker ở nửa trái, ngược lại bên trái) và được kẹp theo chiều dọc
+ * để không bao giờ bị cắt ở mép trên hay mép dưới khung bản đồ, dù thẻ cao bao nhiêu.
+ */
+const mapInfoStyle = computed(() => {
+  const position = selectedMarkerPosition.value
+  if (isCompact.value || !position) return undefined
+  const placeRight = position.x < position.width / 2
+  const height = cardHeight.value || 320
+  const width = cardWidth.value || 390
+  const margin = 12
+  // Chừa 64px bên trái cho nút phóng to/thu nhỏ của bản đồ.
+  const controlsGap = 64
+  const top = Math.min(Math.max(position.y - height / 2, margin), Math.max(margin, position.height - height - margin))
+  const left = placeRight
+    ? Math.max(controlsGap, Math.min(position.x + 30, position.width - width - margin))
+    : Math.max(controlsGap, position.x - 30 - width)
+  return { left: `${left}px`, top: `${top}px` }
+})
+const mapInfoPlacement = computed(() => {
+  const position = selectedMarkerPosition.value
+  if (isCompact.value || !position) return 'default'
+  return `${position.x < position.width / 2 ? 'right' : 'left'}-side`
+})
 /** Ghi bộ lọc/điểm chọn lên URL nhưng giữ các tham số còn lại; không gọi router khi query không đổi. */
 function writeQuery(patch: Record<string, string | undefined>, mode: 'push' | 'replace' = 'replace'): void {
   const query = mergeQuery(route.query, patch)
@@ -153,13 +309,18 @@ async function loadFeatures(): Promise<void> {
   isLoading.value = true
   errorMessage.value = ''
   try {
+    await resolveContexts()
+    if (requestId !== latestRequestId) return
     const collection = await getMapLocations({
       search: applied.search || undefined,
       type: applied.type || undefined,
       district: applied.district || undefined,
+      product_id: applied.product ? productContext.value?.id : undefined,
+      subject_id: applied.subject ? subjectContext.value?.id : undefined,
+      category: applied.category || undefined,
     })
     if (requestId !== latestRequestId) return
-    features.value = collection.features
+    allFeatures.value = collection.features
     // Chỉ giữ điểm "ngoài bộ lọc" khi nó vẫn đang được chọn và chưa nằm trong kết quả mới.
     keepExtras((extra) =>
       extra.properties.slug === selectedSlug.value &&
@@ -168,16 +329,84 @@ async function loadFeatures(): Promise<void> {
     if (selectedSlug.value && !selectedFeature.value) clearSelection()
   } catch (error) {
     if (requestId !== latestRequestId) return
-    features.value = []
+    allFeatures.value = []
     errorMessage.value = getApiErrorMessage(error, 'Không thể tải dữ liệu bản đồ. Vui lòng thử lại.')
   } finally {
     if (requestId === latestRequestId) isLoading.value = false
   }
 }
 
+/**
+ * Bộ lọc theo sản phẩm hoặc chủ thể cần mã số và tên để hiển thị: tra một lần rồi nhớ lại.
+ * Sản phẩm/chủ thể không còn công khai thì bỏ bộ lọc đó và báo cho người dùng.
+ */
+async function resolveContexts(): Promise<void> {
+  contextMessage.value = ''
+  if (!applied.product) productContext.value = null
+  else if (productContext.value?.slug !== applied.product) {
+    try {
+      const result = await getProductLocations(applied.product)
+      productContext.value = { id: result.product_id, name: result.product_name, slug: result.product_slug }
+    } catch {
+      productContext.value = null
+      contextMessage.value = 'Không tìm thấy sản phẩm này nên bản đồ đang hiện tất cả địa điểm.'
+      applied.product = ''
+      filters.product = ''
+      writeQuery({ product: undefined })
+    }
+  }
+  if (!applied.tour) tourDetail.value = null
+  else if (tourDetail.value?.slug !== applied.tour) {
+    try {
+      tourDetail.value = await getTour(applied.tour)
+    } catch {
+      tourDetail.value = null
+      contextMessage.value = 'Không tìm thấy tuyến tham quan này nên bản đồ đang hiện tất cả địa điểm.'
+      applied.tour = ''
+      filters.tour = ''
+      writeQuery({ tour: undefined })
+    }
+  }
+  if (!applied.subject) subjectContext.value = null
+  else if (String(subjectContext.value?.id ?? '') !== applied.subject) {
+    try {
+      const result = await getPublicSubject(Number(applied.subject))
+      subjectContext.value = {
+        id: result.id,
+        name: result.name,
+        locationCount: result.locations.length,
+        productCount: result.products.length,
+      }
+    } catch {
+      subjectContext.value = null
+      contextMessage.value = 'Không tìm thấy chủ thể này nên bản đồ đang hiện tất cả địa điểm.'
+      applied.subject = ''
+      filters.subject = ''
+      writeQuery({ subject: undefined })
+    }
+  }
+}
+
+async function loadTours(): Promise<void> {
+  try {
+    tours.value = await getTours()
+  } catch {
+    tours.value = []
+  }
+}
+
+async function loadCategories(): Promise<void> {
+  try {
+    categories.value = (await getCategories()).items
+  } catch {
+    categories.value = []
+  }
+}
+
 async function loadFilterOptions(): Promise<void> {
   try {
-    const options = await getLocationFilterOptions()
+    // Lấy cả hai lớp để danh sách loại hình có đủ điểm du lịch lẫn cửa hàng.
+    const options = await getLocationFilterOptions('all')
     typeOptions.value = options.types
     districts.value = sortVietnamese(options.districts)
   } catch {
@@ -191,15 +420,59 @@ async function applyFilters(urlMode: 'push' | 'replace' | false = 'replace'): Pr
   filters.search = filters.search.trim()
   Object.assign(applied, filters)
   if (urlMode) {
-    writeQuery({ search: applied.search, type: applied.type, district: applied.district }, urlMode)
+    writeQuery(
+      {
+        search: applied.search,
+        type: applied.type,
+        district: applied.district,
+        kind: applied.kind === 'all' ? undefined : applied.kind,
+        product: applied.product,
+        subject: applied.subject,
+        category: applied.category,
+        tour: applied.tour,
+      },
+      urlMode,
+    )
   }
   await loadFeatures()
   if (userPosition.value) await loadNearby(userPosition.value)
 }
 
 async function clearFilters(): Promise<void> {
-  Object.assign(filters, { search: '', type: '', district: '' })
+  Object.assign(filters, { search: '', type: '', district: '', product: '', subject: '', category: '', tour: '' })
   await applyFilters('push')
+}
+
+/** Chuyển lớp (tất cả, điểm du lịch, cửa hàng): lọc phía client nên không cần tải lại bản đồ. */
+async function selectKind(kind: LocationKindFilter): Promise<void> {
+  if (applied.kind === kind) return
+  filters.kind = kind
+  applied.kind = kind
+  writeQuery({ kind: kind === 'all' ? undefined : kind }, 'push')
+  if (selectedSlug.value && !selectedFeature.value) clearSelection()
+  if (userPosition.value) await loadNearby(userPosition.value)
+}
+
+async function selectCategory(slug: string): Promise<void> {
+  filters.category = filters.category === slug ? '' : slug
+  await applyFilters('push')
+}
+
+async function clearProductFilter(): Promise<void> {
+  filters.product = ''
+  filters.subject = ''
+  filters.tour = ''
+  await applyFilters('push')
+}
+
+/** Chọn một tuyến: bỏ các bộ lọc khác để đủ mọi chặng của tuyến hiện trên bản đồ. */
+async function selectTour(slug: string): Promise<void> {
+  Object.assign(filters, { search: '', type: '', district: '', product: '', subject: '', category: '', tour: slug })
+  await applyFilters('push')
+  // Nút vừa bấm nằm cuối bảng và biến mất: đưa về đầu để thấy bản đồ và danh sách chặng.
+  await nextTick()
+  if (mapPanel.value) mapPanel.value.scrollTop = 0
+  if (isCompact.value) window.scrollTo({ top: 0 })
 }
 
 async function selectLegendType(type: LocationType | ''): Promise<void> {
@@ -221,6 +494,8 @@ function clearRoute(): void {
 
 function clearSelection(): void {
   selectedSlug.value = null
+  selectedMarkerPosition.value = null
+  selectedImageFailed.value = false
   keepExtras(() => false)
   clearRoute()
   writeQuery({ diem: undefined, action: undefined })
@@ -230,7 +505,17 @@ async function closeSelection(): Promise<void> {
   clearSelection()
   // Nút đóng biến mất cùng thẻ: đưa focus về đầu danh sách để người dùng bàn phím không bị mất vị trí.
   await nextTick()
-  allLocationsTitle.value?.focus()
+  if (isPanelCollapsed.value && !isCompact.value) panelToggle.value?.focus()
+  else allLocationsTitle.value?.focus()
+}
+
+/** Nút định vị trên bản đồ: kết quả và thông báo nằm trong bảng, nên trên máy tính mở bảng và cuộn tới đó. */
+async function locateFromMap(): Promise<void> {
+  if (!isCompact.value) isPanelCollapsed.value = false
+  await locateUser('nearby')
+  if (isCompact.value) return
+  await nextTick()
+  nearbyTitle.value?.scrollIntoView?.({ block: 'nearest', behavior: scrollBehavior() })
 }
 
 function selectLocation(slug: string): void {
@@ -239,6 +524,7 @@ function selectLocation(slug: string): void {
     return
   }
   selectedSlug.value = slug
+  selectedImageFailed.value = false
   keepExtras((feature) => feature.properties.slug === slug)
   clearRoute()
   writeQuery({ diem: slug, action: undefined })
@@ -283,13 +569,6 @@ async function revealSelectedCard(): Promise<void> {
   window.scrollBy({ top: delta, behavior: scrollBehavior() })
 }
 
-function showMap(): void {
-  const canvas = mapCanvas.value
-  if (canvas && typeof canvas.scrollIntoView === 'function') {
-    canvas.scrollIntoView({ block: 'start', behavior: scrollBehavior() })
-  }
-}
-
 function geolocationErrorMessage(error: GeolocationPositionError): string {
   if (error.code === error.PERMISSION_DENIED) {
     return 'Bạn chưa cho phép truy cập vị trí. Hãy bật quyền vị trí cho trang web rồi thử lại.'
@@ -316,7 +595,7 @@ function requestCurrentPosition(): Promise<Coordinate> {
 function emptyNearbyMessage(origin: Coordinate): string {
   const scope = hasNearbyFilters.value || applied.type ? ' phù hợp với bộ lọc' : ''
   const outside = isInsideLamDong(origin) ? '' : 'Bạn đang ở ngoài Lâm Đồng. '
-  return `${outside}Không có điểm du lịch nào${scope} trong bán kính ${radiusKm.value} km quanh bạn.${
+  return `${outside}Không có địa điểm nào${scope} trong bán kính ${radiusKm.value} km quanh bạn.${
     radiusKm.value < RADIUS_OPTIONS_KM[RADIUS_OPTIONS_KM.length - 1] ? ' Hãy thử chọn bán kính lớn hơn.' : ''
   }`
 }
@@ -333,6 +612,7 @@ async function loadNearby(origin: Coordinate, report = true): Promise<void> {
       radiusKm: radiusKm.value,
       limit: hasNearbyFilters.value ? NEARBY_FETCH_LIMIT : NEARBY_LIMIT,
       type: applied.type || undefined,
+      kind: applied.kind,
     })
     if (requestId !== latestNearbyId) return
     nearby.value = response.items
@@ -388,6 +668,17 @@ async function showRoute(): Promise<void> {
   }
 }
 
+// Lỗi và thông báo nằm trong bảng bên trái: đang thu gọn thì mở lại để người dùng thấy.
+watch([errorMessage, contextMessage], ([error, context]) => {
+  if (error || context) isPanelCollapsed.value = false
+})
+
+// Chọn điểm từ bản đồ mà nhóm của nó đang đóng thì mở nhóm ra.
+watch(selectedSlug, () => {
+  const type = selectedFeature.value?.properties.type
+  if (type) collapsedGroups[type] = false
+})
+
 // Esc bỏ chọn điểm (trừ khi đang gõ trong ô nhập/chọn, nơi Esc có nghĩa riêng).
 function onKeydown(event: KeyboardEvent): void {
   if (event.key !== 'Escape' || event.defaultPrevented || !selectedSlug.value) return
@@ -437,10 +728,28 @@ onMounted(() => {
   }
   window.addEventListener('keydown', onKeydown)
   void loadFilterOptions()
+  void loadCategories()
+  void loadTours()
   void loadFeatures()
 })
 
+// Đo chiều cao thẻ điểm (đổi theo nội dung, ảnh tải xong, xoay màn hình) để đặt thẻ không bị cắt.
+watch(selectedCard, (element) => {
+  cardObserver?.disconnect()
+  cardObserver = null
+  cardHeight.value = element?.offsetHeight ?? 0
+  cardWidth.value = element?.offsetWidth ?? 0
+  if (element && typeof ResizeObserver !== 'undefined') {
+    cardObserver = new ResizeObserver(() => {
+      cardHeight.value = element.offsetHeight
+      cardWidth.value = element.offsetWidth
+    })
+    cardObserver.observe(element)
+  }
+})
+
 onBeforeUnmount(() => {
+  cardObserver?.disconnect()
   window.removeEventListener('keydown', onKeydown)
   compactQuery?.removeEventListener?.('change', onCompactChange)
 })
@@ -448,12 +757,12 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <main class="map-page">
-    <aside class="map-panel" aria-label="Công cụ bản đồ">
+  <main class="map-page" :class="{ 'is-panel-collapsed': isPanelCollapsed }">
+    <aside ref="mapPanel" class="map-panel" aria-label="Công cụ bản đồ">
       <header class="panel-header">
-        <span class="eyebrow">Bản đồ số Lâm Đồng</span>
-        <h1>Khám phá du lịch nông nghiệp</h1>
-        <p>{{ mappableCount }} điểm đến đang hiển thị trên bản đồ.</p>
+        <h1>Bản đồ OCOP Lâm Đồng</h1>
+        <p>Tìm nơi tham quan và nơi mua sản phẩm OCOP.</p>
+        <p v-if="hasCounts" class="visually-hidden" role="status">{{ mappableCount }} địa điểm đang hiển thị trên bản đồ.</p>
         <p class="panel-notice" role="status" data-test="unmappable-notice">
           <template v-if="unmappableCount">
             {{ unmappableCount }} điểm chưa có tọa độ hợp lệ nên chưa hiển thị trên bản đồ (vẫn có trong danh sách).
@@ -461,8 +770,84 @@ onBeforeUnmount(() => {
         </p>
       </header>
 
+      <div class="kind-toggle" role="group" aria-label="Loại địa điểm" data-test="kind-toggle">
+        <button
+          v-for="option in [
+            { value: 'all', label: 'Tất cả', count: kindCounts.all },
+            { value: 'attraction', label: 'Du lịch', count: kindCounts.attraction },
+            { value: 'shop', label: 'Cửa hàng', count: kindCounts.shop },
+          ] as const"
+          :key="option.value"
+          type="button"
+          :aria-pressed="applied.kind === option.value"
+          :class="{ active: applied.kind === option.value }"
+          :data-kind="option.value"
+          @click="selectKind(option.value)"
+        >
+          <span v-if="option.value !== 'all'" class="kind-swatch" :class="`is-${option.value}`" aria-hidden="true" />
+          {{ option.label }} <span v-if="hasCounts" class="kind-count">{{ option.count }}</span>
+        </button>
+      </div>
+
+      <section
+        v-if="productContext || subjectContext || tourDetail"
+        class="panel-section context-banner"
+        aria-label="Bộ lọc đang áp dụng"
+        data-test="context-banner"
+      >
+        <span class="context-eyebrow">
+          {{
+            tourDetail
+              ? 'Đang xem tuyến tham quan'
+              : productContext
+                ? 'Đang xem nơi mua và sản xuất'
+                : 'Đang xem các điểm của chủ thể'
+          }}
+        </span>
+        <strong v-if="tourDetail">{{ tourDetail.name }}</strong>
+        <strong v-else-if="productContext">{{ productContext.name }}</strong>
+        <strong v-else-if="subjectContext">{{ subjectContext.name }}</strong>
+        <template v-if="tourDetail">
+          <span class="context-meta">
+            {{ tourDetail.stop_count }} chặng<template v-if="tourDetail.duration_text"> · {{ tourDetail.duration_text }}</template>
+          </span>
+          <p v-if="tourDetail.description" class="context-meta">{{ tourDetail.description }}</p>
+          <p class="context-meta">Đường chấm trên bản đồ chỉ nối các chặng theo thứ tự, không phải đường đi thực tế.</p>
+          <ol class="tour-stops" aria-label="Các chặng của tuyến" data-test="tour-stops">
+            <li v-for="stop in tourDetail.stops" :key="stop.location.slug">
+              <button type="button" :class="{ active: stop.location.slug === selectedSlug }" @click="selectLocation(stop.location.slug)">
+                <span class="tour-number" aria-hidden="true">{{ stop.position }}</span>
+                <span class="tour-stop-text">
+                  <strong>{{ stop.location.name }}</strong>
+                  <small>{{ stop.location.type_label }}</small>
+                  <small v-if="stop.note">{{ stop.note }}</small>
+                </span>
+              </button>
+            </li>
+          </ol>
+        </template>
+        <span v-if="subjectContext && !productContext" class="context-meta">
+          {{ subjectContext.locationCount }} địa điểm · {{ subjectContext.productCount }} sản phẩm OCOP
+        </span>
+        <div class="context-actions">
+          <RouterLink
+            v-if="productContext && !tourDetail"
+            class="btn btn-outline-success btn-sm"
+            :to="{ name: 'product-detail', params: { slug: productContext.slug } }"
+          >
+            Xem sản phẩm
+          </RouterLink>
+          <button class="btn btn-sm context-clear" type="button" data-test="clear-context" @click="clearProductFilter">
+            Bỏ lọc
+          </button>
+        </div>
+      </section>
+      <p v-if="contextMessage" class="panel-section panel-message" role="status" data-test="context-message">
+        {{ contextMessage }}
+      </p>
+
       <form class="panel-section filter-form" role="search" @submit.prevent="applyFilters('replace')">
-        <label class="visually-hidden" for="map-search">Tìm điểm du lịch</label>
+        <label class="visually-hidden" for="map-search">Tìm địa điểm</label>
         <div class="search-row">
           <input
             id="map-search"
@@ -470,7 +855,7 @@ onBeforeUnmount(() => {
             class="form-control"
             type="search"
             maxlength="150"
-            placeholder="Tìm đồi chè, vườn dâu..."
+            placeholder="Tìm địa điểm, cửa hàng"
           />
           <button class="btn btn-success" type="submit" :disabled="isLoading" aria-label="Tìm kiếm">
             <AppIcon name="search" :size="16" />
@@ -488,19 +873,149 @@ onBeforeUnmount(() => {
             <option v-for="district in districtOptions" :key="district" :value="district">{{ district }}</option>
           </select>
         </div>
+        <details v-if="categories.length" class="category-filter" :open="Boolean(applied.category)">
+          <summary>
+            Nhóm sản phẩm
+            <span v-if="applied.category" class="category-active">đang lọc</span>
+          </summary>
+          <div class="category-chips" role="group" aria-label="Có bán sản phẩm thuộc nhóm">
+          <button
+            v-for="category in categories"
+            :key="category.slug"
+            type="button"
+            class="chip"
+            :aria-pressed="applied.category === category.slug"
+            data-test="category-chip"
+            @click="selectCategory(category.slug)"
+          >
+            {{ category.name }}
+          </button>
+          </div>
+        </details>
         <button v-if="hasFilters" class="btn-link-reset" type="button" @click="clearFilters">Xóa bộ lọc</button>
       </form>
-
-      <MapLegend :features="mappable" :active-type="applied.type" @select="selectLegendType" />
 
       <div v-if="errorMessage" class="panel-section alert alert-danger mb-0" role="alert">
         {{ errorMessage }}
         <button class="btn btn-sm btn-outline-danger ms-2" type="button" @click="loadFeatures">Thử lại</button>
       </div>
 
+      <section class="panel-section" aria-labelledby="all-locations-title">
+        <div class="section-title-row list-head">
+          <h2 id="all-locations-title" ref="allLocationsTitle" tabindex="-1">
+            {{ productContext ? 'Nơi có sản phẩm này' : 'Tất cả địa điểm' }}
+            <span v-if="hasCounts" class="list-count" role="status" data-test="list-count">{{ features.length }}</span>
+          </h2>
+          <div class="view-toggle" role="group" aria-label="Kiểu hiển thị danh sách">
+            <button type="button" :aria-pressed="viewMode === 'list'" data-test="view-list" @click="viewMode = 'list'">Danh sách</button>
+            <button type="button" :aria-pressed="viewMode === 'detail'" data-test="view-detail" @click="viewMode = 'detail'">Chi tiết</button>
+          </div>
+        </div>
+        <p v-if="isLoading" class="panel-hint">Đang tải dữ liệu bản đồ...</p>
+        <div v-else-if="!features.length && !errorMessage" class="empty-state">
+          <p class="panel-hint">
+            {{ hasFilters || applied.kind !== 'all' ? 'Không có địa điểm phù hợp với bộ lọc.' : 'Chưa có địa điểm nào để hiển thị.' }}
+          </p>
+          <button v-if="hasFilters" class="btn btn-outline-success btn-sm" type="button" @click="clearFilters">
+            Xóa bộ lọc
+          </button>
+          <button v-else-if="applied.kind !== 'all'" class="btn btn-outline-success btn-sm" type="button" @click="selectKind('all')">
+            Xem tất cả địa điểm
+          </button>
+        </div>
+        <div v-else class="location-groups">
+          <section v-for="group in groupedLocations" :key="group.type" class="location-group">
+            <h3>
+              <button
+                type="button"
+                class="group-toggle"
+                :aria-expanded="!collapsedGroups[group.type]"
+                :aria-controls="`location-group-${group.type}`"
+                data-test="group-toggle"
+                @click="collapsedGroups[group.type] = !collapsedGroups[group.type]"
+              >
+                <i
+                  class="type-dot"
+                  :class="{ 'is-shop': featureKind(group.items[0]) === 'shop' }"
+                  :style="{ background: locationTypeStyle(group.items[0].properties.type).color }"
+                  aria-hidden="true"
+                />
+                <span class="group-label">{{ group.label }}</span>
+                <span class="group-count">{{ group.items.length }}</span>
+                <span class="group-chevron" aria-hidden="true" />
+              </button>
+            </h3>
+            <ul
+              v-show="!collapsedGroups[group.type]"
+              :id="`location-group-${group.type}`"
+              class="location-list"
+              :class="{ 'is-detail': viewMode === 'detail' }"
+            >
+              <li v-for="feature in group.items" :key="feature.properties.slug">
+                <button
+                  type="button"
+                  :class="{ active: feature.properties.slug === selectedSlug }"
+                  @click="selectLocation(feature.properties.slug)"
+                >
+                  <img
+                    v-if="feature.properties.primary_image_url"
+                    class="location-thumb"
+                    :src="feature.properties.primary_image_url"
+                    alt=""
+                    loading="lazy"
+                  />
+                  <i
+                    v-else
+                    class="type-dot"
+                    :class="{ 'is-shop': featureKind(feature) === 'shop' }"
+                    :style="{ background: locationTypeStyle(feature.properties.type).color }"
+                    aria-hidden="true"
+                  />
+                  <span class="location-text">
+                    <strong>{{ feature.properties.name }}</strong>
+                    <small>
+                      {{ feature.properties.type_label }} · {{ feature.properties.district }}
+                      <template v-if="feature.properties.products?.length"> · {{ feature.properties.products.length }} sản phẩm OCOP</template>
+                    </small>
+                    <span v-if="productContext && linkedProductRole(feature)" class="role-badge" data-test="role-badge">
+                      {{ productRoleLabel(linkedProductRole(feature)) }}
+                    </span>
+                    <template v-if="viewMode === 'detail'">
+                      <span class="location-address">{{ feature.properties.address }}</span>
+                      <span v-if="feature.properties.opening_hours" class="location-meta">Mở cửa {{ feature.properties.opening_hours }}</span>
+                      <span v-if="feature.properties.description" class="location-desc">{{ feature.properties.description }}</span>
+                      <span v-if="feature.properties.services?.length" class="location-meta">
+                        {{ feature.properties.services.slice(0, 3).join(' · ') }}
+                      </span>
+                    </template>
+                  </span>
+                </button>
+              </li>
+            </ul>
+          </section>
+        </div>
+      </section>
+
+      <section v-if="tours.length && !tourDetail" class="panel-section tour-list" aria-labelledby="tour-list-title" data-test="tour-list">
+        <h2 id="tour-list-title">Tuyến tham quan</h2>
+        <p class="panel-hint">Chọn một tuyến để xem các chặng theo thứ tự trên bản đồ.</p>
+        <ul>
+          <li v-for="tour in tours" :key="tour.slug">
+            <button type="button" data-test="tour-item" @click="selectTour(tour.slug)">
+              <strong>{{ tour.name }}</strong>
+              <small>
+                {{ tour.stop_count }} chặng<template v-if="tour.duration_text"> · {{ tour.duration_text }}</template>
+              </small>
+            </button>
+          </li>
+        </ul>
+      </section>
+
+      <MapLegend :features="mappable" :active-type="applied.type" @select="selectLegendType" />
+
       <section class="panel-section" aria-labelledby="nearby-title">
         <div class="section-title-row">
-          <h2 id="nearby-title">Điểm gần bạn</h2>
+          <h2 id="nearby-title" ref="nearbyTitle">Điểm gần bạn</h2>
           <button class="btn btn-sm btn-outline-success" type="button" :disabled="isLocating" @click="locateUser('nearby')">
             <AppIcon name="navigation" :size="14" />
             {{ isLocating ? 'Đang định vị...' : userPosition ? 'Cập nhật vị trí' : 'Định vị tôi' }}
@@ -514,7 +1029,7 @@ onBeforeUnmount(() => {
         </div>
         <p v-if="locationMessage" class="panel-message" role="status">{{ locationMessage }}</p>
         <p v-else-if="!userPosition" class="panel-hint">
-          Cho phép truy cập vị trí để tìm điểm du lịch gần nhất trong bán kính {{ radiusKm }} km.
+          Cho phép truy cập vị trí để tìm địa điểm gần nhất trong bán kính {{ radiusKm }} km.
         </p>
         <p v-if="isLoadingNearby" class="panel-hint">Đang tìm điểm gần nhất...</p>
         <ol v-else-if="nearby.length" class="nearby-list">
@@ -530,17 +1045,73 @@ onBeforeUnmount(() => {
         </ol>
       </section>
 
+      <p class="panel-note">
+        Dữ liệu điểm đến mang tính tham khảo. Tuyến đường do dịch vụ chỉ đường gợi ý (dữ liệu OpenStreetMap).
+      </p>
+    </aside>
+
+    <section class="map-canvas" aria-label="Bản đồ">
+      <div class="map-stage">
+        <LeafletMap
+          ref="leafletMap"
+          :features="displayFeatures"
+          :selected-slug="selectedSlug"
+          :user-position="userPosition"
+          :route="routeLine"
+          :links="productLinks"
+          @select="selectLocation"
+          @selected-position="selectedMarkerPosition = $event"
+        />
+        <div class="map-tools" role="group" aria-label="Điều khiển bản đồ">
+          <button
+            v-if="!isCompact"
+            ref="panelToggle"
+            type="button"
+            :aria-expanded="!isPanelCollapsed"
+            :aria-label="isPanelCollapsed ? 'Mở bảng danh sách' : 'Thu gọn bảng danh sách'"
+            :title="isPanelCollapsed ? 'Mở bảng danh sách' : 'Thu gọn bảng danh sách'"
+            data-test="panel-toggle"
+            @click="isPanelCollapsed = !isPanelCollapsed"
+          >
+            <AppIcon :name="isPanelCollapsed ? 'chevronRight' : 'chevronLeft'" :size="18" />
+          </button>
+          <button
+            type="button"
+            aria-label="Vị trí của tôi"
+            title="Vị trí của tôi"
+            :disabled="isLocating"
+            data-test="map-locate"
+            @click="locateFromMap"
+          >
+            <AppIcon name="navigation" :size="18" />
+          </button>
+          <button
+            type="button"
+            aria-label="Xem toàn bộ các điểm"
+            title="Xem toàn bộ các điểm"
+            data-test="map-reset"
+            @click="leafletMap?.resetView()"
+          >
+            <AppIcon name="map" :size="18" />
+          </button>
+        </div>
+      </div>
       <section
         v-if="selectedFeature"
         ref="selectedCard"
-        class="panel-section selected-card"
-        aria-labelledby="selected-title"
+        class="map-info-overlay"
+        :class="`placement-${mapInfoPlacement}`"
+        :style="mapInfoStyle"
+        aria-labelledby="map-selected-title"
         aria-live="polite"
       >
-        <div class="section-title-row">
+        <div class="map-info-head">
           <span
             class="type-badge"
-            :style="{ '--type-color': locationTypeStyle(selectedFeature.properties.type).color }"
+            :style="{
+              '--type-color': locationTypeStyle(selectedFeature.properties.type).color,
+              '--type-on': locationTypeStyle(selectedFeature.properties.type).onColor,
+            }"
           >
             {{ selectedFeature.properties.type_label }}
           </span>
@@ -548,103 +1119,111 @@ onBeforeUnmount(() => {
             <AppIcon name="close" :size="13" />
           </button>
         </div>
-        <h2 id="selected-title">{{ selectedFeature.properties.name }}</h2>
-        <p class="selected-address"><AppIcon name="map-pin" :size="13" /> {{ selectedFeature.properties.address }}</p>
-        <p v-if="isOutsideFilter" class="panel-hint selected-note" data-test="outside-filter">
-          Điểm này không thuộc bộ lọc hiện tại nhưng vẫn được hiển thị để bạn xem.
-        </p>
-        <p v-if="!selectedCoordinates" class="panel-hint selected-note" data-test="no-coordinates">
-          Điểm này chưa có tọa độ hợp lệ nên chưa hiển thị trên bản đồ và chưa thể chỉ đường.
-        </p>
-        <dl class="selected-facts">
-          <div>
-            <dt>Giờ mở cửa</dt>
-            <dd>{{ selectedFeature.properties.opening_hours || 'Chưa cập nhật' }}</dd>
+        <div class="map-info-content">
+          <img
+            v-if="selectedHasOwnImage"
+            class="map-info-image"
+            :src="selectedFeature.properties.primary_image_url!"
+            :alt="selectedFeature.properties.name"
+            @error="selectedImageFailed = true"
+          />
+          <div class="map-info-body">
+            <h2 id="map-selected-title">{{ selectedFeature.properties.name }}</h2>
+            <p class="selected-address">
+              <AppIcon name="map-pin" :size="13" /> {{ selectedFeature.properties.address }}
+            </p>
+            <p v-if="isOutsideFilter" class="panel-hint selected-note" data-test="outside-filter">
+              Điểm này không thuộc bộ lọc hiện tại nhưng vẫn được hiển thị để bạn xem.
+            </p>
+            <p v-if="!selectedCoordinates" class="panel-hint selected-note" data-test="no-coordinates">
+              Điểm này chưa có tọa độ hợp lệ nên chưa hiển thị trên bản đồ và chưa thể chỉ đường.
+            </p>
+            <p v-if="selectedFeature.properties.subject" class="map-info-subject">
+              Chủ thể:
+              <RouterLink
+                :to="{ name: 'map', query: { subject: String(selectedFeature.properties.subject.id) } }"
+                data-test="subject-link"
+              >
+                {{ selectedFeature.properties.subject.name }}
+              </RouterLink>
+            </p>
+            <p v-if="selectedMeta" class="map-info-meta">{{ selectedMeta }}</p>
+            <ul class="map-info-contact" aria-label="Thông tin liên hệ">
+              <li v-if="selectedFeature.properties.contact_phone">
+                <AppIcon name="phone" :size="13" />
+                <a v-if="telephoneHref(selectedFeature.properties.contact_phone)" :href="telephoneHref(selectedFeature.properties.contact_phone)!">
+                  {{ selectedFeature.properties.contact_phone }}
+                </a>
+                <span v-else>{{ selectedFeature.properties.contact_phone }}</span>
+              </li>
+              <li v-if="safeExternalUrl(selectedFeature.properties.website)">
+                <AppIcon name="map" :size="13" />
+                <a :href="safeExternalUrl(selectedFeature.properties.website)!" target="_blank" rel="noopener noreferrer">Trang web của đơn vị</a>
+              </li>
+              <li v-if="featureKind(selectedFeature) === 'attraction' && selectedFeature.properties.ticket_price !== null">
+                <AppIcon name="award" :size="13" /> Vé: {{ formatTicketPrice(selectedFeature.properties.ticket_price) }}
+              </li>
+            </ul>
+            <p v-if="selectedFeature.properties.description" class="map-info-description">
+              {{ selectedFeature.properties.description }}
+            </p>
+            <ul v-if="selectedFeature.properties.services?.length" class="map-info-services" aria-label="Dịch vụ">
+              <li v-for="service in selectedFeature.properties.services.slice(0, 4)" :key="service">{{ service }}</li>
+            </ul>
+            <ul v-if="selectedFeature.properties.products?.length" class="map-info-products" aria-label="Sản phẩm OCOP tại điểm">
+              <li v-for="product in selectedFeature.properties.products.slice(0, 5)" :key="product.id">
+                <img v-if="product.primary_image_url" :src="product.primary_image_url" :alt="`Ảnh ${product.name}`" loading="lazy" />
+                <span>
+                  <RouterLink class="map-info-product-link" :to="{ name: 'product-detail', params: { slug: product.slug } }">
+                    <strong>{{ product.name }}</strong>
+                    <small>OCOP {{ product.star }} sao · {{ productRoleLabel(product.role) }}</small>
+                  </RouterLink>
+                  <RouterLink
+                    v-if="product.slug !== applied.product"
+                    class="product-where"
+                    :to="{ name: 'map', query: { product: product.slug } }"
+                    data-test="product-where"
+                  >
+                    Xem nơi mua và sản xuất
+                  </RouterLink>
+                </span>
+              </li>
+            </ul>
           </div>
-          <div>
-            <dt>Giá vé</dt>
-            <dd>{{ formatTicketPrice(selectedFeature.properties.ticket_price) }}</dd>
-          </div>
-        </dl>
-
-        <p v-if="routeIntent && !routeResult" class="panel-hint" data-test="route-intent" role="status">Điểm đến đã chọn. Bấm “Lấy vị trí &amp; chỉ đường” để xác nhận dùng vị trí hiện tại và tìm tuyến đường.</p>
-        <div class="selected-actions">
-          <button
-            v-if="selectedCoordinates"
-            class="btn btn-success"
-            type="button"
-            :disabled="isRouting || isLocating"
-            @click="showRoute"
-          >
-            <AppIcon name="navigation" :size="15" /> {{ isRouting ? 'Đang tìm đường...' : routeIntent ? 'Lấy vị trí & chỉ đường' : 'Chỉ đường' }}
-          </button>
-          <RouterLink
-            class="btn btn-outline-success"
-            :to="{ name: 'location-detail', params: { slug: selectedFeature.properties.slug } }"
-          >
-            Xem chi tiết
-          </RouterLink>
-          <button v-if="isCompact && selectedCoordinates" class="btn btn-outline-success" type="button" @click="showMap">
-            <AppIcon name="map-pin" :size="15" /> Xem trên bản đồ
-          </button>
         </div>
-
-        <div v-if="routeResult" class="route-summary" role="status">
-          <strong>{{ formatDistance(routeResult.distance_m) }}</strong>
-          <span>khoảng {{ formatDuration(routeResult.duration_s) }} lái xe</span>
-          <button class="btn-link-reset" type="button" @click="clearRoute">Ẩn tuyến</button>
-        </div>
-        <p v-if="routeMessage" class="panel-message" role="alert">{{ routeMessage }}</p>
-        <a v-if="selectedCoordinates" class="external-directions" :href="directionsUrl" target="_blank" rel="noopener noreferrer">
-          Mở chỉ đường bằng Google Maps
-        </a>
-      </section>
-
-      <section class="panel-section" aria-labelledby="all-locations-title">
-        <h2 id="all-locations-title" ref="allLocationsTitle" tabindex="-1">Tất cả điểm đến</h2>
-        <p v-if="isLoading" class="panel-hint">Đang tải dữ liệu bản đồ...</p>
-        <div v-else-if="!features.length && !errorMessage" class="empty-state">
-          <p class="panel-hint">
-            {{ hasFilters ? 'Không có điểm du lịch phù hợp với bộ lọc.' : 'Chưa có điểm du lịch nào để hiển thị.' }}
+        <div class="map-info-footer">
+          <p v-if="routeIntent && !routeResult" class="panel-hint selected-note" data-test="route-intent" role="status">
+            Điểm đến đã chọn. Bấm “Lấy vị trí &amp; chỉ đường” để xác nhận dùng vị trí hiện tại và tìm tuyến đường.
           </p>
-          <button v-if="hasFilters" class="btn btn-outline-success btn-sm" type="button" @click="clearFilters">
-            Xóa bộ lọc
-          </button>
-        </div>
-        <ul v-else class="location-list">
-          <li v-for="feature in features" :key="feature.properties.slug">
+          <div v-if="routeResult" class="route-summary" role="status">
+            <strong>{{ formatDistance(routeResult.distance_m) }}</strong>
+            <span>khoảng {{ formatDuration(routeResult.duration_s) }} lái xe</span>
+            <button class="btn-link-reset" type="button" @click="clearRoute">Ẩn tuyến</button>
+          </div>
+          <div class="map-info-actions">
             <button
+              v-if="selectedCoordinates"
+              class="btn btn-success"
               type="button"
-              :class="{ active: feature.properties.slug === selectedSlug }"
-              @click="selectLocation(feature.properties.slug)"
+              :disabled="isRouting || isLocating"
+              @click="showRoute"
             >
-              <i
-                class="type-dot"
-                :style="{ background: locationTypeStyle(feature.properties.type).color }"
-                aria-hidden="true"
-              />
-              <span>
-                <strong>{{ feature.properties.name }}</strong>
-                <small>{{ feature.properties.type_label }} · {{ feature.properties.district }}</small>
-              </span>
+              <AppIcon name="navigation" :size="15" />
+              {{ isRouting ? 'Đang tìm đường...' : routeIntent ? 'Lấy vị trí & chỉ đường' : 'Chỉ đường' }}
             </button>
-          </li>
-        </ul>
+            <RouterLink
+              class="btn btn-outline-success"
+              :to="{ name: 'location-detail', params: { slug: selectedFeature.properties.slug } }"
+            >
+              Xem chi tiết
+            </RouterLink>
+          </div>
+          <p v-if="routeMessage" class="panel-message" role="alert">{{ routeMessage }}</p>
+          <a v-if="selectedCoordinates" class="external-directions" :href="directionsUrl" target="_blank" rel="noopener noreferrer">
+            Mở chỉ đường bằng Google Maps
+          </a>
+        </div>
       </section>
-
-      <p class="panel-note">
-        Dữ liệu điểm đến mang tính tham khảo. Tuyến đường do dịch vụ chỉ đường gợi ý (dữ liệu OpenStreetMap).
-      </p>
-    </aside>
-
-    <section ref="mapCanvas" class="map-canvas" aria-label="Bản đồ">
-      <LeafletMap
-        :features="displayFeatures"
-        :selected-slug="selectedSlug"
-        :user-position="userPosition"
-        :route="routeLine"
-        @select="selectLocation"
-      />
     </section>
   </main>
 </template>
@@ -668,7 +1247,7 @@ onBeforeUnmount(() => {
   margin: var(--ocop-space-1) 0;
   color: var(--ocop-primary-950);
   font-size: var(--ocop-font-size-title-md);
-  font-weight: 800;
+  font-weight: var(--ocop-font-weight-semibold);
 }
 
 .panel-notice {
@@ -689,13 +1268,6 @@ onBeforeUnmount(() => {
   font-size: var(--ocop-font-size-small);
 }
 
-.eyebrow {
-  color: var(--ocop-primary-700);
-  font-size: var(--ocop-font-size-caption);
-  font-weight: 800;
-  text-transform: uppercase;
-}
-
 .panel-section {
   padding: 14px;
   border: 1px solid var(--ocop-border);
@@ -707,7 +1279,7 @@ onBeforeUnmount(() => {
   margin: 0;
   color: var(--ocop-navy);
   font-size: var(--ocop-font-size-body-lg);
-  font-weight: 800;
+  font-weight: var(--ocop-font-weight-semibold);
 }
 
 .filter-form {
@@ -721,12 +1293,33 @@ onBeforeUnmount(() => {
   gap: var(--ocop-space-2);
 }
 
+.search-row .form-control,
+.search-row .btn,
+.select-row .form-select {
+  min-height: 44px;
+}
+
+.search-row .btn {
+  min-width: 44px;
+}
+
+/* Nút đang khóa giữ màu chủ đạo (mờ đi), không nhảy sang xanh lá mặc định của Bootstrap. */
+.search-row .btn:disabled {
+  --bs-btn-disabled-bg: var(--ocop-primary-700);
+  --bs-btn-disabled-border-color: var(--ocop-primary-700);
+}
+
+.alert .btn {
+  min-height: 44px;
+}
+
 .select-row .form-select {
   min-width: 0;
 }
 
 .section-title-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: var(--ocop-space-2);
@@ -740,6 +1333,18 @@ onBeforeUnmount(() => {
   gap: 5px;
 }
 
+.list-head {
+  flex-wrap: nowrap;
+}
+
+.list-head h2 {
+  white-space: nowrap;
+}
+
+.list-head .view-toggle button {
+  padding-inline: var(--ocop-space-2);
+}
+
 .radius-row {
   display: flex;
   align-items: center;
@@ -750,7 +1355,7 @@ onBeforeUnmount(() => {
 
 .radius-row label {
   flex: 0 0 auto;
-  font-weight: 650;
+  font-weight: var(--ocop-font-weight-semibold);
 }
 
 .radius-row .form-select {
@@ -782,7 +1387,7 @@ onBeforeUnmount(() => {
   background: transparent;
   color: var(--ocop-primary-700);
   font-size: var(--ocop-font-size-small);
-  font-weight: 700;
+  font-weight: var(--ocop-font-weight-semibold);
 }
 
 .nearby-list,
@@ -838,7 +1443,59 @@ onBeforeUnmount(() => {
   color: var(--ocop-primary-700);
   font-size: var(--ocop-font-size-small);
   font-style: normal;
-  font-weight: 800;
+  font-weight: var(--ocop-font-weight-semibold);
+}
+
+.location-groups {
+  display: grid;
+  gap: var(--ocop-space-2);
+  margin-top: var(--ocop-space-2);
+}
+
+.location-group h3 {
+  margin: 0;
+}
+
+.location-group .location-list {
+  margin-top: var(--ocop-space-1);
+}
+
+.group-toggle {
+  display: flex;
+  width: 100%;
+  min-height: 44px;
+  align-items: center;
+  gap: var(--ocop-space-2);
+  padding: 0 var(--ocop-space-2);
+  border: 0;
+  border-bottom: 1px solid var(--ocop-border);
+  background: transparent;
+  color: var(--ocop-navy);
+  font-size: var(--ocop-font-size-small);
+  font-weight: var(--ocop-font-weight-semibold);
+  text-align: left;
+}
+
+.group-label {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.group-count {
+  color: var(--ocop-text-muted);
+}
+
+.group-chevron {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 auto;
+  border-right: 2px solid currentcolor;
+  border-bottom: 2px solid currentcolor;
+  transform: rotate(45deg);
+}
+
+.group-toggle[aria-expanded='true'] .group-chevron {
+  transform: rotate(-135deg);
 }
 
 .type-dot {
@@ -848,22 +1505,534 @@ onBeforeUnmount(() => {
   border-radius: 50%;
 }
 
-.selected-card {
-  border-color: var(--ocop-mint-border);
-  box-shadow: var(--ocop-shadow-sm);
+.location-thumb {
+  width: 44px;
+  height: 36px;
+  flex: 0 0 auto;
+  border-radius: var(--ocop-radius-xs);
+  object-fit: cover;
 }
 
-.selected-card h2 {
-  font-size: 1.15rem;
+.map-info-overlay {
+  position: absolute;
+  z-index: 1100;
+  top: var(--ocop-space-6);
+  left: var(--ocop-space-6);
+  width: min(360px, calc(100% - var(--ocop-space-12)));
+  display: flex;
+  max-height: calc(100% - var(--ocop-space-12));
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: var(--ocop-shadow-overlay);
+  transform-origin: center;
+}
+
+.map-info-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ocop-space-2);
+  padding: var(--ocop-space-3);
+  border-bottom: 1px solid var(--ocop-border);
+  background: var(--ocop-card);
+}
+
+.map-info-head {
+  flex: none;
+}
+
+.map-info-content {
+  min-height: 0;
+  overflow-y: auto;
+  background: var(--ocop-card);
+}
+
+.map-info-footer {
+  flex: none;
+  padding: var(--ocop-space-2) var(--ocop-space-3) var(--ocop-space-3);
+  border-top: 1px solid var(--ocop-border);
+  background: var(--ocop-card);
+}
+
+.map-info-image {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 7;
+  object-fit: cover;
+}
+
+.map-info-body {
+  min-width: 0;
+  padding: var(--ocop-space-3);
+}
+
+.map-info-body h2 {
+  margin: 0;
+  color: var(--ocop-navy);
+  font-size: var(--ocop-font-size-title-sm);
+  line-height: 1.3;
+}
+
+.map-info-body .selected-address {
+  margin: var(--ocop-space-2) 0;
+}
+
+.map-info-subject,
+.map-info-meta {
+  margin: 0;
+  color: var(--ocop-slate);
+  font-size: var(--ocop-font-size-caption);
+}
+
+.map-info-description {
+  display: -webkit-box;
+  margin: var(--ocop-space-2) 0 0;
+  overflow: hidden;
+  color: var(--ocop-slate);
+  font-size: var(--ocop-font-size-caption);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.map-info-services {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ocop-space-1);
+  margin: var(--ocop-space-2) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.map-info-services li {
+  padding: 3px 8px;
+  border-radius: var(--ocop-radius-pill);
+  background: var(--ocop-mint-soft);
+  color: var(--ocop-primary-900);
+  font-size: var(--ocop-font-size-caption);
+}
+
+.map-info-products {
+  display: grid;
+  gap: var(--ocop-space-1);
+  margin: var(--ocop-space-2) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.map-info-products li {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: var(--ocop-space-2);
+  padding: 5px 0;
+  border-top: 1px solid var(--ocop-border);
+}
+
+.map-info-products img {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
+  border-radius: var(--ocop-radius-xs);
+  object-fit: cover;
+}
+
+.map-info-products span {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.map-info-products strong,
+.map-info-products small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.map-info-products strong {
+  color: var(--ocop-primary-900);
+  font-size: var(--ocop-font-size-caption);
+}
+
+.map-info-products small {
+  color: var(--ocop-slate);
+  font-size: var(--ocop-font-size-caption);
+}
+
+.map-info-subject {
+  color: var(--ocop-primary-900);
+  font-weight: var(--ocop-font-weight-semibold);
+}
+
+.map-info-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ocop-space-2);
+}
+
+.map-info-actions .btn {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 5px;
+  padding-inline: var(--ocop-space-3);
 }
 
 .type-badge {
   padding: var(--ocop-space-1) 9px;
   border-radius: var(--ocop-radius-pill);
   background: var(--type-color, var(--ocop-primary-700));
-  color: var(--ocop-white);
+  color: var(--type-on, var(--ocop-white));
   font-size: var(--ocop-font-size-caption);
-  font-weight: 700;
+  font-weight: var(--ocop-font-weight-semibold);
+}
+
+.kind-toggle {
+  display: flex;
+  gap: var(--ocop-space-1);
+  padding: var(--ocop-space-1);
+  border-radius: var(--ocop-radius-md);
+  background: var(--ocop-surface-muted);
+}
+
+.kind-toggle button {
+  display: inline-flex;
+  min-height: 44px;
+  min-width: 0;
+  flex: 1 1 0;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 0 var(--ocop-space-1);
+  border: 0;
+  border-radius: var(--ocop-radius-sm);
+  background: transparent;
+  color: var(--ocop-text-muted);
+  font-size: var(--ocop-font-size-small);
+  font-weight: var(--ocop-font-weight-semibold);
+  white-space: nowrap;
+}
+
+.kind-toggle button.active {
+  background: var(--ocop-card);
+  box-shadow: var(--ocop-shadow-sm);
+  color: var(--ocop-navy);
+  font-weight: var(--ocop-font-weight-semibold);
+}
+
+.kind-count {
+  color: var(--ocop-text-muted);
+  font-weight: var(--ocop-font-weight-semibold);
+}
+
+.kind-swatch {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--ocop-primary-700);
+}
+
+.kind-swatch.is-shop {
+  border-radius: var(--ocop-radius-xs);
+  background: var(--ocop-daquy-400);
+}
+
+.context-banner {
+  display: grid;
+  gap: var(--ocop-space-2);
+  border: 2px solid var(--ocop-daquy-500);
+  background: var(--ocop-daquy-50);
+}
+
+.context-eyebrow {
+  color: var(--ocop-daquy-700);
+  font-size: var(--ocop-font-size-caption);
+  font-weight: var(--ocop-font-weight-semibold);
+}
+
+.context-banner strong {
+  color: var(--ocop-navy);
+  font-size: var(--ocop-font-size-body-lg);
+}
+
+.context-meta {
+  color: var(--ocop-text-muted);
+  font-size: var(--ocop-font-size-small);
+}
+
+.tour-list h2 {
+  margin-bottom: var(--ocop-space-2);
+}
+
+.tour-list ul,
+.tour-stops {
+  display: grid;
+  gap: var(--ocop-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tour-list button,
+.tour-stops button {
+  display: flex;
+  width: 100%;
+  min-height: 44px;
+  align-items: flex-start;
+  gap: var(--ocop-space-2);
+  padding: var(--ocop-space-2) var(--ocop-space-3);
+  border: 1px solid var(--ocop-border);
+  border-radius: var(--ocop-radius-sm);
+  background: var(--ocop-card);
+  color: var(--ocop-navy);
+  text-align: left;
+}
+
+.tour-list button {
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tour-list .panel-hint {
+  margin-bottom: var(--ocop-space-2);
+}
+
+.tour-list ul {
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.tour-list small,
+.tour-stop-text small {
+  color: var(--ocop-text-muted);
+  font-size: var(--ocop-font-size-caption);
+}
+
+.tour-stops button.active {
+  border-color: var(--ocop-primary-700);
+  background: var(--ocop-mint-soft);
+}
+
+.tour-number {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--ocop-mist-900);
+  color: var(--ocop-white);
+  font-size: var(--ocop-font-size-small);
+  font-weight: var(--ocop-font-weight-semibold);
+}
+
+.tour-stop-text {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.context-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ocop-space-2);
+}
+
+.context-actions .btn {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.category-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ocop-space-2);
+}
+
+.chips-label {
+  width: 100%;
+  color: var(--ocop-text-muted);
+  font-size: var(--ocop-font-size-caption);
+  font-weight: var(--ocop-font-weight-semibold);
+}
+
+.chip {
+  min-height: 44px;
+  padding: 0 var(--ocop-space-3);
+  border: 1px solid var(--ocop-border);
+  border-radius: var(--ocop-radius-pill);
+  background: var(--ocop-card);
+  color: var(--ocop-navy);
+  font-size: var(--ocop-font-size-small);
+  font-weight: var(--ocop-font-weight-semibold);
+}
+
+.chip[aria-pressed='true'] {
+  border-color: var(--ocop-daquy-500);
+  background: var(--ocop-daquy-100);
+  font-weight: var(--ocop-font-weight-semibold);
+}
+
+.list-count {
+  margin-left: var(--ocop-space-1);
+  color: var(--ocop-text-muted);
+  font-size: var(--ocop-font-size-small);
+  font-weight: var(--ocop-font-weight-semibold);
+}
+
+.view-toggle {
+  display: flex;
+  overflow: hidden;
+  border: 1px solid var(--ocop-mist-300);
+  border-radius: var(--ocop-radius-sm);
+}
+
+.view-toggle button {
+  min-height: 44px;
+  padding: 0 var(--ocop-space-3);
+  white-space: nowrap;
+  border: 0;
+  background: var(--ocop-card);
+  color: var(--ocop-mist-900);
+  font-size: var(--ocop-font-size-caption);
+  font-weight: var(--ocop-font-weight-semibold);
+}
+
+.view-toggle button[aria-pressed='true'] {
+  background: var(--ocop-mist-900);
+  color: var(--ocop-white);
+  font-weight: var(--ocop-font-weight-semibold);
+}
+
+.type-dot.is-shop {
+  border-radius: 3px;
+}
+
+.location-list.is-detail button {
+  align-items: flex-start;
+}
+
+.location-text {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.role-badge {
+  justify-self: start;
+  padding: 2px var(--ocop-space-2);
+  border-radius: var(--ocop-radius-pill);
+  background: var(--ocop-daquy-100);
+  color: var(--ocop-daquy-800);
+  font-size: var(--ocop-font-size-caption);
+  font-weight: var(--ocop-font-weight-semibold);
+}
+
+.location-address,
+.location-meta,
+.location-desc {
+  color: var(--ocop-text-muted);
+  font-size: var(--ocop-font-size-caption);
+}
+
+.location-desc {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.map-info-contact {
+  display: grid;
+  gap: 2px;
+  margin: var(--ocop-space-2) 0 0;
+  padding: 0;
+  color: var(--ocop-text-muted);
+  font-size: var(--ocop-font-size-caption);
+  list-style: none;
+}
+
+.map-info-contact li {
+  display: flex;
+  min-height: 24px;
+  align-items: center;
+  gap: 6px;
+}
+
+.map-info-contact a {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+}
+
+.map-info-contact a,
+.map-info-subject a,
+.product-where {
+  color: var(--ocop-primary-700);
+  font-weight: var(--ocop-font-weight-semibold);
+}
+
+.map-info-products .map-info-product-link {
+  display: grid;
+  min-width: 0;
+  min-height: 44px;
+  align-content: center;
+}
+
+.product-where {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  font-size: var(--ocop-font-size-caption);
+}
+
+.context-clear {
+  border: 1px solid var(--ocop-mist-700);
+  background: var(--ocop-card);
+  color: var(--ocop-mist-900);
+  font-weight: var(--ocop-font-weight-semibold);
+}
+
+.category-filter summary::after {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 auto;
+  border-right: 2px solid currentcolor;
+  border-bottom: 2px solid currentcolor;
+  content: '';
+  transform: rotate(45deg);
+  transition: transform var(--ocop-duration-fast);
+}
+
+.category-filter[open] summary::after {
+  transform: rotate(-135deg);
+}
+
+.category-filter summary {
+  list-style: none;
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--ocop-navy);
+  font-size: var(--ocop-font-size-small);
+  font-weight: var(--ocop-font-weight-semibold);
+  cursor: pointer;
+}
+
+.category-active {
+  padding: 2px var(--ocop-space-2);
+  border-radius: var(--ocop-radius-pill);
+  background: var(--ocop-daquy-100);
+  color: var(--ocop-daquy-800);
+  font-size: var(--ocop-font-size-caption);
+}
+
+.category-filter .category-chips {
+  padding-top: var(--ocop-space-1);
 }
 
 .close-button {
@@ -882,51 +2051,20 @@ onBeforeUnmount(() => {
   font-size: var(--ocop-font-size-small);
 }
 
-.selected-facts {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--ocop-space-2);
-  margin: 0 0 var(--ocop-space-3);
-}
-
-.selected-facts dt {
-  color: var(--ocop-slate);
-  font-size: var(--ocop-font-size-caption);
-  font-weight: 700;
-}
-
-.selected-facts dd {
-  margin: 0;
-  font-size: var(--ocop-font-size-small);
-  font-weight: 650;
-}
-
-.selected-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--ocop-space-2);
-}
-
-.selected-actions .btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-}
-
 .route-summary {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
+  align-items: center;
   gap: var(--ocop-space-2);
-  margin-top: var(--ocop-space-3);
-  padding: 10px var(--ocop-space-3);
+  margin-bottom: var(--ocop-space-2);
+  padding: var(--ocop-space-1) var(--ocop-space-3);
   border-radius: var(--ocop-radius-sm);
   background: var(--ocop-mint-soft);
 }
 
 .route-summary strong {
   color: var(--ocop-primary-900);
-  font-size: 1.1rem;
+  font-size: var(--ocop-font-size-title-sm);
 }
 
 .route-summary span {
@@ -935,11 +2073,12 @@ onBeforeUnmount(() => {
 }
 
 .external-directions {
-  display: inline-block;
-  margin-top: 10px;
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
   color: var(--ocop-primary-700);
   font-size: var(--ocop-font-size-small);
-  font-weight: 700;
+  font-weight: var(--ocop-font-weight-semibold);
 }
 
 .map-canvas {
@@ -947,22 +2086,108 @@ onBeforeUnmount(() => {
   /* Giữ các z-index của Leaflet (tới 1000) trong khung bản đồ: không đè lên header dính khi cuộn. */
   isolation: isolate;
   height: 62vh;
-  min-height: 360px;
+  min-height: 420px;
   order: -1;
 }
 
-/* Màn hẹp: thẻ điểm chọn lên ngay dưới bản đồ để thấy được mà không phải cuộn qua bộ lọc. */
+.map-stage {
+  position: relative;
+  height: 100%;
+}
+
+/* Góc dưới trái: thẻ điểm luôn chừa cột này nên hai thứ không đè nhau. */
+.map-tools {
+  position: absolute;
+  z-index: 1000;
+  bottom: var(--ocop-space-3);
+  left: var(--ocop-space-3);
+  display: grid;
+  gap: var(--ocop-space-2);
+}
+
+.map-tools button {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--ocop-border-strong);
+  border-radius: var(--ocop-radius-sm);
+  background: var(--ocop-card);
+  box-shadow: var(--ocop-shadow-sm);
+  color: var(--ocop-navy);
+}
+
+.map-tools button:hover {
+  background: var(--ocop-surface-muted);
+}
+
+.map-tools button:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--ocop-primary-500) 60%, transparent);
+  outline-offset: 2px;
+}
+
 @media (max-width: 991.98px) {
-  .selected-card {
-    order: -1;
+  .map-canvas {
+    height: auto;
+    min-height: 0;
+  }
+
+  .map-stage {
+    height: 62vh;
+    min-height: 420px;
+  }
+
+  /* Thẻ nằm ngay dưới bản đồ, không đè lên: đủ cao để đọc, nút ở chân thẻ luôn thấy. */
+  .map-info-overlay {
+    position: static;
+    width: auto;
+    max-height: 60vh;
+    max-height: 60dvh;
+    margin: var(--ocop-space-3) var(--ocop-space-4) 0;
+    border: 1px solid var(--ocop-border);
+    border-radius: var(--ocop-radius-md);
+  }
+
+  /* Khung bản đồ trên điện thoại thấp: nhường chỗ cho chữ, ảnh xem ở trang chi tiết. */
+  .map-info-image {
+    display: none;
+  }
+
+  /* Ưu tiên thông tin cần ngay: mô tả dài và dịch vụ xem ở trang chi tiết. */
+  .map-info-description,
+  .map-info-services {
+    display: none;
+  }
+
+  .map-info-actions {
+    flex-wrap: nowrap;
+  }
+
+  .map-info-actions .btn {
+    flex: 1 1 0;
+    justify-content: center;
+    padding-inline: var(--ocop-space-2);
+    white-space: nowrap;
   }
 }
 
 @media (min-width: 992px) {
   .map-page {
     grid-template-columns: 380px minmax(0, 1fr);
-    height: calc(100vh - 4.5rem);
+    /* Thanh thông báo (2rem) và đầu trang (4.5rem) nằm trên bản đồ: trừ cả hai để đáy bản đồ và danh sách
+       không bị đẩy ra ngoài màn hình (trước đây thiếu 2rem nên phải cuộn trang mới thấy chú thích bản quyền). */
+    height: calc(100vh - 6.5rem);
+    height: calc(100dvh - 6.5rem);
     min-height: 560px;
+  }
+
+  .map-page.is-panel-collapsed {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .map-page.is-panel-collapsed .map-panel {
+    display: none;
   }
 
   .map-panel {

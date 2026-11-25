@@ -10,11 +10,13 @@ import ReviewSection from '@/components/reviews/ReviewSection.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
 import { getApiErrorMessage } from '@/services/api-error'
 import { getLocation } from '@/services/locations'
+import { locationFallbackPhoto } from '@/constants/photos'
 import { absoluteUrl, applyPageSeo, clipDescription, locationJsonLd } from '@/utils/seo'
 import type { LocationDetail, MapFeature } from '@/types/location'
 import {
   externalDirectionsUrl,
   formatTicketPrice,
+  locationKind,
   locationTypeStyle,
   safeExternalUrl,
 } from '@/utils/location'
@@ -27,6 +29,13 @@ const errorTitle = ref('Không thể tải điểm du lịch')
 const errorMessage = ref('')
 
 const typeStyle = computed(() => locationTypeStyle(location.value?.type ?? 'other'))
+const hasOwnPhoto = computed(() => Boolean(location.value?.primary_image_url) || Boolean(location.value?.images.length))
+const usesFallbackPhoto = computed(() => Boolean(location.value) && !hasOwnPhoto.value)
+const galleryPrimaryUrl = computed(() =>
+  hasOwnPhoto.value || !location.value
+    ? (location.value?.primary_image_url ?? null)
+    : locationFallbackPhoto(location.value.type).src,
+)
 const mapFeatures = computed<MapFeature[]>(() => {
   if (!location.value) return []
   const current = location.value
@@ -141,10 +150,15 @@ function retryLoad(): void {
 
       <template v-else-if="location">
         <section class="location-overview">
-          <PresentationGallery :images="location.images" :primary-url="location.primary_image_url" :name="location.name" landscape />
+          <div class="location-media">
+            <PresentationGallery :images="location.images" :primary-url="galleryPrimaryUrl" :name="location.name" landscape />
+            <p v-if="usesFallbackPhoto" class="photo-note" data-test="photo-note">
+              Ảnh minh họa theo loại hình, chưa phải ảnh thực tế của điểm này.
+            </p>
+          </div>
 
           <div class="location-info">
-            <span class="type-badge" :style="{ '--type-color': typeStyle.color }">
+            <span class="type-badge" :style="{ '--type-color': typeStyle.color, '--type-on': typeStyle.onColor }">
               <AppIcon :name="typeStyle.icon" :size="14" /> {{ location.type_label }}
             </span>
             <h1>{{ location.name }}</h1>
@@ -159,7 +173,7 @@ function retryLoad(): void {
                 <dt><AppIcon name="clock" :size="15" /> Giờ mở cửa</dt>
                 <dd>{{ location.opening_hours || 'Chưa cập nhật' }}</dd>
               </div>
-              <div>
+              <div v-if="locationKind(location.type) === 'attraction'">
                 <dt><AppIcon name="checkCircle" :size="15" /> Giá vé tham khảo</dt>
                 <dd>{{ formatTicketPrice(location.ticket_price) }}</dd>
               </div>
@@ -197,6 +211,13 @@ function retryLoad(): void {
               <span>Đơn vị quản lý</span>
               <strong>{{ location.subject.name }}</strong>
               <small>{{ location.subject.district }}, Lâm Đồng</small>
+              <RouterLink
+                class="subject-map-link"
+                :to="{ name: 'map', query: { subject: String(location.subject.id) } }"
+                data-test="subject-map-link"
+              >
+                Xem các địa điểm của đơn vị này trên bản đồ
+              </RouterLink>
             </aside>
           </div>
         </section>
@@ -215,7 +236,6 @@ function retryLoad(): void {
         </section>
 
         <section v-if="location.products.length" class="products-block" aria-labelledby="location-products-title">
-          <span class="section-eyebrow">Sản phẩm OCOP tại điểm đến</span>
           <h2 id="location-products-title">Sản phẩm OCOP tại điểm này</h2>
           <div class="product-grid" :class="{ 'product-grid-spacious': location.products.length <= 2 }">
             <div v-for="product in location.products" :key="product.id" class="related-product">
@@ -253,6 +273,13 @@ function retryLoad(): void {
   font-size: 0.86rem;
 }
 
+.breadcrumb-nav a,
+.breadcrumb-nav span {
+  display: inline-flex;
+  min-height: var(--ocop-control-md);
+  align-items: center;
+}
+
 .breadcrumb-nav a {
   color: var(--ocop-primary-700);
   text-decoration: none;
@@ -286,7 +313,7 @@ function retryLoad(): void {
   border-radius: 50%;
   background: var(--ocop-danger-soft);
   color: var(--ocop-danger);
-  font-weight: 800;
+  font-weight: var(--ocop-font-weight-semibold);
 }
 
 .error-state h1 {
@@ -312,16 +339,20 @@ function retryLoad(): void {
   padding: 5px 10px;
   border-radius: var(--ocop-radius-pill);
   background: var(--type-color, var(--ocop-primary-700));
-  color: var(--ocop-white);
+  color: var(--type-on, var(--ocop-white));
   font-size: var(--ocop-font-size-caption);
-  font-weight: 700;
+  font-weight: var(--ocop-font-weight-semibold);
+}
+
+.location-media {
+  min-width: 0;
 }
 
 .location-info h1 {
   margin: 0.85rem 0 0.6rem;
   color: var(--ocop-primary-950);
   font-size: clamp(1.8rem, 4vw, 2.6rem);
-  font-weight: 800;
+  font-weight: var(--ocop-font-weight-semibold);
 }
 
 .lead-description {
@@ -350,7 +381,13 @@ function retryLoad(): void {
   gap: 6px;
   color: var(--ocop-slate);
   font-size: 0.8rem;
-  font-weight: 700;
+  font-weight: var(--ocop-font-weight-semibold);
+}
+
+.info-list a {
+  display: inline-flex;
+  min-height: var(--ocop-control-md);
+  align-items: center;
 }
 
 .info-list dd {
@@ -377,7 +414,7 @@ function retryLoad(): void {
   background: var(--ocop-mint-soft);
   color: var(--ocop-primary-900);
   font-size: var(--ocop-font-size-small);
-  font-weight: 600;
+  font-weight: var(--ocop-font-weight-semibold);
 }
 
 .action-row {
@@ -386,8 +423,11 @@ function retryLoad(): void {
   gap: 0.6rem;
 }
 
-.action-row .btn {
+.action-row .btn,
+.error-actions .btn,
+.related-product-cta {
   display: inline-flex;
+  min-height: var(--ocop-control-md);
   align-items: center;
   gap: 6px;
 }
@@ -397,9 +437,24 @@ function retryLoad(): void {
   gap: 0.15rem;
   margin-top: 1.25rem;
   padding: 1rem;
-  border-left: 4px solid var(--ocop-primary-700);
-  border-radius: 0.75rem;
+  border: 1px solid var(--ocop-mint-border);
+  border-radius: var(--ocop-radius-md);
   background: var(--ocop-mint-soft);
+}
+
+.photo-note {
+  margin: 0.5rem 0 0;
+  color: var(--ocop-text-muted);
+  font-size: 0.8rem;
+}
+
+.subject-map-link {
+  display: inline-flex;
+  min-height: var(--ocop-control-md);
+  align-items: center;
+  color: var(--ocop-primary-700);
+  font-size: 0.85rem;
+  font-weight: var(--ocop-font-weight-semibold);
 }
 
 .subject-card span,
@@ -418,15 +473,7 @@ function retryLoad(): void {
   margin: 0.25rem 0 1rem;
   color: var(--ocop-primary-950);
   font-size: 1.4rem;
-  font-weight: 800;
-}
-
-.section-eyebrow {
-  color: var(--ocop-primary-700);
-  font-size: 0.76rem;
-  font-weight: 750;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-weight: var(--ocop-font-weight-semibold);
 }
 
 .mini-map {

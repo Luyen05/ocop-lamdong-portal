@@ -5,6 +5,7 @@ import axios from 'axios'
 
 import PresentationGallery from '@/components/products/PresentationGallery.vue'
 import ProductCard from '@/components/products/ProductCard.vue'
+import ProductWhereToBuy from '@/components/products/ProductWhereToBuy.vue'
 import ReviewSection from '@/components/reviews/ReviewSection.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
 import { getApiErrorMessage } from '@/services/api-error'
@@ -237,21 +238,7 @@ function retryLoad(): void {
               </li>
             </ul>
           </article>
-          <article v-if="product.related_locations?.length" class="content-block location-block">
-            <span class="section-eyebrow">Trải nghiệm tại điểm đến</span>
-            <h2>Nơi mua &amp; trải nghiệm</h2>
-            <ul>
-              <li v-for="location in product.related_locations" :key="location.id">
-                <div>
-                  <strong>{{ location.name }}</strong>
-                  <span>{{ location.type_label }} · {{ location.district }}</span>
-                </div>
-                <RouterLink :to="{ name: 'location-detail', params: { slug: location.slug } }">
-                  Xem điểm đến
-                </RouterLink>
-              </li>
-            </ul>
-          </article>
+          <ProductWhereToBuy :slug="product.slug" :subject="{ id: product.subject.id, name: product.subject.name }" />
         </section>
 
         <section v-if="relatedProducts.length" class="related-section" aria-labelledby="related-title">

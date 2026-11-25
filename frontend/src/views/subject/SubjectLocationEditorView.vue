@@ -344,7 +344,7 @@ function markSaved(): void {
 
 async function loadReferenceData(): Promise<void> {
   const [options, products, application] = await Promise.allSettled([
-    getLocationFilterOptions(),
+    getLocationFilterOptions('all'),
     listMyProducts('approved'),
     getMySubjectApplication(),
   ])
@@ -1017,13 +1017,27 @@ onBeforeUnmount(() => {
           <section v-show="sectionVisible(4)" class="card" aria-labelledby="s-prod">
             <div class="card-head">
               <h2 id="s-prod">6. Sản phẩm OCOP có tại điểm</h2>
-              <p>Chỉ hiện sản phẩm của đơn vị đã được duyệt. Không bắt buộc.</p>
+              <p id="s-prod-help">Chỉ hiện sản phẩm của đơn vị đã được duyệt. Sản phẩm được chọn sẽ xuất hiện trong card của điểm trên bản đồ.</p>
             </div>
             <p v-if="!approvedProducts.length" class="muted-text">Đơn vị chưa có sản phẩm OCOP nào được duyệt.</p>
-            <label v-for="product in approvedProducts" :key="product.id" class="check-row">
-              <input v-model="form.product_ids" type="checkbox" :value="product.id" />
-              {{ product.name }}
-            </label>
+            <div v-else class="product-options" aria-describedby="s-prod-help">
+              <label v-for="product in approvedProducts" :key="product.id" class="product-option">
+                <input v-model="form.product_ids" type="checkbox" :value="product.id" />
+                <img
+                  v-if="product.images?.find((image) => image.is_primary)?.image_url"
+                  :src="product.images?.find((image) => image.is_primary)?.image_url"
+                  :alt="`Ảnh ${product.name}`"
+                  loading="lazy"
+                />
+                <span class="product-option-info">
+                  <strong>{{ product.name }}</strong>
+                  <small>{{ product.category.name }} · {{ product.star ? `OCOP ${product.star} sao` : 'Chưa cập nhật hạng sao' }}</small>
+                </span>
+              </label>
+            </div>
+            <p v-if="form.product_ids.length" class="selected-product-count" role="status">
+              Đã chọn {{ form.product_ids.length }} sản phẩm để hiển thị tại điểm này.
+            </p>
           </section>
 
           <section v-if="isRequestMode" v-show="sectionVisible(4)" class="card" aria-labelledby="s-reason">
@@ -1098,10 +1112,10 @@ onBeforeUnmount(() => {
 .crumbs { display: flex; flex-wrap: wrap; gap: var(--ocop-space-2); color: var(--ocop-mist-600); font-size: var(--ocop-font-size-small); }
 .crumbs a { color: var(--ocop-mist-700); }
 .title-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ocop-space-3); }
-.title-row h1 { margin: 0; font-size: var(--ocop-font-size-title-md); font-weight: 800; }
+.title-row h1 { margin: 0; font-size: var(--ocop-font-size-title-md); font-weight: var(--ocop-font-weight-semibold); }
 .editor-head > p { margin: 0; color: var(--ocop-mist-700); }
 
-.status { display: inline-block; padding: var(--ocop-space-1) var(--ocop-space-3); border-radius: var(--ocop-radius-pill); font-size: var(--ocop-font-size-caption); font-weight: 700; }
+.status { display: inline-block; padding: var(--ocop-space-1) var(--ocop-space-3); border-radius: var(--ocop-radius-pill); font-size: var(--ocop-font-size-caption); font-weight: var(--ocop-font-weight-semibold); }
 .tone-neutral { background: var(--ocop-mist-100); color: var(--ocop-mist-800); }
 .tone-info { background: var(--ocop-tone-sky-soft); color: var(--ocop-tone-sky); }
 .tone-warning { background: var(--ocop-warning-soft); color: var(--ocop-warning); }
@@ -1131,7 +1145,7 @@ onBeforeUnmount(() => {
 .editor-grid { display: grid; grid-template-columns: minmax(0, 1fr) 320px; align-items: start; gap: var(--ocop-space-6); }
 .editor-form { display: grid; min-width: 0; margin: 0; padding: 0; gap: var(--ocop-space-5); border: 0; }
 .card { display: grid; min-width: 0; gap: var(--ocop-space-4); padding: var(--ocop-space-6); border: 1px solid var(--ocop-mist-200); border-radius: var(--ocop-radius-lg); background: var(--ocop-white); }
-.card h2 { margin: 0; font-size: var(--ocop-font-size-title-sm); font-weight: 700; }
+.card h2 { margin: 0; font-size: var(--ocop-font-size-title-sm); font-weight: var(--ocop-font-weight-semibold); }
 .card-head { display: grid; gap: var(--ocop-space-1); }
 .card-head p { margin: 0; color: var(--ocop-mist-700); font-size: var(--ocop-font-size-small); }
 .card-head.is-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--ocop-space-3); }
@@ -1143,7 +1157,7 @@ input[type='text'], input[type='tel'], input[type='url'], select, textarea {
 }
 textarea { padding: var(--ocop-space-3); resize: vertical; }
 :is(input, select, textarea):focus-visible { border-color: var(--admin-primary-dark); outline: 3px solid var(--admin-primary-dark); outline-offset: 1px; }
-.field-error { color: var(--ocop-danger-strong); font-size: var(--ocop-font-size-caption); font-weight: 700; }
+.field-error { color: var(--ocop-danger-strong); font-size: var(--ocop-font-size-caption); font-weight: var(--ocop-font-weight-semibold); }
 :is(input, select, textarea)[aria-invalid='true'] { border-color: var(--ocop-danger-strong); }
 fieldset:disabled :is(input, select, textarea) { background: var(--ocop-mist-50); color: var(--ocop-mist-800); }
 label small, .paste-box small, .dropzone small { color: var(--ocop-mist-600); font-size: var(--ocop-font-size-caption); font-weight: 400; }
@@ -1154,7 +1168,7 @@ label small.is-ok { color: var(--ocop-success); }
 
 .btn-dark, .btn-line, .btn-accent, .btn-text {
   display: inline-flex; min-height: var(--ocop-control-md); padding: 0 var(--ocop-space-5); align-items: center; justify-content: center; gap: var(--ocop-space-2);
-  border-radius: var(--ocop-radius-sm); font-size: var(--ocop-font-size-small); font-weight: 700; text-decoration: none; white-space: nowrap; cursor: pointer;
+  border-radius: var(--ocop-radius-sm); font-size: var(--ocop-font-size-small); font-weight: var(--ocop-font-weight-semibold); text-decoration: none; white-space: nowrap; cursor: pointer;
 }
 .btn-dark { border: 0; background: var(--admin-primary); color: var(--admin-on-primary); }
 .btn-dark:hover { background: var(--admin-primary-dark); }
@@ -1182,7 +1196,7 @@ button:disabled { cursor: not-allowed; opacity: 0.65; }
 .facts { display: grid; margin: 0; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--ocop-space-3); }
 .facts div { display: grid; gap: 2px; padding: var(--ocop-space-3); border-radius: var(--ocop-radius-sm); background: var(--ocop-mist-50); }
 .facts dt { color: var(--ocop-mist-600); font-size: var(--ocop-font-size-caption); font-weight: 400; }
-.facts dd { margin: 0; font-weight: 700; }
+.facts dd { margin: 0; font-weight: var(--ocop-font-weight-semibold); }
 .num { font-variant-numeric: tabular-nums; }
 .checks { display: grid; margin: 0; padding: 0; gap: var(--ocop-space-2); list-style: none; }
 .checks li { display: flex; align-items: flex-start; gap: var(--ocop-space-2); font-size: var(--ocop-font-size-small); }
@@ -1209,6 +1223,15 @@ button:disabled { cursor: not-allowed; opacity: 0.65; }
 .radio { display: inline-flex; min-height: var(--ocop-control-md); align-items: center; gap: var(--ocop-space-2); font-size: var(--ocop-font-size-caption); }
 .radio input, .check-row input { width: 20px; height: 20px; accent-color: var(--admin-primary); }
 .check-row { display: flex; min-height: var(--ocop-control-md); padding: 0 var(--ocop-space-3); align-items: center; gap: var(--ocop-space-3); border: 1px solid var(--ocop-mist-200); border-radius: var(--ocop-radius-sm); font-weight: 400; }
+.product-options { display: grid; gap: var(--ocop-space-2); }
+.product-option { display: flex; min-height: 68px; align-items: center; gap: var(--ocop-space-3); padding: var(--ocop-space-2) var(--ocop-space-3); border: 1px solid var(--ocop-mist-200); border-radius: var(--ocop-radius-sm); background: var(--ocop-card); cursor: pointer; }
+.product-option:has(input:checked) { border-color: var(--ocop-mint-border); background: var(--ocop-mint-soft); }
+.product-option input { width: 20px; height: 20px; flex: 0 0 auto; accent-color: var(--admin-primary); }
+.product-option img { width: 48px; height: 48px; flex: 0 0 auto; border-radius: var(--ocop-radius-xs); object-fit: cover; }
+.product-option-info { display: grid; gap: 3px; min-width: 0; }
+.product-option-info strong { overflow: hidden; color: var(--ocop-navy); text-overflow: ellipsis; white-space: nowrap; }
+.product-option-info small { color: var(--ocop-mist-700); font-size: var(--ocop-font-size-caption); }
+.selected-product-count { margin: var(--ocop-space-2) 0 0; color: var(--ocop-primary-700); font-size: var(--ocop-font-size-small); font-weight: 700; }
 .muted-text { margin: 0; color: var(--ocop-mist-700); font-size: var(--ocop-font-size-small); }
 
 .status-card { position: sticky; top: var(--ocop-space-6); gap: var(--ocop-space-4); padding: var(--ocop-space-5); }
@@ -1216,7 +1239,7 @@ button:disabled { cursor: not-allowed; opacity: 0.65; }
 .checklist { display: grid; margin: 0; padding: 0; gap: 10px; list-style: none; }
 .checklist li { display: flex; align-items: center; gap: 10px; color: var(--ocop-mist-950); font-size: var(--ocop-font-size-small); font-weight: 600; }
 .checklist li.done { color: var(--ocop-mist-800); font-weight: 400; }
-.check-mark { display: grid; width: 24px; height: 24px; flex-shrink: 0; place-items: center; border-radius: var(--ocop-radius-pill); background: var(--ocop-warning-soft); color: var(--ocop-warning); font-size: var(--ocop-font-size-small); font-weight: 800; }
+.check-mark { display: grid; width: 24px; height: 24px; flex-shrink: 0; place-items: center; border-radius: var(--ocop-radius-pill); background: var(--ocop-warning-soft); color: var(--ocop-warning); font-size: var(--ocop-font-size-small); font-weight: var(--ocop-font-weight-semibold); }
 .done .check-mark { background: var(--ocop-success-soft); color: var(--ocop-success); }
 .summary { margin: 0; padding: var(--ocop-space-3); border-radius: var(--ocop-radius-sm); background: var(--ocop-warning-soft); color: var(--ocop-mist-900); font-size: var(--ocop-font-size-small); line-height: 1.5; }
 .summary.is-ok { background: var(--ocop-success-soft); color: var(--ocop-success); }
