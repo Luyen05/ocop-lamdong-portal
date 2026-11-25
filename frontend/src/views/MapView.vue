@@ -1071,10 +1071,10 @@ onBeforeUnmount(() => {
               <li v-for="product in selectedFeature.properties.products.slice(0, 5)" :key="product.id">
                 <img v-if="product.primary_image_url" :src="product.primary_image_url" :alt="`Ảnh ${product.name}`" loading="lazy" />
                 <span>
-                  <RouterLink :to="{ name: 'product-detail', params: { slug: product.slug } }">
+                  <RouterLink class="map-info-product-link" :to="{ name: 'product-detail', params: { slug: product.slug } }">
                     <strong>{{ product.name }}</strong>
+                    <small>OCOP {{ product.star }} sao · {{ productRoleLabel(product.role) }}</small>
                   </RouterLink>
-                  <small>OCOP {{ product.star }} sao · {{ productRoleLabel(product.role) }}</small>
                   <RouterLink
                     v-if="product.slug !== applied.product"
                     class="product-where"
@@ -1820,11 +1820,11 @@ onBeforeUnmount(() => {
   font-weight: var(--ocop-font-weight-semibold);
 }
 
-.map-info-products a {
-  display: inline-flex;
+.map-info-products .map-info-product-link {
+  display: grid;
   min-width: 0;
   min-height: 44px;
-  align-items: center;
+  align-content: center;
 }
 
 .product-where {
