@@ -1182,26 +1182,28 @@ onBeforeUnmount(() => {
                 </span>
               </li>
             </ul>
-            <div class="map-info-actions">
-              <button
-                v-if="selectedCoordinates"
-                class="btn btn-success"
-                type="button"
-                :disabled="isRouting || isLocating"
-                @click="showRoute"
-              >
-                <AppIcon name="navigation" :size="15" />
-                {{ isRouting ? 'Đang tìm đường...' : 'Chỉ đường' }}
-              </button>
-              <RouterLink
-                class="btn btn-outline-success"
-                :to="{ name: 'location-detail', params: { slug: selectedFeature.properties.slug } }"
-              >
-                Xem chi tiết
-              </RouterLink>
-            </div>
-            <p v-if="routeMessage" class="panel-message" role="alert">{{ routeMessage }}</p>
           </div>
+        </div>
+        <div class="map-info-footer">
+          <div class="map-info-actions">
+            <button
+              v-if="selectedCoordinates"
+              class="btn btn-success"
+              type="button"
+              :disabled="isRouting || isLocating"
+              @click="showRoute"
+            >
+              <AppIcon name="navigation" :size="15" />
+              {{ isRouting ? 'Đang tìm đường...' : 'Chỉ đường' }}
+            </button>
+            <RouterLink
+              class="btn btn-outline-success"
+              :to="{ name: 'location-detail', params: { slug: selectedFeature.properties.slug } }"
+            >
+              Xem chi tiết
+            </RouterLink>
+          </div>
+          <p v-if="routeMessage" class="panel-message" role="alert">{{ routeMessage }}</p>
         </div>
       </section>
     </section>
@@ -1318,7 +1320,11 @@ onBeforeUnmount(() => {
 }
 
 .list-head h2 {
-  min-width: 0;
+  white-space: nowrap;
+}
+
+.list-head .view-toggle button {
+  padding-inline: var(--ocop-space-2);
 }
 
 .radius-row {
@@ -1443,8 +1449,10 @@ onBeforeUnmount(() => {
   top: var(--ocop-space-6);
   left: var(--ocop-space-6);
   width: min(360px, calc(100% - var(--ocop-space-12)));
+  display: flex;
   max-height: calc(100% - var(--ocop-space-12));
-  overflow-y: auto;
+  flex-direction: column;
+  overflow: hidden;
   box-shadow: var(--ocop-shadow-overlay);
   transform-origin: center;
 }
@@ -1467,7 +1475,20 @@ onBeforeUnmount(() => {
   background: var(--ocop-card);
 }
 
+.map-info-head {
+  flex: none;
+}
+
 .map-info-content {
+  min-height: 0;
+  overflow-y: auto;
+  background: var(--ocop-card);
+}
+
+.map-info-footer {
+  flex: none;
+  padding: var(--ocop-space-2) var(--ocop-space-3) var(--ocop-space-3);
+  border-top: 1px solid var(--ocop-border);
   background: var(--ocop-card);
 }
 
@@ -1585,12 +1606,11 @@ onBeforeUnmount(() => {
   display: flex;
   flex-wrap: wrap;
   gap: var(--ocop-space-2);
-  margin-top: var(--ocop-space-3);
 }
 
 .map-info-actions .btn {
   display: inline-flex;
-  min-height: 40px;
+  min-height: 44px;
   align-items: center;
   gap: 5px;
   padding-inline: var(--ocop-space-3);
@@ -2115,13 +2135,6 @@ onBeforeUnmount(() => {
 
   .map-info-actions {
     flex-wrap: nowrap;
-    position: sticky;
-    z-index: 1;
-    bottom: calc(var(--ocop-space-3) * -1);
-    margin-inline: calc(var(--ocop-space-3) * -1);
-    padding: var(--ocop-space-2) var(--ocop-space-3);
-    background: var(--ocop-card);
-    box-shadow: 0 -6px 10px -8px color-mix(in srgb, var(--ocop-neutral-900) 35%, transparent);
   }
 
   .map-info-actions .btn {
