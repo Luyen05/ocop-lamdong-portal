@@ -176,7 +176,7 @@ npm run dev
 
 ```powershell
 $OutputEncoding = [System.Text.UTF8Encoding]::new($false)
-foreach ($seed in 'seed_public_reference','seed_ocop_2025_2026','seed_product_workflow','seed_dehavi_demo','seed_dehavi_media','seed_dalavi_reference','seed_product_drafts_public_sources','seed_cua_hang_ban_do','seed_tuyen_tham_quan') {
+foreach ($seed in 'seed_public_reference','seed_ocop_2025_2026','seed_product_workflow','seed_dehavi_demo','seed_dehavi_media','seed_dalavi_reference','seed_product_drafts_public_sources') {
   Get-Content ".\database\$seed.sql" -Raw -Encoding UTF8 | docker compose exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
 }
 ```
