@@ -5,7 +5,6 @@ import { useRoute, useRouter } from 'vue-router'
 import LeafletMap from '@/components/map/LeafletMap.vue'
 import MapLegend from '@/components/map/MapLegend.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
-import { locationFallbackPhoto } from '@/constants/photos'
 import { getApiErrorMessage } from '@/services/api-error'
 import { getCategories } from '@/services/categories'
 import {
@@ -202,21 +201,24 @@ const displayFeatures = computed(() => {
   const present = new Set(features.value.map((feature) => feature.properties.slug))
   return [...features.value, ...extraFeatures.value.filter((feature) => !present.has(feature.properties.slug))]
 })
-const selectedFallbackPhoto = computed(() =>
-  selectedFeature.value ? locationFallbackPhoto(selectedFeature.value.properties.type) : null,
-)
-const selectedImageUrl = computed(() => {
-  if (selectedFeature.value?.properties.primary_image_url && !selectedImageFailed.value) {
-    return selectedFeature.value.properties.primary_image_url
-  }
-  return selectedFallbackPhoto.value?.src ?? ''
-})
 const selectedHasOwnImage = computed(
   () => Boolean(selectedFeature.value?.properties.primary_image_url) && !selectedImageFailed.value,
 )
 const selectedFeature = computed(
   () => displayFeatures.value.find((feature) => feature.properties.slug === selectedSlug.value) ?? null,
 )
+/** Đánh giá, số sản phẩm, giờ mở cửa: chỉ nối mục có dữ liệu để không thừa dấu chấm ở đầu dòng. */
+const selectedMeta = computed(() => {
+  const properties = selectedFeature.value?.properties
+  if (!properties) return ''
+  return [
+    properties.rating_avg ? `★ ${properties.rating_avg.toFixed(1)}` : '',
+    properties.products?.length ? `${properties.products.length} sản phẩm OCOP` : '',
+    properties.opening_hours ?? '',
+  ]
+    .filter(Boolean)
+    .join(' · ')
+})
 const isOutsideFilter = computed(
   () =>
     Boolean(selectedFeature.value) &&
@@ -278,9 +280,6 @@ const mapInfoPlacement = computed(() => {
   if (isCompact.value || !position) return 'default'
   return `${position.x < position.width / 2 ? 'right' : 'left'}-side`
 })
-// Trên điện thoại thẻ nằm đè phần dưới bản đồ: báo cho bản đồ chừa chỗ để marker đang chọn không bị che.
-const mapBottomInset = computed(() => (isCompact.value && selectedFeature.value ? cardHeight.value + 16 : 0))
-
 /** Ghi bộ lọc/điểm chọn lên URL nhưng giữ các tham số còn lại; không gọi router khi query không đổi. */
 function writeQuery(patch: Record<string, string | undefined>, mode: 'push' | 'replace' = 'replace'): void {
   const query = mergeQuery(route.query, patch)
@@ -863,102 +862,6 @@ onBeforeUnmount(() => {
         <button class="btn btn-sm btn-outline-danger ms-2" type="button" @click="loadFeatures">Thử lại</button>
       </div>
 
-      <section
-        v-if="selectedFeature"
-        class="panel-section selected-card"
-        aria-labelledby="selected-title"
-        aria-live="polite"
-      >
-        <div class="section-title-row">
-          <span
-            class="type-badge"
-            :style="{
-              '--type-color': locationTypeStyle(selectedFeature.properties.type).color,
-              '--type-on': locationTypeStyle(selectedFeature.properties.type).onColor,
-            }"
-          >
-            {{ selectedFeature.properties.type_label }}
-          </span>
-          <button class="close-button" type="button" aria-label="Bỏ chọn điểm" @click="closeSelection">
-            <AppIcon name="close" :size="13" />
-          </button>
-        </div>
-        <div class="selected-media" aria-hidden="true">
-          <img
-            v-if="selectedImageUrl"
-            :src="selectedImageUrl"
-            :alt="selectedHasOwnImage ? selectedFeature.properties.name : ''"
-            :style="{ objectPosition: selectedHasOwnImage ? 'center' : selectedFallbackPhoto?.position }"
-            @error="selectedImageFailed = true"
-          />
-        </div>
-        <h2 id="selected-title">{{ selectedFeature.properties.name }}</h2>
-        <p class="selected-address"><AppIcon name="map-pin" :size="13" /> {{ selectedFeature.properties.address }}</p>
-        <p v-if="isOutsideFilter" class="panel-hint selected-note" data-test="outside-filter">
-          Điểm này không thuộc bộ lọc hiện tại nhưng vẫn được hiển thị để bạn xem.
-        </p>
-        <p v-if="!selectedCoordinates" class="panel-hint selected-note" data-test="no-coordinates">
-          Điểm này chưa có tọa độ hợp lệ nên chưa hiển thị trên bản đồ và chưa thể chỉ đường.
-        </p>
-        <dl class="selected-facts">
-          <div>
-            <dt>Giờ mở cửa</dt>
-            <dd>{{ selectedFeature.properties.opening_hours || 'Chưa cập nhật' }}</dd>
-          </div>
-          <div>
-            <dt>Giá vé</dt>
-            <dd>{{ formatTicketPrice(selectedFeature.properties.ticket_price) }}</dd>
-          </div>
-          <div v-if="selectedFeature.properties.subject">
-            <dt>Chủ thể</dt>
-            <dd>{{ selectedFeature.properties.subject.name }}</dd>
-          </div>
-          <div>
-            <dt>Sản phẩm OCOP</dt>
-            <dd>{{ selectedFeature.properties.products?.length ?? 0 }}</dd>
-          </div>
-        </dl>
-        <div v-if="selectedFeature.properties.products?.length" class="selected-products">
-          <h3>Sản phẩm tại điểm</h3>
-          <ul>
-            <li v-for="product in selectedFeature.properties.products" :key="product.id">
-              <RouterLink :to="{ name: 'product-detail', params: { slug: product.slug } }">
-                {{ product.name }}
-              </RouterLink>
-              <span>{{ product.star }} sao</span>
-            </li>
-          </ul>
-        </div>
-
-        <p v-if="routeIntent && !routeResult" class="panel-hint" data-test="route-intent" role="status">Điểm đến đã chọn. Bấm “Lấy vị trí &amp; chỉ đường” để xác nhận dùng vị trí hiện tại và tìm tuyến đường.</p>
-        <div class="selected-actions">
-          <button
-            v-if="selectedCoordinates"
-            class="btn btn-success"
-            type="button"
-            :disabled="isRouting || isLocating"
-            @click="showRoute"
-          >
-            <AppIcon name="navigation" :size="15" /> {{ isRouting ? 'Đang tìm đường...' : routeIntent ? 'Lấy vị trí & chỉ đường' : 'Chỉ đường' }}
-          </button>
-          <RouterLink
-            class="btn btn-outline-success"
-            :to="{ name: 'location-detail', params: { slug: selectedFeature.properties.slug } }"
-          >
-            Xem chi tiết
-          </RouterLink>
-        </div>
-
-        <div v-if="routeResult" class="route-summary" role="status">
-          <strong>{{ formatDistance(routeResult.distance_m) }}</strong>
-          <span>khoảng {{ formatDuration(routeResult.duration_s) }} lái xe</span>
-          <button class="btn-link-reset" type="button" @click="clearRoute">Ẩn tuyến</button>
-        </div>
-        <a v-if="selectedCoordinates" class="external-directions" :href="directionsUrl" target="_blank" rel="noopener noreferrer">
-          Mở chỉ đường bằng Google Maps
-        </a>
-      </section>
-
       <section class="panel-section" aria-labelledby="all-locations-title">
         <div class="section-title-row list-head">
           <h2 id="all-locations-title" ref="allLocationsTitle" tabindex="-1">
@@ -1087,7 +990,6 @@ onBeforeUnmount(() => {
         :user-position="userPosition"
         :route="routeLine"
         :links="productLinks"
-        :bottom-inset="mapBottomInset"
         @select="selectLocation"
         @selected-position="selectedMarkerPosition = $event"
       />
@@ -1118,7 +1020,7 @@ onBeforeUnmount(() => {
           <img
             v-if="selectedHasOwnImage"
             class="map-info-image"
-            :src="selectedImageUrl"
+            :src="selectedFeature.properties.primary_image_url!"
             :alt="selectedFeature.properties.name"
             @error="selectedImageFailed = true"
           />
@@ -1126,6 +1028,12 @@ onBeforeUnmount(() => {
             <h2 id="map-selected-title">{{ selectedFeature.properties.name }}</h2>
             <p class="selected-address">
               <AppIcon name="map-pin" :size="13" /> {{ selectedFeature.properties.address }}
+            </p>
+            <p v-if="isOutsideFilter" class="panel-hint selected-note" data-test="outside-filter">
+              Điểm này không thuộc bộ lọc hiện tại nhưng vẫn được hiển thị để bạn xem.
+            </p>
+            <p v-if="!selectedCoordinates" class="panel-hint selected-note" data-test="no-coordinates">
+              Điểm này chưa có tọa độ hợp lệ nên chưa hiển thị trên bản đồ và chưa thể chỉ đường.
             </p>
             <p v-if="selectedFeature.properties.subject" class="map-info-subject">
               Chủ thể:
@@ -1136,11 +1044,7 @@ onBeforeUnmount(() => {
                 {{ selectedFeature.properties.subject.name }}
               </RouterLink>
             </p>
-            <p class="map-info-meta">
-              <span v-if="selectedFeature.properties.rating_avg">★ {{ selectedFeature.properties.rating_avg.toFixed(1) }}</span>
-              <span v-if="selectedFeature.properties.products?.length"> · {{ selectedFeature.properties.products.length }} sản phẩm OCOP</span>
-              <span v-if="selectedFeature.properties.opening_hours"> · {{ selectedFeature.properties.opening_hours }}</span>
-            </p>
+            <p v-if="selectedMeta" class="map-info-meta">{{ selectedMeta }}</p>
             <ul class="map-info-contact" aria-label="Thông tin liên hệ">
               <li v-if="selectedFeature.properties.contact_phone">
                 <AppIcon name="phone" :size="13" />
@@ -1185,6 +1089,14 @@ onBeforeUnmount(() => {
           </div>
         </div>
         <div class="map-info-footer">
+          <p v-if="routeIntent && !routeResult" class="panel-hint selected-note" data-test="route-intent" role="status">
+            Điểm đến đã chọn. Bấm “Lấy vị trí &amp; chỉ đường” để xác nhận dùng vị trí hiện tại và tìm tuyến đường.
+          </p>
+          <div v-if="routeResult" class="route-summary" role="status">
+            <strong>{{ formatDistance(routeResult.distance_m) }}</strong>
+            <span>khoảng {{ formatDuration(routeResult.duration_s) }} lái xe</span>
+            <button class="btn-link-reset" type="button" @click="clearRoute">Ẩn tuyến</button>
+          </div>
           <div class="map-info-actions">
             <button
               v-if="selectedCoordinates"
@@ -1194,7 +1106,7 @@ onBeforeUnmount(() => {
               @click="showRoute"
             >
               <AppIcon name="navigation" :size="15" />
-              {{ isRouting ? 'Đang tìm đường...' : 'Chỉ đường' }}
+              {{ isRouting ? 'Đang tìm đường...' : routeIntent ? 'Lấy vị trí & chỉ đường' : 'Chỉ đường' }}
             </button>
             <RouterLink
               class="btn btn-outline-success"
@@ -1204,6 +1116,9 @@ onBeforeUnmount(() => {
             </RouterLink>
           </div>
           <p v-if="routeMessage" class="panel-message" role="alert">{{ routeMessage }}</p>
+          <a v-if="selectedCoordinates" class="external-directions" :href="directionsUrl" target="_blank" rel="noopener noreferrer">
+            Mở chỉ đường bằng Google Maps
+          </a>
         </div>
       </section>
     </section>
@@ -1457,14 +1372,6 @@ onBeforeUnmount(() => {
   transform-origin: center;
 }
 
-.map-panel > .selected-card {
-  display: none;
-}
-
-.selected-card {
-  border-color: var(--ocop-mint-border);
-}
-
 .map-info-head {
   display: flex;
   align-items: center;
@@ -1614,24 +1521,6 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: 5px;
   padding-inline: var(--ocop-space-3);
-}
-
-.selected-media {
-  aspect-ratio: 16 / 7;
-  overflow: hidden;
-  margin: 0 0 var(--ocop-space-3);
-  border-radius: var(--ocop-radius-sm);
-  background: var(--ocop-mint-soft);
-}
-
-.selected-media img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.selected-card h2 {
-  font-size: 1.15rem;
 }
 
 .type-badge {
@@ -2001,93 +1890,20 @@ onBeforeUnmount(() => {
   font-size: var(--ocop-font-size-small);
 }
 
-.selected-facts {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--ocop-space-2);
-  margin: 0 0 var(--ocop-space-3);
-}
-
-.selected-facts dt {
-  color: var(--ocop-slate);
-  font-size: var(--ocop-font-size-caption);
-  font-weight: 700;
-}
-
-.selected-facts dd {
-  margin: 0;
-  font-size: var(--ocop-font-size-small);
-  font-weight: 650;
-}
-
-.selected-products {
-  margin: 0 0 var(--ocop-space-3);
-  padding: var(--ocop-space-3);
-  border-radius: var(--ocop-radius-sm);
-  background: var(--ocop-surface-subtle);
-}
-
-.selected-products h3 {
-  margin: 0 0 var(--ocop-space-2);
-  color: var(--ocop-navy);
-  font-size: var(--ocop-font-size-small);
-}
-
-.selected-products ul {
-  display: grid;
-  gap: var(--ocop-space-1);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.selected-products li {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--ocop-space-2);
-  font-size: var(--ocop-font-size-small);
-}
-
-.selected-products a {
-  min-width: 0;
-  color: var(--ocop-primary-700);
-  font-weight: 700;
-}
-
-.selected-products span {
-  flex: 0 0 auto;
-  color: var(--ocop-warning);
-  font-size: var(--ocop-font-size-caption);
-  font-weight: 700;
-}
-
-.selected-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--ocop-space-2);
-}
-
-.selected-actions .btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-}
-
 .route-summary {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
+  align-items: center;
   gap: var(--ocop-space-2);
-  margin-top: var(--ocop-space-3);
-  padding: 10px var(--ocop-space-3);
+  margin-bottom: var(--ocop-space-2);
+  padding: var(--ocop-space-1) var(--ocop-space-3);
   border-radius: var(--ocop-radius-sm);
   background: var(--ocop-mint-soft);
 }
 
 .route-summary strong {
   color: var(--ocop-primary-900);
-  font-size: 1.1rem;
+  font-size: var(--ocop-font-size-title-sm);
 }
 
 .route-summary span {
@@ -2096,8 +1912,9 @@ onBeforeUnmount(() => {
 }
 
 .external-directions {
-  display: inline-block;
-  margin-top: 10px;
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
   color: var(--ocop-primary-700);
   font-size: var(--ocop-font-size-small);
   font-weight: 700;
@@ -2113,13 +1930,25 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 991.98px) {
+  .map-canvas {
+    height: auto;
+    min-height: 0;
+  }
+
+  .map-canvas :deep(.leaflet-map-shell) {
+    height: 62vh;
+    min-height: 420px;
+  }
+
+  /* Thẻ nằm ngay dưới bản đồ, không đè lên: đủ cao để đọc, nút ở chân thẻ luôn thấy. */
   .map-info-overlay {
-    top: auto;
-    left: var(--ocop-space-3);
-    right: var(--ocop-space-3);
-    bottom: 28px;
+    position: static;
     width: auto;
-    max-height: min(52%, 300px);
+    max-height: 60vh;
+    max-height: 60dvh;
+    margin: var(--ocop-space-3) var(--ocop-space-4) 0;
+    border: 1px solid var(--ocop-border);
+    border-radius: var(--ocop-radius-md);
   }
 
   /* Khung bản đồ trên điện thoại thấp: nhường chỗ cho chữ, ảnh xem ở trang chi tiết. */

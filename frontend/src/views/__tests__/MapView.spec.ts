@@ -168,27 +168,27 @@ describe('MapView', () => {
     await wrapper.findAll('.location-list button')[0].trigger('click')
     expect(router.replace).toHaveBeenCalledWith({ name: 'map', query: { diem: 'cau-dat-farm' } })
     expect(map.props('selectedSlug')).toBe('cau-dat-farm')
-    expect(wrapper.get('#selected-title').text()).toBe('Cầu Đất Farm')
-    expect(wrapper.get('.selected-facts').text()).toContain('HTX Chè Cầu Đất')
-    expect(wrapper.get('.selected-products').text()).toContain('Trà xanh Cầu Đất')
+    expect(wrapper.get('#map-selected-title').text()).toBe('Cầu Đất Farm')
+    expect(wrapper.get('.map-info-overlay').text()).toContain('HTX Chè Cầu Đất')
+    expect(wrapper.get('.map-info-overlay').text()).toContain('Trà xanh Cầu Đất')
     expect(wrapper.get('.external-directions').attributes('href')).toContain('11.879583%2C108.547398')
 
     map.vm.$emit('select', 'vuon-hong-nha-tom')
     await flushPromises()
-    expect(wrapper.get('#selected-title').text()).toBe('Vườn hồng Nhà Tom')
+    expect(wrapper.get('#map-selected-title').text()).toBe('Vườn hồng Nhà Tom')
   })
 
   it('chon san diem tu query va bo qua slug khong ton tai', async () => {
     route.query = { diem: 'vuon-hong-nha-tom' }
     const wrapper = mountView()
     await flushPromises()
-    expect(wrapper.get('#selected-title').text()).toBe('Vườn hồng Nhà Tom')
+    expect(wrapper.get('#map-selected-title').text()).toBe('Vườn hồng Nhà Tom')
 
     route.query = { diem: 'khong-ton-tai' }
     vi.mocked(getMapLocations).mockResolvedValueOnce({ type: 'FeatureCollection', features })
     await wrapper.get('form').trigger('submit')
     await flushPromises()
-    expect(wrapper.find('#selected-title').exists()).toBe(false)
+    expect(wrapper.find('#map-selected-title').exists()).toBe(false)
   })
   it('normal destination focuses marker without route intent or automatic GPS', async () => {
     const gps = mockGeolocation({ latitude: 11.9404, longitude: 108.4383 })
@@ -215,7 +215,7 @@ describe('MapView', () => {
     expect(wrapper.get('[data-test="route-intent"]').text()).toContain('xác nhận')
     expect(gps).not.toHaveBeenCalled()
     expect(getRoute).not.toHaveBeenCalled()
-    await wrapper.get('.selected-actions button').trigger('click')
+    await wrapper.get('.map-info-actions button').trigger('click')
     await flushPromises()
     expect(gps).toHaveBeenCalledTimes(1)
     expect(getRoute).toHaveBeenCalledWith('cau-dat-farm', origin)
@@ -231,7 +231,7 @@ describe('MapView', () => {
     const wrapper = mountView()
     await flushPromises()
     expect(gps).not.toHaveBeenCalled()
-    await wrapper.get('.selected-actions button').trigger('click')
+    await wrapper.get('.map-info-actions button').trigger('click')
     await flushPromises()
     expect(wrapper.text()).toContain('Bạn chưa cho phép truy cập vị trí')
     expect(getRoute).not.toHaveBeenCalled()
@@ -294,11 +294,13 @@ describe('MapView', () => {
     const wrapper = mountView()
     await flushPromises()
 
-    const routeButton = wrapper.findAll('.selected-actions button')[0]
+    const routeButton = wrapper.findAll('.map-info-actions button')[0]
     await routeButton.trigger('click')
     await flushPromises()
 
     expect(getRoute).toHaveBeenCalledWith('cau-dat-farm', { latitude: 11.9404, longitude: 108.4383 })
+    expect(wrapper.findAll('.route-summary')).toHaveLength(1)
+    expect(wrapper.find('.map-info-overlay .route-summary').exists()).toBe(true)
     expect(wrapper.get('.route-summary').text()).toContain('15 km')
     expect(wrapper.get('.route-summary').text()).toContain('22 phút')
     expect(wrapper.getComponent(LeafletMapStub).props('route')).toHaveLength(2)
@@ -324,7 +326,7 @@ describe('MapView', () => {
     const wrapper = mountView()
     await flushPromises()
 
-    await wrapper.findAll('.selected-actions button')[0].trigger('click')
+    await wrapper.findAll('.map-info-actions button')[0].trigger('click')
     await flushPromises()
 
     expect(wrapper.text()).toContain('Dịch vụ chỉ đường tạm thời không phản hồi.')
@@ -349,7 +351,7 @@ describe('MapView', () => {
     expect((wrapper.get('#map-search').element as HTMLInputElement).value).toBe('chè')
     expect((wrapper.get('select[aria-label="Lọc theo loại hình"]').element as HTMLSelectElement).value).toBe('tea_coffee_farm')
     expect((wrapper.get('select[aria-label="Lọc theo địa bàn"]').element as HTMLSelectElement).value).toBe('Đà Lạt')
-    expect(wrapper.get('#selected-title').text()).toBe('Cầu Đất Farm')
+    expect(wrapper.get('#map-selected-title').text()).toBe('Cầu Đất Farm')
   })
 
   it('ghi bo loc len URL, giu tham so diem; tim kiem dung replace, chon select dung push', async () => {
@@ -426,10 +428,10 @@ describe('MapView', () => {
     expect(wrapper.findAll('.location-list button')).toHaveLength(4)
 
     await wrapper.findAll('.location-list button')[2].trigger('click')
-    expect(wrapper.get('#selected-title').text()).toBe('Không tọa độ')
+    expect(wrapper.get('#map-selected-title').text()).toBe('Không tọa độ')
     expect(wrapper.find('[data-test="no-coordinates"]').exists()).toBe(true)
     expect(wrapper.find('.external-directions').exists()).toBe(false)
-    expect(wrapper.find('.selected-actions .btn-success').exists()).toBe(false)
+    expect(wrapper.find('.map-info-actions .btn-success').exists()).toBe(false)
   })
 
   it('chu giai loc theo loai hinh va dong bo voi URL', async () => {
@@ -478,7 +480,7 @@ describe('MapView', () => {
     await wrapper.get('.nearby-list button').trigger('click')
     await flushPromises()
 
-    expect(wrapper.get('#selected-title').text()).toBe('Điểm ngoài lọc')
+    expect(wrapper.get('#map-selected-title').text()).toBe('Điểm ngoài lọc')
     expect(wrapper.find('[data-test="outside-filter"]').exists()).toBe(true)
     const map = wrapper.getComponent(LeafletMapStub)
     expect(map.props('selectedSlug')).toBe('ngoai-loc')
@@ -515,7 +517,7 @@ describe('MapView', () => {
     route.query = { diem: 'cau-dat-farm' }
     const wrapper = mountView()
     await flushPromises()
-    await wrapper.get('.selected-actions .btn-success').trigger('click')
+    await wrapper.get('.map-info-actions .btn-success').trigger('click')
     await flushPromises()
 
     expect(wrapper.findAll('.panel-message')).toHaveLength(1)
@@ -527,15 +529,15 @@ describe('MapView', () => {
     route.query = { diem: 'cau-dat-farm' }
     const wrapper = mountView()
     await flushPromises()
-    expect(wrapper.find('#selected-title').exists()).toBe(true)
+    expect(wrapper.find('#map-selected-title').exists()).toBe(true)
 
     wrapper.get('#map-search').element.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
     await flushPromises()
-    expect(wrapper.find('#selected-title').exists()).toBe(true)
+    expect(wrapper.find('#map-selected-title').exists()).toBe(true)
 
     document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
     await flushPromises()
-    expect(wrapper.find('#selected-title').exists()).toBe(false)
+    expect(wrapper.find('#map-selected-title').exists()).toBe(false)
     expect(router.replace).toHaveBeenLastCalledWith({ name: 'map', query: {} })
   })
   describe('lop diem du lich va cua hang, loc theo san pham va chu the', () => {

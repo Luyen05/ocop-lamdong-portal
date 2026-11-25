@@ -17,8 +17,6 @@ const props = withDefaults(
     route?: Array<[number, number]> | null
     /** Đường nét đứt nối các cặp điểm (vd. nơi sản xuất → nơi bán), mỗi cặp là hai slug. */
     links?: Array<[string, string]>
-    /** Phần đáy bản đồ bị thẻ thông tin che (px): marker đang chọn được giữ nằm trên phần này. */
-    bottomInset?: number
     cluster?: boolean
     initialZoom?: number
     label?: string
@@ -28,7 +26,6 @@ const props = withDefaults(
     userPosition: null,
     route: null,
     links: () => [],
-    bottomInset: 0,
     cluster: true,
     initialZoom: 9,
     label: 'Bản đồ số điểm du lịch nông nghiệp Lâm Đồng',
@@ -271,7 +268,7 @@ function keepSelectedInView(): void {
   if (marker) {
     map.panInside(marker.getLatLng(), {
       paddingTopLeft: [48, 56],
-      paddingBottomRight: [48, 48 + props.bottomInset],
+      paddingBottomRight: [48, 48],
       animate: false,
     })
   }
@@ -404,15 +401,6 @@ watch(
   },
 )
 watch(() => props.links, renderLinks)
-// Đợi hoạt ảnh phóng to/di chuyển của bản đồ xong rồi mới dịch marker khỏi vùng thẻ che.
-let insetTimer: ReturnType<typeof setTimeout> | undefined
-watch(
-  () => props.bottomInset,
-  () => {
-    clearTimeout(insetTimer)
-    insetTimer = setTimeout(keepSelectedInView, 450)
-  },
-)
 watch(() => props.selectedSlug, (_slug, previousSlug) => focusSelected(previousSlug ?? null))
 watch(() => props.userPosition, renderUserPosition)
 watch(() => props.route, renderRoute)
