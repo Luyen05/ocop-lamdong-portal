@@ -28,6 +28,7 @@ Các thay đổi đáng chú ý của dự án. Định dạng theo [Keep a Chan
 
 ### Sửa
 
+- Rà soát phong cách ở trang quản trị, chủ thể và tài khoản: chữ đậm tối đa 600 (token mới `--ocop-font-weight-semibold`), bỏ lời chào ở dashboard và trang đăng nhập, bỏ dấu chấm than ở thông báo gửi đánh giá, thay `transition: all`, bỏ viền trái màu ở ghi chú duyệt hồ sơ.
 - Trang chủ chỉ tải 12 sản phẩm để chọn 8 sản phẩm nổi bật, đồng thời rút ngắn hiệu ứng hiện nội dung để giảm thời gian chờ cảm nhận.
 - Các API bản đồ xem trước, tin tức và điểm du lịch trên trang chủ được lên lịch khi trình duyệt rảnh để ưu tiên nội dung đầu trang.
 - Trang đăng nhập/đăng ký vừa màn hình laptop (Windows 125–150%, trình duyệt 100%): không còn tràn theo chiều dọc ở 1536×784 và 1366×650 (đăng nhập), vẫn giữ ba dòng lợi ích ở cột trái và ghi chú quyền riêng tư (chỉ ẩn ghi chú khi cao dưới 700 px); thanh thông báo đầu trang tự gọn khi màn hình thấp; nút Google/Facebook xếp hai cột.
