@@ -1110,11 +1110,10 @@ onBeforeUnmount(() => {
         </div>
         <div class="map-info-content">
           <img
-            v-if="selectedImageUrl"
+            v-if="selectedHasOwnImage"
             class="map-info-image"
             :src="selectedImageUrl"
-            :alt="selectedHasOwnImage ? selectedFeature.properties.name : ''"
-            :style="{ objectPosition: selectedHasOwnImage ? 'center' : selectedFallbackPhoto?.position }"
+            :alt="selectedFeature.properties.name"
             @error="selectedImageFailed = true"
           />
           <div class="map-info-body">
@@ -1417,7 +1416,7 @@ onBeforeUnmount(() => {
   z-index: 1100;
   top: var(--ocop-space-6);
   left: var(--ocop-space-6);
-  width: min(390px, calc(100% - var(--ocop-space-12)));
+  width: min(360px, calc(100% - var(--ocop-space-12)));
   max-height: calc(100% - var(--ocop-space-12));
   overflow-y: auto;
   box-shadow: var(--ocop-shadow-overlay);
@@ -1443,15 +1442,13 @@ onBeforeUnmount(() => {
 }
 
 .map-info-content {
-  display: grid;
-  grid-template-columns: 112px minmax(0, 1fr);
   background: var(--ocop-card);
 }
 
 .map-info-image {
-  width: 112px;
-  height: 100%;
-  min-height: 150px;
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 7;
   object-fit: cover;
 }
 
@@ -2079,13 +2076,9 @@ onBeforeUnmount(() => {
     max-height: min(52%, 300px);
   }
 
-  .map-info-content {
-    grid-template-columns: 72px minmax(0, 1fr);
-  }
-
+  /* Khung bản đồ trên điện thoại thấp: nhường chỗ cho chữ, ảnh xem ở trang chi tiết. */
   .map-info-image {
-    width: 72px;
-    min-height: 100px;
+    display: none;
   }
 
   /* Ưu tiên thông tin cần ngay: mô tả dài và dịch vụ xem ở trang chi tiết. */
