@@ -7,6 +7,7 @@ import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 import type { Coordinate, MapFeature } from '@/types/location'
 import { featureKind, hasValidCoordinates, isInsideLamDong, locationTypeStyle } from '@/utils/location'
+import { prefersReducedMotion } from '@/utils/motion'
 
 const props = withDefaults(
   defineProps<{
@@ -89,6 +90,27 @@ let resizeObserver: ResizeObserver | null = null
 let isUnmounted = false
 const markers = new Map<string, L.Marker>()
 const featuresBySlug = new Map<string, MapFeature>()
+
+let pendingFocus: (() => void) | null = null
+
+/** Chỉ bay mượt khi người dùng không chọn giảm chuyển động và khung có kích thước thật (jsdom là 0x0). */
+function canAnimateMap(): boolean {
+  if (!map || prefersReducedMotion()) return false
+  const size = map.getSize()
+  return size.x > 0 && size.y > 0
+}
+
+/** Hủy việc đang chờ bay xong, để lần di chuyển khác (tuyến đường, toàn cảnh) không bị kéo ngược lại. */
+function cancelPendingFocus(): void {
+  if (map && pendingFocus) map.off('moveend', pendingFocus)
+  pendingFocus = null
+}
+
+function moveToBounds(bounds: L.LatLngBounds, options: L.FitBoundsOptions): void {
+  if (!map) return
+  if (canAnimateMap()) map.flyToBounds(bounds, { ...options, duration: 0.85 })
+  else map.fitBounds(bounds, options)
+}
 
 /**
  * DivIcon có nhãn đọc được: Leaflet chỉ đặt role="button" và tabindex cho phần tử icon, nên
@@ -236,6 +258,7 @@ function renderMarkers(fitToFeatures: boolean): void {
 
 function focusSelected(previousSlug: string | null = null): void {
   if (!map) return
+  cancelPendingFocus()
   if (previousSlug && previousSlug !== props.selectedSlug) {
     setMarkerSelected(previousSlug, false)
     markers.get(previousSlug)?.closeTooltip()
@@ -249,16 +272,38 @@ function focusSelected(previousSlug: string | null = null): void {
 
   // Điểm đang chọn đã có thẻ thông tin nên không mở thêm tooltip trùng tên (dễ bị thẻ che mất một nửa).
   marker.closeTooltip()
-  if (clusterLayer) {
-    clusterLayer.zoomToShowLayer(marker, () => {
-      marker.closeTooltip()
-      keepSelectedInView()
+  const reveal = () => {
+    if (!map || props.selectedSlug !== slug) return
+    if (clusterLayer) {
+      clusterLayer.zoomToShowLayer(marker, () => {
+        marker.closeTooltip()
+        keepSelectedInView()
+        emitSelectedPosition()
+      })
+    } else {
       emitSelectedPosition()
-    })
-  } else {
-    map.setView(marker.getLatLng(), Math.max(map.getZoom(), 13))
-    emitSelectedPosition()
+    }
   }
+
+  const target = marker.getLatLng()
+  const targetZoom = Math.max(map.getZoom(), 14)
+  if (!canAnimateMap()) {
+    if (!clusterLayer) map.setView(target, Math.max(map.getZoom(), 13))
+    reveal()
+    return
+  }
+  // Đã đứng đúng chỗ thì không bay lại (flyTo với quãng đường bằng 0 làm bản đồ giật).
+  if (map.getCenter().distanceTo(target) < 12 && map.getZoom() >= targetZoom) {
+    reveal()
+    return
+  }
+  map.stop()
+  pendingFocus = () => {
+    pendingFocus = null
+    reveal()
+  }
+  map.once('moveend', pendingFocus)
+  map.flyTo(target, targetZoom, { duration: 0.85 })
 }
 
 /** Sau khi đổi kích thước khung, đảm bảo marker đang chọn vẫn nằm trong tầm nhìn. */
@@ -308,12 +353,13 @@ function renderUserPosition(): void {
     .bindTooltip('Vị trí của bạn', { direction: 'top' })
     .addTo(userLayer)
   if (props.route?.length) return // renderRoute tự căn khung theo tuyến đường.
+  cancelPendingFocus()
 
   const destination = selectedLatLng()
   if (destination) {
     // Có điểm đang chọn: không kéo bản đồ về phía người dùng mà ôm cả hai điểm.
     markers.get(props.selectedSlug as string)?.closeTooltip()
-    map.fitBounds(L.latLngBounds([position, destination]), { padding: [56, 56], maxZoom: 15 })
+    moveToBounds(L.latLngBounds([position, destination]), { padding: [56, 56], maxZoom: 15 })
   } else if (isInsideLamDong(props.userPosition)) {
     map.setView(position, Math.max(map.getZoom(), 11))
   }
@@ -341,8 +387,20 @@ function renderRoute(): void {
   const points = props.route.map(([longitude, latitude]) => [latitude, longitude] as L.LatLngTuple)
   routeLayer = L.polyline(points, { className: 'ocop-route-line', weight: 5, opacity: 0.85 }).addTo(map)
   if (props.selectedSlug) markers.get(props.selectedSlug)?.closeTooltip()
-  map.fitBounds(routeLayer.getBounds(), { padding: [40, 40] })
+  cancelPendingFocus()
+  moveToBounds(routeLayer.getBounds(), { padding: [40, 40] })
 }
+
+/** Đưa khung nhìn về toàn bộ các điểm đang hiển thị; chưa có điểm nào thì về vị trí ban đầu. */
+function resetView(): void {
+  if (!map) return
+  cancelPendingFocus()
+  const points = [...markers.values()].map((marker) => marker.getLatLng())
+  if (points.length) moveToBounds(L.latLngBounds(points), { padding: [40, 40], maxZoom: 12 })
+  else map.setView(LAM_DONG_CENTER, props.initialZoom)
+}
+
+defineExpose({ resetView })
 
 async function initialize(): Promise<void> {
   if (!container.value) return
@@ -411,6 +469,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   isUnmounted = true
+  cancelPendingFocus()
   resizeObserver?.disconnect()
   map?.remove()
   map = null
