@@ -4,6 +4,13 @@ Các thay đổi đáng chú ý của dự án. Định dạng theo [Keep a Chan
 
 ## [Chưa phát hành] — nhánh `2312682_HaLuyen_NangCapBanDo`
 
+### Sửa — rà soát bản đồ số, đợt 2
+
+- Bấm "Chỉ đường" nay hiện khoảng cách, thời gian, nút "Ẩn tuyến" và liên kết Google Maps. Trước đó các mục này, cùng thông báo "ngoài bộ lọc", "chưa có tọa độ" và hướng dẫn khi mở từ liên kết chỉ đường, nằm trong một thẻ bị CSS ẩn.
+- Điện thoại: thẻ điểm nằm dưới bản đồ, cao tối đa 60% màn hình, nút luôn thấy.
+- Trang chi tiết điểm du lịch: hết lỗi ghi chú ảnh minh họa đẩy phần thông tin xuống dưới; nhãn loại hình đủ tương phản.
+- Giảm chữ đậm, bỏ chữ viết hoa và thẻ viền trái màu, mở rộng vùng chạm trên bản đồ và trang chi tiết điểm.
+
 ### Thêm
 
 - Tuyến tham quan (giao diện): bản đồ có mục "Tuyến tham quan"; chọn tuyến (URL `tour`) thì chỉ hiện các chặng, nối bằng đường nét đứt theo thứ tự, kèm danh sách chặng có ghi chú; tuyến không còn công khai thì tự bỏ và báo.
