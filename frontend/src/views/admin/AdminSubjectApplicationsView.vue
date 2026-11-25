@@ -386,7 +386,7 @@ onMounted(loadApplications)
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
-  transition: all var(--admin-transition);
+  transition: background-color var(--admin-transition), border-color var(--admin-transition), color var(--admin-transition), box-shadow var(--admin-transition), opacity var(--admin-transition);
   background: var(--admin-card);
   color: var(--admin-text);
 }

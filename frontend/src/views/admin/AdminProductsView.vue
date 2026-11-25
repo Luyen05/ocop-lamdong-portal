@@ -927,7 +927,7 @@ onMounted(() => {
   font-size: var(--admin-font-sm);
   font-weight: 600;
   cursor: pointer;
-  transition: all var(--admin-transition);
+  transition: background-color var(--admin-transition), border-color var(--admin-transition), color var(--admin-transition), box-shadow var(--admin-transition), opacity var(--admin-transition);
 }
 .tab-list button.active {
   border-color: var(--admin-primary);
@@ -987,7 +987,7 @@ onMounted(() => {
   font-size: var(--admin-font-sm);
   font-weight: 600;
   cursor: pointer;
-  transition: all var(--admin-transition);
+  transition: background-color var(--admin-transition), border-color var(--admin-transition), color var(--admin-transition), box-shadow var(--admin-transition), opacity var(--admin-transition);
 }
 .filter-actions button:hover { border-color: var(--admin-primary); color: var(--admin-primary); }
 .filter-actions .primary-button {
@@ -1058,7 +1058,7 @@ onMounted(() => {
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
-  transition: all var(--admin-transition);
+  transition: background-color var(--admin-transition), border-color var(--admin-transition), color var(--admin-transition), box-shadow var(--admin-transition), opacity var(--admin-transition);
 }
 .queue-panel button:hover { border-color: var(--admin-primary); color: var(--admin-primary); }
 

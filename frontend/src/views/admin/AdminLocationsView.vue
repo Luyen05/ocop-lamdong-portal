@@ -576,7 +576,7 @@ onMounted(loadList)
   text-decoration: none;
   white-space: nowrap;
   cursor: pointer;
-  transition: all var(--admin-transition);
+  transition: background-color var(--admin-transition), border-color var(--admin-transition), color var(--admin-transition), box-shadow var(--admin-transition), opacity var(--admin-transition);
 }
 .btn-line:hover { border-color: var(--admin-primary); color: var(--admin-primary); background: var(--admin-primary-soft); }
 .btn-line[aria-pressed='true'] { border-color: var(--admin-primary); background: var(--admin-primary-soft); color: var(--admin-primary); }
@@ -613,7 +613,7 @@ onMounted(loadList)
   font-size: var(--admin-font-sm);
   font-weight: 600;
   cursor: pointer;
-  transition: all var(--admin-transition);
+  transition: background-color var(--admin-transition), border-color var(--admin-transition), color var(--admin-transition), box-shadow var(--admin-transition), opacity var(--admin-transition);
 }
 .tabs button.active,
 .tabs button[aria-pressed='true'] {
@@ -844,7 +844,7 @@ onMounted(loadList)
   background: var(--admin-card);
   text-align: left;
   cursor: pointer;
-  transition: all var(--admin-transition);
+  transition: background-color var(--admin-transition), border-color var(--admin-transition), color var(--admin-transition), box-shadow var(--admin-transition), opacity var(--admin-transition);
 }
 .decision-option strong { font-size: var(--admin-font-sm); color: var(--admin-text); }
 .decision-option span { font-size: var(--admin-font-xs); color: var(--admin-muted); }
