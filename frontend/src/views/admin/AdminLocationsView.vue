@@ -540,7 +540,7 @@ onMounted(loadList)
   justify-content: space-between;
   gap: var(--admin-space-4);
 }
-.page-head h1 { margin: 0 0 4px; font-size: 1.625rem; font-weight: 800; color: var(--admin-text); }
+.page-head h1 { margin: 0 0 4px; font-size: 1.625rem; font-weight: var(--ocop-font-weight-semibold); color: var(--admin-text); }
 .page-head p { margin: 0; color: var(--admin-muted); font-size: var(--admin-font-sm); }
 
 /* ── Search ── */
@@ -631,7 +631,7 @@ onMounted(loadList)
   border-radius: var(--admin-radius-pill);
   background: color-mix(in srgb, var(--ocop-white) 22%, transparent);
   font-size: 11px;
-  font-weight: 800;
+  font-weight: var(--ocop-font-weight-semibold);
 }
 .tabs button:not(.active):not([aria-pressed='true']) .count {
   background: var(--admin-bg);
@@ -672,7 +672,7 @@ onMounted(loadList)
 }
 .queue-item:hover { background: var(--admin-bg); }
 .queue-item.active { background: var(--admin-primary-soft); }
-.queue-item strong { font-size: var(--admin-font-sm); font-weight: 700; color: var(--admin-text); }
+.queue-item strong { font-size: var(--admin-font-sm); font-weight: var(--ocop-font-weight-semibold); color: var(--admin-text); }
 .queue-item > span:not(.tags) { font-size: var(--admin-font-xs); color: var(--admin-muted); }
 .queue-item.active strong { color: var(--admin-primary); }
 .queue-item small { font-size: 11px; color: var(--admin-muted); }
@@ -686,7 +686,7 @@ onMounted(loadList)
   background: var(--admin-bg);
   color: var(--admin-muted);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: var(--ocop-font-weight-semibold);
   border: 1px solid var(--admin-border);
 }
 .tag.is-warning { background: var(--admin-warning-soft); color: var(--admin-warning-text); border-color: var(--admin-warning-border); }
@@ -726,7 +726,7 @@ onMounted(loadList)
   padding-bottom: var(--admin-space-4);
   border-bottom: 1px solid var(--admin-border-soft);
 }
-.detail-head h2 { margin: 0 0 4px; font-size: var(--admin-font-xl); font-weight: 800; color: var(--admin-text); }
+.detail-head h2 { margin: 0 0 4px; font-size: var(--admin-font-xl); font-weight: var(--ocop-font-weight-semibold); color: var(--admin-text); }
 .detail-head > div > span { font-size: var(--admin-font-sm); color: var(--admin-muted); }
 
 /* Status pill */
@@ -735,7 +735,7 @@ onMounted(loadList)
   padding: 4px 12px;
   border-radius: var(--admin-radius-pill);
   font-size: var(--admin-font-xs);
-  font-weight: 700;
+  font-weight: var(--ocop-font-weight-semibold);
   white-space: nowrap;
 }
 .tone-success { background: var(--admin-badge-approved-bg); color: var(--admin-badge-approved-text); }
@@ -767,12 +767,12 @@ onMounted(loadList)
 .map-box :deep(.leaflet-container) { height: 260px !important; border-radius: var(--admin-radius-md); }
 .map-actions { display: flex; gap: 8px; }
 .hint { margin: 0; font-size: var(--admin-font-xs); color: var(--admin-muted); }
-.num { font-variant-numeric: tabular-nums; font-weight: 700; }
+.num { font-variant-numeric: tabular-nums; font-weight: var(--ocop-font-weight-semibold); }
 
 /* Facts */
 .facts-col { display: grid; gap: var(--admin-space-3); }
 .facts { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; margin: 0; font-size: var(--admin-font-sm); }
-.facts dt { color: var(--admin-muted); font-weight: 700; white-space: nowrap; }
+.facts dt { color: var(--admin-muted); font-weight: var(--ocop-font-weight-semibold); white-space: nowrap; }
 .facts dd { margin: 0; color: var(--admin-text); overflow-wrap: anywhere; }
 
 /* Checks list */
@@ -780,7 +780,7 @@ onMounted(loadList)
 .checks li { display: flex; align-items: flex-start; gap: 7px; font-size: var(--admin-font-xs); padding: 6px 10px; border-radius: var(--admin-radius-sm); background: var(--admin-bg); }
 .checks li.ok   { background: var(--admin-success-soft); color: var(--admin-success-text); }
 .checks li.warn { background: var(--admin-warning-soft); color: var(--admin-warning-text); }
-.check-mark { font-weight: 800; flex-shrink: 0; }
+.check-mark { font-weight: var(--ocop-font-weight-semibold); flex-shrink: 0; }
 
 /* Content section */
 .content {
@@ -791,10 +791,10 @@ onMounted(loadList)
   border-radius: var(--admin-radius-md);
   background: var(--admin-bg);
 }
-.content h3 { grid-column: 1 / -1; margin: 0 0 4px; font-size: var(--admin-font-base); font-weight: 700; color: var(--admin-text); }
+.content h3 { grid-column: 1 / -1; margin: 0 0 4px; font-size: var(--admin-font-base); font-weight: var(--ocop-font-weight-semibold); color: var(--admin-text); }
 .content div { display: grid; gap: 3px; }
 .content div.wide { grid-column: 1 / -1; }
-.content span { font-size: var(--admin-font-xs); font-weight: 700; color: var(--admin-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.content span { font-size: var(--admin-font-xs); font-weight: var(--ocop-font-weight-semibold); color: var(--admin-muted); text-transform: uppercase; letter-spacing: 0.04em; }
 .content p { margin: 0; font-size: var(--admin-font-sm); color: var(--admin-text); overflow-wrap: anywhere; }
 .pre { white-space: pre-wrap; }
 
@@ -806,17 +806,17 @@ onMounted(loadList)
 
 /* Reason */
 .reason { padding: var(--admin-space-3) var(--admin-space-4); border-radius: var(--admin-radius-md); background: var(--admin-bg); }
-.reason span { font-size: var(--admin-font-xs); font-weight: 700; color: var(--admin-muted); text-transform: uppercase; }
+.reason span { font-size: var(--admin-font-xs); font-weight: var(--ocop-font-weight-semibold); color: var(--admin-muted); text-transform: uppercase; }
 .reason p { margin: 4px 0 0; font-size: var(--admin-font-sm); }
 
 /* Compare table */
 .compare-wrap { overflow: hidden; border: 1px solid var(--admin-border); border-radius: var(--admin-radius-md); }
 .compare { width: 100%; border-collapse: collapse; font-size: var(--admin-font-sm); }
-.compare thead th { padding: 9px 14px; background: var(--admin-bg); color: var(--admin-muted); font-size: var(--admin-font-xs); font-weight: 700; text-align: left; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 1px solid var(--admin-border); }
+.compare thead th { padding: 9px 14px; background: var(--admin-bg); color: var(--admin-muted); font-size: var(--admin-font-xs); font-weight: var(--ocop-font-weight-semibold); text-align: left; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 1px solid var(--admin-border); }
 .compare tbody tr { border-bottom: 1px solid var(--admin-border-soft); }
 .compare tbody tr:last-child { border-bottom: 0; }
 .compare tbody tr.changed { background: var(--admin-highlight); }
-.compare th[scope='row'] { padding: 9px 14px; color: var(--admin-muted); font-weight: 700; white-space: nowrap; }
+.compare th[scope='row'] { padding: 9px 14px; color: var(--admin-muted); font-weight: var(--ocop-font-weight-semibold); white-space: nowrap; }
 .compare td { padding: 9px 14px; color: var(--admin-text); overflow-wrap: anywhere; }
 
 /* Decision section */
@@ -828,7 +828,7 @@ onMounted(loadList)
   display: grid;
   gap: var(--admin-space-3);
 }
-.decision h3 { margin: 0; font-size: var(--admin-font-base); font-weight: 700; color: var(--admin-text); }
+.decision h3 { margin: 0; font-size: var(--admin-font-base); font-weight: var(--ocop-font-weight-semibold); color: var(--admin-text); }
 
 .decision-options {
   display: grid;
@@ -857,7 +857,7 @@ onMounted(loadList)
 .decision-option.is-needs_revision.active { border-color: var(--admin-warning-border); background: var(--admin-warning-soft); }
 .decision-option.is-needs_revision.active strong { color: var(--admin-warning-text); }
 
-.decision label { display: grid; gap: 5px; font-size: var(--admin-font-xs); font-weight: 700; color: var(--admin-muted); text-transform: uppercase; }
+.decision label { display: grid; gap: 5px; font-size: var(--admin-font-xs); font-weight: var(--ocop-font-weight-semibold); color: var(--admin-muted); text-transform: uppercase; }
 .decision textarea { padding: 9px 12px; border: 1px solid var(--admin-border); border-radius: var(--admin-radius-sm); font: inherit; font-size: var(--admin-font-sm); color: var(--admin-text); resize: vertical; min-height: 80px; outline: none; transition: border-color var(--admin-transition); }
 .decision textarea:focus { border-color: var(--admin-primary); }
 
@@ -873,7 +873,7 @@ onMounted(loadList)
   background: var(--admin-primary);
   color: var(--ocop-white);
   font-size: var(--admin-font-sm);
-  font-weight: 700;
+  font-weight: var(--ocop-font-weight-semibold);
   cursor: pointer;
   transition: background var(--admin-transition);
 }

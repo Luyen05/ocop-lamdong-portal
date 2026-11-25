@@ -311,10 +311,10 @@ onBeforeUnmount(() => clearTimeout(searchTimer))
 .users-page { display: grid; gap: var(--admin-space-5); font-family: var(--admin-font); }
 
 .page-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--admin-space-4); flex-wrap: wrap; }
-.page-heading > div > span { color: var(--admin-primary); font-size: var(--admin-font-xs); font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em; }
-.page-heading h1 { margin: var(--admin-space-1) 0; color: var(--admin-text); font-size: var(--ocop-font-size-title-md); font-weight: 800; }
+.page-heading > div > span { color: var(--admin-primary); font-size: var(--admin-font-xs); font-weight: var(--ocop-font-weight-semibold); text-transform: uppercase; letter-spacing: 0.07em; }
+.page-heading h1 { margin: var(--admin-space-1) 0; color: var(--admin-text); font-size: var(--ocop-font-size-title-md); font-weight: var(--ocop-font-weight-semibold); }
 .page-heading p { margin: 0; color: var(--admin-muted); font-size: var(--admin-font-sm); }
-.page-heading > strong { padding: var(--admin-space-1) var(--admin-space-3); border-radius: var(--admin-radius-pill); background: var(--admin-primary-soft); color: var(--admin-primary-dark); font-size: var(--admin-font-xs); font-weight: 800; }
+.page-heading > strong { padding: var(--admin-space-1) var(--admin-space-3); border-radius: var(--admin-radius-pill); background: var(--admin-primary-soft); color: var(--admin-primary-dark); font-size: var(--admin-font-xs); font-weight: var(--ocop-font-weight-semibold); }
 
 .filter-bar {
   display: grid;
@@ -327,7 +327,7 @@ onBeforeUnmount(() => clearTimeout(searchTimer))
   box-shadow: var(--admin-shadow-sm);
 }
 .filter-field { display: grid; gap: var(--admin-space-1); margin: 0; }
-.filter-field > span { color: var(--admin-muted); font-size: var(--admin-font-xs); font-weight: 700; }
+.filter-field > span { color: var(--admin-muted); font-size: var(--admin-font-xs); font-weight: var(--ocop-font-weight-semibold); }
 .form-control, .form-select {
   width: 100%;
   min-height: var(--admin-control-height);
@@ -380,7 +380,7 @@ onBeforeUnmount(() => clearTimeout(searchTimer))
   background: var(--admin-bg);
   color: var(--admin-muted);
   font-size: var(--admin-font-xs);
-  font-weight: 700;
+  font-weight: var(--ocop-font-weight-semibold);
   letter-spacing: 0.05em;
   text-align: left;
   text-transform: uppercase;
@@ -390,12 +390,12 @@ onBeforeUnmount(() => clearTimeout(searchTimer))
 .table td { padding: var(--admin-space-3) var(--admin-space-5); border-bottom: 1px solid var(--admin-border-soft); color: var(--admin-text); font-size: var(--admin-font-sm); vertical-align: middle; }
 .table tbody tr:last-child td { border-bottom: 0; }
 .table tbody tr:hover td { background: var(--admin-bg); }
-.table td strong { display: block; font-weight: 700; overflow-wrap: anywhere; }
+.table td strong { display: block; font-weight: var(--ocop-font-weight-semibold); overflow-wrap: anywhere; }
 .table td small { display: block; margin-top: var(--admin-space-1); color: var(--admin-muted); font-size: var(--admin-font-xs); overflow-wrap: anywhere; }
 .cell-actions { text-align: right; }
 .self-note { color: var(--admin-muted); font-size: var(--admin-font-xs); font-weight: 600; }
 
-.status-badge { display: inline-flex; padding: 3px var(--admin-space-3); border-radius: var(--admin-radius-pill); font-size: var(--admin-font-xs); font-weight: 700; white-space: nowrap; }
+.status-badge { display: inline-flex; padding: 3px var(--admin-space-3); border-radius: var(--admin-radius-pill); font-size: var(--admin-font-xs); font-weight: var(--ocop-font-weight-semibold); white-space: nowrap; }
 .status-approved { background: var(--admin-badge-approved-bg); color: var(--admin-badge-approved-text); }
 .status-rejected { background: var(--admin-badge-rejected-bg); color: var(--admin-badge-rejected-text); }
 
@@ -403,7 +403,7 @@ onBeforeUnmount(() => clearTimeout(searchTimer))
 
 .modal-layer { position: fixed; z-index: 200; inset: 0; display: grid; padding: var(--admin-space-5); place-items: center; overflow-y: auto; background: var(--admin-scrim); }
 .confirm-dialog { width: min(100%, 480px); padding: var(--admin-space-6); border-radius: var(--admin-radius-lg); background: var(--admin-card); box-shadow: var(--admin-shadow-modal); }
-.confirm-dialog h2 { margin: 0 0 var(--admin-space-3); color: var(--admin-text); font-size: var(--admin-font-xl); font-weight: 800; }
+.confirm-dialog h2 { margin: 0 0 var(--admin-space-3); color: var(--admin-text); font-size: var(--admin-font-xl); font-weight: var(--ocop-font-weight-semibold); }
 .dialog-body { display: grid; gap: var(--admin-space-2); margin-bottom: var(--admin-space-4); color: var(--admin-text); font-size: var(--admin-font-sm); }
 .dialog-body p { margin: 0; overflow-wrap: anywhere; }
 .dialog-note { padding: var(--admin-space-3); border-radius: var(--admin-radius-md); background: var(--admin-warning-soft); color: var(--admin-warning-text); }
@@ -419,7 +419,7 @@ onBeforeUnmount(() => clearTimeout(searchTimer))
   .users-table tr { display: grid; gap: var(--admin-space-2); padding: var(--admin-space-4); border: 1px solid var(--admin-border); border-radius: var(--admin-radius-md); background: var(--admin-card); }
   .users-table tbody tr:hover td { background: transparent; }
   .users-table td { display: grid; grid-template-columns: minmax(96px, 35%) minmax(0, 1fr); gap: var(--admin-space-2); padding: 0; border: 0; text-align: left; }
-  .users-table td::before { content: attr(data-label); color: var(--admin-muted); font-size: var(--admin-font-xs); font-weight: 700; }
+  .users-table td::before { content: attr(data-label); color: var(--admin-muted); font-size: var(--admin-font-xs); font-weight: var(--ocop-font-weight-semibold); }
   .users-table td.cell-account { grid-template-columns: 1fr; }
   .users-table td.cell-account::before { content: none; }
   .users-table td.cell-actions { grid-template-columns: 1fr; padding-top: var(--admin-space-2); border-top: 1px solid var(--admin-border-soft); }

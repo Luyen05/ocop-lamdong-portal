@@ -393,31 +393,31 @@ onMounted(() => {
 <style scoped>
 .subject-products-page { display: grid; gap: var(--ocop-space-5); }
 .page-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--ocop-space-5); }
-.page-heading span { color: var(--ocop-primary-700); font-size: var(--ocop-font-size-caption); font-weight: 800; text-transform: uppercase; }
+.page-heading span { color: var(--ocop-primary-700); font-size: var(--ocop-font-size-caption); font-weight: var(--ocop-font-weight-semibold); text-transform: uppercase; }
 .page-heading h1 { margin: var(--ocop-space-1) 0; color: var(--ocop-navy); font-size: 30px; }
 .page-heading p { margin: 0; color: var(--ocop-slate); font-size: var(--ocop-font-size-small); }
-.primary-button, .product-actions a { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; padding: 10px 14px; border-radius: 9px; background: var(--ocop-primary-700); color: var(--ocop-white); font-size: var(--ocop-font-size-caption); font-weight: 700; text-align: center; text-decoration: none; }
+.primary-button, .product-actions a { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; padding: 10px 14px; border-radius: 9px; background: var(--ocop-primary-700); color: var(--ocop-white); font-size: var(--ocop-font-size-caption); font-weight: var(--ocop-font-weight-semibold); text-align: center; text-decoration: none; }
 .filter-bar { display: flex; padding: var(--ocop-space-2); flex-wrap: wrap; gap: 7px; border: 1px solid var(--ocop-border); border-radius: var(--ocop-radius-md); background: var(--ocop-card); }
-.filter-bar button { min-height: 44px; padding: var(--ocop-space-2) 11px; border: 1px solid transparent; border-radius: var(--ocop-radius-sm); background: transparent; color: var(--ocop-neutral-600); font-size: var(--ocop-font-size-caption); font-weight: 700; }
+.filter-bar button { min-height: 44px; padding: var(--ocop-space-2) 11px; border: 1px solid transparent; border-radius: var(--ocop-radius-sm); background: transparent; color: var(--ocop-neutral-600); font-size: var(--ocop-font-size-caption); font-weight: var(--ocop-font-weight-semibold); }
 .filter-bar button span { margin-left: var(--ocop-space-1); padding: 2px 6px; border-radius: var(--ocop-radius-pill); background: var(--ocop-border-soft); font-size: var(--ocop-font-size-caption); }
 .filter-bar button.active { border-color: var(--ocop-mint-border); background: var(--ocop-mint-soft); color: var(--ocop-primary-700); }
-.dialog-card label { display: grid; gap: 5px; color: var(--ocop-neutral-600); font-size: var(--ocop-font-size-caption); font-weight: 700; }
+.dialog-card label { display: grid; gap: 5px; color: var(--ocop-neutral-600); font-size: var(--ocop-font-size-caption); font-weight: var(--ocop-font-weight-semibold); }
 .product-panel { overflow: hidden; border: 1px solid var(--ocop-border); border-radius: 14px; background: var(--ocop-card); }
 .product-list article { display: grid; padding: var(--ocop-space-4); align-items: center; grid-template-columns: 88px minmax(0, 1fr) auto; gap: var(--ocop-space-4); border-bottom: 1px solid var(--ocop-border-soft); }
 .product-list article:last-child { border-bottom: 0; }
 .product-list article > img { width: 88px; height: 76px; border-radius: 10px; background: var(--ocop-surface-muted); object-fit: cover; }
-.product-placeholder { display: grid; width: 88px; height: 76px; place-items: center; border-radius: 10px; background: linear-gradient(135deg, var(--ocop-success-soft), var(--ocop-text-on-dark)); color: var(--ocop-primary-700); font-size: var(--ocop-font-size-small); font-weight: 800; }
+.product-placeholder { display: grid; width: 88px; height: 76px; place-items: center; border-radius: 10px; background: linear-gradient(135deg, var(--ocop-success-soft), var(--ocop-text-on-dark)); color: var(--ocop-primary-700); font-size: var(--ocop-font-size-small); font-weight: var(--ocop-font-weight-semibold); }
 .product-copy h2 { margin: 7px 0 3px; font-size: var(--ocop-font-size-body-lg); }
 .product-copy p, .product-copy small { margin: 0; color: var(--ocop-slate); font-size: var(--ocop-font-size-caption); }
 .product-copy > div { display: flex; gap: 7px; }
-.status, .stars { padding: 3px 7px; border-radius: var(--ocop-radius-pill); background: var(--ocop-border-soft); color: var(--ocop-neutral-600); font-size: var(--ocop-font-size-caption); font-weight: 800; }
+.status, .stars { padding: 3px 7px; border-radius: var(--ocop-radius-pill); background: var(--ocop-border-soft); color: var(--ocop-neutral-600); font-size: var(--ocop-font-size-caption); font-weight: var(--ocop-font-weight-semibold); }
 .status-approved { background: var(--ocop-success-soft); color: var(--ocop-success); }
 .status-pending { background: var(--ocop-warning-soft); color: var(--ocop-warning); }
 .status-needs_revision, .status-rejected { background: var(--ocop-danger-soft); color: var(--ocop-danger); }
 .moderation-note, .request-note { margin-top: 7px !important; padding: 6px var(--ocop-space-2); border-radius: 6px; background: var(--ocop-warning-soft); color: var(--ocop-warning) !important; }
 .request-note { background: var(--ocop-info-soft); color: var(--ocop-info) !important; }
 .product-actions { display: grid; min-width: 140px; gap: 7px; }
-.product-actions button, .dialog-card button { min-height: 44px; padding: var(--ocop-space-2) 10px; border: 1px solid var(--ocop-border); border-radius: var(--ocop-radius-sm); background: var(--ocop-card); font-size: var(--ocop-font-size-caption); font-weight: 700; }
+.product-actions button, .dialog-card button { min-height: 44px; padding: var(--ocop-space-2) 10px; border: 1px solid var(--ocop-border); border-radius: var(--ocop-radius-sm); background: var(--ocop-card); font-size: var(--ocop-font-size-caption); font-weight: var(--ocop-font-weight-semibold); }
 .approve-button { border-color: var(--ocop-primary-700) !important; color: var(--ocop-primary-700); }
 .danger-button { border-color: var(--ocop-danger-border) !important; color: var(--ocop-danger-strong); }
 .dialog-backdrop { position: fixed; z-index: 80; inset: 0; display: grid; padding: var(--ocop-space-5); place-items: center; background: color-mix(in srgb, var(--ocop-neutral-900) 55%, transparent); }

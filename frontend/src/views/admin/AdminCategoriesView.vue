@@ -393,11 +393,11 @@ onMounted(loadCategories)
 
 .page-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--admin-space-4); flex-wrap: wrap; }
 .page-heading > div:first-child { max-width: 64ch; }
-.page-heading > div > span { color: var(--admin-primary); font-size: var(--admin-font-xs); font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em; }
-.page-heading h1 { margin: var(--admin-space-1) 0; color: var(--admin-text); font-size: var(--ocop-font-size-title-md); font-weight: 800; }
+.page-heading > div > span { color: var(--admin-primary); font-size: var(--admin-font-xs); font-weight: var(--ocop-font-weight-semibold); text-transform: uppercase; letter-spacing: 0.07em; }
+.page-heading h1 { margin: var(--admin-space-1) 0; color: var(--admin-text); font-size: var(--ocop-font-size-title-md); font-weight: var(--ocop-font-weight-semibold); }
 .page-heading p { margin: 0; color: var(--admin-muted); font-size: var(--admin-font-sm); }
 .heading-actions { display: flex; align-items: center; gap: var(--admin-space-3); flex-wrap: wrap; }
-.heading-actions > strong { padding: var(--admin-space-1) var(--admin-space-3); border-radius: var(--admin-radius-pill); background: var(--admin-primary-soft); color: var(--admin-primary-dark); font-size: var(--admin-font-xs); font-weight: 800; }
+.heading-actions > strong { padding: var(--admin-space-1) var(--admin-space-3); border-radius: var(--admin-radius-pill); background: var(--admin-primary-soft); color: var(--admin-primary-dark); font-size: var(--admin-font-xs); font-weight: var(--ocop-font-weight-semibold); }
 
 .btn {
   display: inline-flex;
@@ -438,7 +438,7 @@ onMounted(loadCategories)
   background: var(--admin-bg);
   color: var(--admin-muted);
   font-size: var(--admin-font-xs);
-  font-weight: 700;
+  font-weight: var(--ocop-font-weight-semibold);
   letter-spacing: 0.05em;
   text-align: left;
   text-transform: uppercase;
@@ -449,7 +449,7 @@ onMounted(loadCategories)
 .table tbody tr:last-child td { border-bottom: 0; }
 .table tbody tr:hover td { background: var(--admin-bg); }
 .table tbody tr.is-hidden .name-cell strong { color: var(--admin-muted); }
-.table td strong { display: block; font-weight: 700; }
+.table td strong { display: block; font-weight: var(--ocop-font-weight-semibold); }
 .table td small { display: block; margin-top: var(--admin-space-1); color: var(--admin-muted); font-size: var(--admin-font-xs); overflow-wrap: anywhere; }
 .table code { color: var(--admin-text); font-size: var(--admin-font-xs); overflow-wrap: anywhere; }
 
@@ -484,7 +484,7 @@ onMounted(loadCategories)
 .modal-layer { position: fixed; z-index: 200; inset: 0; display: grid; padding: var(--admin-space-5); place-items: center; overflow-y: auto; background: var(--admin-scrim); }
 .dialog { width: min(100%, 560px); max-height: calc(100vh - 2 * var(--admin-space-5)); padding: var(--admin-space-6); overflow-y: auto; border-radius: var(--admin-radius-lg); background: var(--admin-card); box-shadow: var(--admin-shadow-modal); }
 .dialog-sm { width: min(100%, 460px); }
-.dialog h2 { margin: 0; color: var(--admin-text); font-size: var(--admin-font-xl); font-weight: 800; overflow-wrap: anywhere; }
+.dialog h2 { margin: 0; color: var(--admin-text); font-size: var(--admin-font-xl); font-weight: var(--ocop-font-weight-semibold); overflow-wrap: anywhere; }
 .dialog-header { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--admin-space-4); margin-bottom: var(--admin-space-4); }
 .icon-button { display: grid; width: var(--admin-control-height); height: var(--admin-control-height); flex: none; place-items: center; border: 0; border-radius: var(--admin-radius-sm); background: var(--admin-bg); color: var(--admin-muted); cursor: pointer; }
 .icon-button:hover { background: var(--admin-danger-soft); color: var(--admin-danger-text); }
@@ -492,7 +492,7 @@ onMounted(loadCategories)
 
 .category-form { display: grid; gap: var(--admin-space-4); }
 .field { display: grid; gap: var(--admin-space-1); margin: 0; }
-.field > span { color: var(--admin-text); font-size: var(--admin-font-sm); font-weight: 700; }
+.field > span { color: var(--admin-text); font-size: var(--admin-font-sm); font-weight: var(--ocop-font-weight-semibold); }
 .field > small { color: var(--admin-muted); font-size: var(--admin-font-xs); }
 .field-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--admin-space-3); }
 .form-control {
@@ -526,7 +526,7 @@ textarea.form-control { resize: vertical; }
   .categories-table tr { display: grid; gap: var(--admin-space-2); padding: var(--admin-space-4); border: 1px solid var(--admin-border); border-radius: var(--admin-radius-md); background: var(--admin-card); }
   .categories-table tbody tr:hover td { background: transparent; }
   .categories-table td { display: grid; grid-template-columns: minmax(88px, 35%) minmax(0, 1fr); align-items: center; gap: var(--admin-space-2); padding: 0; border: 0; text-align: left !important; }
-  .categories-table td::before { content: attr(data-label); color: var(--admin-muted); font-size: var(--admin-font-xs); font-weight: 700; }
+  .categories-table td::before { content: attr(data-label); color: var(--admin-muted); font-size: var(--admin-font-xs); font-weight: var(--ocop-font-weight-semibold); }
   .categories-table td.cell-name, .categories-table td.cell-actions { grid-template-columns: 1fr; }
   .categories-table td.cell-name::before, .categories-table td.cell-actions::before { content: none; }
   .categories-table td.cell-actions { padding-top: var(--admin-space-2); border-top: 1px solid var(--admin-border-soft); }
