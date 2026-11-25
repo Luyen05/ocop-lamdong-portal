@@ -253,7 +253,7 @@ onBeforeUnmount(() => chart?.destroy())
   margin: 0;
   color: var(--admin-text);
   font-size: var(--admin-font-sm);
-  font-weight: 800;
+  font-weight: var(--ocop-font-weight-semibold);
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }

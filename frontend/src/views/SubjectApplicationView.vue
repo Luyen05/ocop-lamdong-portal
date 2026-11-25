@@ -382,7 +382,7 @@ onBeforeUnmount(() => {
 .moderation-note {
   margin-top: 22px;
   padding: var(--ocop-space-4);
-  border-left: 4px solid var(--ocop-gold);
+  border: 1px solid color-mix(in srgb, var(--ocop-gold) 55%, transparent);
   border-radius: var(--ocop-radius-sm);
   background: var(--ocop-accent-soft);
 }

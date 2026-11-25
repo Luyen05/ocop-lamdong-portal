@@ -195,7 +195,7 @@ async function submitReview(payload: ReviewPayload): Promise<void> {
       notice.value = 'Đã lưu thay đổi. Đánh giá sẽ hiển thị lại sau khi được duyệt.'
     } else {
       myReview.value = await createReview(props.targetType, props.targetId, payload)
-      notice.value = 'Cảm ơn bạn! Đánh giá sẽ hiển thị sau khi được duyệt.'
+      notice.value = 'Đã gửi đánh giá. Đánh giá sẽ hiển thị sau khi được duyệt.'
     }
     isEditing.value = false
     focusNotice()

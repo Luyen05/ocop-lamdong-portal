@@ -59,7 +59,7 @@ Các thay đổi đáng chú ý của dự án. Định dạng theo [Keep a Chan
   - Liên kết số điện thoại, website và "Xem nơi mua và sản xuất" có vùng bấm đủ lớn; nút "Bỏ lọc" ở banner đủ tương phản.
   - Trang điểm du lịch: chưa có ảnh thì dùng ảnh minh họa theo loại hình kèm ghi chú thay vì khung trống; mini map ở trang sản phẩm gom cụm để ghim không đè nhau; ô tìm kiếm, nút mở tìm kiếm và nút menu ở đầu trang đạt vùng bấm 40–44px.
   - README: thêm hướng dẫn đặt `$OutputEncoding` UTF-8 khi nạp seed/migration bằng PowerShell 5.1 (nguyên nhân làm tiếng Việt thành dấu `?`), và các migration 015, 016.
-
+- Rà soát phong cách ở trang quản trị, chủ thể và tài khoản: chữ đậm tối đa 600 (token mới `--ocop-font-weight-semibold`), bỏ lời chào ở dashboard và trang đăng nhập, bỏ dấu chấm than ở thông báo gửi đánh giá, thay `transition: all`, bỏ viền trái màu ở ghi chú duyệt hồ sơ.
 - Trang chủ chỉ tải 12 sản phẩm để chọn 8 sản phẩm nổi bật, đồng thời rút ngắn hiệu ứng hiện nội dung để giảm thời gian chờ cảm nhận.
 - Các API bản đồ xem trước, tin tức và điểm du lịch trên trang chủ được lên lịch khi trình duyệt rảnh để ưu tiên nội dung đầu trang.
 - Trang đăng nhập/đăng ký vừa màn hình laptop (Windows 125–150%, trình duyệt 100%): không còn tràn theo chiều dọc ở 1536×784 và 1366×650 (đăng nhập), vẫn giữ ba dòng lợi ích ở cột trái và ghi chú quyền riêng tư (chỉ ẩn ghi chú khi cao dưới 700 px); thanh thông báo đầu trang tự gọn khi màn hình thấp; nút Google/Facebook xếp hai cột.
