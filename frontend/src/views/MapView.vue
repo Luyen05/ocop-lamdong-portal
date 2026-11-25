@@ -129,6 +129,11 @@ const cardWidth = ref(0)
 let cardObserver: ResizeObserver | null = null
 const selectedImageFailed = ref(false)
 const allLocationsTitle = ref<HTMLElement | null>(null)
+const leafletMap = ref<InstanceType<typeof LeafletMap> | null>(null)
+const panelToggle = ref<HTMLButtonElement | null>(null)
+const nearbyTitle = ref<HTMLElement | null>(null)
+/** Máy tính: ẩn bảng bên trái để xem bản đồ rộng hơn. */
+const isPanelCollapsed = ref(false)
 let compactQuery: MediaQueryList | null = null
 
 function queryText(value: unknown): string {
@@ -488,7 +493,17 @@ async function closeSelection(): Promise<void> {
   clearSelection()
   // Nút đóng biến mất cùng thẻ: đưa focus về đầu danh sách để người dùng bàn phím không bị mất vị trí.
   await nextTick()
-  allLocationsTitle.value?.focus()
+  if (isPanelCollapsed.value && !isCompact.value) panelToggle.value?.focus()
+  else allLocationsTitle.value?.focus()
+}
+
+/** Nút định vị trên bản đồ: kết quả và thông báo nằm trong bảng, nên trên máy tính mở bảng và cuộn tới đó. */
+async function locateFromMap(): Promise<void> {
+  if (!isCompact.value) isPanelCollapsed.value = false
+  await locateUser('nearby')
+  if (isCompact.value) return
+  await nextTick()
+  nearbyTitle.value?.scrollIntoView?.({ block: 'nearest', behavior: scrollBehavior() })
 }
 
 function selectLocation(slug: string): void {
@@ -641,6 +656,11 @@ async function showRoute(): Promise<void> {
   }
 }
 
+// Lỗi và thông báo nằm trong bảng bên trái: đang thu gọn thì mở lại để người dùng thấy.
+watch([errorMessage, contextMessage], ([error, context]) => {
+  if (error || context) isPanelCollapsed.value = false
+})
+
 // Esc bỏ chọn điểm (trừ khi đang gõ trong ô nhập/chọn, nơi Esc có nghĩa riêng).
 function onKeydown(event: KeyboardEvent): void {
   if (event.key !== 'Escape' || event.defaultPrevented || !selectedSlug.value) return
@@ -719,7 +739,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <main class="map-page">
+  <main class="map-page" :class="{ 'is-panel-collapsed': isPanelCollapsed }">
     <aside ref="mapPanel" class="map-panel" aria-label="Công cụ bản đồ">
       <header class="panel-header">
         <h1>Bản đồ OCOP Lâm Đồng</h1>
@@ -948,7 +968,7 @@ onBeforeUnmount(() => {
 
       <section class="panel-section" aria-labelledby="nearby-title">
         <div class="section-title-row">
-          <h2 id="nearby-title">Điểm gần bạn</h2>
+          <h2 id="nearby-title" ref="nearbyTitle">Điểm gần bạn</h2>
           <button class="btn btn-sm btn-outline-success" type="button" :disabled="isLocating" @click="locateUser('nearby')">
             <AppIcon name="navigation" :size="14" />
             {{ isLocating ? 'Đang định vị...' : userPosition ? 'Cập nhật vị trí' : 'Định vị tôi' }}
@@ -984,15 +1004,51 @@ onBeforeUnmount(() => {
     </aside>
 
     <section class="map-canvas" aria-label="Bản đồ">
-      <LeafletMap
-        :features="displayFeatures"
-        :selected-slug="selectedSlug"
-        :user-position="userPosition"
-        :route="routeLine"
-        :links="productLinks"
-        @select="selectLocation"
-        @selected-position="selectedMarkerPosition = $event"
-      />
+      <div class="map-stage">
+        <LeafletMap
+          ref="leafletMap"
+          :features="displayFeatures"
+          :selected-slug="selectedSlug"
+          :user-position="userPosition"
+          :route="routeLine"
+          :links="productLinks"
+          @select="selectLocation"
+          @selected-position="selectedMarkerPosition = $event"
+        />
+        <div class="map-tools" role="group" aria-label="Điều khiển bản đồ">
+          <button
+            v-if="!isCompact"
+            ref="panelToggle"
+            type="button"
+            :aria-expanded="!isPanelCollapsed"
+            :aria-label="isPanelCollapsed ? 'Mở bảng danh sách' : 'Thu gọn bảng danh sách'"
+            :title="isPanelCollapsed ? 'Mở bảng danh sách' : 'Thu gọn bảng danh sách'"
+            data-test="panel-toggle"
+            @click="isPanelCollapsed = !isPanelCollapsed"
+          >
+            <AppIcon :name="isPanelCollapsed ? 'chevronRight' : 'chevronLeft'" :size="18" />
+          </button>
+          <button
+            type="button"
+            aria-label="Vị trí của tôi"
+            title="Vị trí của tôi"
+            :disabled="isLocating"
+            data-test="map-locate"
+            @click="locateFromMap"
+          >
+            <AppIcon name="navigation" :size="18" />
+          </button>
+          <button
+            type="button"
+            aria-label="Xem toàn bộ các điểm"
+            title="Xem toàn bộ các điểm"
+            data-test="map-reset"
+            @click="leafletMap?.resetView()"
+          >
+            <AppIcon name="map" :size="18" />
+          </button>
+        </div>
+      </div>
       <section
         v-if="selectedFeature"
         ref="selectedCard"
@@ -1935,13 +1991,50 @@ onBeforeUnmount(() => {
   order: -1;
 }
 
+.map-stage {
+  position: relative;
+  height: 100%;
+}
+
+/* Góc dưới trái: thẻ điểm luôn chừa cột này nên hai thứ không đè nhau. */
+.map-tools {
+  position: absolute;
+  z-index: 1000;
+  bottom: var(--ocop-space-3);
+  left: var(--ocop-space-3);
+  display: grid;
+  gap: var(--ocop-space-2);
+}
+
+.map-tools button {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--ocop-border-strong);
+  border-radius: var(--ocop-radius-sm);
+  background: var(--ocop-card);
+  box-shadow: var(--ocop-shadow-sm);
+  color: var(--ocop-navy);
+}
+
+.map-tools button:hover {
+  background: var(--ocop-surface-muted);
+}
+
+.map-tools button:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--ocop-primary-500) 60%, transparent);
+  outline-offset: 2px;
+}
+
 @media (max-width: 991.98px) {
   .map-canvas {
     height: auto;
     min-height: 0;
   }
 
-  .map-canvas :deep(.leaflet-map-shell) {
+  .map-stage {
     height: 62vh;
     min-height: 420px;
   }
@@ -1988,6 +2081,14 @@ onBeforeUnmount(() => {
     height: calc(100vh - 6.5rem);
     height: calc(100dvh - 6.5rem);
     min-height: 560px;
+  }
+
+  .map-page.is-panel-collapsed {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .map-page.is-panel-collapsed .map-panel {
+    display: none;
   }
 
   .map-panel {

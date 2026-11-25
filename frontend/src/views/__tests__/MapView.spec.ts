@@ -44,10 +44,16 @@ vi.mock('@/services/categories', () => ({
   getCategories: vi.fn(),
 }))
 
+const resetView = vi.fn()
+
 const LeafletMapStub = defineComponent({
   name: 'LeafletMap',
   props: ['features', 'selectedSlug', 'userPosition', 'route', 'links'],
   emits: ['select'],
+  setup(_, { expose }) {
+    expose({ resetView })
+    return {}
+  },
   template: '<div class="map-stub" />',
 })
 
@@ -707,5 +713,25 @@ describe('MapView', () => {
       expect(wrapper.find('.location-list.is-detail').exists()).toBe(true)
       expect(wrapper.findAll('.location-address').length).toBe(3)
     })
+  })
+
+  it('thu gon bang ben, mo lai khi can va nut xem toan canh goi ban do', async () => {
+    resetView.mockClear()
+    const wrapper = mountView()
+    await flushPromises()
+    const toggle = wrapper.get('[data-test="panel-toggle"]')
+
+    await toggle.trigger('click')
+    expect(wrapper.get('.map-page').classes()).toContain('is-panel-collapsed')
+    expect(toggle.attributes('aria-expanded')).toBe('false')
+
+    await wrapper.get('[data-test="map-reset"]').trigger('click')
+    expect(resetView).toHaveBeenCalledTimes(1)
+
+    mockGeolocation({ code: 1 })
+    await wrapper.get('[data-test="map-locate"]').trigger('click')
+    await flushPromises()
+    expect(wrapper.get('.map-page').classes()).not.toContain('is-panel-collapsed')
+    expect(wrapper.text()).toContain('Bạn chưa cho phép truy cập vị trí')
   })
 })
