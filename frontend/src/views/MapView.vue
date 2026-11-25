@@ -817,7 +817,7 @@ onBeforeUnmount(() => {
             class="form-control"
             type="search"
             maxlength="150"
-            placeholder="Tìm địa điểm, cửa hàng..."
+            placeholder="Tìm địa điểm, cửa hàng"
           />
           <button class="btn btn-success" type="submit" :disabled="isLoading" aria-label="Tìm kiếm">
             <AppIcon name="search" :size="16" />
@@ -1144,7 +1144,7 @@ onBeforeUnmount(() => {
   margin: var(--ocop-space-1) 0;
   color: var(--ocop-primary-950);
   font-size: var(--ocop-font-size-title-md);
-  font-weight: 800;
+  font-weight: var(--ocop-font-weight-semibold);
 }
 
 .panel-notice {
@@ -1176,7 +1176,7 @@ onBeforeUnmount(() => {
   margin: 0;
   color: var(--ocop-navy);
   font-size: var(--ocop-font-size-body-lg);
-  font-weight: 800;
+  font-weight: var(--ocop-font-weight-semibold);
 }
 
 .filter-form {
@@ -1252,7 +1252,7 @@ onBeforeUnmount(() => {
 
 .radius-row label {
   flex: 0 0 auto;
-  font-weight: 650;
+  font-weight: var(--ocop-font-weight-semibold);
 }
 
 .radius-row .form-select {
@@ -1284,7 +1284,7 @@ onBeforeUnmount(() => {
   background: transparent;
   color: var(--ocop-primary-700);
   font-size: var(--ocop-font-size-small);
-  font-weight: 700;
+  font-weight: var(--ocop-font-weight-semibold);
 }
 
 .nearby-list,
@@ -1340,7 +1340,7 @@ onBeforeUnmount(() => {
   color: var(--ocop-primary-700);
   font-size: var(--ocop-font-size-small);
   font-style: normal;
-  font-weight: 800;
+  font-weight: var(--ocop-font-weight-semibold);
 }
 
 .type-dot {
@@ -1506,7 +1506,7 @@ onBeforeUnmount(() => {
 
 .map-info-subject {
   color: var(--ocop-primary-900);
-  font-weight: 700;
+  font-weight: var(--ocop-font-weight-semibold);
 }
 
 .map-info-actions {
@@ -1529,7 +1529,7 @@ onBeforeUnmount(() => {
   background: var(--type-color, var(--ocop-primary-700));
   color: var(--type-on, var(--ocop-white));
   font-size: var(--ocop-font-size-caption);
-  font-weight: 700;
+  font-weight: var(--ocop-font-weight-semibold);
 }
 
 .kind-toggle {
@@ -1554,7 +1554,7 @@ onBeforeUnmount(() => {
   background: transparent;
   color: var(--ocop-text-muted);
   font-size: var(--ocop-font-size-small);
-  font-weight: 650;
+  font-weight: var(--ocop-font-weight-semibold);
   white-space: nowrap;
 }
 
@@ -1562,12 +1562,12 @@ onBeforeUnmount(() => {
   background: var(--ocop-card);
   box-shadow: var(--ocop-shadow-sm);
   color: var(--ocop-navy);
-  font-weight: 800;
+  font-weight: var(--ocop-font-weight-semibold);
 }
 
 .kind-count {
   color: var(--ocop-text-muted);
-  font-weight: 650;
+  font-weight: var(--ocop-font-weight-semibold);
 }
 
 .kind-swatch {
@@ -1593,8 +1593,7 @@ onBeforeUnmount(() => {
 .context-eyebrow {
   color: var(--ocop-daquy-700);
   font-size: var(--ocop-font-size-caption);
-  font-weight: 800;
-  text-transform: uppercase;
+  font-weight: var(--ocop-font-weight-semibold);
 }
 
 .context-banner strong {
@@ -1670,7 +1669,7 @@ onBeforeUnmount(() => {
   background: var(--ocop-mist-900);
   color: var(--ocop-white);
   font-size: var(--ocop-font-size-small);
-  font-weight: 800;
+  font-weight: var(--ocop-font-weight-semibold);
 }
 
 .tour-stop-text {
@@ -1702,7 +1701,7 @@ onBeforeUnmount(() => {
   width: 100%;
   color: var(--ocop-text-muted);
   font-size: var(--ocop-font-size-caption);
-  font-weight: 700;
+  font-weight: var(--ocop-font-weight-semibold);
 }
 
 .chip {
@@ -1713,20 +1712,20 @@ onBeforeUnmount(() => {
   background: var(--ocop-card);
   color: var(--ocop-navy);
   font-size: var(--ocop-font-size-small);
-  font-weight: 600;
+  font-weight: var(--ocop-font-weight-semibold);
 }
 
 .chip[aria-pressed='true'] {
   border-color: var(--ocop-daquy-500);
   background: var(--ocop-daquy-100);
-  font-weight: 800;
+  font-weight: var(--ocop-font-weight-semibold);
 }
 
 .list-count {
   margin-left: var(--ocop-space-1);
   color: var(--ocop-text-muted);
   font-size: var(--ocop-font-size-small);
-  font-weight: 650;
+  font-weight: var(--ocop-font-weight-semibold);
 }
 
 .view-toggle {
@@ -1744,13 +1743,13 @@ onBeforeUnmount(() => {
   background: var(--ocop-card);
   color: var(--ocop-mist-900);
   font-size: var(--ocop-font-size-caption);
-  font-weight: 650;
+  font-weight: var(--ocop-font-weight-semibold);
 }
 
 .view-toggle button[aria-pressed='true'] {
   background: var(--ocop-mist-900);
   color: var(--ocop-white);
-  font-weight: 800;
+  font-weight: var(--ocop-font-weight-semibold);
 }
 
 .type-dot.is-shop {
@@ -1774,7 +1773,7 @@ onBeforeUnmount(() => {
   background: var(--ocop-daquy-100);
   color: var(--ocop-daquy-800);
   font-size: var(--ocop-font-size-caption);
-  font-weight: 700;
+  font-weight: var(--ocop-font-weight-semibold);
 }
 
 .location-address,
@@ -1803,14 +1802,14 @@ onBeforeUnmount(() => {
 
 .map-info-contact li {
   display: flex;
-  min-height: 32px;
+  min-height: 24px;
   align-items: center;
   gap: 6px;
 }
 
 .map-info-contact a {
   display: inline-flex;
-  min-height: 32px;
+  min-height: 44px;
   align-items: center;
 }
 
@@ -1818,12 +1817,19 @@ onBeforeUnmount(() => {
 .map-info-subject a,
 .product-where {
   color: var(--ocop-primary-700);
-  font-weight: 700;
+  font-weight: var(--ocop-font-weight-semibold);
+}
+
+.map-info-products a {
+  display: inline-flex;
+  min-width: 0;
+  min-height: 44px;
+  align-items: center;
 }
 
 .product-where {
   display: inline-flex;
-  min-height: 32px;
+  min-height: 44px;
   align-items: center;
   font-size: var(--ocop-font-size-caption);
 }
@@ -1832,7 +1838,7 @@ onBeforeUnmount(() => {
   border: 1px solid var(--ocop-mist-700);
   background: var(--ocop-card);
   color: var(--ocop-mist-900);
-  font-weight: 650;
+  font-weight: var(--ocop-font-weight-semibold);
 }
 
 .category-filter summary::after {
@@ -1858,7 +1864,7 @@ onBeforeUnmount(() => {
   justify-content: space-between;
   color: var(--ocop-navy);
   font-size: var(--ocop-font-size-small);
-  font-weight: 700;
+  font-weight: var(--ocop-font-weight-semibold);
   cursor: pointer;
 }
 
@@ -1917,7 +1923,7 @@ onBeforeUnmount(() => {
   align-items: center;
   color: var(--ocop-primary-700);
   font-size: var(--ocop-font-size-small);
-  font-weight: 700;
+  font-weight: var(--ocop-font-weight-semibold);
 }
 
 .map-canvas {

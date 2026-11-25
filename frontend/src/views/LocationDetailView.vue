@@ -313,7 +313,7 @@ function retryLoad(): void {
   border-radius: 50%;
   background: var(--ocop-danger-soft);
   color: var(--ocop-danger);
-  font-weight: 800;
+  font-weight: var(--ocop-font-weight-semibold);
 }
 
 .error-state h1 {
@@ -341,7 +341,7 @@ function retryLoad(): void {
   background: var(--type-color, var(--ocop-primary-700));
   color: var(--type-on, var(--ocop-white));
   font-size: var(--ocop-font-size-caption);
-  font-weight: 700;
+  font-weight: var(--ocop-font-weight-semibold);
 }
 
 .location-media {
@@ -352,7 +352,7 @@ function retryLoad(): void {
   margin: 0.85rem 0 0.6rem;
   color: var(--ocop-primary-950);
   font-size: clamp(1.8rem, 4vw, 2.6rem);
-  font-weight: 800;
+  font-weight: var(--ocop-font-weight-semibold);
 }
 
 .lead-description {
@@ -381,7 +381,7 @@ function retryLoad(): void {
   gap: 6px;
   color: var(--ocop-slate);
   font-size: 0.8rem;
-  font-weight: 700;
+  font-weight: var(--ocop-font-weight-semibold);
 }
 
 .info-list a {
@@ -414,7 +414,7 @@ function retryLoad(): void {
   background: var(--ocop-mint-soft);
   color: var(--ocop-primary-900);
   font-size: var(--ocop-font-size-small);
-  font-weight: 600;
+  font-weight: var(--ocop-font-weight-semibold);
 }
 
 .action-row {
@@ -454,7 +454,7 @@ function retryLoad(): void {
   align-items: center;
   color: var(--ocop-primary-700);
   font-size: 0.85rem;
-  font-weight: 700;
+  font-weight: var(--ocop-font-weight-semibold);
 }
 
 .subject-card span,
@@ -473,7 +473,7 @@ function retryLoad(): void {
   margin: 0.25rem 0 1rem;
   color: var(--ocop-primary-950);
   font-size: 1.4rem;
-  font-weight: 800;
+  font-weight: var(--ocop-font-weight-semibold);
 }
 
 .mini-map {

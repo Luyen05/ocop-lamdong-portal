@@ -61,7 +61,7 @@ function toggle(type: LocationType): void {
   margin: 0 0 var(--ocop-space-2);
   color: var(--ocop-navy);
   font-size: var(--ocop-font-size-body-lg);
-  font-weight: 800;
+  font-weight: var(--ocop-font-weight-semibold);
 }
 
 ul {
@@ -118,7 +118,7 @@ ul {
   min-width: 0;
   flex: 1 1 auto;
   font-size: var(--ocop-font-size-small);
-  font-weight: 650;
+  font-weight: var(--ocop-font-weight-semibold);
   line-height: 1.25;
 }
 
@@ -126,7 +126,7 @@ ul {
   flex: 0 0 auto;
   color: var(--ocop-primary-700);
   font-size: var(--ocop-font-size-small);
-  font-weight: 800;
+  font-weight: var(--ocop-font-weight-semibold);
 }
 
 .legend-swatch.is-shop {

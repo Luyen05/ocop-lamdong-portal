@@ -488,7 +488,7 @@ onBeforeUnmount(() => {
 .leaflet-container .marker-cluster div {
   background: var(--ocop-mist-900);
   color: var(--ocop-white);
-  font-weight: 600;
+  font-weight: var(--ocop-font-weight-semibold);
 }
 
 /* Nút phóng to, thu nhỏ đủ vùng chạm. */
