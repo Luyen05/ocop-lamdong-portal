@@ -45,6 +45,7 @@ Các thay đổi đáng chú ý của dự án. Định dạng theo [Keep a Chan
 
 ### Sửa
 
+- Rà soát bản đồ số theo checklist unslop: gọn đầu bảng (bỏ ô thống kê lặp), không hiện số 0 khi đang tải hoặc lỗi; thẻ điểm chỉ hiện ảnh thật, nút luôn nằm ngoài vùng cuộn; cụm ghim theo hệ màu; vùng chạm 44px; chọn tuyến tham quan không làm mất bản đồ và ghi rõ đường chấm không phải đường đi.
 - Rà soát giao diện và trải nghiệm toàn bộ, tập trung bản đồ (axe: không còn lỗi trên các trang đã quét):
   - Bản đồ: thẻ điểm không còn bị cắt ở mép trên/dưới (tự kẹp theo chiều cao thẻ, đặt cạnh marker, chừa chỗ cho nút phóng to); trên điện thoại thẻ gọn hơn, nút Chỉ đường luôn thấy, bản đồ tự dịch để marker đang chọn không bị thẻ che, thẻ không che dòng ghi nguồn OpenStreetMap; bỏ tooltip trùng tên bị thẻ che mất một nửa.
   - Bản đồ: chiều cao khung bản đồ trừ đủ thanh thông báo và đầu trang (trước đây đáy bản đồ, danh sách và chú thích bản quyền bị đẩy ra ngoài màn hình); nút chọn lớp không còn xuống dòng, nhãn thống kê ngắn gọn, danh sách địa điểm lên trước, tuyến tham quan gập gọn, chip nhóm sản phẩm gập trong mục "Nhóm sản phẩm", nút Danh sách/Chi tiết không xuống dòng; lớp bản đồ dùng nút bật/tắt (aria-pressed) thay cho radiogroup không có phím mũi tên.
