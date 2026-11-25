@@ -4,6 +4,11 @@ Các thay đổi đáng chú ý của dự án. Định dạng theo [Keep a Chan
 
 ## [Chưa phát hành] — nhánh `2312682_HaLuyen_NangCapBanDo`
 
+### Gộp phần cải tiến bản đồ của Khiêm Thuận
+
+- Thêm: bay mượt đến điểm và tuyến đường (tắt khi giảm chuyển động); nút định vị và xem toàn bộ các điểm trên bản đồ; thu gọn bảng danh sách trên máy tính; danh sách gom nhóm theo loại hình; số địa bàn ở bản đồ xem trước trang chủ.
+- Chưa nhận: lớp ranh giới tỉnh (tọa độ chỉ phủ Lâm Đồng trước sáp nhập, không ghi nguồn), thanh số liệu và thẻ nổi trùng chức năng đang có, hiệu ứng ghim nhấp nháy liên tục.
+
 ### Sửa — rà soát bản đồ số, đợt 2
 
 - Bấm "Chỉ đường" nay hiện khoảng cách, thời gian, nút "Ẩn tuyến" và liên kết Google Maps. Trước đó các mục này, cùng thông báo "ngoài bộ lọc", "chưa có tọa độ" và hướng dẫn khi mở từ liên kết chỉ đường, nằm trong một thẻ bị CSS ẩn.
