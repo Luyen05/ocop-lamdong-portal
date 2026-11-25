@@ -198,6 +198,18 @@ const productLinks = computed<Array<[string, string]>>(() => {
   return pairs.slice(0, 12)
 })
 const mapPanel = ref<HTMLElement | null>(null)
+/** Danh sách gom theo loại hình, giữ thứ tự xuất hiện; mỗi nhóm đóng mở được. */
+const groupedLocations = computed(() => {
+  const groups = new Map<string, { type: string; label: string; items: MapFeature[] }>()
+  for (const feature of features.value) {
+    const { type, type_label: label } = feature.properties
+    const group = groups.get(type)
+    if (group) group.items.push(feature)
+    else groups.set(type, { type, label, items: [feature] })
+  }
+  return [...groups.values()]
+})
+const collapsedGroups = reactive<Record<string, boolean>>({})
 /** Chưa tải xong hoặc tải lỗi thì chưa biết số lượng: không hiện "0". */
 const hasCounts = computed(() => !isLoading.value && !errorMessage.value)
 const displayFeatures = computed(() => {
@@ -661,6 +673,12 @@ watch([errorMessage, contextMessage], ([error, context]) => {
   if (error || context) isPanelCollapsed.value = false
 })
 
+// Chọn điểm từ bản đồ mà nhóm của nó đang đóng thì mở nhóm ra.
+watch(selectedSlug, () => {
+  const type = selectedFeature.value?.properties.type
+  if (type) collapsedGroups[type] = false
+})
+
 // Esc bỏ chọn điểm (trừ khi đang gõ trong ô nhập/chọn, nơi Esc có nghĩa riêng).
 function onKeydown(event: KeyboardEvent): void {
   if (event.key !== 'Escape' || event.defaultPrevented || !selectedSlug.value) return
@@ -905,48 +923,77 @@ onBeforeUnmount(() => {
             Xem tất cả địa điểm
           </button>
         </div>
-        <ul v-else class="location-list" :class="{ 'is-detail': viewMode === 'detail' }">
-          <li v-for="feature in features" :key="feature.properties.slug">
-            <button
-              type="button"
-              :class="{ active: feature.properties.slug === selectedSlug }"
-              @click="selectLocation(feature.properties.slug)"
+        <div v-else class="location-groups">
+          <section v-for="group in groupedLocations" :key="group.type" class="location-group">
+            <h3>
+              <button
+                type="button"
+                class="group-toggle"
+                :aria-expanded="!collapsedGroups[group.type]"
+                :aria-controls="`location-group-${group.type}`"
+                data-test="group-toggle"
+                @click="collapsedGroups[group.type] = !collapsedGroups[group.type]"
+              >
+                <i
+                  class="type-dot"
+                  :class="{ 'is-shop': featureKind(group.items[0]) === 'shop' }"
+                  :style="{ background: locationTypeStyle(group.items[0].properties.type).color }"
+                  aria-hidden="true"
+                />
+                <span class="group-label">{{ group.label }}</span>
+                <span class="group-count">{{ group.items.length }}</span>
+                <span class="group-chevron" aria-hidden="true" />
+              </button>
+            </h3>
+            <ul
+              v-show="!collapsedGroups[group.type]"
+              :id="`location-group-${group.type}`"
+              class="location-list"
+              :class="{ 'is-detail': viewMode === 'detail' }"
             >
-              <img
-                v-if="feature.properties.primary_image_url"
-                class="location-thumb"
-                :src="feature.properties.primary_image_url"
-                alt=""
-                loading="lazy"
-              />
-              <i
-                v-else
-                class="type-dot"
-                :class="{ 'is-shop': featureKind(feature) === 'shop' }"
-                :style="{ background: locationTypeStyle(feature.properties.type).color }"
-                aria-hidden="true"
-              />
-              <span class="location-text">
-                <strong>{{ feature.properties.name }}</strong>
-                <small>
-                  {{ feature.properties.type_label }} · {{ feature.properties.district }}
-                  <template v-if="feature.properties.products?.length"> · {{ feature.properties.products.length }} sản phẩm OCOP</template>
-                </small>
-                <span v-if="productContext && linkedProductRole(feature)" class="role-badge" data-test="role-badge">
-                  {{ productRoleLabel(linkedProductRole(feature)) }}
-                </span>
-                <template v-if="viewMode === 'detail'">
-                  <span class="location-address">{{ feature.properties.address }}</span>
-                  <span v-if="feature.properties.opening_hours" class="location-meta">Mở cửa {{ feature.properties.opening_hours }}</span>
-                  <span v-if="feature.properties.description" class="location-desc">{{ feature.properties.description }}</span>
-                  <span v-if="feature.properties.services?.length" class="location-meta">
-                    {{ feature.properties.services.slice(0, 3).join(' · ') }}
+              <li v-for="feature in group.items" :key="feature.properties.slug">
+                <button
+                  type="button"
+                  :class="{ active: feature.properties.slug === selectedSlug }"
+                  @click="selectLocation(feature.properties.slug)"
+                >
+                  <img
+                    v-if="feature.properties.primary_image_url"
+                    class="location-thumb"
+                    :src="feature.properties.primary_image_url"
+                    alt=""
+                    loading="lazy"
+                  />
+                  <i
+                    v-else
+                    class="type-dot"
+                    :class="{ 'is-shop': featureKind(feature) === 'shop' }"
+                    :style="{ background: locationTypeStyle(feature.properties.type).color }"
+                    aria-hidden="true"
+                  />
+                  <span class="location-text">
+                    <strong>{{ feature.properties.name }}</strong>
+                    <small>
+                      {{ feature.properties.type_label }} · {{ feature.properties.district }}
+                      <template v-if="feature.properties.products?.length"> · {{ feature.properties.products.length }} sản phẩm OCOP</template>
+                    </small>
+                    <span v-if="productContext && linkedProductRole(feature)" class="role-badge" data-test="role-badge">
+                      {{ productRoleLabel(linkedProductRole(feature)) }}
+                    </span>
+                    <template v-if="viewMode === 'detail'">
+                      <span class="location-address">{{ feature.properties.address }}</span>
+                      <span v-if="feature.properties.opening_hours" class="location-meta">Mở cửa {{ feature.properties.opening_hours }}</span>
+                      <span v-if="feature.properties.description" class="location-desc">{{ feature.properties.description }}</span>
+                      <span v-if="feature.properties.services?.length" class="location-meta">
+                        {{ feature.properties.services.slice(0, 3).join(' · ') }}
+                      </span>
+                    </template>
                   </span>
-                </template>
-              </span>
-            </button>
-          </li>
-        </ul>
+                </button>
+              </li>
+            </ul>
+          </section>
+        </div>
       </section>
 
       <section v-if="tours.length && !tourDetail" class="panel-section tour-list" aria-labelledby="tour-list-title" data-test="tour-list">
@@ -1397,6 +1444,58 @@ onBeforeUnmount(() => {
   font-size: var(--ocop-font-size-small);
   font-style: normal;
   font-weight: var(--ocop-font-weight-semibold);
+}
+
+.location-groups {
+  display: grid;
+  gap: var(--ocop-space-2);
+  margin-top: var(--ocop-space-2);
+}
+
+.location-group h3 {
+  margin: 0;
+}
+
+.location-group .location-list {
+  margin-top: var(--ocop-space-1);
+}
+
+.group-toggle {
+  display: flex;
+  width: 100%;
+  min-height: 44px;
+  align-items: center;
+  gap: var(--ocop-space-2);
+  padding: 0 var(--ocop-space-2);
+  border: 0;
+  border-bottom: 1px solid var(--ocop-border);
+  background: transparent;
+  color: var(--ocop-navy);
+  font-size: var(--ocop-font-size-small);
+  font-weight: var(--ocop-font-weight-semibold);
+  text-align: left;
+}
+
+.group-label {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.group-count {
+  color: var(--ocop-text-muted);
+}
+
+.group-chevron {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 auto;
+  border-right: 2px solid currentcolor;
+  border-bottom: 2px solid currentcolor;
+  transform: rotate(45deg);
+}
+
+.group-toggle[aria-expanded='true'] .group-chevron {
+  transform: rotate(-135deg);
 }
 
 .type-dot {

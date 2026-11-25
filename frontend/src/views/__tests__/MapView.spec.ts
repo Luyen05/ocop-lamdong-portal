@@ -734,4 +734,20 @@ describe('MapView', () => {
     expect(wrapper.get('.map-page').classes()).not.toContain('is-panel-collapsed')
     expect(wrapper.text()).toContain('Bạn chưa cho phép truy cập vị trí')
   })
+
+  it('danh sach gom theo loai hinh, dong mo duoc va tu mo khi chon diem tren ban do', async () => {
+    const wrapper = mountView()
+    await flushPromises()
+    const header = wrapper.get('[data-test="group-toggle"]')
+    expect(header.text()).toContain('2')
+    expect(header.attributes('aria-expanded')).toBe('true')
+
+    await header.trigger('click')
+    expect(header.attributes('aria-expanded')).toBe('false')
+    expect(wrapper.get('.location-list').attributes('style')).toContain('display: none')
+
+    wrapper.getComponent(LeafletMapStub).vm.$emit('select', 'vuon-hong-nha-tom')
+    await flushPromises()
+    expect(header.attributes('aria-expanded')).toBe('true')
+  })
 })
