@@ -10,11 +10,9 @@ import {
   type AdminStatistics,
 } from '@/services/admin'
 import { getApiErrorMessage } from '@/services/api-error'
-import { authStore } from '@/stores/auth'
 import { categoryTheme } from '@/utils/category'
 import { locationTypeStyle } from '@/utils/location'
 
-const greetingName = computed(() => authStore.currentUser.value?.full_name || 'Quản trị viên')
 
 const stats = ref<AdminDashboardStats | null>(null)
 const loading = ref(true)
@@ -254,7 +252,7 @@ onMounted(() => {
     <header class="dash-head">
       <div>
         <p class="dash-date">{{ todayLabel }}</p>
-        <h1>Xin chào, {{ greetingName }}</h1>
+        <h1>Tổng quan quản trị</h1>
         <p class="dash-summary" role="status">
           <template v-if="loading">Đang tải việc cần xử lý...</template>
           <template v-else-if="errorMessage">Chưa tải được việc cần xử lý.</template>

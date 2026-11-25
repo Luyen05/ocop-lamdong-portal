@@ -41,7 +41,7 @@ async function submit(): Promise<void> {
 </script>
 
 <template>
-  <AuthLayout title="Đăng nhập" subtitle="Chào mừng bạn quay lại với OCOP Lâm Đồng.">
+  <AuthLayout title="Đăng nhập" subtitle="Dùng tài khoản OCOP Lâm Đồng của bạn.">
     <form class="d-grid gap-3" @submit.prevent="submit">
       <div v-if="wasRegistered" class="alert alert-success py-2" role="status">
         Tạo tài khoản thành công. Bạn có thể đăng nhập ngay.
